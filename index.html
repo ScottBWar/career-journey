@@ -628,12 +628,41 @@
     @media (max-width: 900px) {
       body { cursor: auto; }
       #cur-dot, #cur-ring, #sidebar { display: none; }
-      .hero, .section-left, .bento-section, footer { padding-left: 6vw; }
+
+      /* Hero: stack left then terminal */
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 12vh 6vw 8vh;
+        gap: 2.5rem;
+        align-items: start;
+      }
+      .hero-left { order: 1; }
+      .hero-right { order: 2; width: 100%; }
+      .terminal { max-width: 100%; }
+      .terminal-body { height: 260px; font-size: 0.65rem; }
+      .hero-name { font-size: clamp(3.8rem, 16vw, 6rem); }
+      .hero-scroll { left: 6vw; transform: none; }
+      .hero-links { flex-wrap: wrap; gap: 0.8rem; }
+      .hero-link { font-size: 0.62rem; }
+
+      /* Role sections: single column, show both cols stacked */
       .role-section { grid-template-columns: 1fr; }
-      .section-right { display: none; }
+      .section-left { padding: 6vh 6vw 3vh; }
+      .section-right {
+        display: flex; flex-direction: column;
+        border-left: none;
+        border-top: 1px solid rgba(255,255,255,0.08);
+      }
+      .section-bullets-wrap { padding: 3vh 6vw; }
+      .section-map { display: none; }
+
+      /* Bento */
+      .bento-section { padding-left: 6vw; padding-right: 6vw; }
       .bento { grid-template-columns: 1fr; }
       .bc-about,.bc-nums,.bc-fe,.bc-be,.bc-cloud,.bc-ai,.bc-certs { grid-column: span 1; }
       .threads { grid-template-columns: 1fr 1fr; }
+
+      footer { padding-left: 6vw; }
     }
   </style>
 </head>
