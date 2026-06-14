@@ -145,6 +145,36 @@
       from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+
+    .btn-game {
+      margin-top: 2.2rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.95rem 2.4rem;
+      border-radius: 999px;
+      font: inherit;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #05060f;
+      background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4);
+      background-size: 200% 200%;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 12px 34px rgba(165, 180, 252, 0.4);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      opacity: 0;
+      animation: rise 1s ease 0.85s forwards, shimmer 8s ease infinite;
+    }
+
+    .btn-game:hover {
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 18px 48px rgba(240, 171, 252, 0.55);
+    }
+
+    .btn-game:active { transform: translateY(-1px) scale(1.0); }
   </style>
 </head>
 <body>
@@ -162,6 +192,8 @@
       <div class="unit"><span class="num" id="m">00</span><span class="label">Minutes</span></div>
       <div class="unit"><span class="num" id="s">00</span><span class="label">Seconds</span></div>
     </div>
+
+    <a class="btn-game" href="game.html">🎮 Game</a>
 
     <div class="signature">— Scott Warner</div>
   </div>

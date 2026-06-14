@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pirate vs. Shark — A Battle on the High Seas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      /* sunset sky shows through the transparent WebGL canvas */
+      background: linear-gradient(180deg, #1b1145 0%, #5b2a86 35%, #c2557b 62%, #ef8f6e 82%, #f6c177 100%);
+      color: #fff;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #renderCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      touch-action: none;
+      z-index: 0;
+    }
+
+    /* ---- UI overlay -------------------------------------------------- */
+    #ui {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(0.8rem, 2vw, 1.6rem);
+    }
+
+    .topbar { display: flex; justify-content: center; }
+
+    .enemy-plate {
+      pointer-events: auto;
+      min-width: min(440px, 80vw);
+      background: linear-gradient(180deg, rgba(20, 16, 60, 0.85), rgba(12, 10, 36, 0.85));
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 12px;
+      padding: 0.7rem 1.1rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(6px);
+    }
+
+    .enemy-plate .row { display: flex; justify-content: space-between; align-items: baseline; }
+    .enemy-plate .name { font-weight: 700; letter-spacing: 0.08em; }
+    .enemy-plate .hpnum { font-size: 0.85rem; color: rgba(255,255,255,0.7); font-variant-numeric: tabular-nums; }
+
+    .bar {
+      height: 12px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+      margin-top: 0.45rem;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .bar > i { display: block; height: 100%; width: 100%; transition: width 0.45s ease; }
+    .bar.hp > i { background: linear-gradient(90deg, #f87171, #fca5a5); }
+    .bar.php > i { background: linear-gradient(90deg, #34d399, #6ee7b7); }
+    .bar.mp > i { background: linear-gradient(90deg, #60a5fa, #93c5fd); }
+
+    /* ---- bottom HUD --------------------------------------------------- */
+    .bottom { display: flex; gap: 1rem; align-items: flex-end; justify-content: space-between; }
+
+    .party {
+      pointer-events: auto;
+      flex: 1;
+      max-width: 360px;
+      background: linear-gradient(180deg, rgba(20, 16, 60, 0.88), rgba(12, 10, 36, 0.9));
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .party .name { font-weight: 700; letter-spacing: 0.06em; margin-bottom: 0.25rem; }
+    .party .statline { display: flex; justify-content: space-between; font-size: 0.8rem; color: rgba(255,255,255,0.75); margin-top: 0.5rem; }
+    .party .statline span:first-child { color: rgba(255,255,255,0.55); letter-spacing: 0.12em; }
+
+    .menu {
+      pointer-events: auto;
+      width: min(300px, 46vw);
+      background: linear-gradient(180deg, rgba(20, 16, 60, 0.92), rgba(12, 10, 36, 0.94));
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 12px;
+      padding: 0.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .menu .cmd {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      text-align: left;
+      font: inherit;
+      font-weight: 500;
+      color: #fff;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: background 0.12s ease, transform 0.06s ease;
+    }
+    .menu .cmd:hover:not(:disabled) { background: rgba(129, 140, 248, 0.28); }
+    .menu .cmd:active:not(:disabled) { transform: scale(0.98); }
+    .menu .cmd:disabled { opacity: 0.35; cursor: not-allowed; }
+    .menu .cmd .cost { font-size: 0.78rem; color: #93c5fd; }
+    .menu .cmd .cost.qty { color: #fcd34d; }
+    .menu .cmd.back { color: rgba(255,255,255,0.65); }
+
+    /* message line */
+    .message {
+      position: fixed;
+      left: 50%;
+      bottom: 188px;
+      transform: translateX(-50%);
+      z-index: 3;
+      pointer-events: none;
+      padding: 0.55rem 1.4rem;
+      background: rgba(8, 6, 24, 0.78);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      font-size: clamp(0.85rem, 2.4vw, 1.05rem);
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      max-width: 92vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    }
+
+    /* floating damage numbers */
+    .float {
+      position: fixed;
+      z-index: 4;
+      pointer-events: none;
+      font-weight: 700;
+      font-size: 1.7rem;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+      transform: translate(-50%, -50%);
+      animation: floatUp 0.95s ease-out forwards;
+    }
+    @keyframes floatUp {
+      0%   { opacity: 0; transform: translate(-50%, -30%) scale(0.6); }
+      20%  { opacity: 1; transform: translate(-50%, -90%) scale(1.15); }
+      100% { opacity: 0; transform: translate(-50%, -200%) scale(1); }
+    }
+
+    /* end screen */
+    #end {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: rgba(5, 4, 18, 0.72);
+      backdrop-filter: blur(4px);
+    }
+    #end.show { display: flex; }
+    #end h1 {
+      font-size: clamp(2.4rem, 10vw, 5rem);
+      font-weight: 700;
+      background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    #end p { margin-top: 0.8rem; color: rgba(255,255,255,0.8); letter-spacing: 0.05em; }
+    #end .actions { margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .pill {
+      font: inherit; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 0.85rem 2rem; border-radius: 999px; border: none; cursor: pointer;
+      color: #05060f; background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4);
+      box-shadow: 0 10px 30px rgba(165,180,252,0.4); text-decoration: none;
+    }
+    .pill.ghost { color: #fff; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+    .pill:hover { transform: translateY(-2px); }
+
+    /* intro title */
+    #intro {
+      position: fixed; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    #intro .vs {
+      text-align: center;
+      animation: introFade 2.6s ease forwards;
+      text-shadow: 0 6px 30px rgba(0,0,0,0.6);
+    }
+    #intro .vs .who { font-size: clamp(1.6rem, 6vw, 3rem); font-weight: 700; letter-spacing: 0.1em; }
+    #intro .vs .x { font-size: clamp(1rem, 4vw, 1.6rem); color: #fcd34d; letter-spacing: 0.4em; margin: 0.4rem 0; }
+    @keyframes introFade {
+      0% { opacity: 0; transform: scale(0.8); }
+      20% { opacity: 1; transform: scale(1); }
+      75% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.1); }
+    }
+
+    .hint { position: fixed; top: 0.6rem; left: 0.8rem; z-index: 3; font-size: 0.72rem; color: rgba(255,255,255,0.45); letter-spacing: 0.08em; }
+    .back-link { position: fixed; top: 0.6rem; right: 0.8rem; z-index: 3; pointer-events: auto; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.8rem; letter-spacing: 0.08em; }
+    .back-link:hover { color: #fff; }
+
+    @media (max-width: 560px) {
+      .party .statline { font-size: 0.72rem; }
+      .message { bottom: 168px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="renderCanvas"></canvas>
+
+  <a class="back-link" href="coming-soon.html">← Back</a>
+  <div class="hint">A Battle on the High Seas</div>
+
+  <div id="ui">
+    <div class="topbar">
+      <div class="enemy-plate">
+        <div class="row">
+          <span class="name" id="enemyName">Maneater Shark</span>
+          <span class="hpnum" id="enemyHPNum">185 / 185</span>
+        </div>
+        <div class="bar hp"><i id="enemyHPBar"></i></div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="party">
+        <div class="name" id="playerName">Captain Redbeard</div>
+        <div class="bar php"><i id="playerHPBar"></i></div>
+        <div class="statline"><span>HP</span><span id="playerHPNum">135 / 135</span></div>
+        <div class="bar mp"><i id="playerMPBar"></i></div>
+        <div class="statline"><span>MP</span><span id="playerMPNum">30 / 30</span></div>
+      </div>
+
+      <div class="menu" id="menu"><!-- populated by JS --></div>
+    </div>
+  </div>
+
+  <div class="message" id="message">A monstrous shark surfaces...</div>
+
+  <div id="intro">
+    <div class="vs">
+      <div class="who">CAPTAIN REDBEARD</div>
+      <div class="x">— VS —</div>
+      <div class="who">MANEATER SHARK</div>
+    </div>
+  </div>
+
+  <div id="end">
+    <h1 id="endTitle">Victory!</h1>
+    <p id="endText"></p>
+    <div class="actions">
+      <button class="pill" onclick="location.reload()">Rematch</button>
+      <a class="pill ghost" href="coming-soon.html">Back to Site</a>
+    </div>
+  </div>
+
+  <script>
+  // =====================================================================
+  //  PIRATE vs SHARK — a tiny Final Fantasy-style turn battle in Babylon.js
+  // =====================================================================
+  const canvas = document.getElementById('renderCanvas');
+  const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+
+  const V3 = BABYLON.Vector3;
+  const Color3 = BABYLON.Color3;
+
+  // ---- combat state ----------------------------------------------------
+  const player = { name: 'Captain Redbeard', maxhp: 135, hp: 135, maxmp: 30, mp: 30 };
+  const enemy  = { name: 'Maneater Shark',   maxhp: 185, hp: 185 };
+  const inv = { potion: 3, grog: 2, bomb: 2 };
+
+  const SPELLS = {
+    cannon:  { name: 'Cannon Blast', mp: 10, min: 30, max: 45 },
+    tempest: { name: 'Tempest',      mp: 16, min: 48, max: 68 },
+    mend:    { name: 'Mend',         mp: 8,  min: 35, max: 50, heal: true },
+  };
+  const ITEMS = {
+    potion: { name: 'Potion',      effect: 'Heal 55 HP',  heal: 55 },
+    grog:   { name: 'Grog',        effect: 'Restore 18 MP', mana: 18 },
+    bomb:   { name: 'Powder Bomb', effect: '42-58 damage', min: 42, max: 58 },
+  };
+
+  let busy = true;   // input locked until intro finishes
+  let over = false;
+
+  const rnd  = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+  const easeInOut = (k) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  // =====================================================================
+  //  SCENE
+  // =====================================================================
+  const scene = new BABYLON.Scene(engine);
+  scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // let the CSS sunset sky show
+  scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+  scene.fogColor = new Color3(0.55, 0.35, 0.45);
+  scene.fogDensity = 0.012;
+
+  const camera = new BABYLON.ArcRotateCamera('cam', -Math.PI / 2 - 0.45, 1.12, 17, new V3(0, 1.6, 0.5), scene);
+  camera.lowerRadiusLimit = camera.upperRadiusLimit = 17;
+
+  const hemi = new BABYLON.HemisphericLight('hemi', new V3(0.2, 1, 0.1), scene);
+  hemi.intensity = 0.85;
+  hemi.groundColor = new Color3(0.25, 0.2, 0.35);
+  const sun = new BABYLON.DirectionalLight('sun', new V3(-0.6, -1, 0.4), scene);
+  sun.intensity = 1.1;
+  sun.diffuse = new Color3(1.0, 0.85, 0.7);
+
+  // ---- material helper -------------------------------------------------
+  function mat(name, hex, opts = {}) {
+    const m = new BABYLON.StandardMaterial(name, scene);
+    m.diffuseColor = Color3.FromHexString(hex);
+    m.specularColor = new Color3(opts.spec ?? 0.15, opts.spec ?? 0.15, opts.spec ?? 0.15);
+    if (opts.emissive) m.emissiveColor = Color3.FromHexString(opts.emissive);
+    return m;
+  }
+
+  // ---- particle flare texture (shared) ---------------------------------
+  const flare = (() => {
+    const dt = new BABYLON.DynamicTexture('flare', 64, scene, false);
+    const c = dt.getContext();
+    const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.4, 'rgba(255,255,255,0.55)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g; c.fillRect(0, 0, 64, 64);
+    dt.hasAlpha = true; dt.update();
+    return dt;
+  })();
+
+  // =====================================================================
+  //  OCEAN (animated wave mesh)
+  // =====================================================================
+  const ocean = BABYLON.MeshBuilder.CreateGround('ocean', { width: 260, height: 260, subdivisions: 44 }, scene);
+  const oceanMat = new BABYLON.StandardMaterial('oceanMat', scene);
+  oceanMat.diffuseColor = Color3.FromHexString('#15486b');
+  oceanMat.specularColor = new Color3(0.9, 0.8, 0.7);
+  oceanMat.specularPower = 64;
+  oceanMat.emissiveColor = Color3.FromHexString('#0a2740');
+  ocean.material = oceanMat;
+  ocean.position.y = -0.2;
+  const oceanBase = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind).slice();
+
+  // foam ring around the shark's splash zone
+  const foam = BABYLON.MeshBuilder.CreateDisc('foam', { radius: 3.4, tessellation: 40 }, scene);
+  foam.rotation.x = Math.PI / 2;
+  foam.position.set(3.8, 0.02, -1.5);
+  const foamMat = mat('foamMat', '#bfe6f0', { emissive: '#5b8fa3' });
+  foamMat.alpha = 0.45;
+  foam.material = foamMat;
+
+  // =====================================================================
+  //  THE PIRATE SHIP DECK (where the captain stands)
+  // =====================================================================
+  const deckRoot = new BABYLON.TransformNode('deck', scene);
+  deckRoot.position.set(-3.8, 0, 1.6);
+  function plank(w, h, d, x, y, z, m) {
+    const b = BABYLON.MeshBuilder.CreateBox('plank', { width: w, height: h, depth: d }, scene);
+    b.position.set(x, y, z); b.material = m; b.parent = deckRoot; return b;
+  }
+  const woodDark = mat('woodDark', '#5b3a1e');
+  const woodLite = mat('woodLite', '#7a5230');
+  plank(5.2, 0.5, 5.2, 0, 0.25, 0, woodDark);
+  for (let i = -2; i <= 2; i++) plank(0.9, 0.12, 5.0, i, 0.52, 0, i % 2 ? woodLite : woodDark);
+  // a little barrel + rail post for flavour
+  const barrel = BABYLON.MeshBuilder.CreateCylinder('barrel', { height: 1.0, diameter: 0.8 }, scene);
+  barrel.position.set(-1.6, 1.05, -1.6); barrel.material = mat('barrelMat', '#6b4423'); barrel.parent = deckRoot;
+
+  // =====================================================================
+  //  PIRATE (built from primitives)
+  // =====================================================================
+  const pirate = new BABYLON.TransformNode('pirate', scene);
+  pirate.position.set(-3.4, 0.55, 1.4);
+  pirate.rotation.y = Math.PI / 2.3; // face the shark
+
+  const skin  = mat('skin', '#d9a06b');
+  const coat  = mat('coat', '#7a1f1f');
+  const coat2 = mat('coat2', '#9c2a2a');
+  const dark  = mat('dark', '#2a2018');
+  const gold  = mat('gold', '#d9a521', { emissive: '#5a4208' });
+  const steel = mat('steel', '#c9d2dc', { spec: 0.8 });
+
+  function part(builder, m, pos, parent = pirate) {
+    builder.material = m; builder.position.set(pos[0], pos[1], pos[2]); builder.parent = parent; return builder;
+  }
+  // legs
+  part(BABYLON.MeshBuilder.CreateCylinder('legL', { height: 1.1, diameter: 0.34 }, scene), dark, [-0.22, 0.0, 0]);
+  part(BABYLON.MeshBuilder.CreateCylinder('legR', { height: 1.1, diameter: 0.34 }, scene), dark, [ 0.22, 0.0, 0]);
+  // torso (coat)
+  part(BABYLON.MeshBuilder.CreateBox('torso', { width: 0.95, height: 1.15, depth: 0.6 }, scene), coat, [0, 1.05, 0]);
+  part(BABYLON.MeshBuilder.CreateBox('sash', { width: 1.0, height: 0.22, depth: 0.62 }, scene), gold, [0, 0.75, 0]);
+  // shoulders + arms
+  const armL = part(BABYLON.MeshBuilder.CreateCylinder('armL', { height: 0.95, diameter: 0.3 }, scene), coat2, [-0.62, 1.05, 0]);
+  armL.rotation.z = 0.25;
+  const armR = new BABYLON.TransformNode('armRpivot', scene); // pivot at shoulder for swinging
+  armR.parent = pirate; armR.position.set(0.6, 1.45, 0);
+  const armRmesh = part(BABYLON.MeshBuilder.CreateCylinder('armR', { height: 0.95, diameter: 0.3 }, scene), coat2, [0, -0.45, 0], armR);
+  // head + face
+  part(BABYLON.MeshBuilder.CreateSphere('head', { diameter: 0.62 }, scene), skin, [0, 1.95, 0]);
+  part(BABYLON.MeshBuilder.CreateBox('beard', { width: 0.5, height: 0.4, depth: 0.32 }, scene), mat('beardMat', '#7a3b12'), [0, 1.7, 0.18]);
+  // eye patch
+  part(BABYLON.MeshBuilder.CreateBox('patch', { width: 0.18, height: 0.16, depth: 0.05 }, scene), dark, [0.14, 2.02, 0.3]);
+  // hat (black tricorne-ish: brim disc + dome) with skull
+  const hatBrim = part(BABYLON.MeshBuilder.CreateCylinder('hatBrim', { height: 0.08, diameter: 0.95 }, scene), dark, [0, 2.28, 0]);
+  part(BABYLON.MeshBuilder.CreateSphere('hatTop', { diameter: 0.62, slice: 0.5 }, scene), dark, [0, 2.3, 0]);
+  part(BABYLON.MeshBuilder.CreateBox('skull', { width: 0.16, height: 0.16, depth: 0.05 }, scene), mat('skullMat', '#f2ead9', { emissive: '#3a3528' }), [0, 2.42, 0.3]);
+  // cutlass held in right hand
+  const swordRoot = new BABYLON.TransformNode('swordRoot', scene);
+  swordRoot.parent = armR; swordRoot.position.set(0, -0.95, 0.1);
+  part(BABYLON.MeshBuilder.CreateBox('blade', { width: 0.08, height: 1.3, depth: 0.16 }, scene), steel, [0, 0.55, 0], swordRoot);
+  part(BABYLON.MeshBuilder.CreateBox('guard', { width: 0.32, height: 0.1, depth: 0.22 }, scene), gold, [0, -0.05, 0], swordRoot);
+  part(BABYLON.MeshBuilder.CreateCylinder('grip', { height: 0.32, diameter: 0.1 }, scene), dark, [0, -0.22, 0], swordRoot);
+  swordRoot.rotation.x = -0.4;
+
+  // blob shadow under the pirate
+  const pShadow = BABYLON.MeshBuilder.CreateDisc('pShadow', { radius: 0.9, tessellation: 24 }, scene);
+  pShadow.rotation.x = Math.PI / 2; pShadow.position.set(-3.4, 0.56, 1.4);
+  const shadowMat = mat('shadowMat', '#000000'); shadowMat.alpha = 0.28; shadowMat.disableLighting = true;
+  pShadow.material = shadowMat;
+
+  // =====================================================================
+  //  SHARK (built from primitives)
+  // =====================================================================
+  const shark = new BABYLON.TransformNode('shark', scene);
+  shark.position.set(3.8, 0.35, -1.5);
+  shark.rotation.y = -Math.PI / 2.1;
+
+  const sharkGrey = mat('sharkGrey', '#6f7f8c', { spec: 0.3 });
+  const sharkBelly = mat('sharkBelly', '#d8dfe4');
+  const sharkDark = mat('sharkDark', '#3c4750');
+
+  // body — a stretched sphere
+  const body = BABYLON.MeshBuilder.CreateSphere('sbody', { diameterX: 3.6, diameterY: 1.4, diameterZ: 1.5, segments: 16 }, scene);
+  body.material = sharkGrey; body.parent = shark; body.position.y = 0.2;
+  // belly
+  const belly = BABYLON.MeshBuilder.CreateSphere('sbelly', { diameterX: 3.0, diameterY: 0.9, diameterZ: 1.2, segments: 12 }, scene);
+  belly.material = sharkBelly; belly.parent = shark; belly.position.set(0, -0.1, 0);
+  // snout (cone toward +x)
+  const snout = BABYLON.MeshBuilder.CreateCylinder('snout', { height: 1.3, diameterTop: 0, diameterBottom: 1.2, tessellation: 16 }, scene);
+  snout.material = sharkGrey; snout.parent = shark; snout.rotation.z = -Math.PI / 2; snout.position.set(2.1, 0.2, 0);
+  // mouth (dark, slightly open)
+  const mouth = BABYLON.MeshBuilder.CreateBox('mouth', { width: 1.0, height: 0.34, depth: 1.0 }, scene);
+  mouth.material = sharkDark; mouth.parent = shark; mouth.position.set(1.5, -0.15, 0);
+  // teeth (two rows of little cones)
+  for (let i = 0; i < 6; i++) {
+    const tx = 1.15 + i * 0.18;
+    const tUp = BABYLON.MeshBuilder.CreateCylinder('t', { height: 0.2, diameterTop: 0, diameterBottom: 0.12 }, scene);
+    tUp.material = sharkBelly; tUp.parent = shark; tUp.position.set(tx, -0.02, (i % 2 ? 0.28 : -0.28)); tUp.rotation.x = Math.PI;
+    const tDn = BABYLON.MeshBuilder.CreateCylinder('t', { height: 0.2, diameterTop: 0, diameterBottom: 0.12 }, scene);
+    tDn.material = sharkBelly; tDn.parent = shark; tDn.position.set(tx, -0.28, (i % 2 ? -0.28 : 0.28));
+  }
+  // eyes
+  [-0.42, 0.42].forEach(z => {
+    const e = BABYLON.MeshBuilder.CreateSphere('eye', { diameter: 0.22 }, scene);
+    e.material = mat('eyeMat', '#0a0a0a', { emissive: '#1a0000' }); e.parent = shark; e.position.set(1.45, 0.42, z);
+  });
+  // dorsal fin (triangular prism)
+  const dorsal = BABYLON.MeshBuilder.CreateCylinder('dorsal', { height: 0.18, diameter: 1.5, tessellation: 3 }, scene);
+  dorsal.material = sharkDark; dorsal.parent = shark; dorsal.rotation.x = Math.PI / 2; dorsal.scaling.x = 0.8;
+  dorsal.position.set(-0.1, 1.15, 0);
+  // pectoral fins
+  [-1, 1].forEach(s => {
+    const pec = BABYLON.MeshBuilder.CreateCylinder('pec', { height: 0.12, diameter: 1.0, tessellation: 3 }, scene);
+    pec.material = sharkDark; pec.parent = shark; pec.rotation.x = Math.PI / 2; pec.rotation.y = s * 0.6;
+    pec.position.set(0.4, -0.25, s * 0.9); pec.scaling.x = 0.6;
+  });
+  // tail (its own pivot so it can wiggle)
+  const tailPivot = new BABYLON.TransformNode('tailPivot', scene);
+  tailPivot.parent = shark; tailPivot.position.set(-1.7, 0.2, 0);
+  const tailFin = BABYLON.MeshBuilder.CreateCylinder('tail', { height: 0.16, diameter: 1.7, tessellation: 3 }, scene);
+  tailFin.material = sharkDark; tailFin.parent = tailPivot; tailFin.rotation.x = Math.PI / 2; tailFin.rotation.z = Math.PI / 2;
+  tailFin.scaling.x = 1.1; tailFin.position.set(-0.6, 0, 0);
+
+  // =====================================================================
+  //  IDLE ANIMATION
+  // =====================================================================
+  let t = 0;
+  scene.onBeforeRenderObservable.add(() => {
+    const dt = engine.getDeltaTime() / 1000;
+    t += dt;
+
+    // gentle camera sway
+    camera.alpha = -Math.PI / 2 - 0.45 + Math.sin(t * 0.25) * 0.05;
+
+    // pirate breathing bob
+    if (!pirate._busy) pirate.position.y = 0.55 + Math.sin(t * 1.6) * 0.04;
+    // shark bobbing on the swell + tail wiggle
+    if (!shark._busy) {
+      shark.position.y = 0.35 + Math.sin(t * 1.1) * 0.12;
+      shark.rotation.z = Math.sin(t * 1.1) * 0.06;
+    }
+    tailPivot.rotation.y = Math.sin(t * 4) * 0.4;
+
+    // foam pulse
+    foam.scaling.x = foam.scaling.y = 1 + Math.sin(t * 2) * 0.04;
+
+    // animate ocean waves
+    const pos = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+    for (let i = 0; i < pos.length; i += 3) {
+      const x = oceanBase[i], z = oceanBase[i + 2];
+      pos[i + 1] = Math.sin(x * 0.25 + t * 1.3) * 0.35 + Math.cos(z * 0.3 + t * 1.0) * 0.35;
+    }
+    ocean.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
+  });
+
+  // =====================================================================
+  //  HELPERS — tween / move / flash / particles / floating damage
+  // =====================================================================
+  function tween(apply, ms, ease = easeInOut) {
+    return new Promise(res => {
+      let acc = 0;
+      const obs = scene.onBeforeRenderObservable.add(() => {
+        acc += engine.getDeltaTime();
+        const k = Math.min(1, acc / ms);
+        apply(ease(k));
+        if (k >= 1) { scene.onBeforeRenderObservable.remove(obs); res(); }
+      });
+    });
+  }
+  function moveTo(node, to, ms) {
+    const from = node.position.clone();
+    return tween(k => { node.position = V3.Lerp(from, to, k); }, ms);
+  }
+  function rotTo(node, axis, from, to, ms) {
+    return tween(k => { node.rotation[axis] = from + (to - from) * k; }, ms);
+  }
+
+  function hitFlash(root, hex, ms = 180) {
+    const col = Color3.FromHexString(hex);
+    const meshes = (root.getChildMeshes ? root.getChildMeshes() : [root]).filter(m => m.material);
+    const saved = meshes.map(m => m.material.emissiveColor.clone());
+    meshes.forEach(m => m.material.emissiveColor = col);
+    setTimeout(() => meshes.forEach((m, i) => m.material.emissiveColor = saved[i]), ms);
+  }
+
+  function burst(pos, hexA, hexB, count = 70, power = 7, gravity = -8) {
+    const ps = new BABYLON.ParticleSystem('burst', count, scene);
+    ps.particleTexture = flare;
+    ps.emitter = pos.clone();
+    ps.minEmitBox = new V3(-0.2, -0.2, -0.2);
+    ps.maxEmitBox = new V3(0.2, 0.2, 0.2);
+    ps.color1 = BABYLON.Color4.FromHexString(hexA + 'ff');
+    ps.color2 = BABYLON.Color4.FromHexString(hexB + 'ff');
+    ps.colorDead = new BABYLON.Color4(0, 0, 0, 0);
+    ps.minSize = 0.25; ps.maxSize = 0.9;
+    ps.minLifeTime = 0.3; ps.maxLifeTime = 0.7;
+    ps.emitRate = count * 8;
+    ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
+    ps.gravity = new V3(0, gravity, 0);
+    ps.direction1 = new V3(-1, 1, -1); ps.direction2 = new V3(1, 1.5, 1);
+    ps.minEmitPower = power * 0.5; ps.maxEmitPower = power;
+    ps.minAngularSpeed = 0; ps.maxAngularSpeed = Math.PI;
+    ps.targetStopDuration = 0.18;
+    ps.disposeOnStop = true;
+    ps.start();
+  }
+
+  function floatDamage(worldPos, text, color) {
+    const rw = engine.getRenderWidth(), rh = engine.getRenderHeight();
+    const p = BABYLON.Vector3.Project(
+      worldPos, BABYLON.Matrix.Identity(), scene.getTransformMatrix(),
+      new BABYLON.Viewport(0, 0, rw, rh)
+    );
+    const el = document.createElement('div');
+    el.className = 'float';
+    el.textContent = text;
+    el.style.color = color;
+    el.style.left = (p.x * (canvas.clientWidth / rw)) + 'px';
+    el.style.top  = (p.y * (canvas.clientHeight / rh)) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+
+  const worldOf = (node, dy = 2.2) => node.getAbsolutePosition().add(new V3(0, dy, 0));
+
+  // =====================================================================
+  //  UI BINDING
+  // =====================================================================
+  const el = id => document.getElementById(id);
+  function refresh() {
+    el('enemyHPNum').textContent = `${Math.max(0, enemy.hp)} / ${enemy.maxhp}`;
+    el('enemyHPBar').style.width = clamp(enemy.hp / enemy.maxhp * 100, 0, 100) + '%';
+    el('playerHPNum').textContent = `${Math.max(0, player.hp)} / ${player.maxhp}`;
+    el('playerHPBar').style.width = clamp(player.hp / player.maxhp * 100, 0, 100) + '%';
+    el('playerMPNum').textContent = `${player.mp} / ${player.maxmp}`;
+    el('playerMPBar').style.width = clamp(player.mp / player.maxmp * 100, 0, 100) + '%';
+  }
+  function msg(text) { el('message').textContent = text; }
+
+  const menu = el('menu');
+  function button(label, sub, onClick, disabled, subClass = '') {
+    const b = document.createElement('button');
+    b.className = 'cmd';
+    b.innerHTML = `<span>${label}</span>` + (sub ? `<span class="cost ${subClass}">${sub}</span>` : '');
+    b.disabled = !!disabled;
+    b.onclick = onClick;
+    return b;
+  }
+  function showMain() {
+    if (over) return;
+    menu.innerHTML = '';
+    menu.append(
+      button('⚔️  Fight', '', () => act(playerFight)),
+      button('✨  Magic', '', showMagic),
+      button('🎒  Item', '', showItems),
+    );
+  }
+  function showMagic() {
+    menu.innerHTML = '';
+    for (const [k, s] of Object.entries(SPELLS)) {
+      menu.append(button(s.name, s.mp + ' MP', () => act(() => playerSpell(k)), player.mp < s.mp));
+    }
+    menu.append(button('↩  Back', '', showMain, false, ''));
+    menu.lastChild.classList.add('back');
+  }
+  function showItems() {
+    menu.innerHTML = '';
+    for (const [k, it] of Object.entries(ITEMS)) {
+      menu.append(button(it.name, '×' + inv[k], () => act(() => playerItem(k)), inv[k] <= 0, 'qty'));
+    }
+    menu.append(button('↩  Back', '', showMain, false, ''));
+    menu.lastChild.classList.add('back');
+  }
+  function lockMenu() { [...menu.querySelectorAll('button')].forEach(b => b.disabled = true); }
+
+  // wraps a player action: lock, run, then enemy turn, then unlock
+  async function act(fn) {
+    if (busy || over) return;
+    busy = true; lockMenu();
+    await fn();
+    refresh();
+    if (checkEnd()) return;
+    await wait(350);
+    await enemyTurn();
+    refresh();
+    if (checkEnd()) return;
+    busy = false;
+    showMain();
+  }
+
+  // =====================================================================
+  //  PLAYER ACTIONS
+  // =====================================================================
+  async function dashAndBack(action) {
+    pirate._busy = true;
+    const home = pirate.position.clone();
+    const lunge = new V3(1.6, 0.6, -0.9); // toward the shark
+    await moveTo(pirate, lunge, 260);
+    await action();
+    await moveTo(pirate, home, 320);
+    pirate.position = home;
+    pirate._busy = false;
+  }
+
+  async function swingSword() {
+    await rotTo(armR, 'x', 0, -2.2, 120);
+    await rotTo(armR, 'x', -2.2, 0.6, 110);
+    await rotTo(armR, 'x', 0.6, 0, 140);
+  }
+
+  function dealToEnemy(dmg, hex = '#ffffff') {
+    enemy.hp = Math.max(0, enemy.hp - dmg);
+    hitFlash(shark, '#ff6060');
+    burst(worldOf(shark, 0.6), '#ff7b7b', '#ffd1d1', 60, 6);
+    floatDamage(worldOf(shark, 1.4), String(dmg), hex);
+    // knockback shimmy
+    shark._busy = true;
+    const h = shark.position.clone();
+    moveTo(shark, h.add(new V3(0.5, 0, 0)), 90).then(() => moveTo(shark, h, 160).then(() => shark._busy = false));
+  }
+
+  async function playerFight() {
+    msg('Captain Redbeard swings his cutlass!');
+    await dashAndBack(async () => {
+      await swingSword();
+      let dmg = rnd(16, 26);
+      const crit = Math.random() < 0.12;
+      if (crit) dmg = Math.round(dmg * 1.8);
+      dealToEnemy(dmg, crit ? '#fcd34d' : '#ffffff');
+      if (crit) msg('A critical hit! ' + dmg + ' damage!');
+    });
+  }
+
+  async function playerSpell(key) {
+    const s = SPELLS[key];
+    player.mp -= s.mp;
+    refresh();
+
+    if (s.heal) {
+      const amt = rnd(s.min, s.max);
+      player.hp = Math.min(player.maxhp, player.hp + amt);
+      msg(`Mend restores ${amt} HP!`);
+      burst(worldOf(pirate, -0.4), '#6ee7b7', '#bbf7d0', 60, 5, -2);
+      floatDamage(worldOf(pirate, 1.6), '+' + amt, '#6ee7b7');
+      await wait(700);
+      return;
+    }
+
+    if (key === 'cannon') {
+      msg('Cannon Blast! A cannonball roars across the deck!');
+      // fire a cannonball from the pirate to the shark
+      const ball = BABYLON.MeshBuilder.CreateSphere('ball', { diameter: 0.45 }, scene);
+      ball.material = mat('ballMat', '#1c1c1c', { emissive: '#000000' });
+      ball.position = worldOf(pirate, -0.3);
+      const target = worldOf(shark, -0.3);
+      await tween(k => { ball.position = V3.Lerp(ball.position, target, 1); }, 0); // ensure start
+      await moveTo(ball, target, 360);
+      ball.dispose();
+      burst(target, '#ffb347', '#ff5e3a', 90, 9);
+      dealToEnemy(rnd(s.min, s.max));
+      await wait(450);
+      return;
+    }
+
+    if (key === 'tempest') {
+      msg('Tempest! The captain calls down the storm!');
+      // crackling burst around the shark
+      for (let i = 0; i < 3; i++) {
+        burst(worldOf(shark, rnd(-1, 18) / 10), '#a5b4fc', '#e0e7ff', 70, 8, -3);
+        await wait(120);
+      }
+      hitFlash(shark, '#c7d2fe', 360);
+      dealToEnemy(rnd(s.min, s.max), '#a5b4fc');
+      await wait(450);
+      return;
+    }
+  }
+
+  async function playerItem(key) {
+    inv[key]--;
+    const it = ITEMS[key];
+    if (it.heal) {
+      player.hp = Math.min(player.maxhp, player.hp + it.heal);
+      msg(`The captain quaffs a Potion. +${it.heal} HP!`);
+      burst(worldOf(pirate, -0.4), '#6ee7b7', '#bbf7d0', 50, 5, -2);
+      floatDamage(worldOf(pirate, 1.6), '+' + it.heal, '#6ee7b7');
+      await wait(650);
+    } else if (it.mana) {
+      player.mp = Math.min(player.maxmp, player.mp + it.mana);
+      msg(`A swig of Grog restores ${it.mana} MP!`);
+      burst(worldOf(pirate, -0.4), '#60a5fa', '#bfdbfe', 50, 5, -2);
+      floatDamage(worldOf(pirate, 1.6), '+' + it.mana + ' MP', '#93c5fd');
+      await wait(650);
+    } else {
+      msg('The captain hurls a Powder Bomb!');
+      const ball = BABYLON.MeshBuilder.CreateSphere('bomb', { diameter: 0.4 }, scene);
+      ball.material = mat('bombMat', '#222', { emissive: '#1a0a00' });
+      ball.position = worldOf(pirate, -0.2);
+      const target = worldOf(shark, -0.2);
+      await moveTo(ball, target, 380);
+      ball.dispose();
+      burst(target, '#ffd166', '#ef476f', 110, 11);
+      dealToEnemy(rnd(it.min, it.max), '#fca5a5');
+      await wait(500);
+    }
+  }
+
+  // =====================================================================
+  //  ENEMY AI
+  // =====================================================================
+  async function enemyTurn() {
+    if (over) return;
+    // 10% the shark misses entirely
+    if (Math.random() < 0.10) {
+      msg('The shark lunges — but crashes into the waves and misses!');
+      shark._busy = true;
+      const h = shark.position.clone();
+      await moveTo(shark, h.add(new V3(-1.2, -0.3, 0.6)), 200);
+      await moveTo(shark, h, 300);
+      shark._busy = false;
+      await wait(300);
+      return;
+    }
+
+    let move = 'bite';
+    if (enemy.hp < enemy.maxhp * 0.45 && Math.random() < 0.45) move = 'frenzy';
+    else move = Math.random() < 0.6 ? 'bite' : 'tail';
+
+    let dmg, label;
+    if (move === 'bite')        { dmg = rnd(16, 24); label = 'The shark sinks its teeth in!'; }
+    else if (move === 'tail')   { dmg = rnd(20, 30); label = 'The shark whips its tail around!'; }
+    else                        { dmg = rnd(30, 44); label = 'FRENZY! The shark thrashes wildly!'; }
+    msg(label);
+
+    shark._busy = true;
+    const home = shark.position.clone();
+
+    if (move === 'tail') {
+      // big tail sweep, then strike
+      await rotTo(tailPivot, 'y', tailPivot.rotation.y, 1.4, 130);
+      await moveTo(shark, home.add(new V3(-2.4, -0.1, 1.2)), 220);
+    } else {
+      // lunge bite / frenzy charge
+      await moveTo(shark, home.add(new V3(-3.0, -0.2, 1.4)), move === 'frenzy' ? 200 : 240);
+    }
+
+    // impact on the pirate
+    player.hp = Math.max(0, player.hp - dmg);
+    hitFlash(pirate, '#ff5050');
+    burst(worldOf(pirate, -0.2), '#ff6b6b', '#ffd1d1', 60, 6);
+    floatDamage(worldOf(pirate, 1.6), String(dmg), '#ff8a8a');
+    if (move === 'frenzy') hitFlash(shark, '#ffd166', 200);
+
+    await wait(160);
+    await moveTo(shark, home, 360);
+    shark.position = home;
+    shark._busy = false;
+    await wait(250);
+  }
+
+  // =====================================================================
+  //  WIN / LOSE
+  // =====================================================================
+  function checkEnd() {
+    if (enemy.hp <= 0 && !over) { endGame(true); return true; }
+    if (player.hp <= 0 && !over) { endGame(false); return true; }
+    return false;
+  }
+
+  async function endGame(won) {
+    over = true; busy = true;
+    lockMenu();
+    if (won) {
+      msg('The Maneater Shark sinks beneath the waves!');
+      // sink the shark
+      shark._busy = true;
+      await tween(k => {
+        shark.position.y = 0.35 - k * 3;
+        shark.rotation.z = k * 1.4;
+      }, 1200);
+    } else {
+      msg('Captain Redbeard is dragged under...');
+      pirate._busy = true;
+      await tween(k => {
+        pirate.position.y = 0.55 - k * 2;
+        pirate.rotation.x = k * 1.4;
+      }, 1100);
+    }
+    await wait(400);
+    el('endTitle').textContent = won ? 'Victory!' : 'Defeated';
+    el('endText').textContent = won
+      ? 'The seas are yours once more, Captain. ⚓'
+      : 'The deep claims another soul... Care for a rematch?';
+    el('end').classList.add('show');
+  }
+
+  // =====================================================================
+  //  BOOT
+  // =====================================================================
+  refresh();
+  engine.runRenderLoop(() => scene.render());
+  window.addEventListener('resize', () => engine.resize());
+
+  // intro sequence
+  (async () => {
+    await wait(2600);
+    document.getElementById('intro').style.display = 'none';
+    msg('Battle start! Choose your action, Captain.');
+    busy = false;
+    showMain();
+  })();
+  </script>
+</body>
+</html>
