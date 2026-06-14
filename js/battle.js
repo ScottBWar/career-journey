@@ -91,7 +91,21 @@ window.Battle = (function () {
       const dt = engine.getDeltaTime() / 1000; t += dt;
       if (!cineActive) camera.alpha = -Math.PI/2 - 0.5 + Math.sin(t*0.22)*0.04;
       if (shakeAmt > 0.001) { camera.targetScreenOffset.x = (Math.random()-0.5)*shakeAmt; camera.targetScreenOffset.y = (Math.random()-0.5)*shakeAmt; shakeAmt *= 0.84; } else if (camera.targetScreenOffset.x) { camera.targetScreenOffset.set(0, 0); shakeAmt = 0; }
-      for (const a of actors) { if (!a.alive || a._busy) continue; a.node.position.y = a.baseY + Math.sin(t*1.5 + a.phase)*0.05; if (a.idle) a.idle(t); }
+      for (const a of actors) {
+        if (!a.alive || a._busy) continue;
+        if (a.side === 'party') {
+          const act = a === activeMember;
+          a.node.position.y = a.baseY + Math.sin(t*1.6 + a.phase) * (act ? 0.1 : 0.05);
+          a.node.rotation.z = Math.sin(t*1.15 + a.phase) * (act ? 0.05 : 0.02);          // subtle body sway / "vibing"
+          a.node.rotation.y = (Math.PI/2.2) + (act ? Math.sin(t*0.9)*0.05 : 0);            // active turns to face foes a touch
+          if (a.arm) a.arm.rotation.x = act ? (-0.5 + Math.sin(t*2.0 + a.phase)*0.13) : (Math.sin(t*1.3 + a.phase)*0.05); // active holds weapon ready
+          if (a.staffPiv) a.staffPiv.rotation.z = Math.sin(t*1.5 + a.phase) * (act ? 0.11 : 0.04);
+          if (a.idle) a.idle(t);
+        } else {
+          a.node.position.y = a.baseY + Math.sin(t*1.5 + a.phase)*0.05;
+          if (a.idle) a.idle(t);
+        }
+      }
       const pos = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind);
       for (let i = 0; i < pos.length; i += 3) { const x = oceanBase[i], z = oceanBase[i+2]; pos[i+1] = Math.sin(x*0.22 + t*1.4)*0.5 + Math.cos(z*0.28 + t*1.1)*0.45; }
       ocean.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
