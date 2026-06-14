@@ -435,6 +435,33 @@ window.Battle = (function () {
     }
   }
 
+  // ---- unique FF7-style victory poses ----
+  async function victoryAnim(p) {
+    p._busy = true; const arm = p.arm || p.staffPiv; const base = p.node.position.clone();
+    const hop = (h) => tween(k => { p.node.position.y = base.y + Math.sin(k * Math.PI) * h; }, 320);
+    if (arm) {
+      switch (p.key) {
+        case 'swordsman': await rotTo(arm, 'x', arm.rotation.x, -2.3, 160); await tween(k => { arm.rotation.y = k * Math.PI * 2; }, 520); arm.rotation.y = 0; break; // spin blade overhead
+        case 'blader': await tween(k => { arm.rotation.x = -Math.sin(k * Math.PI * 2) * 1.7; }, 520); arm.rotation.x = -1.4; break; // quick flourish
+        case 'pirate': await rotTo(arm, 'x', arm.rotation.x, -2.2, 240); break; // raise cutlass high
+        case 'dragoon': await rotTo(arm, 'x', arm.rotation.x, -0.2, 220); break; // plant the harpoon
+        case 'ruffy': await rotTo(arm, 'x', arm.rotation.x, -2.6, 200); break; // both fists up cheer
+        default: await tween(k => { arm.rotation.y = k * Math.PI * 2; }, 520); arm.rotation.y = 0; // staff twirl (mage/healer)
+      }
+    }
+    await hop(p.key === 'ruffy' ? 0.7 : 0.45); if (p.key === 'ruffy') await hop(0.5);
+    p.node.position.y = base.y;
+  }
+  async function victorySequence() {
+    cineActive = true; if (window.SFX) SFX.play('levelup');
+    const alive = party.filter(p => p.alive); if (!alive.length) { await wait(400); return; }
+    const cen = alive.reduce((a, p) => a.add(p.node.getAbsolutePosition()), new V3(0, 0, 0)).scale(1 / alive.length).add(new V3(0, 1.6, 0));
+    const oRad = camera.radius, oTgt = camera.target.clone();
+    tween(k => { camera.radius = oRad + (11 - oRad) * k; camera.setTarget(V3.Lerp(oTgt, cen, k)); }, 360);
+    await Promise.all(alive.map(p => victoryAnim(p)));
+    await wait(550);
+  }
+
   async function finish(won) {
     over = true; lockMenu(); clearBanner(); activeMember = null; renderParty(false);
     const bar = el('turnbar'); if (bar) bar.innerHTML = '';
@@ -443,7 +470,7 @@ window.Battle = (function () {
     let levelUps = [], xp = 0, gold = 0;
     if (won) { enemies.forEach(e => { xp += e.xp; gold += e.gold; }); levelUps = Progress.reward(Game.state, xp, gold); Music.play('victory', Game.musicForReturn()); }
     else { Music.play('island'); }
-    await wait(700);
+    if (won) await victorySequence(); else await wait(700);
     el('bResultTitle').textContent = won ? 'Victory!' : 'Defeated';
     let body = won ? `Gained <b>${xp} XP</b> and <b>${gold} gold</b>.` : 'Your party was overwhelmed by the tide.';
     if (won && levelUps.length) body += '<br>' + levelUps.map(u => `⭐ ${u.name} reached Lv ${u.level}!`).join('<br>');
