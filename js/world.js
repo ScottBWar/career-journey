@@ -85,6 +85,7 @@ window.World = (function () {
     }
 
     // roamers
+    if (!Game.state.islands[key]) Game.state.islands[key] = { cleared: {} };
     const cleared = Game.state.islands[key].cleared;
     def.encounters.forEach((enc, idx) => {
       if (cleared['e' + idx]) return;

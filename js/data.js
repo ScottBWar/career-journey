@@ -178,6 +178,17 @@ window.Data = (function () {
       { key: 'conquerors_fists', name: "Conqueror's Fists", atk: 26, slots: 3, price: 880, desc: '+26 ATK · 3 shell slots' },
     ],
   };
+  // ultimate weapons (sold at the Mall Isle bazaar)
+  const ULT = {
+    pirate:    { key: 'worldbreaker', name: 'Worldbreaker Cutlass', atk: 34, slots: 3, price: 1600, desc: '+34 ATK · 3 slots · ultimate' },
+    swordsman: { key: 'apocalypse',   name: 'Apocalypse Blade',     atk: 36, slots: 3, price: 1700, desc: '+36 ATK · 3 slots · ultimate' },
+    healer:    { key: 'tidemother',   name: 'Tidemother Scepter',   atk: 14, slots: 4, price: 1500, desc: '+14 ATK · 4 slots · ultimate' },
+    mage:      { key: 'cosmos_staff', name: 'Cosmos Staff',         atk: 14, slots: 4, price: 1600, desc: '+14 ATK · 4 slots · ultimate' },
+    blader:    { key: 'rainbow_prism', name: 'Rainbow Prism',       atk: 34, slots: 3, price: 1650, desc: '+34 ATK · 3 slots · ultimate' },
+    dragoon:   { key: 'megalodon',    name: 'Megalodon Harpoon',    atk: 36, slots: 3, price: 1700, desc: '+36 ATK · 3 slots · ultimate' },
+    ruffy:     { key: 'gear5_gloves', name: 'Gear-5 Gloves',        atk: 38, slots: 3, price: 1800, desc: '+38 ATK · 3 slots · ultimate' },
+  };
+  Object.keys(ULT).forEach(k => { if (WEAPONS[k]) WEAPONS[k].push(ULT[k]); });
 
   // ---------------- SEASHELLS (this game's "materia") ----------------
   // magic shells grant an ability; support shells give a passive stat.
@@ -407,6 +418,32 @@ window.Data = (function () {
       ],
       exit: { x: 0, z: -11 },
     },
+    mall: {
+      name: 'The Grand Bazaar', ground: '#c9c0d8', accent: '#ff9ec0',
+      buildings: [
+        { kind: 'shop', x: -9, z: -2, label: 'Armory' },
+        { kind: 'shop', x: 9, z: -2, label: 'Emporium' },
+        { kind: 'house', x: -9, z: 9, wall: '#d8d0e8', roof: '#a05aa0' },
+        { kind: 'house', x: 9, z: 9, wall: '#e0d0e0', roof: '#5a7aa0' },
+        { kind: 'house', x: 0, z: 12, wall: '#d0c8e0', roof: '#7a5aa0', w: 6, d: 5 },
+        { kind: 'house', x: -4, z: 9, wall: '#dcd2ec', roof: '#3a6a8a' },
+      ],
+      npcs: [
+        { name: 'A Famous Plumber', color: '#d83a3a', hair: '#3a2a18', x: -9, z: 0.5, service: 'shop',
+          lines: ['It\'sa me — a legally-distinct plumber!', 'I sell-a the most powerful weapons in any franchise. Take a look!'] },
+        { name: 'A Blue Hedgehog', color: '#3a6ad8', x: 9, z: 0.5, service: 'shop',
+          lines: ['Gotta SHOP fast!', 'Top-tier gear, way past cool. Rings accepted... I mean gold.'] },
+        { name: 'A Green-Clad Hero', color: '#2f8d52', hair: '#caa030', x: -4, z: 6,
+          lines: ['It\'s dangerous to shop alone — but you brought friends. Good.', 'I\'m after a princess and a triangle. Long story.'] },
+        { name: 'An Electric Mouse', color: '#f6d23a', hair: '#d83a3a', x: 4, z: 6,
+          lines: ['Pika! (Translation: nice mall, huh?)', 'Pi-ka-CHU! (Buy the ultimate weapons, they\'re worth it.)'] },
+        { name: 'A Lombax Mechanic', color: '#d8923a', x: 0, z: 8,
+          lines: ['Ratchet up your firepower!', 'These ultimate weapons are out of this world. Literally.'] },
+        { name: 'A Brooding Spiky Teen', color: '#3a3f6b', hair: '#caa030', x: 5, z: 9,
+          lines: ['...', '...Not interested. (He clearly wandered in from another RPG.)'] },
+      ],
+      exit: { x: 0, z: -12 },
+    },
   };
 
   // ---------------- ISLANDS (each is its own walkable overworld) ----------------
@@ -446,6 +483,13 @@ window.Data = (function () {
       boss: { x: 0, z: 12, color: '#ff3a3a' },
       decor: { trees: 2, palms: 2, rocks: 16 }, shells: { x: 12, z: 6 }, mermaids: [ { key: 'nyx', x: -6, z: -6 }, { key: 'lumina', x: 6, z: -5 } ],
     },
+    mall: {
+      name: 'Mall Isle', size: 46, ground: '#b8b0c8', sand: '#d8d0e0', water: '#1e6f96',
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      town: { key: 'mall', x: 0, z: 5, color: '#ff9ec0' },
+      encounters: [],
+      decor: { trees: 4, palms: 6, rocks: 4 },
+    },
   };
 
   // ---------------- SEA (sail between islands) ----------------
@@ -455,6 +499,7 @@ window.Data = (function () {
       { key: 'tidehaven', x: -34, z: 8 },
       { key: 'dunes', x: 30, z: -2 },
       { key: 'spire', x: 4, z: -42 },
+      { key: 'mall', x: -10, z: 34 },
     ],
     ships: [
       { id: 's0', type: 'sloop', x: -10, z: 20 },
