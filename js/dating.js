@@ -13,7 +13,7 @@ window.Dating = (function () {
     key = mermaidKey; m = Data.MERMAIDS[key]; onClose = close;
     if (!Game.state.mermaids[key]) Game.state.mermaids[key] = { rel: 0, idx: 0, enchanted: false };
     st = Game.state.mermaids[key];
-    el('date').classList.add('show');
+    el('date').className = 'overlay show scene-' + m.element; // element-themed scene background
     if (window.SFX) SFX.play('confirm');
     render();
   }

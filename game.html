@@ -282,8 +282,10 @@
     .sh-foot { margin-top: 0.8rem; text-align: center; color: rgba(255,255,255,0.6); font-size: 0.82rem; }
     .sh-result { text-align: center; line-height: 1.7; margin: 1rem 0; }
 
-    /* dating sim */
-    .date-box { width: min(560px, 96vw); padding: 1.2rem; }
+    /* dating sim — per-element animated scene backgrounds */
+    #date.show[class*="scene-"] { backdrop-filter: none; }
+    #date[class*="scene-"]::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+    .date-box { position: relative; z-index: 1; width: min(560px, 96vw); padding: 1.2rem; }
     .date-head { display: flex; gap: 0.9rem; align-items: center; margin-bottom: 0.8rem; }
     .date-port { width: 84px; height: 84px; border-radius: 10px; }
     .date-name { font-weight: 700; font-size: 1.2rem; }
@@ -295,6 +297,36 @@
     .date-opts { display: flex; flex-direction: column; gap: 0.5rem; }
     .date-opt { text-align: left; justify-content: flex-start; text-transform: none; letter-spacing: 0.01em; font-weight: 500; }
     .date-opt .portrait.mini, .portrait.mini { width: 22px; height: 22px; display: inline-block; vertical-align: middle; border-radius: 4px; margin-right: 0.3rem; }
+
+    /* fire — molten grotto with flickering embers */
+    #date.scene-fire { background: radial-gradient(circle at 50% 125%, #ff8a3a 0%, #a82a1f 42%, #2a0a08 100%); }
+    #date.scene-fire::after { background: radial-gradient(circle at 28% 82%, rgba(255,190,90,0.4), transparent 38%), radial-gradient(circle at 72% 92%, rgba(255,110,40,0.34), transparent 44%); animation: dsFlicker 2.3s ease-in-out infinite; }
+    @keyframes dsFlicker { 0%,100% { opacity: 0.65; } 45% { opacity: 1; } 60% { opacity: 0.8; } }
+
+    /* water — sunlit deep with drifting caustics */
+    #date.scene-water { background: linear-gradient(180deg, #2a8fb0 0%, #0e3a4a 65%, #06212c 100%); }
+    #date.scene-water::after { background: repeating-linear-gradient(115deg, rgba(255,255,255,0.07) 0 2px, transparent 2px 24px), repeating-linear-gradient(65deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 30px); animation: dsCaustic 7s linear infinite; }
+    @keyframes dsCaustic { from { background-position: 0 0, 0 0; } to { background-position: 260px 70px, -200px 60px; } }
+
+    /* thunder — storm sky with lightning flashes */
+    #date.scene-thunder { background: linear-gradient(180deg, #313652 0%, #14172a 100%); }
+    #date.scene-thunder::after { background: linear-gradient(120deg, transparent 40%, rgba(255,255,200,0.9) 50%, transparent 60%); opacity: 0; animation: dsBolt 5.5s linear infinite; }
+    @keyframes dsBolt { 0%,90%,100% { opacity: 0; } 91% { opacity: 0.55; } 92% { opacity: 0; } 94% { opacity: 0.4; } 95% { opacity: 0; } }
+
+    /* earth — verdant glade with drifting light */
+    #date.scene-earth { background: radial-gradient(circle at 50% 28%, #5aa05a 0%, #2f5e30 55%, #15301a 100%); }
+    #date.scene-earth::after { background: radial-gradient(circle at 22% 22%, rgba(190,235,160,0.22), transparent 32%), radial-gradient(circle at 78% 62%, rgba(150,210,130,0.18), transparent 36%); animation: dsDrift 9s ease-in-out infinite alternate; }
+    @keyframes dsDrift { from { transform: translateY(6px); } to { transform: translateY(-10px); } }
+
+    /* dark — abyssal shimmer */
+    #date.scene-dark { background: radial-gradient(circle at 50% 42%, #43236a 0%, #1c1030 55%, #07050f 100%); }
+    #date.scene-dark::after { background: radial-gradient(circle at 40% 60%, rgba(176,106,255,0.22), transparent 42%), radial-gradient(circle at 65% 35%, rgba(120,60,200,0.16), transparent 40%); animation: dsShimmer 7s ease-in-out infinite; }
+    @keyframes dsShimmer { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 0.95; transform: scale(1.08); } }
+
+    /* holy — radiant rotating light rays */
+    #date.scene-holy { background: radial-gradient(circle at 50% 32%, #fff4cc 0%, #e0b766 42%, #7a5a24 100%); }
+    #date.scene-holy::after { background: conic-gradient(from 0deg at 50% 38%, transparent 0deg, rgba(255,255,255,0.22) 14deg, transparent 30deg, rgba(255,255,255,0.18) 56deg, transparent 74deg, rgba(255,255,255,0.22) 100deg, transparent 120deg, rgba(255,255,255,0.18) 150deg, transparent 170deg, rgba(255,255,255,0.22) 200deg, transparent 220deg, rgba(255,255,255,0.18) 250deg, transparent 270deg, rgba(255,255,255,0.22) 300deg, transparent 320deg, rgba(255,255,255,0.18) 348deg, transparent 360deg); animation: dsRays 26s linear infinite; transform-origin: 50% 38%; }
+    @keyframes dsRays { to { transform: rotate(360deg); } }
 
     /* battle transition */
     #transition { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0; }
