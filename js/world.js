@@ -5,7 +5,7 @@
 window.World = (function () {
   const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
   let scene, cam, player, engine, def, key;
-  let roamers = [], gates = [], idlers = [], paused = false, locked = false, nearGate = null, t = 0, camYaw = 0, playerArm = null, swingT = 0;
+  let roamers = [], gates = [], idlers = [], gulls = [], water = null, waterBase = null, paused = false, locked = false, nearGate = null, t = 0, camYaw = 0, playerArm = null, swingT = 0;
   const SPEED = 9;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
@@ -14,7 +14,7 @@ window.World = (function () {
   function build(islandKey) {
     key = islandKey; def = Data.ISLANDS[islandKey]; engine = Game.engine;
     if (scene) scene.dispose();
-    roamers = []; gates = []; idlers = []; nearGate = null; t = 0; paused = false; locked = false;
+    roamers = []; gates = []; idlers = []; gulls = []; nearGate = null; t = 0; paused = false; locked = false;
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.6, 0.8, 0.95); scene.fogDensity = 0.006;
@@ -23,7 +23,7 @@ window.World = (function () {
     const hemi = new BABYLON.HemisphericLight('h', new V3(0.2, 1, 0.1), scene); hemi.intensity = 0.95; hemi.groundColor = new Color3(0.4, 0.45, 0.35);
     const sun = new BABYLON.DirectionalLight('s', new V3(-0.5, -1, 0.4), scene); sun.intensity = 1.0;
 
-    const water = MB.CreateGround('water', { width: 280, height: 280 }, scene); water.material = M('water', def.water, { spec: 0.6 }); water.position.y = -0.3;
+    water = MB.CreateGround('water', { width: 280, height: 280, subdivisions: 40 }, scene); const wm = M('water', def.water, { spec: 0.8 }); wm.specularPower = 64; wm.emissiveColor = Color3.FromHexString(def.water).scale(0.18); water.material = wm; water.position.y = -0.35; waterBase = water.getVerticesData(BABYLON.VertexBuffer.PositionKind).slice();
     const sand = MB.CreateDisc('sand', { radius: def.size * 0.6, tessellation: 48 }, scene); sand.rotation.x = Math.PI/2; sand.position.y = -0.04; sand.material = M('sand', def.sand);
     const grass = MB.CreateDisc('grass', { radius: def.size * 0.54, tessellation: 48 }, scene); grass.rotation.x = Math.PI/2; grass.material = M('grass', def.ground);
 
@@ -94,6 +94,10 @@ window.World = (function () {
       idlers.push(ro);
     });
 
+    // ambient seagulls wheeling overhead
+    for (let i = 0; i < 5; i++) { const g = Models.enemy('gull'); g.node.scaling.setAll(0.5);
+      gulls.push({ node: g.node, idle: g.idle, cx: (Math.random()*2-1)*def.size*0.3, cz: (Math.random()*2-1)*def.size*0.3, rad: 6 + Math.random()*9, ang: Math.random()*6.28, spd: 0.4 + Math.random()*0.4, y: 7 + Math.random()*5 }); }
+
     // player avatar = the active party leader
     const leaderKey = Game.state.active[0] || 'pirate'; const leaderModel = Progress.def(leaderKey).model;
     const hero = Models[leaderModel] ? Models[leaderModel]() : Models.hero(); player = hero.node; playerArm = hero.arm || hero.staffPiv || null;
@@ -128,6 +132,10 @@ window.World = (function () {
     Game.state.location.x = player.position.x; Game.state.location.z = player.position.z;
 
     idlers.forEach(o => o.idle && o.idle(t));
+    // wavy water
+    if (water && waterBase) { const wp = water.getVerticesData(BABYLON.VertexBuffer.PositionKind); for (let i = 0; i < wp.length; i += 3) { const x = waterBase[i], z = waterBase[i+2]; wp[i+1] = Math.sin(x*0.06 + t*1.1)*0.55 + Math.cos(z*0.08 + t*0.9)*0.5 + Math.sin((x+z)*0.04 + t*0.5)*0.3; } water.updateVerticesData(BABYLON.VertexBuffer.PositionKind, wp); }
+    // wheeling seagulls
+    gulls.forEach(g => { g.ang += g.spd * dt; g.node.position.set(g.cx + Math.cos(g.ang)*g.rad, g.y + Math.sin(t + g.ang)*0.4, g.cz + Math.sin(g.ang)*g.rad); g.node.rotation.y = -g.ang + Math.PI/2; if (g.idle) g.idle(t * 3); });
 
     for (const r of roamers) {
       if (!r.node.isEnabled()) continue;

@@ -51,12 +51,32 @@ window.Render = (function () {
     return s;
   }
 
+  let _flareURL = null;
+  function flareTex() {
+    if (_flareURL) return _flareURL;
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d');
+    const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.3, 'rgba(255,255,255,0.5)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g; c.fillRect(0, 0, 64, 64); return _flareURL = cv.toDataURL();
+  }
+  function lensFlare(scene, sun) {
+    if (!sun) return;
+    const dir = sun.direction.clone(); dir.normalize();
+    const emitter = BABYLON.MeshBuilder.CreateSphere('sunE', { diameter: 4 }, scene); emitter.position = dir.scale(-260); emitter.isVisible = false; emitter.isPickable = false;
+    const sys = new BABYLON.LensFlareSystem('lf', emitter, scene); const u = flareTex();
+    new BABYLON.LensFlare(0.28, 0, new BABYLON.Color3(1, 0.97, 0.9), u, sys);
+    new BABYLON.LensFlare(0.13, 0.3, new BABYLON.Color3(1, 0.85, 0.6), u, sys);
+    new BABYLON.LensFlare(0.07, 0.55, new BABYLON.Color3(0.6, 0.8, 1), u, sys);
+    new BABYLON.LensFlare(0.11, 0.85, new BABYLON.Color3(1, 0.75, 0.55), u, sys);
+    new BABYLON.LensFlare(0.05, 1.1, new BABYLON.Color3(0.8, 0.9, 1), u, sys);
+  }
+
   // apply everything to a freshly-built scene
   function setup(scene, camera, opts) {
     opts = opts || {};
     try { sky(scene, opts.skyTop, opts.skyHorizon); } catch (e) { console.warn('sky', e); }
     try { pipeline(scene, camera); } catch (e) { console.warn('pipeline', e); }
     if (high()) { try { ssao(scene, camera); } catch (e) { console.warn('ssao', e); } }
+    if (opts.sun) { try { lensFlare(scene, opts.sun); } catch (e) { console.warn('flare', e); } }
   }
 
   function setQuality(q) { quality = q; try { localStorage.setItem('bb_quality', q); } catch (e) {} }

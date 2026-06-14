@@ -93,7 +93,7 @@ window.Battle = (function () {
       if (shakeAmt > 0.001) { camera.targetScreenOffset.x = (Math.random()-0.5)*shakeAmt; camera.targetScreenOffset.y = (Math.random()-0.5)*shakeAmt; shakeAmt *= 0.84; } else if (camera.targetScreenOffset.x) { camera.targetScreenOffset.set(0, 0); shakeAmt = 0; }
       for (const a of actors) { if (!a.alive || a._busy) continue; a.node.position.y = a.baseY + Math.sin(t*1.5 + a.phase)*0.05; if (a.idle) a.idle(t); }
       const pos = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-      for (let i = 0; i < pos.length; i += 3) { const x = oceanBase[i], z = oceanBase[i+2]; pos[i+1] = Math.sin(x*0.25 + t*1.3)*0.35 + Math.cos(z*0.3 + t*1.0)*0.35; }
+      for (let i = 0; i < pos.length; i += 3) { const x = oceanBase[i], z = oceanBase[i+2]; pos[i+1] = Math.sin(x*0.22 + t*1.4)*0.5 + Math.cos(z*0.28 + t*1.1)*0.45; }
       ocean.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
     });
 

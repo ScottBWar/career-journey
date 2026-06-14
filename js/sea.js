@@ -107,7 +107,7 @@ window.Sea = (function () {
 
     // animate ocean
     const pos = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-    for (let i = 0; i < pos.length; i += 3) { const x = oceanBase[i], z = oceanBase[i+2]; pos[i+1] = Math.sin(x*0.12 + t*1.1)*0.4 + Math.cos(z*0.15 + t*0.9)*0.4; }
+    for (let i = 0; i < pos.length; i += 3) { const x = oceanBase[i], z = oceanBase[i+2]; pos[i+1] = Math.sin(x*0.1 + t*1.2)*0.65 + Math.cos(z*0.13 + t*0.95)*0.6 + Math.sin((x+z)*0.05 + t*0.6)*0.35; }
     ocean.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
 
     nearTarget = null;
