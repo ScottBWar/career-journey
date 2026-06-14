@@ -2,783 +2,238 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beach Brawl — Party vs. The High Seas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Beach Brawl — A High-Seas RPG</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%; overflow: hidden;
-      font-family: 'Space Grotesk', system-ui, sans-serif;
-      background: linear-gradient(180deg, #1b1145 0%, #5b2a86 32%, #c2557b 58%, #ef8f6e 80%, #ffd9a0 100%);
-      color: #fff; user-select: none; -webkit-user-select: none;
-    }
+    html, body { height: 100%; overflow: hidden; font-family: 'Space Grotesk', system-ui, sans-serif; color: #fff; user-select: none; -webkit-user-select: none; }
+    body { background: linear-gradient(180deg, #1b1145 0%, #5b2a86 35%, #c2557b 62%, #ef8f6e 100%); transition: background 0.6s ease; }
+    body.mode-world { background: linear-gradient(180deg, #2a4a8a 0%, #4a86c8 40%, #9fd0e8 75%, #d8eef5 100%); }
+    body.mode-town  { background: linear-gradient(180deg, #3a5a9a 0%, #6aa0d0 45%, #c9e2ee 100%); }
+    body.mode-battle{ background: linear-gradient(180deg, #1b1145 0%, #5b2a86 32%, #c2557b 58%, #ef8f6e 82%, #ffd9a0 100%); }
     #renderCanvas { position: fixed; inset: 0; width: 100%; height: 100%; outline: none; touch-action: none; z-index: 0; }
 
-    #ui { position: fixed; inset: 0; z-index: 2; pointer-events: none;
-          display: flex; flex-direction: column; justify-content: space-between;
-          padding: clamp(0.6rem, 1.6vw, 1.3rem); }
+    .pill { font: inherit; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.85rem 2rem; border-radius: 999px; border: none; cursor: pointer; color: #05060f; background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4); box-shadow: 0 10px 30px rgba(165,180,252,0.4); text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .pill.ghost { color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
+    .pill.small { padding: 0.5rem 1rem; font-size: 0.78rem; letter-spacing: 0.06em; }
+    .pill:hover:not(:disabled) { transform: translateY(-2px); }
+    .pill:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* enemy plates */
+    .panel { background: linear-gradient(180deg, rgba(20,16,60,0.92), rgba(12,10,36,0.94)); border: 1px solid rgba(255,255,255,0.26); border-radius: 14px; box-shadow: 0 14px 40px rgba(0,0,0,0.5); }
+
+    .back-link { position: fixed; top: 0.6rem; right: 0.8rem; z-index: 20; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.78rem; }
+    .back-link:hover { color: #fff; }
+
+    /* ---------- START ---------- */
+    #start { position: fixed; inset: 0; z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: rgba(5,4,18,0.6); backdrop-filter: blur(4px); }
+    body.mode-start #start { display: flex; }
+    #start h1 { font-size: clamp(2.6rem, 11vw, 6rem); font-weight: 700; background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    #start p { margin-top: 0.6rem; color: rgba(255,255,255,0.8); letter-spacing: 0.05em; }
+    #start .actions { margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+
+    /* ---------- WORLD/TOWN HUD ---------- */
+    #worldHUD { position: fixed; left: 0; right: 0; top: 0; z-index: 10; display: none; justify-content: space-between; align-items: flex-start; padding: 0.7rem 0.9rem; pointer-events: none; }
+    body.mode-world #worldHUD, body.mode-town #worldHUD { display: flex; }
+    #hudParty { display: flex; gap: 0.5rem; pointer-events: auto; }
+    .hud-m { background: rgba(12,10,36,0.8); border: 1px solid rgba(255,255,255,0.2); border-radius: 9px; padding: 0.4rem 0.6rem; min-width: 120px; }
+    .hud-m.ko { opacity: 0.45; }
+    .hud-row { display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; gap: 0.5rem; }
+    .hud-lv { color: #fcd34d; }
+    .hud-bar { height: 6px; border-radius: 4px; background: rgba(0,0,0,0.45); overflow: hidden; margin-top: 0.25rem; }
+    .hud-bar > i { display: block; height: 100%; }
+    .hud-bar.php > i { background: linear-gradient(90deg, #34d399, #6ee7b7); }
+    .hud-bar.mp > i { background: linear-gradient(90deg, #60a5fa, #93c5fd); }
+    .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; pointer-events: auto; }
+    #hudGold { background: rgba(12,10,36,0.8); border: 1px solid rgba(255,255,255,0.2); border-radius: 9px; padding: 0.4rem 0.7rem; font-weight: 700; font-size: 0.85rem; color: #fde68a; }
+    .hud-btns { display: flex; gap: 0.4rem; }
+    .hud-btn { font: inherit; font-weight: 700; font-size: 0.8rem; padding: 0.45rem 0.8rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.25); background: rgba(12,10,36,0.8); color: #fff; cursor: pointer; }
+    .hud-btn:hover { background: rgba(129,140,248,0.4); }
+
+    #worldPrompt { position: fixed; left: 50%; bottom: 8%; transform: translateX(-50%); z-index: 11; display: none; padding: 0.6rem 1.4rem; background: rgba(8,6,24,0.82); border: 1px solid rgba(252,211,77,0.6); border-radius: 999px; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
+    #worldPrompt.show { display: block; }
+
+    /* ---------- BATTLE UI ---------- */
+    #battleUI { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; justify-content: space-between; padding: clamp(0.6rem,1.6vw,1.3rem); pointer-events: none; }
+    body.mode-battle #battleUI { display: flex; }
     .enemies { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; pointer-events: auto; }
-    .eplate {
-      min-width: 170px; max-width: 240px; flex: 1 1 180px;
-      background: linear-gradient(180deg, rgba(20,16,60,0.85), rgba(12,10,36,0.85));
-      border: 1px solid rgba(255,255,255,0.22); border-radius: 10px; padding: 0.5rem 0.7rem;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.45); transition: opacity 0.4s, transform 0.2s;
-    }
+    .eplate { min-width: 160px; max-width: 240px; flex: 1 1 170px; background: linear-gradient(180deg, rgba(20,16,60,0.85), rgba(12,10,36,0.85)); border: 1px solid rgba(255,255,255,0.22); border-radius: 10px; padding: 0.5rem 0.7rem; box-shadow: 0 8px 24px rgba(0,0,0,0.45); transition: opacity 0.4s, transform 0.2s; }
     .eplate.dead { opacity: 0.3; }
     .eplate.targetable { cursor: pointer; }
     .eplate.targetable:hover { transform: translateY(-3px); border-color: #fcd34d; box-shadow: 0 8px 28px rgba(252,211,77,0.4); }
     .eplate .row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.4rem; }
-    .eplate .name { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .eplate .hpnum { font-size: 0.7rem; color: rgba(255,255,255,0.65); font-variant-numeric: tabular-nums; }
-
+    .eplate .name { font-weight: 700; font-size: 0.84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .eplate .hpnum { font-size: 0.7rem; color: rgba(255,255,255,0.65); }
     .bar { height: 9px; border-radius: 5px; background: rgba(0,0,0,0.45); overflow: hidden; margin-top: 0.35rem; border: 1px solid rgba(255,255,255,0.14); }
-    .bar > i { display: block; height: 100%; width: 100%; transition: width 0.45s ease; }
-    .bar.hp > i  { background: linear-gradient(90deg, #f87171, #fca5a5); }
+    .bar > i { display: block; height: 100%; transition: width 0.45s ease; }
+    .bar.hp > i { background: linear-gradient(90deg, #f87171, #fca5a5); }
     .bar.php > i { background: linear-gradient(90deg, #34d399, #6ee7b7); }
-    .bar.mp > i  { background: linear-gradient(90deg, #60a5fa, #93c5fd); }
-
+    .bar.mp > i { background: linear-gradient(90deg, #60a5fa, #93c5fd); }
     .bottom { display: flex; gap: 0.8rem; align-items: flex-end; justify-content: space-between; }
-
-    /* party panel */
-    .party { pointer-events: auto; display: flex; flex-direction: column; gap: 0.4rem; min-width: 250px; max-width: 340px; flex: 1; }
-    .pmember {
-      background: linear-gradient(180deg, rgba(20,16,60,0.88), rgba(12,10,36,0.9));
-      border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 0.45rem 0.7rem;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.45); transition: border-color 0.2s, transform 0.15s; cursor: default;
-    }
+    .party { pointer-events: auto; display: flex; flex-direction: column; gap: 0.4rem; min-width: 240px; max-width: 330px; flex: 1; }
+    .pmember { background: linear-gradient(180deg, rgba(20,16,60,0.88), rgba(12,10,36,0.9)); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 0.45rem 0.7rem; box-shadow: 0 8px 24px rgba(0,0,0,0.45); transition: border-color 0.2s, transform 0.15s; }
     .pmember.active { border-color: #fcd34d; box-shadow: 0 0 0 1px #fcd34d, 0 8px 28px rgba(252,211,77,0.35); transform: translateX(6px); }
     .pmember.dead { opacity: 0.4; }
     .pmember.targetable { cursor: pointer; }
     .pmember.targetable:hover { border-color: #6ee7b7; }
     .pmember .row { display: flex; justify-content: space-between; align-items: baseline; }
-    .pmember .name { font-weight: 700; font-size: 0.82rem; letter-spacing: 0.03em; }
-    .pmember .role { font-size: 0.65rem; color: rgba(255,255,255,0.5); letter-spacing: 0.1em; text-transform: uppercase; }
-    .pmember .nums { font-size: 0.66rem; color: rgba(255,255,255,0.6); font-variant-numeric: tabular-nums; }
+    .pmember .name { font-weight: 700; font-size: 0.82rem; }
+    .pmember .role { font-size: 0.62rem; color: rgba(255,255,255,0.5); letter-spacing: 0.1em; text-transform: uppercase; }
+    .pmember .nums { font-size: 0.64rem; color: rgba(255,255,255,0.6); }
     .twobar { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; align-items: center; }
-
-    /* command menu */
-    .menu { pointer-events: auto; width: min(280px, 44vw);
-      background: linear-gradient(180deg, rgba(20,16,60,0.92), rgba(12,10,36,0.94));
-      border: 1px solid rgba(255,255,255,0.26); border-radius: 12px; padding: 0.45rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .menu .title { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.5); padding: 0.25rem 0.6rem 0.4rem; }
-    .menu .cmd { display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left;
-      font: inherit; font-weight: 500; color: #fff; background: transparent; border: none; border-radius: 8px;
-      padding: 0.5rem 0.75rem; cursor: pointer; letter-spacing: 0.03em; transition: background 0.12s, transform 0.06s; }
+    .menu { pointer-events: auto; width: min(280px, 44vw); background: linear-gradient(180deg, rgba(20,16,60,0.92), rgba(12,10,36,0.94)); border: 1px solid rgba(255,255,255,0.26); border-radius: 12px; padding: 0.45rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .menu .title { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.5); padding: 0.25rem 0.6rem 0.4rem; }
+    .menu .cmd { display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left; font: inherit; font-weight: 500; color: #fff; background: transparent; border: none; border-radius: 8px; padding: 0.5rem 0.75rem; cursor: pointer; transition: background 0.12s, transform 0.06s; }
     .menu .cmd:hover:not(:disabled) { background: rgba(129,140,248,0.28); }
     .menu .cmd:active:not(:disabled) { transform: scale(0.98); }
     .menu .cmd:disabled { opacity: 0.32; cursor: not-allowed; }
     .menu .cmd .cost { font-size: 0.74rem; color: #93c5fd; }
     .menu .cmd .cost.qty { color: #fcd34d; }
-    .menu .cmd .cost.hp { color: #6ee7b7; }
     .menu .cmd.back { color: rgba(255,255,255,0.6); }
+    #bMessage { position: fixed; left: 50%; bottom: 210px; transform: translateX(-50%); z-index: 11; pointer-events: none; padding: 0.5rem 1.3rem; background: rgba(8,6,24,0.78); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; font-size: clamp(0.8rem,2.2vw,1rem); max-width: 92vw; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
 
-    .message { position: fixed; left: 50%; bottom: 210px; transform: translateX(-50%); z-index: 3; pointer-events: none;
-      padding: 0.5rem 1.3rem; background: rgba(8,6,24,0.78); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px;
-      font-size: clamp(0.8rem, 2.2vw, 1rem); letter-spacing: 0.02em; max-width: 92vw; text-align: center;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
-
-    .float { position: fixed; z-index: 4; pointer-events: none; font-weight: 700; font-size: 1.6rem;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.7); transform: translate(-50%, -50%); animation: floatUp 0.95s ease-out forwards; }
+    .float { position: fixed; z-index: 14; pointer-events: none; font-weight: 700; font-size: 1.6rem; text-shadow: 0 2px 6px rgba(0,0,0,0.7); transform: translate(-50%,-50%); animation: floatUp 0.95s ease-out forwards; }
     @keyframes floatUp { 0%{opacity:0;transform:translate(-50%,-30%) scale(0.6);} 20%{opacity:1;transform:translate(-50%,-90%) scale(1.15);} 100%{opacity:0;transform:translate(-50%,-200%) scale(1);} }
 
-    #end { position: fixed; inset: 0; z-index: 5; display: none; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; background: rgba(5,4,18,0.72); backdrop-filter: blur(4px); }
-    #end.show { display: flex; }
-    #end h1 { font-size: clamp(2.4rem, 10vw, 5rem); font-weight: 700;
-      background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-    #end p { margin-top: 0.8rem; color: rgba(255,255,255,0.8); letter-spacing: 0.04em; max-width: 32ch; }
+    /* ---------- MODALS ---------- */
+    .overlay { position: fixed; inset: 0; z-index: 25; display: none; align-items: center; justify-content: center; background: rgba(5,4,18,0.6); backdrop-filter: blur(4px); padding: 1rem; }
+    .overlay.show { display: flex; }
+
+    /* dialogue */
+    #dialogue { z-index: 24; align-items: flex-end; justify-content: center; background: none; backdrop-filter: none; pointer-events: none; }
+    #dialogue .box { pointer-events: auto; width: min(640px, 94vw); margin-bottom: 6vh; padding: 1rem 1.2rem; }
+    #dlgName { font-weight: 700; color: #fcd34d; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+    #dlgText { font-size: clamp(0.95rem,2.6vw,1.15rem); line-height: 1.5; min-height: 3.2em; }
+    #dlgNext { margin-top: 0.8rem; float: right; }
+
+    /* confirm */
+    #confirm .box { width: min(420px, 92vw); padding: 1.4rem; text-align: center; }
+    #confirmText { font-size: 1.05rem; line-height: 1.5; }
+    #confirm .actions { margin-top: 1.4rem; display: flex; gap: 0.8rem; justify-content: center; }
+
+    /* shop */
+    #shop .box { width: min(560px, 94vw); max-height: 84vh; overflow: auto; padding: 1.2rem; }
+    #shop .shead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    #shop h2 { font-size: 1.4rem; }
+    #shopGold { color: #fde68a; font-weight: 700; }
+    .shop-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.7rem 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.12); }
+    .shop-info { display: flex; flex-direction: column; }
+    .shop-info span { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+
+    /* result (battle end) */
+    #bResult { z-index: 16; }
+    #bResult .box { width: min(460px, 92vw); padding: 1.6rem; text-align: center; }
+    #bResultTitle { font-size: clamp(2rem,8vw,3.4rem); font-weight: 700; background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    #bResultText { margin-top: 0.8rem; line-height: 1.6; color: rgba(255,255,255,0.85); }
+    #bResultBtn { margin-top: 1.5rem; }
+
+    /* skills */
+    #skills .sk-wrap { width: min(1000px, 96vw); max-height: 90vh; overflow: auto; }
+    .sk-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    .sk-head h2 { font-size: 1.5rem; flex: 0 0 auto; }
+    .sk-gold { color: #fde68a; font-weight: 700; flex: 1; }
+    .sk-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.9rem; }
+    .sk-col { background: rgba(12,10,36,0.6); border: 1px solid rgba(255,255,255,0.16); border-radius: 12px; padding: 0.8rem; }
+    .sk-name { font-weight: 700; }
+    .sk-role { font-size: 0.66rem; color: rgba(255,255,255,0.5); letter-spacing: 0.1em; text-transform: uppercase; }
+    .sk-stats { font-size: 0.72rem; color: rgba(255,255,255,0.7); margin: 0.4rem 0; line-height: 1.4; }
+    .sk-xp { height: 6px; border-radius: 4px; background: rgba(0,0,0,0.4); overflow: hidden; }
+    .sk-xp > i { display: block; height: 100%; background: linear-gradient(90deg,#fcd34d,#fbbf24); }
+    .sk-xptxt { font-size: 0.66rem; color: rgba(255,255,255,0.5); margin: 0.2rem 0 0.6rem; }
+    .sk-nodes { display: flex; flex-direction: column; gap: 0.4rem; }
+    .sk-node { text-align: left; font: inherit; color: #fff; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16); border-radius: 9px; padding: 0.5rem 0.6rem; cursor: pointer; transition: background 0.12s, border-color 0.12s; }
+    .sk-node:hover:not(:disabled) { background: rgba(129,140,248,0.28); }
+    .sk-node:disabled { cursor: default; }
+    .sk-node.learned { border-color: #6ee7b7; background: rgba(52,211,153,0.14); }
+    .sk-node.locked { opacity: 0.5; }
+    .sk-node-top { display: flex; justify-content: space-between; font-weight: 700; font-size: 0.85rem; }
+    .sk-cost { color: #fcd34d; }
+    .sk-node.learned .sk-cost { color: #6ee7b7; }
+    .sk-desc { font-size: 0.72rem; color: rgba(255,255,255,0.7); margin-top: 0.2rem; }
+    .sk-desc em { color: #fca5a5; font-style: normal; }
+
+    /* toast */
+    #toast { position: fixed; left: 50%; top: 14%; transform: translateX(-50%); z-index: 27; max-width: 90vw; text-align: center; padding: 0.7rem 1.4rem; background: rgba(8,6,24,0.9); border: 1px solid rgba(255,255,255,0.25); border-radius: 12px; font-size: 0.92rem; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    #toast.show { opacity: 1; }
+
+    /* ending */
+    #end { z-index: 28; flex-direction: column; text-align: center; }
+    #end .box { background: none; border: none; box-shadow: none; max-width: 600px; }
+    #endTitle { font-size: clamp(2.4rem,10vw,5rem); font-weight: 700; background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    #endText { margin-top: 0.8rem; color: rgba(255,255,255,0.85); line-height: 1.6; }
     #end .actions { margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-    .pill { font: inherit; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.85rem 2rem; border-radius: 999px;
-      border: none; cursor: pointer; color: #05060f; background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4);
-      box-shadow: 0 10px 30px rgba(165,180,252,0.4); text-decoration: none; }
-    .pill.ghost { color: #fff; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); box-shadow: none; }
-    .pill:hover { transform: translateY(-2px); }
 
-    #intro { position: fixed; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-    #intro .vs { text-align: center; animation: introFade 3s ease forwards; text-shadow: 0 6px 30px rgba(0,0,0,0.6); padding: 1rem; }
-    #intro .who { font-size: clamp(1.2rem, 4.5vw, 2.4rem); font-weight: 700; letter-spacing: 0.08em; }
-    #intro .sub { font-size: clamp(0.8rem, 2.6vw, 1.1rem); color: rgba(255,255,255,0.85); margin-top: 0.3rem; }
-    #intro .x { font-size: clamp(1rem, 4vw, 1.6rem); color: #fcd34d; letter-spacing: 0.4em; margin: 0.7rem 0; }
-    @keyframes introFade { 0%{opacity:0;transform:scale(0.85);} 18%{opacity:1;transform:scale(1);} 78%{opacity:1;transform:scale(1);} 100%{opacity:0;transform:scale(1.08);} }
-
-    .hint { position: fixed; top: 0.6rem; left: 0.8rem; z-index: 3; font-size: 0.7rem; color: rgba(255,255,255,0.45); letter-spacing: 0.06em; }
-    .back-link { position: fixed; top: 0.6rem; right: 0.8rem; z-index: 3; pointer-events: auto; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.78rem; }
-    .back-link:hover { color: #fff; }
-    @media (max-width: 640px) { .message { bottom: 188px; } .menu { width: 46vw; } }
+    @media (max-width: 680px) {
+      #bMessage { bottom: 188px; }
+      .hud-m { min-width: 92px; }
+      #start h1 { font-size: 3rem; }
+    }
   </style>
 </head>
-<body>
+<body class="mode-start">
   <canvas id="renderCanvas"></canvas>
-  <a class="back-link" href="coming-soon.html">← Back</a>
-  <div class="hint">Beach Brawl</div>
+  <a class="back-link" href="coming-soon.html">← Site</a>
 
-  <div id="ui">
-    <div class="enemies" id="enemies"></div>
+  <!-- WORLD / TOWN HUD -->
+  <div id="worldHUD">
+    <div id="hudParty"></div>
+    <div class="hud-right">
+      <div id="hudGold">⛃ 0</div>
+      <div class="hud-btns">
+        <button class="hud-btn" id="btnSkills">Skills (M)</button>
+        <button class="hud-btn" id="btnMusic">🔊</button>
+      </div>
+    </div>
+  </div>
+  <div id="worldPrompt"></div>
+
+  <!-- BATTLE -->
+  <div id="battleUI">
+    <div class="enemies" id="bEnemies"></div>
     <div class="bottom">
-      <div class="party" id="party"></div>
-      <div class="menu" id="menu"></div>
+      <div class="party" id="bParty"></div>
+      <div class="menu" id="bMenu"></div>
     </div>
   </div>
+  <div id="bMessage"></div>
+  <div class="overlay" id="bResult"><div class="box panel"><h1 id="bResultTitle">Victory!</h1><p id="bResultText"></p><button class="pill" id="bResultBtn">Continue</button></div></div>
 
-  <div class="message" id="message">The tide brings monsters...</div>
-
-  <div id="intro">
-    <div class="vs">
-      <div class="who">THE BEACH PARTY</div>
-      <div class="sub" id="introParty"></div>
-      <div class="x">— VS —</div>
-      <div class="who">THE HIGH SEAS</div>
-      <div class="sub" id="introEnemies"></div>
-    </div>
-  </div>
-
-  <div id="end">
-    <h1 id="endTitle">Victory!</h1>
-    <p id="endText"></p>
+  <!-- START -->
+  <div id="start">
+    <h1>Beach Brawl</h1>
+    <p>A high-seas RPG · explore, battle, level up, and slay the Kraken</p>
     <div class="actions">
-      <button class="pill" onclick="location.reload()">Rematch</button>
-      <a class="pill ghost" href="coming-soon.html">Back to Site</a>
+      <button class="pill" id="startNew">New Game</button>
+      <button class="pill ghost" id="startContinue">Continue</button>
     </div>
   </div>
 
-  <script>
-  // =====================================================================
-  //  BEACH BRAWL — party-vs-enemies turn battle in Babylon.js
-  // =====================================================================
-  const canvas = document.getElementById('renderCanvas');
-  const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
-  const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
+  <!-- DIALOGUE -->
+  <div class="overlay" id="dialogue"><div class="box panel"><div id="dlgName"></div><div id="dlgText"></div><button class="pill small" id="dlgNext">Next ▶</button></div></div>
 
-  const rnd  = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
-  const wait = (ms) => new Promise(r => setTimeout(r, ms));
-  const easeInOut = (k) => (k < 0.5 ? 2*k*k : 1 - Math.pow(-2*k+2, 2)/2);
-  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-  const shuffle = (a) => a.map(v => [Math.random(), v]).sort((x, y) => x[0]-y[0]).map(p => p[1]);
-  const el = id => document.getElementById(id);
+  <!-- CONFIRM -->
+  <div class="overlay" id="confirm"><div class="box panel"><div id="confirmText"></div><div class="actions"><button class="pill" id="confirmYes">Yes</button><button class="pill ghost" id="confirmNo">No</button></div></div></div>
 
-  // =====================================================================
-  //  SCENE
-  // =====================================================================
-  const scene = new BABYLON.Scene(engine);
-  scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
-  scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-  scene.fogColor = new Color3(0.6, 0.45, 0.45);
-  scene.fogDensity = 0.009;
+  <!-- SHOP -->
+  <div class="overlay" id="shop"><div class="box panel"><div class="shead"><h2>🛒 Shop</h2><span id="shopGold">⛃ 0</span><button class="pill ghost small" id="shopClose">Close</button></div><div id="shopList"></div></div></div>
 
-  const camera = new BABYLON.ArcRotateCamera('cam', -Math.PI/2 - 0.52, 1.03, 25, new V3(0, 1.7, 0), scene);
-  camera.lowerRadiusLimit = camera.upperRadiusLimit = 25;
+  <!-- SKILLS -->
+  <div class="overlay" id="skills"><div class="panel" id="skillBody" style="padding:1.2rem;"></div></div>
 
-  const hemi = new BABYLON.HemisphericLight('hemi', new V3(0.1, 1, 0.1), scene);
-  hemi.intensity = 0.9; hemi.groundColor = new Color3(0.35, 0.3, 0.25);
-  const sun = new BABYLON.DirectionalLight('sun', new V3(-0.5, -1, 0.3), scene);
-  sun.intensity = 1.05; sun.diffuse = new Color3(1.0, 0.86, 0.72);
+  <!-- TOAST + ENDING -->
+  <div id="toast"></div>
+  <div class="overlay" id="end"><div class="box"><h1 id="endTitle"></h1><p id="endText"></p><div class="actions"><button class="pill" id="endContinue">Keep Playing</button><a class="pill ghost" href="coming-soon.html">Back to Site</a></div></div></div>
 
-  function M(name, hex, opt = {}) {
-    const m = new BABYLON.StandardMaterial(name, scene);
-    m.diffuseColor = Color3.FromHexString(hex);
-    const s = opt.spec ?? 0.15; m.specularColor = new Color3(s, s, s);
-    if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive);
-    if (opt.alpha != null) m.alpha = opt.alpha;
-    if (opt.specPower) m.specularPower = opt.specPower;
-    return m;
-  }
-  function attach(mesh, parent, m, x = 0, y = 0, z = 0) { mesh.material = m; mesh.parent = parent; mesh.position.set(x, y, z); return mesh; }
-
-  // shared particle flare
-  const flare = (() => {
-    const dt = new BABYLON.DynamicTexture('flare', 64, scene, false);
-    const c = dt.getContext();
-    const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
-    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.4, 'rgba(255,255,255,0.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
-    c.fillStyle = g; c.fillRect(0, 0, 64, 64); dt.hasAlpha = true; dt.update(); return dt;
-  })();
-
-  // ---- beach + ocean ---------------------------------------------------
-  const sand = MB.CreateGround('sand', { width: 80, height: 50, subdivisions: 1 }, scene);
-  sand.material = M('sandMat', '#e7c890', { spec: 0.05 });
-  sand.position.z = 4;
-  const ocean = MB.CreateGround('ocean', { width: 200, height: 120, subdivisions: 40 }, scene);
-  const oceanMat = M('oceanMat', '#15486b', { spec: 0.9, specPower: 64, emissive: '#0a2740' });
-  ocean.material = oceanMat; ocean.position.set(0, -0.15, -28);
-  const oceanBase = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind).slice();
-  // a little beach decor
-  [['#ff7e6b', -7, 6.5], ['#ffd166', 6, 7], ['#5eead4', 0, 8]].forEach(([hex, x, z], i) => {
-    const star = MB.CreateCylinder('star', { height: 0.1, diameter: 0.9, tessellation: 5 }, scene);
-    star.material = M('starMat' + i, hex); star.rotation.x = Math.PI / 2; star.position.set(x, 0.06, z);
-  });
-
-  // =====================================================================
-  //  MODEL BUILDERS  (each returns { node, idle })
-  // =====================================================================
-  // palette
-  const P = {
-    skin: M('skin', '#d9a06b'), skin2: M('skin2', '#cf9a78'),
-    dark: M('dark', '#2a2018'), steel: M('steel', '#c9d2dc', { spec: 0.8 }),
-    gold: M('gold', '#d9a521', { emissive: '#4a3606' }),
-  };
-
-  function buildPirate() {
-    const r = new BABYLON.TransformNode('pirate', scene);
-    const coat = M('coat', '#7a1f1f'), coat2 = M('coat2', '#9c2a2a'), beard = M('beardP', '#7a3b12');
-    attach(MB.CreateCylinder('lL', { height: 1.1, diameter: 0.34 }, scene), r, P.dark, -0.22, 0.55, 0);
-    attach(MB.CreateCylinder('lR', { height: 1.1, diameter: 0.34 }, scene), r, P.dark, 0.22, 0.55, 0);
-    attach(MB.CreateBox('torso', { width: 0.95, height: 1.15, depth: 0.6 }, scene), r, coat, 0, 1.6, 0);
-    attach(MB.CreateBox('sash', { width: 1.0, height: 0.22, depth: 0.62 }, scene), r, P.gold, 0, 1.3, 0);
-    const aL = attach(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.3 }, scene), r, coat2, -0.62, 1.6, 0); aL.rotation.z = 0.25;
-    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.6, 2.0, 0);
-    attach(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.3 }, scene), arm, coat2, 0, -0.45, 0);
-    attach(MB.CreateSphere('head', { diameter: 0.62 }, scene), r, P.skin, 0, 2.5, 0);
-    attach(MB.CreateBox('beard', { width: 0.5, height: 0.4, depth: 0.32 }, scene), r, beard, 0, 2.25, 0.18);
-    attach(MB.CreateBox('patch', { width: 0.18, height: 0.16, depth: 0.05 }, scene), r, P.dark, 0.14, 2.57, 0.3);
-    attach(MB.CreateCylinder('brim', { height: 0.08, diameter: 0.95 }, scene), r, P.dark, 0, 2.83, 0);
-    attach(MB.CreateSphere('htop', { diameter: 0.62, slice: 0.5 }, scene), r, P.dark, 0, 2.85, 0);
-    attach(MB.CreateBox('skull', { width: 0.16, height: 0.16, depth: 0.05 }, scene), r, M('skullP', '#f2ead9', { emissive: '#3a3528' }), 0, 2.97, 0.3);
-    const sw = new BABYLON.TransformNode('swR', scene); sw.parent = arm; sw.position.set(0, -0.95, 0.1); sw.rotation.x = -0.4;
-    attach(MB.CreateBox('blade', { width: 0.08, height: 1.3, depth: 0.16 }, scene), sw, P.steel, 0, 0.55, 0);
-    attach(MB.CreateBox('guard', { width: 0.32, height: 0.1, depth: 0.22 }, scene), sw, P.gold, 0, -0.05, 0);
-    return { node: r, arm };
-  }
-
-  function buildSwordsman() { // Cloud-inspired: spiky blond hair, big buster sword
-    const r = new BABYLON.TransformNode('swordsman', scene);
-    const navy = M('navy', '#2c3a52'), navy2 = M('navy2', '#3a4d6b'), hair = M('hair', '#e7d27a', { emissive: '#4a4010' });
-    attach(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.32 }, scene), r, M('pant', '#1f2733'), -0.22, 0.57, 0);
-    attach(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.32 }, scene), r, M('pant', '#1f2733'), 0.22, 0.57, 0);
-    attach(MB.CreateBox('torso', { width: 0.92, height: 1.2, depth: 0.55 }, scene), r, navy, 0, 1.62, 0);
-    attach(MB.CreateBox('belt', { width: 0.96, height: 0.18, depth: 0.57 }, scene), r, M('belt', '#7a5230'), 0, 1.25, 0);
-    attach(MB.CreateSphere('pauldron', { diameter: 0.62, slice: 0.6 }, scene), r, P.steel, -0.55, 2.05, 0);
-    const aL = attach(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.28 }, scene), r, navy2, -0.6, 1.6, 0); aL.rotation.z = 0.22;
-    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.62, 2.02, 0);
-    attach(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.28 }, scene), arm, navy2, 0, -0.45, 0);
-    attach(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, P.skin2, 0, 2.5, 0);
-    // spiky hair — a crown of cones
-    const spikes = [[0,0.45,0, 0,0,0],[ -0.18,0.42,0.05, 0,0,0.5],[0.18,0.42,0.05, 0,0,-0.5],[0,0.4,0.22, 0.6,0,0],[0,0.4,-0.2, -0.6,0,0],[-0.22,0.3,-0.05,0,0,0.9],[0.22,0.3,-0.05,0,0,-0.9]];
-    spikes.forEach((s, i) => { const c = attach(MB.CreateCylinder('hair'+i, { height: 0.6, diameterTop: 0, diameterBottom: 0.26 }, scene), r, hair, s[0], 2.72 + s[1]*0.2, s[2]); c.rotation.set(s[3], s[4], s[5]); });
-    // the big buster sword (held), its own pivot
-    const sw = new BABYLON.TransformNode('swR', scene); sw.parent = arm; sw.position.set(0.1, -0.95, 0.12); sw.rotation.x = -0.5;
-    attach(MB.CreateBox('blade', { width: 0.38, height: 2.7, depth: 0.09 }, scene), sw, M('busterBlade', '#cdd6e0', { spec: 0.9, specPower: 80 }), 0, 1.25, 0);
-    attach(MB.CreateBox('edge', { width: 0.1, height: 2.6, depth: 0.11 }, scene), sw, M('busterEdge', '#9aa6b4', { spec: 0.9 }), 0.14, 1.25, 0);
-    attach(MB.CreateBox('guard', { width: 0.5, height: 0.14, depth: 0.2 }, scene), sw, P.steel, 0, -0.1, 0);
-    attach(MB.CreateCylinder('grip', { height: 0.5, diameter: 0.1 }, scene), sw, P.dark, 0, -0.4, 0);
-    return { node: r, arm };
-  }
-
-  function buildHealer() { // tide priestess
-    const r = new BABYLON.TransformNode('healer', scene);
-    const robe = M('robe', '#2fae9a', { emissive: '#0c3a33' }), robe2 = M('robe2', '#7fe3d4'), hairC = M('hairC', '#37c0e0', { emissive: '#0a3a48' });
-    attach(MB.CreateCylinder('robe', { height: 1.9, diameterTop: 0.5, diameterBottom: 1.4 }, scene), r, robe, 0, 0.95, 0);
-    attach(MB.CreateCylinder('trim', { height: 0.2, diameterTop: 1.32, diameterBottom: 1.42 }, scene), r, robe2, 0, 0.12, 0);
-    const aL = attach(MB.CreateCylinder('aL', { height: 0.8, diameter: 0.22 }, scene), r, robe, -0.5, 1.5, 0); aL.rotation.z = 0.4;
-    const aR = attach(MB.CreateCylinder('aR', { height: 0.8, diameter: 0.22 }, scene), r, robe, 0.5, 1.5, 0); aR.rotation.z = -0.4;
-    attach(MB.CreateSphere('head', { diameter: 0.55 }, scene), r, P.skin, 0, 2.25, 0);
-    // flowing hair
-    attach(MB.CreateBox('hairBack', { width: 0.6, height: 1.1, depth: 0.25 }, scene), r, hairC, 0, 1.9, -0.18);
-    attach(MB.CreateSphere('hairTop', { diameter: 0.6, slice: 0.6 }, scene), r, hairC, 0, 2.42, 0);
-    // halo
-    const halo = attach(MB.CreateTorus('halo', { diameter: 0.7, thickness: 0.05, tessellation: 24 }, scene), r, M('halo', '#fff6c2', { emissive: '#fff0a0' }), 0, 2.85, 0);
-    halo.rotation.x = Math.PI / 2.3;
-    // staff with glowing shell orb
-    const staff = new BABYLON.TransformNode('staffPiv', scene); staff.parent = r; staff.position.set(0.72, 1.6, 0.1);
-    attach(MB.CreateCylinder('staff', { height: 2.0, diameter: 0.08 }, scene), staff, M('staffMat', '#b07a3a'), 0, 0, 0);
-    const orb = attach(MB.CreateSphere('orb', { diameter: 0.42 }, scene), staff, M('orbMat', '#9be7ff', { emissive: '#3fb8ff' }), 0, 1.05, 0);
-    return { node: r, halo, orb, staffPiv: staff, idle(t) { halo.rotation.z = t * 1.2; orb.scaling.setAll(1 + Math.sin(t * 3) * 0.08); } };
-  }
-
-  // ---------- ENEMIES ----------
-  function buildShark() {
-    const r = new BABYLON.TransformNode('eShark', scene);
-    const grey = M('shGrey', '#6f7f8c', { spec: 0.3 }), belly = M('shBelly', '#d8dfe4'), drk = M('shDark', '#3c4750');
-    attach(MB.CreateSphere('b', { diameterX: 3.4, diameterY: 1.3, diameterZ: 1.4, segments: 14 }, scene), r, grey, 0, 0.9, 0);
-    attach(MB.CreateSphere('bl', { diameterX: 2.8, diameterY: 0.85, diameterZ: 1.1, segments: 12 }, scene), r, belly, 0, 0.65, 0);
-    const sn = attach(MB.CreateCylinder('sn', { height: 1.2, diameterTop: 0, diameterBottom: 1.1, tessellation: 14 }, scene), r, grey, 1.9, 0.9, 0); sn.rotation.z = -Math.PI/2;
-    attach(MB.CreateBox('mouth', { width: 0.9, height: 0.3, depth: 0.95 }, scene), r, drk, 1.4, 0.55, 0);
-    const dor = attach(MB.CreateCylinder('dor', { height: 0.16, diameter: 1.4, tessellation: 3 }, scene), r, drk, -0.1, 1.85, 0); dor.rotation.x = Math.PI/2; dor.scaling.x = 0.8;
-    [-0.4, 0.4].forEach(z => attach(MB.CreateSphere('eye', { diameter: 0.2 }, scene), r, M('shEye', '#0a0a0a', { emissive: '#1a0000' }), 1.35, 1.1, z));
-    const tp = new BABYLON.TransformNode('tp', scene); tp.parent = r; tp.position.set(-1.6, 0.9, 0);
-    const tf = attach(MB.CreateCylinder('tf', { height: 0.15, diameter: 1.6, tessellation: 3 }, scene), tp, drk, -0.55, 0, 0); tf.rotation.x = Math.PI/2; tf.rotation.z = Math.PI/2; tf.scaling.x = 1.1;
-    return { node: r, idle(t) { tp.rotation.y = Math.sin(t * 4) * 0.4; } };
-  }
-  function buildCrab() {
-    const r = new BABYLON.TransformNode('eCrab', scene);
-    const red = M('crRed', '#e0573a', { spec: 0.3 }), red2 = M('crRed2', '#c9472d');
-    attach(MB.CreateSphere('shell', { diameterX: 2.4, diameterY: 1.1, diameterZ: 1.9, segments: 14 }, scene), r, red, 0, 1.0, 0);
-    // eye stalks
-    [-0.4, 0.4].forEach(x => { attach(MB.CreateCylinder('st', { height: 0.6, diameter: 0.1 }, scene), r, red2, x, 1.8, 0.7); attach(MB.CreateSphere('ey', { diameter: 0.26 }, scene), r, M('crEye', '#0a0a0a', { emissive: '#220000' }), x, 2.1, 0.7); });
-    // legs
-    for (let s of [-1, 1]) for (let i = 0; i < 3; i++) { const lg = attach(MB.CreateCylinder('lg', { height: 1.2, diameter: 0.14 }, scene), r, red2, s * 1.0, 0.7, -0.5 + i * 0.5); lg.rotation.z = s * 1.1; }
-    // claws (pivots so they can pinch)
-    const claws = [];
-    for (let s of [-1, 1]) { const cp = new BABYLON.TransformNode('cp', scene); cp.parent = r; cp.position.set(s * 1.3, 0.9, 0.9);
-      attach(MB.CreateCylinder('arm', { height: 0.8, diameter: 0.18 }, scene), cp, red2, 0, -0.2, 0);
-      attach(MB.CreateSphere('claw', { diameterX: 0.7, diameterY: 0.5, diameterZ: 0.4 }, scene), cp, red, 0, 0.35, 0);
-      cp.rotation.z = s * -0.4; claws.push(cp); }
-    return { node: r, claws, idle(t) { claws.forEach((c, i) => c.rotation.x = Math.sin(t * 3 + i) * 0.15); } };
-  }
-  function buildJelly() {
-    const r = new BABYLON.TransformNode('eJelly', scene);
-    const dome = attach(MB.CreateSphere('dome', { diameter: 2.0, slice: 0.55 }, scene), r, M('jDome', '#d98cff', { emissive: '#6a2a8a', alpha: 0.8 }), 0, 1.8, 0);
-    const tents = [];
-    for (let i = 0; i < 9; i++) { const a = (i / 9) * Math.PI * 2; const tnt = attach(MB.CreateCylinder('tn', { height: 1.6, diameter: 0.1 }, scene), r, M('jTent', '#e6b3ff', { emissive: '#7a3a9a', alpha: 0.85 }), Math.cos(a) * 0.6, 1.0, Math.sin(a) * 0.6); tents.push(tnt); }
-    return { node: r, dome, tents, idle(t) { dome.scaling.y = 1 + Math.sin(t * 2.5) * 0.12; tents.forEach((tn, i) => tn.rotation.x = Math.sin(t * 2 + i) * 0.25); } };
-  }
-  function buildOcto() {
-    const r = new BABYLON.TransformNode('eOcto', scene);
-    const pur = M('oPur', '#a05bd6', { spec: 0.3 }), pur2 = M('oPur2', '#8a45c0');
-    attach(MB.CreateSphere('head', { diameterX: 1.9, diameterY: 2.1, diameterZ: 1.9, segments: 14 }, scene), r, pur, 0, 1.7, 0);
-    [-0.4, 0.4].forEach(z => { attach(MB.CreateSphere('eyW', { diameter: 0.5 }, scene), r, M('oWhite', '#f5f5f5'), 0.7, 1.9, z); attach(MB.CreateSphere('eyB', { diameter: 0.26 }, scene), r, M('oBlk', '#0a0a0a', { emissive: '#100' }), 0.85, 1.9, z); });
-    const arms = [];
-    for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; const tn = attach(MB.CreateCylinder('arm', { height: 1.5, diameterTop: 0.1, diameterBottom: 0.32 }, scene), r, pur2, Math.cos(a) * 0.7, 0.7, Math.sin(a) * 0.7); tn.rotation.x = Math.sin(a) * 0.4; tn.rotation.z = -Math.cos(a) * 0.4; arms.push(tn); }
-    return { node: r, arms, idle(t) { arms.forEach((tn, i) => tn.rotation.y = Math.sin(t * 2 + i) * 0.2); } };
-  }
-  function buildGull() {
-    const r = new BABYLON.TransformNode('eGull', scene);
-    const wht = M('gWht', '#f3f5f7'), gry = M('gGry', '#b9c3cc'), org = M('gOrg', '#f6a623', { emissive: '#5a3a06' });
-    attach(MB.CreateSphere('body', { diameterX: 1.8, diameterY: 1.3, diameterZ: 1.3, segments: 12 }, scene), r, wht, 0, 1.6, 0);
-    attach(MB.CreateSphere('head', { diameter: 0.9 }, scene), r, wht, 0.9, 2.2, 0);
-    attach(MB.CreateCylinder('beak', { height: 0.6, diameterTop: 0, diameterBottom: 0.3 }, scene), r, org, 1.5, 2.15, 0).rotation.z = -Math.PI/2;
-    [-0.25, 0.25].forEach(z => attach(MB.CreateSphere('ey', { diameter: 0.16 }, scene), r, M('gEye', '#0a0a0a', { emissive: '#100' }), 1.15, 2.32, z));
-    const wings = [];
-    for (let s of [-1, 1]) { const wp = new BABYLON.TransformNode('wp', scene); wp.parent = r; wp.position.set(-0.2, 1.7, s * 0.5);
-      attach(MB.CreateBox('wing', { width: 1.6, height: 0.12, depth: 1.0 }, scene), wp, gry, -0.4, 0, s * 0.5); wings.push(wp); }
-    attach(MB.CreateSphere('tail', { diameterX: 1.0, diameterY: 0.3, diameterZ: 0.7 }, scene), r, gry, -1.1, 1.55, 0);
-    return { node: r, wings, idle(t) { wings.forEach((w, i) => w.rotation.x = Math.sin(t * 6 + i * Math.PI) * 0.5); r.position.y = r._baseY + Math.sin(t * 2) * 0.15; } };
-  }
-  function buildGolem() {
-    const r = new BABYLON.TransformNode('eGolem', scene);
-    const sandC = M('glSand', '#d9b779', { spec: 0.05 }), sandD = M('glSandD', '#c2a062');
-    attach(MB.CreateBox('base', { width: 2.4, height: 1.2, depth: 2.0 }, scene), r, sandC, 0, 0.6, 0);
-    attach(MB.CreateBox('mid', { width: 1.8, height: 1.0, depth: 1.5 }, scene), r, sandD, 0, 1.7, 0);
-    // little turret towers
-    [[-0.9, 0.9], [0.9, -0.9], [0.9, 0.9], [-0.9, -0.9]].forEach(([x, z], i) => { attach(MB.CreateCylinder('twr', { height: 0.7, diameter: 0.5, tessellation: 8 }, scene), r, sandC, x, 1.55, z); attach(MB.CreateCylinder('top', { height: 0.3, diameter: 0, diameterBottom: 0.5, tessellation: 8 }, scene), r, sandD, x, 1.95, z); });
-    attach(MB.CreateCylinder('keep', { height: 1.0, diameter: 0.9, tessellation: 8 }, scene), r, sandC, 0, 2.6, 0);
-    attach(MB.CreateCylinder('flag', { height: 0.5, diameter: 0.05 }, scene), r, P.dark, 0, 3.3, 0);
-    [-0.4, 0.4].forEach(z => attach(MB.CreateSphere('ey', { diameter: 0.3 }, scene), r, M('glEye', '#1a1208', { emissive: '#ff6a00' }), 0.78, 1.8, z));
-    return { node: r, idle(t) { r.rotation.z = Math.sin(t * 1.2) * 0.02; } };
-  }
-
-  // =====================================================================
-  //  COMBATANT DATA
-  // =====================================================================
-  // party: shared inventory
-  const inv = {
-    potion: { name: 'Potion',       qty: 4, kind: 'heal',   amount: 55, target: 'ally',   fx: 'heal' },
-    phoenix:{ name: 'Phoenix Down',  qty: 1, kind: 'revive', target: 'dead',   fx: 'heal' },
-    grog:   { name: 'Grog',          qty: 2, kind: 'mana',   amount: 22, target: 'ally',   fx: 'mana' },
-    bomb:   { name: 'Powder Bomb',   qty: 2, kind: 'damage', min: 45, max: 60, target: 'enemy', fx: 'fire' },
-  };
-
-  function abil(name, opts) { return Object.assign({ name }, opts); }
-
-  const PARTY_DEFS = [
-    { key: 'pirate', name: 'Capt. Redbeard', role: 'Pirate', hp: 150, mp: 24, build: buildPirate, rotY: Math.PI/2.2,
-      fight: { min: 18, max: 28, crit: 0.14 },
-      magic: [ abil('Cannon Blast', { mp: 8, min: 28, max: 40, target: 'enemy', fx: 'fire', proj: true }),
-               abil('Broadside',    { mp: 14, min: 22, max: 32, target: 'all', fx: 'fire' }) ] },
-    { key: 'swordsman', name: 'Lance Strider', role: 'SOLDIER', hp: 178, mp: 18, build: buildSwordsman, rotY: Math.PI/2.2,
-      fight: { min: 26, max: 38, crit: 0.18, big: true },
-      magic: [ abil('Blade Beam',  { mp: 10, min: 40, max: 54, target: 'enemy', fx: 'beam' }),
-               abil('Cross-Slash', { mp: 16, min: 32, max: 46, target: 'all', fx: 'beam' }) ] },
-    { key: 'healer', name: 'Marina', role: 'Tide Priestess', hp: 118, mp: 42, build: buildHealer, rotY: Math.PI/2.2,
-      fight: { min: 8, max: 14, crit: 0.05 },
-      magic: [ abil('Mend',           { mp: 6,  min: 42, max: 58, target: 'ally', fx: 'heal', heal: true }),
-               abil('Tidal Blessing', { mp: 16, min: 30, max: 42, target: 'allparty', fx: 'heal', heal: true }),
-               abil('Brine Bolt',     { mp: 8,  min: 24, max: 34, target: 'enemy', fx: 'water' }) ] },
-  ];
-
-  const ENEMY_POOL = [
-    { key: 'shark',  name: 'Maneater Shark',  hp: 118, build: buildShark,  baseY: 0.0,
-      moves: [ { name: 'sinks its teeth in', min: 14, max: 22 }, { name: 'whips its tail', min: 18, max: 26 } ] },
-    { key: 'crab',   name: 'Giant Hermit Crab', hp: 150, build: buildCrab, baseY: 0.0,
-      moves: [ { name: 'snaps a giant claw', min: 16, max: 24 }, { name: 'bashes with its shell', min: 20, max: 28 } ] },
-    { key: 'jelly',  name: "Man-o'-War Jelly", hp: 82,  build: buildJelly, baseY: 0.2,
-      moves: [ { name: 'stings sharply', min: 12, max: 18 }, { name: 'discharges a shock', min: 12, max: 18, all: true } ] },
-    { key: 'octo',   name: 'Reef Octopus',    hp: 128, build: buildOcto,  baseY: 0.1,
-      moves: [ { name: 'slams a tentacle', min: 18, max: 26 }, { name: 'sprays stinging ink', min: 9, max: 15, all: true } ] },
-    { key: 'gull',   name: 'Dive-Bomb Gull',  hp: 72,  build: buildGull,  baseY: 1.4,
-      moves: [ { name: 'pecks rapidly', min: 10, max: 16 }, { name: 'dive-bombs', min: 20, max: 30 } ] },
-    { key: 'golem',  name: 'Sandcastle Golem', hp: 160, build: buildGolem, baseY: 0.0,
-      moves: [ { name: 'slams a sandy fist', min: 18, max: 26 }, { name: 'crumbles down', min: 14, max: 22, all: true } ] },
-  ];
-
-  // =====================================================================
-  //  BUILD THE ENCOUNTER
-  // =====================================================================
-  const party = [];
-  PARTY_DEFS.forEach((def, i) => {
-    const built = def.build();
-    const home = new V3(-4.4, 0, 3.0 - i * 2.6);
-    built.node.position.copyFrom(home);
-    built.node.rotation.y = def.rotY;
-    party.push({ side: 'party', def, name: def.name, role: def.role, node: built.node, arm: built.arm,
-      maxhp: def.hp, hp: def.hp, maxmp: def.mp, mp: def.mp, home, baseY: 0, phase: i * 1.3, alive: true, _busy: false,
-      idle: built.idle, fight: def.fight, magic: def.magic });
-  });
-
-  const enemies = [];
-  const chosen = shuffle(ENEMY_POOL.slice()).slice(0, 3);
-  chosen.forEach((def, i) => {
-    const built = def.build();
-    const home = new V3(4.4, def.baseY, 3.0 - i * 2.6);
-    built.node.position.copyFrom(home);
-    built.node._baseY = def.baseY;
-    built.node.rotation.y = -Math.PI/2.2;
-    enemies.push({ side: 'enemy', def, name: def.name, node: built.node, baseY: def.baseY,
-      maxhp: def.hp, hp: def.hp, home, phase: i * 1.7 + 0.5, alive: true, _busy: false, idle: built.idle, moves: def.moves });
-  });
-
-  const actors = party.concat(enemies);
-
-  // =====================================================================
-  //  IDLE + WAVES
-  // =====================================================================
-  let t = 0;
-  scene.onBeforeRenderObservable.add(() => {
-    const dt = engine.getDeltaTime() / 1000; t += dt;
-    camera.alpha = -Math.PI/2 - 0.52 + Math.sin(t * 0.22) * 0.04;
-    for (const a of actors) {
-      if (!a.alive || a._busy) continue;
-      a.node.position.y = a.baseY + Math.sin(t * 1.5 + a.phase) * 0.05;
-      if (a.idle) a.idle(t);
-    }
-    const pos = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-    for (let i = 0; i < pos.length; i += 3) { const x = oceanBase[i], z = oceanBase[i+2]; pos[i+1] = Math.sin(x*0.25 + t*1.3)*0.35 + Math.cos(z*0.3 + t*1.0)*0.35; }
-    ocean.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
-  });
-
-  // =====================================================================
-  //  FX HELPERS
-  // =====================================================================
-  function tween(apply, ms, ease = easeInOut) {
-    return new Promise(res => { let acc = 0; const obs = scene.onBeforeRenderObservable.add(() => {
-      acc += engine.getDeltaTime(); const k = Math.min(1, acc / ms); apply(ease(k));
-      if (k >= 1) { scene.onBeforeRenderObservable.remove(obs); res(); } }); });
-  }
-  function moveTo(node, to, ms) { const from = node.position.clone(); return tween(k => { node.position = V3.Lerp(from, to, k); }, ms); }
-  function rotTo(node, axis, from, to, ms) { return tween(k => { node.rotation[axis] = from + (to - from) * k; }, ms); }
-  function hitFlash(node, hex, ms = 180) {
-    const col = Color3.FromHexString(hex);
-    const meshes = node.getChildMeshes().filter(m => m.material);
-    const saved = meshes.map(m => m.material.emissiveColor.clone());
-    meshes.forEach(m => m.material.emissiveColor = col);
-    setTimeout(() => meshes.forEach((m, i) => m.material.emissiveColor = saved[i]), ms);
-  }
-  function burst(pos, hexA, hexB, count = 70, power = 7, gravity = -8) {
-    const ps = new BABYLON.ParticleSystem('burst', count, scene);
-    ps.particleTexture = flare; ps.emitter = pos.clone();
-    ps.minEmitBox = new V3(-0.2, -0.2, -0.2); ps.maxEmitBox = new V3(0.2, 0.2, 0.2);
-    ps.color1 = BABYLON.Color4.FromHexString(hexA + 'ff'); ps.color2 = BABYLON.Color4.FromHexString(hexB + 'ff');
-    ps.colorDead = new BABYLON.Color4(0, 0, 0, 0);
-    ps.minSize = 0.25; ps.maxSize = 0.9; ps.minLifeTime = 0.3; ps.maxLifeTime = 0.7; ps.emitRate = count * 8;
-    ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE; ps.gravity = new V3(0, gravity, 0);
-    ps.direction1 = new V3(-1, 1, -1); ps.direction2 = new V3(1, 1.5, 1);
-    ps.minEmitPower = power * 0.5; ps.maxEmitPower = power; ps.minAngularSpeed = 0; ps.maxAngularSpeed = Math.PI;
-    ps.targetStopDuration = 0.18; ps.disposeOnStop = true; ps.start();
-  }
-  const FX = {
-    fire:  ['#ffb347', '#ff5e3a'], water: ['#5eead4', '#3b82f6'], beam: ['#a5b4fc', '#e0e7ff'],
-    heal:  ['#6ee7b7', '#bbf7d0'], mana: ['#60a5fa', '#bfdbfe'], hit: ['#ff6b6b', '#ffd1d1'],
-  };
-  function worldOf(node, dy = 2.4) { return node.getAbsolutePosition().add(new V3(0, dy, 0)); }
-  function floatDamage(node, text, color, dy = 1.8) {
-    const rw = engine.getRenderWidth(), rh = engine.getRenderHeight();
-    const p = BABYLON.Vector3.Project(worldOf(node, dy), BABYLON.Matrix.Identity(), scene.getTransformMatrix(), new BABYLON.Viewport(0, 0, rw, rh));
-    const d = document.createElement('div'); d.className = 'float'; d.textContent = text; d.style.color = color;
-    d.style.left = (p.x * (canvas.clientWidth / rw)) + 'px'; d.style.top = (p.y * (canvas.clientHeight / rh)) + 'px';
-    document.body.appendChild(d); setTimeout(() => d.remove(), 1000);
-  }
-
-  // =====================================================================
-  //  UI RENDERING
-  // =====================================================================
-  function msg(text) { el('message').textContent = text; }
-  function renderEnemies(targetMode, onPick) {
-    const wrap = el('enemies'); wrap.innerHTML = '';
-    enemies.forEach(e => {
-      const d = document.createElement('div'); d.className = 'eplate' + (e.alive ? '' : ' dead');
-      d.innerHTML = `<div class="row"><span class="name">${e.name}</span><span class="hpnum">${Math.max(0, e.hp)}/${e.maxhp}</span></div><div class="bar hp"><i style="width:${clamp(e.hp/e.maxhp*100,0,100)}%"></i></div>`;
-      if (targetMode && e.alive) { d.classList.add('targetable'); d.onclick = () => onPick(e); }
-      wrap.appendChild(d);
-    });
-  }
-  function renderParty(targetMode, candidates, onPick) {
-    const wrap = el('party'); wrap.innerHTML = '';
-    party.forEach(p => {
-      const d = document.createElement('div');
-      d.className = 'pmember' + (p === activeMember ? ' active' : '') + (p.alive ? '' : ' dead');
-      d.innerHTML = `<div class="row"><span class="name">${p.name}</span><span class="role">${p.role}</span></div>
-        <div class="twobar"><div class="bar php"><i style="width:${clamp(p.hp/p.maxhp*100,0,100)}%"></i></div><span class="nums">HP ${Math.max(0,p.hp)}/${p.maxhp}</span></div>
-        <div class="twobar"><div class="bar mp"><i style="width:${clamp(p.mp/p.maxmp*100,0,100)}%"></i></div><span class="nums">MP ${p.mp}/${p.maxmp}</span></div>`;
-      if (targetMode && candidates.includes(p)) { d.classList.add('targetable'); d.onclick = () => onPick(p); }
-      wrap.appendChild(d);
-    });
-  }
-  function refresh() { renderEnemies(false); renderParty(false); }
-
-  // menu construction
-  const menuEl = el('menu');
-  function clearMenu(title) { menuEl.innerHTML = ''; if (title) { const h = document.createElement('div'); h.className = 'title'; h.textContent = title; menuEl.appendChild(h); } }
-  function cmd(label, sub, onClick, disabled, subClass = '') {
-    const b = document.createElement('button'); b.className = 'cmd';
-    b.innerHTML = `<span>${label}</span>` + (sub ? `<span class="cost ${subClass}">${sub}</span>` : '');
-    b.disabled = !!disabled; b.onclick = onClick; menuEl.appendChild(b); return b;
-  }
-  function backBtn(fn) { cmd('↩  Back', '', fn).classList.add('back'); }
-  function lockMenu() { [...menuEl.querySelectorAll('button')].forEach(b => b.disabled = true); }
-
-  const aliveEnemies = () => enemies.filter(e => e.alive);
-  const aliveParty = () => party.filter(p => p.alive);
-  const deadParty = () => party.filter(p => !p.alive);
-
-  // =====================================================================
-  //  TURN ENGINE
-  // =====================================================================
-  let activeMember = null, over = false;
-
-  function lungeTarget(attacker, target) {
-    const from = attacker.home, to = target.home;
-    return from.add(to.subtract(from).scale(0.66)).add(new V3(0, attacker.baseY, 0).subtract(new V3(0, attacker.baseY, 0)));
-  }
-
-  async function dashAttack(attacker, target, onHit) {
-    attacker._busy = true;
-    const home = attacker.home.clone();
-    const dest = home.add(target.home.subtract(home).scale(0.62));
-    dest.y = attacker.baseY;
-    await moveTo(attacker.node, dest, 260);
-    await onHit();
-    await moveTo(attacker.node, home, 320);
-    attacker.node.position.copyFrom(home); attacker._busy = false;
-  }
-  async function swing(arm) { await rotTo(arm, 'x', 0, -2.3, 110); await rotTo(arm, 'x', -2.3, 0.6, 100); await rotTo(arm, 'x', 0.6, 0, 130); }
-
-  function damageEnemy(e, dmg, color = '#ffffff') {
-    e.hp = Math.max(0, e.hp - dmg);
-    hitFlash(e.node, '#ff6060'); burst(worldOf(e.node, 0.6), ...FX.hit, 55, 6);
-    floatDamage(e.node, String(dmg), color, 2.6);
-    e._busy = true; const h = e.home.clone();
-    moveTo(e.node, h.add(new V3(0.5, 0, 0)), 90).then(() => moveTo(e.node, h, 150).then(() => { e.node.position.copyFrom(h); e._busy = false; }));
-    if (e.hp <= 0) killEnemy(e);
-    renderEnemies(false);
-  }
-  async function killEnemy(e) {
-    e.alive = false; e._busy = true;
-    await tween(k => { e.node.position.y = e.baseY - k * 3; e.node.rotation.z = k * 1.5; e.node.scaling.setAll(1 - k * 0.3); }, 800);
-    e.node.setEnabled(false);
-  }
-  function healMember(p, amt) {
-    p.hp = Math.min(p.maxhp, p.hp + amt);
-    burst(worldOf(p.node, 0.2), ...FX.heal, 45, 5, -2); floatDamage(p.node, '+' + amt, '#6ee7b7', 2.6); renderParty(false);
-  }
-
-  // ---- a single party member's turn (resolves when they finish acting) ----
-  function takeTurn(member) {
-    return new Promise(done => {
-      activeMember = member; renderParty(false); renderEnemies(false);
-      msg(`${member.name}'s turn — choose an action.`);
-      showMain(member, done);
-    });
-  }
-
-  function showMain(m, done) {
-    clearMenu(m.name);
-    cmd('⚔️  Fight', '', () => chooseEnemy('Attack which foe?', e => act(done, () => doFight(m, e)), () => showMain(m, done)));
-    cmd('✨  Magic', '', () => showMagic(m, done));
-    cmd('🎒  Item', '', () => showItems(m, done));
-    cmd('⏭️  Defend', '', () => act(done, () => doDefend(m)));
-  }
-
-  function showMagic(m, done) {
-    clearMenu(m.name + ' · Magic');
-    m.magic.forEach(s => {
-      const label = s.name + (s.target === 'all' || s.target === 'allparty' ? '  (all)' : '');
-      cmd(label, s.mp + ' MP', () => {
-        if (s.target === 'enemy') chooseEnemy('Cast ' + s.name + ' on?', e => act(done, () => doSpell(m, s, [e])), () => showMagic(m, done));
-        else if (s.target === 'ally') chooseAlly('Cast ' + s.name + ' on?', aliveParty(), p => act(done, () => doSpell(m, s, [p])), () => showMagic(m, done));
-        else if (s.target === 'all') act(done, () => doSpell(m, s, aliveEnemies()));
-        else if (s.target === 'allparty') act(done, () => doSpell(m, s, aliveParty()));
-      }, m.mp < s.mp);
-    });
-    backBtn(() => showMain(m, done));
-  }
-
-  function showItems(m, done) {
-    clearMenu(m.name + ' · Items');
-    for (const [key, it] of Object.entries(inv)) {
-      let disabled = it.qty <= 0;
-      if (it.target === 'dead' && deadParty().length === 0) disabled = true;
-      cmd(it.name, '×' + it.qty, () => {
-        if (it.target === 'enemy') chooseEnemy('Throw ' + it.name + ' at?', e => act(done, () => doItem(m, key, it, [e])), () => showItems(m, done));
-        else if (it.target === 'ally') chooseAlly('Use ' + it.name + ' on?', aliveParty(), p => act(done, () => doItem(m, key, it, [p])), () => showItems(m, done));
-        else if (it.target === 'dead') chooseAlly('Revive whom?', deadParty(), p => act(done, () => doItem(m, key, it, [p])), () => showItems(m, done));
-      }, disabled, 'qty');
-    }
-    backBtn(() => showMain(m, done));
-  }
-
-  function chooseEnemy(prompt, onPick, onBack) {
-    clearMenu(prompt); msg(prompt);
-    renderEnemies(true, e => { renderEnemies(false); onPick(e); });
-    backBtn(() => { renderEnemies(false); onBack(); });
-  }
-  function chooseAlly(prompt, candidates, onPick, onBack) {
-    clearMenu(prompt); msg(prompt);
-    renderParty(true, candidates, p => { renderParty(false); onPick(p); });
-    backBtn(() => { renderParty(false); onBack(); });
-  }
-
-  // wrap an action: lock UI, run it, resolve the member's turn
-  async function act(done, fn) { lockMenu(); await fn(); refresh(); activeMember = null; renderParty(false); done(); }
-
-  // ---- actual action implementations ----
-  async function doFight(m, target) {
-    msg(`${m.name} strikes ${target.name}!`);
-    await dashAttack(m, target, async () => {
-      if (m.arm) await swing(m.arm);
-      let dmg = rnd(m.fight.min, m.fight.max);
-      const crit = Math.random() < m.fight.crit;
-      if (crit) dmg = Math.round(dmg * 1.8);
-      if (m.fight.big) burst(worldOf(target.node, 0.4), ...FX.beam, 50, 7);
-      damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff');
-      if (crit) msg('Critical hit! ' + dmg + ' damage!');
-    });
-  }
-  async function doDefend(m) { msg(`${m.name} braces for impact.`); m._defend = true; await wait(350); }
-
-  async function doSpell(m, s, targets) {
-    m.mp -= s.mp; renderParty(false);
-    if (s.heal) {
-      msg(`${m.name} casts ${s.name}!`);
-      if (m.staffPiv) await rotTo(m.staffPiv, 'z', 0, -0.5, 150).then(() => rotTo(m.staffPiv, 'z', -0.5, 0, 200));
-      for (const p of targets) healMember(p, rnd(s.min, s.max));
-      await wait(650); return;
-    }
-    if (s.proj || s.fx === 'beam') {
-      msg(`${m.name} unleashes ${s.name}!`);
-      if (m.arm && s.fx === 'beam') swing(m.arm);
-      for (const e of targets) {
-        const ball = MB.CreateSphere('p', { diameter: s.fx === 'beam' ? 0.6 : 0.4 }, scene);
-        ball.material = M('pMat', s.fx === 'beam' ? '#c7d2fe' : '#1c1c1c', { emissive: s.fx === 'beam' ? '#6366f1' : '#000' });
-        ball.position = worldOf(m.node, -0.2);
-        await moveTo(ball, worldOf(e.node, -0.2), 320);
-        ball.dispose(); burst(worldOf(e.node, 0.2), ...FX[s.fx], 80, 9);
-        damageEnemy(e, rnd(s.min, s.max), s.fx === 'beam' ? '#a5b4fc' : '#ffd1d1');
-      }
-      await wait(400); return;
-    }
-    // direct elemental (broadside / brine bolt / cross-slash on all)
-    msg(`${m.name} unleashes ${s.name}!`);
-    for (const e of targets) { burst(worldOf(e.node, 0.4), ...FX[s.fx], 70, 8); hitFlash(e.node, FX[s.fx][0]); damageEnemy(e, rnd(s.min, s.max), s.fx === 'water' ? '#5eead4' : '#a5b4fc'); await wait(120); }
-    await wait(380);
-  }
-
-  async function doItem(m, key, it, targets) {
-    it.qty--;
-    if (it.kind === 'heal') { msg(`${m.name} uses ${it.name}.`); healMember(targets[0], it.amount); await wait(600); }
-    else if (it.kind === 'mana') { const p = targets[0]; p.mp = Math.min(p.maxmp, p.mp + it.amount); msg(`${m.name} uses ${it.name}. +${it.amount} MP!`); burst(worldOf(p.node, 0.2), ...FX.mana, 45, 5, -2); floatDamage(p.node, '+' + it.amount + ' MP', '#93c5fd', 2.6); renderParty(false); await wait(600); }
-    else if (it.kind === 'revive') { const p = targets[0]; p.alive = true; p.node.setEnabled(true); p.node.position.copyFrom(p.home); p.node.rotation.x = 0; p.hp = Math.round(p.maxhp * 0.5); msg(`${p.name} is revived!`); burst(worldOf(p.node, 0.5), '#fff6c2', '#fde68a', 80, 6, -1); floatDamage(p.node, '+' + p.hp, '#fde68a', 2.6); renderParty(false); await wait(700); }
-    else { msg(`${m.name} hurls a ${it.name}!`); const ball = MB.CreateSphere('b', { diameter: 0.4 }, scene); ball.material = M('bMat', '#222', { emissive: '#1a0a00' }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(targets[0].node, -0.2), 360); ball.dispose(); burst(worldOf(targets[0].node, 0.2), ...FX.fire, 100, 11); damageEnemy(targets[0], rnd(it.min, it.max), '#fca5a5'); await wait(500); }
-  }
-
-  // ---- enemy actions ----
-  async function enemyAct(e) {
-    if (!e.alive || over) return;
-    const targetsAlive = aliveParty(); if (targetsAlive.length === 0) return;
-    const move = e.moves[rnd(0, e.moves.length - 1)];
-    const home = e.home.clone();
-    e._busy = true;
-
-    if (move.all) {
-      msg(`${e.name} ${move.name}!`);
-      // rear up
-      await moveTo(e.node, home.add(new V3(-1.2, 0.4, 0)), 220);
-      for (const p of targetsAlive) {
-        let dmg = rnd(move.min, move.max); if (p._defend) dmg = Math.round(dmg * 0.5);
-        applyToMember(p, dmg);
-      }
-      await wait(200);
-      await moveTo(e.node, home, 320); e.node.position.copyFrom(home); e._busy = false;
-    } else {
-      const target = targetsAlive[rnd(0, targetsAlive.length - 1)];
-      msg(`${e.name} ${move.name} at ${target.name}!`);
-      const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY;
-      await moveTo(e.node, dest, 240);
-      let dmg = rnd(move.min, move.max); if (target._defend) dmg = Math.round(dmg * 0.5);
-      applyToMember(target, dmg);
-      await wait(160);
-      await moveTo(e.node, home, 340); e.node.position.copyFrom(home); e._busy = false;
-    }
-    await wait(220);
-  }
-  function applyToMember(p, dmg) {
-    p.hp = Math.max(0, p.hp - dmg);
-    hitFlash(p.node, '#ff5050'); burst(worldOf(p.node, 0.0), ...FX.hit, 50, 6); floatDamage(p.node, String(dmg), '#ff8a8a', 2.4);
-    if (p.hp <= 0 && p.alive) koMember(p);
-    renderParty(false);
-  }
-  async function koMember(p) {
-    p.alive = false;
-    tween(k => { p.node.rotation.x = k * 1.4; p.node.position.y = p.baseY - k * 0.4; }, 500);
-  }
-
-  // ---- round loop ----
-  function checkEnd() {
-    if (aliveEnemies().length === 0 && !over) { finish(true); return true; }
-    if (aliveParty().length === 0 && !over) { finish(false); return true; }
-    return false;
-  }
-  async function battleLoop() {
-    while (!over) {
-      for (const m of party) {
-        if (over) break;
-        if (!m.alive) continue;
-        m._defend = false;
-        await takeTurn(m);
-        if (checkEnd()) return;
-        await wait(250);
-      }
-      if (over) break;
-      for (const e of enemies) {
-        if (over) break;
-        if (!e.alive) continue;
-        await enemyAct(e);
-        if (checkEnd()) return;
-      }
-    }
-  }
-
-  async function finish(won) {
-    over = true; lockMenu(); activeMember = null; renderParty(false);
-    if (won) { msg('The beach is safe once more!'); }
-    else { msg('The party has fallen...'); }
-    await wait(900);
-    el('endTitle').textContent = won ? 'Victory!' : 'Wiped Out';
-    el('endText').textContent = won
-      ? 'The high seas retreat. Your party stands triumphant on the sand. 🏖️⚓'
-      : 'The tide drags your heroes under. Regroup and try again?';
-    el('end').classList.add('show');
-  }
-
-  // =====================================================================
-  //  BOOT
-  // =====================================================================
-  refresh();
-  el('introParty').textContent = party.map(p => p.name).join(' · ');
-  el('introEnemies').textContent = enemies.map(e => e.name).join(' · ');
-  engine.runRenderLoop(() => scene.render());
-  window.addEventListener('resize', () => engine.resize());
-
-  (async () => {
-    await wait(3000);
-    el('intro').style.display = 'none';
-    msg('The battle begins!');
-    battleLoop();
-  })();
-  </script>
+  <!-- scripts (classic, load order matters) -->
+  <script src="js/audio.js"></script>
+  <script src="js/models.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/progress.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/town.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
