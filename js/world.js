@@ -146,9 +146,6 @@ window.World = (function () {
       if (!locked && V3.Distance(r.node.position, player.position) < 1.7) { startRoamerBattle(r); return; }
     }
 
-    // rare deep-sea ambush — you never know when they'll get ya
-    if (!locked && Game.state.prog.krakenDown !== undefined && Math.random() < 0.00018) { ambush(); return; }
-
     nearGate = null;
     for (const g of gates) { if (V3.Distance(player.position, g.pos) < g.r) { nearGate = g; break; } }
     const prompt = document.getElementById('worldPrompt');

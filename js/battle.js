@@ -16,7 +16,9 @@ window.Battle = (function () {
 
   const FX = { fire:['#ffb347','#ff5e3a'], water:['#5eead4','#3b82f6'], beam:['#a5b4fc','#e0e7ff'], heal:['#6ee7b7','#bbf7d0'], mana:['#60a5fa','#bfdbfe'], hit:['#ff6b6b','#ffd1d1'] };
   const PSPD = { pirate: 11, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12 };
-  const ESPD = { shark: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12 };
+  const ESPD = { shark: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8 };
+  const ELEMCOL = { fire: '#ff7b3a', water: '#5eead4', thunder: '#fde047', earth: '#c2a062', dark: '#b06aff', holy: '#fff0a0', physical: '#dfe7ef' };
+  const fxKey = el => ({ fire: 'fire', water: 'water' })[el] || 'beam';
 
   function M(name, hex, opt = {}) {
     const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene);
@@ -308,16 +310,74 @@ window.Battle = (function () {
   function chooseAlly(prompt, candidates, onPick, onBack) { clearMenu(prompt); msg(prompt); renderParty(true, candidates, p => { renderParty(false); onPick(p); }); backBtn(() => { renderParty(false); onBack(); }); captureNav(); }
   async function act(done, fn) { lockMenu(); clearBanner(); await fn(); refresh(); activeMember = null; renderParty(false); done(); }
 
-  async function doFight(m, target) { msg(`${m.name} strikes ${target.name}!`); await dashAttack(m, target, async () => { if (m.arm) await swing(m.arm); let dmg = rnd(m.fight.min, m.fight.max); const crit = Math.random() < m.fight.crit; if (crit) dmg = Math.round(dmg*1.8); const elem = m.fight.el || 'physical'; if (elem !== 'physical') burst(worldOf(target.node, 0.4), ...(FX[({fire:'fire',water:'water',thunder:'beam',earth:'beam',dark:'beam',holy:'beam'})[elem]] || FX.beam), 40, 6); else if (m.fight.big) burst(worldOf(target.node, 0.4), ...FX.beam, 50, 7); if (crit && window.SFX) SFX.play('crit'); damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff', elem); if (crit) msg('Critical hit! ' + dmg + ' damage!'); }); gainLimit(m, 18); }
+  // ---- attack/spell VFX ----
+  function bladeFlash(m, el) { const col = ELEMCOL[el] || '#dfe7ef'; if (m.arm) hitFlash(m.arm, col, 280); burst(worldOf(m.node, 1.1), col, '#ffffff', 28, 5, -1); }
+  async function meleeAnim(m, target) {
+    const arm = m.arm || m.staffPiv; bladeFlash(m, m.fight.el || 'physical');
+    if (!arm) { await wait(120); return; }
+    const ax = arm.rotation.x, az = arm.rotation.z;
+    switch (m.key) {
+      case 'swordsman': await rotTo(arm, 'x', ax, -2.7, 85); await rotTo(arm, 'x', -2.7, 0.9, 80); await rotTo(arm, 'x', 0.9, ax, 130); break; // heavy overhead cleave
+      case 'blader': await rotTo(arm, 'x', ax, -1.8, 55); await rotTo(arm, 'x', -1.8, 0.5, 50); await rotTo(arm, 'x', 0.5, -1.5, 50); await rotTo(arm, 'x', -1.5, ax, 75); break; // fast double slash
+      case 'pirate': rotTo(arm, 'z', az, -0.9, 80); await rotTo(arm, 'x', ax, -1.7, 80); await rotTo(arm, 'x', -1.7, ax, 100); arm.rotation.z = az; break; // diagonal slash
+      case 'dragoon': await rotTo(arm, 'x', ax, -0.5, 55); await rotTo(arm, 'x', -0.5, -1.15, 45); await rotTo(arm, 'x', -1.15, ax, 80); break; // harpoon thrust jabs
+      case 'ruffy': await rotTo(arm, 'x', ax, -2.4, 65); await rotTo(arm, 'x', -2.4, -0.2, 55); await rotTo(arm, 'x', -0.2, ax, 85); break; // big rubber punch
+      default: await rotTo(arm, 'x', ax, -1.3, 90); await rotTo(arm, 'x', -1.3, ax, 110); // light swing
+    }
+  }
+  function lightningStrike(node, col) {
+    const p = node.getAbsolutePosition();
+    const bolt = MB.CreateBox('bolt', { width: 0.32, height: 11, depth: 0.32 }, scene); bolt.material = M('boltM', col, { emissive: col }); bolt.position.set(p.x, p.y + 5.2, p.z);
+    burst(worldOf(node, 0.5), col, '#ffffff', 130, 13); shake(1.0); flashScreen('rgba(253,224,71,0.2)'); if (window.SFX) SFX.play('crit');
+    setTimeout(() => bolt.dispose(), 150);
+  }
+  function spellHit(e, elem, col) {
+    if (elem === 'thunder' || elem === 'holy' || elem === 'dark') lightningStrike(e.node, col);
+    else if (elem === 'fire') { burst(worldOf(e.node, 0.4), '#ffd166', '#ff3a1a', 130, 12); flashScreen('rgba(255,140,60,0.16)'); shake(0.7); }
+    else if (elem === 'water') { burst(worldOf(e.node, -0.2), '#9be7ff', '#3b82f6', 120, 13, -3); shake(0.6); }
+    else { burst(worldOf(e.node, 0.4), col, '#ffffff', 100, 11); shake(0.6); }
+    hitFlash(e.node, col, 200);
+  }
+  async function projectile(from, to, col) {
+    const ball = MB.CreateSphere('p', { diameter: 0.5 }, scene); ball.material = M('pm', col, { emissive: col }); ball.position.copyFrom(from);
+    const tr = new BABYLON.ParticleSystem('tr', 80, scene); tr.particleTexture = flare; tr.emitter = ball; tr.minEmitBox = tr.maxEmitBox = new V3(0, 0, 0);
+    tr.color1 = BABYLON.Color4.FromHexString(col + 'ff'); tr.color2 = new BABYLON.Color4(1, 1, 1, 1); tr.colorDead = new BABYLON.Color4(0, 0, 0, 0);
+    tr.minSize = 0.2; tr.maxSize = 0.55; tr.minLifeTime = 0.15; tr.maxLifeTime = 0.35; tr.emitRate = 140; tr.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE; tr.minEmitPower = 0; tr.maxEmitPower = 0.6; tr.start();
+    await moveTo(ball, to, 280); tr.stop(); setTimeout(() => { tr.dispose(); ball.dispose(); }, 450);
+  }
+
+  async function doFight(m, target) {
+    msg(`${m.name} strikes ${target.name}!`);
+    const elem = m.fight.el || 'physical';
+    await dashAttack(m, target, async () => {
+      await meleeAnim(m, target);
+      let dmg = rnd(m.fight.min, m.fight.max); const crit = Math.random() < m.fight.crit; if (crit) dmg = Math.round(dmg * 1.8);
+      burst(worldOf(target.node, 0.4), ...FX[fxKey(elem)], crit ? 70 : 45, crit ? 8 : 6);
+      if (crit && window.SFX) SFX.play('crit');
+      damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff', elem);
+      if (crit) msg('Critical hit! ' + dmg + ' damage!');
+    });
+    gainLimit(m, 18);
+  }
   async function doDefend(m) { msg(`${m.name} braces for impact.`); m._defend = true; await wait(300); }
   async function doSpell(m, s, targets) {
+    const elem = Data.elementOf(s), col = ELEMCOL[elem] || '#a5b4fc';
     if (window.SFX) SFX.play(s.fx === 'fire' ? 'fire' : s.fx === 'water' ? 'water' : s.heal ? 'heal' : 'magic');
     m.mp = Math.max(0, m.mp - s.mp); renderParty(false);
-    if (s.heal) { msg(`${m.name} casts ${s.name}!`); if (m.staffPiv) await rotTo(m.staffPiv, 'z', 0, -0.5, 150).then(() => rotTo(m.staffPiv, 'z', -0.5, 0, 200)); for (const p of targets) healMember(p, rnd(s.min, s.max)); await wait(600); return; }
-    const elem = Data.elementOf(s);
-    if (s.proj || s.fx === 'beam') { msg(`${m.name} unleashes ${s.name}!`); if (m.arm && s.fx === 'beam') swing(m.arm);
-      for (const e of targets) { const ball = MB.CreateSphere('p', { diameter: s.fx === 'beam' ? 0.6 : 0.4 }, scene); ball.material = M('pMat', s.fx === 'beam' ? '#c7d2fe' : '#1c1c1c', { emissive: s.fx === 'beam' ? '#6366f1' : '#000' }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(e.node, -0.2), 300); ball.dispose(); burst(worldOf(e.node, 0.2), ...FX[s.fx], 80, 9); damageEnemy(e, rnd(s.min, s.max), s.fx === 'beam' ? '#a5b4fc' : '#ffd1d1', elem); } gainLimit(m, 18); await wait(380); return; }
-    msg(`${m.name} unleashes ${s.name}!`); for (const e of targets) { burst(worldOf(e.node, 0.4), ...FX[s.fx], 70, 8); hitFlash(e.node, FX[s.fx][0]); damageEnemy(e, rnd(s.min, s.max), s.fx === 'water' ? '#5eead4' : '#a5b4fc', elem); await wait(110); } gainLimit(m, 18); await wait(360);
+    // cast wind-up + charge glow
+    if (m.staffPiv) rotTo(m.staffPiv, 'z', 0, -0.6, 150).then(() => rotTo(m.staffPiv, 'z', -0.6, 0, 260));
+    else if (m.arm) rotTo(m.arm, 'x', m.arm.rotation.x, -1.0, 150).then(() => rotTo(m.arm, 'x', -1.0, m.arm.rotation.x, 260));
+    burst(worldOf(m.node, 0.7), col, '#ffffff', 45, 5, -2); await wait(180);
+    if (s.heal) { msg(`${m.name} casts ${s.name}!`); for (const p of targets) { healMember(p, rnd(s.min, s.max)); burst(worldOf(p.node, 1.4), '#6ee7b7', '#ffffff', 50, 4, -3); } await wait(560); return; }
+    msg(`${m.name} unleashes ${s.name}!`);
+    const single = s.target === 'enemy';
+    for (const e of targets) {
+      if (single && (s.proj || elem === 'fire' || elem === 'water')) await projectile(worldOf(m.node, -0.1), worldOf(e.node, -0.1), col);
+      spellHit(e, elem, col);
+      damageEnemy(e, rnd(s.min, s.max), col, elem);
+      await wait(single ? 160 : 110);
+    }
+    gainLimit(m, 18); await wait(320);
   }
   async function doItem(m, key, it, targets) {
     Game.state.inv[key] = Math.max(0, (Game.state.inv[key] || 0) - 1);
