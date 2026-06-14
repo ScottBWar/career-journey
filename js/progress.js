@@ -7,7 +7,7 @@ window.Progress = (function () {
 
   function freshState() {
     const party = Data.PARTY.map(def => ({
-      key: def.key, level: 1, xp: 0, sp: 0, learned: {}, hpCur: null, mpCur: null,
+      key: def.key, level: 1, xp: 0, sp: 0, learned: {}, hpCur: null, mpCur: null, recruited: !def.temporary,
     }));
     const inv = { potion: 3, hipotion: 0, ether: 1, phoenix: 1, bomb: 1 };
 
@@ -29,14 +29,28 @@ window.Progress = (function () {
       location: { place: 'island', island: 'tidehaven', x: start.spawn.x, z: start.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z },
       islands: { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} } },
       dungeons: {}, shipsSunk: {},
-      prog: { krakenDown: false, finalWin: false },
+      prog: { krakenDown: false, finalWin: false, ruffyGone: false },
       flags: {},
     };
     party.forEach(p => { const d = derived(p, state); p.hpCur = d.maxhp; p.mpCur = d.maxmp; });
     return state;
   }
   const shellById = (state, id) => state.shells.find(s => s.id === id);
-  const activeMembers = (state) => state.active.map(k => state.party.find(p => p.key === k)).filter(Boolean);
+  const activeMembers = (state) => state.active.map(k => state.party.find(p => p.key === k)).filter(p => p && p.recruited !== false);
+
+  // recruit / dismiss a (temporary) party member
+  function recruit(state, key) {
+    const p = state.party.find(m => m.key === key); if (!p) return; p.recruited = true;
+    const d = derived(p, state); if (p.hpCur == null || p.hpCur <= 0) { p.hpCur = d.maxhp; p.mpCur = d.maxmp; }
+    if (!state.active.includes(key) && state.active.length < 3) state.active.push(key);
+    save(state);
+  }
+  function dismiss(state, key) {
+    const p = state.party.find(m => m.key === key); if (p) p.recruited = false;
+    const i = state.active.indexOf(key); if (i >= 0) state.active.splice(i, 1);
+    if (state.active.length === 0) { const first = state.party.find(m => m.recruited); if (first) state.active.push(first.key); }
+    save(state);
+  }
 
   function def(key) { return Data.PARTY.find(p => p.key === key); }
 
@@ -170,8 +184,10 @@ window.Progress = (function () {
     const oldWorld = state.world || {};
     if (!state.prog) state.prog = { krakenDown: !!oldWorld.krakenDown, finalWin: !!oldWorld.finalWin };
     // ensure every roster member exists (new characters added in updates)
+    if (state.prog && state.prog.ruffyGone == null) state.prog.ruffyGone = false;
     if (!state.party) state.party = [];
-    Data.PARTY.forEach(def => { if (!state.party.find(p => p.key === def.key)) state.party.push({ key: def.key, level: 1, xp: 0, sp: 0, learned: {}, hpCur: null, mpCur: null }); });
+    Data.PARTY.forEach(def => { if (!state.party.find(p => p.key === def.key)) state.party.push({ key: def.key, level: 1, xp: 0, sp: 0, learned: {}, hpCur: null, mpCur: null, recruited: !def.temporary }); });
+    state.party.forEach(p => { if (p.recruited === undefined) { const d = Data.PARTY.find(x => x.key === p.key); p.recruited = d ? !d.temporary : true; } });
     if (!state.active || state.active.length !== 3) state.active = ['pirate', 'swordsman', 'healer'];
     if (!state.islands) state.islands = { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} } };
     ['tidehaven', 'dunes', 'spire'].forEach(k => { if (!state.islands[k]) state.islands[k] = { cleared: {} }; });
@@ -335,7 +351,7 @@ window.Progress = (function () {
     const close = document.createElement('button'); close.className = 'pill ghost'; close.textContent = 'Close'; close.onclick = onClose; head.appendChild(close);
     wrap.appendChild(head);
     const grid = document.createElement('div'); grid.className = 'sk-cols';
-    state.party.forEach(p => {
+    state.party.filter(p => p.recruited !== false).forEach(p => {
       const d = derived(p, state); const isActive = state.active.includes(p.key);
       const col = document.createElement('button'); col.className = 'roster-card' + (isActive ? ' on' : '');
       col.innerHTML = `<div class="rc-top"><span class="rc-name">${d.name}</span><span class="rc-tag">${isActive ? 'IN PARTY' : 'Bench'}</span></div>
@@ -388,5 +404,5 @@ window.Progress = (function () {
   }
 
   return { freshState, derived, reward, fullHeal, canLearn, learn, save, load, clear, renderSkillTree, renderGear, renderRoster, renderShipyard,
-           toggleActive, activeMembers, shipStats, equipWeapon, equipShell, unequipSlot, addShell, buyWeapon, pouchShells, def };
+           toggleActive, activeMembers, recruit, dismiss, shipStats, equipWeapon, equipShell, unequipSlot, addShell, buyWeapon, pouchShells, def };
 })();

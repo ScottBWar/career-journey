@@ -30,7 +30,7 @@ window.Sea = (function () {
   function build() {
     engine = Game.engine;
     if (scene) scene.dispose();
-    isles = []; idlers = []; nearIsle = null; t = 0; paused = false;
+    isles = []; idlers = []; foes = []; nearTarget = null; t = 0; paused = false; locked = false;
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.55, 0.78, 0.95); scene.fogDensity = 0.004;
@@ -78,7 +78,7 @@ window.Sea = (function () {
   }
 
   function update() {
-    if (paused) return;
+    if (paused || (window.Game && Game.blocking && Game.blocking())) return;
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
     let mx = 0, mz = 0;
     if (Input.down('KeyW') || Input.down('ArrowUp')) mz += 1;

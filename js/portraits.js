@@ -11,6 +11,7 @@ window.Portraits = (function () {
     mage:      { type: 'mage',      skin: '#caa37a', hair: '#2a2e52', eye: '#ffe066', bg: '#3a3f6b' },
     blader:    { type: 'wanderer',  skin: '#d9a06b', hair: '#e2622a', bg: '#3f7fae' },
     dragoon:   { type: 'dragoon',   skin: '#cf9a78', hair: '#3a2a18', bg: '#9c2f3a' },
+    ruffy:     { type: 'rival',     skin: '#e8b48a', hair: '#161616', eye: '#1a1a1a', bg: '#b8342a' },
     selachoth: { type: 'villain',   skin: '#aebfc8', hair: '#e8eef2', eye: '#ffe08a', bg: '#16181f' },
     kraken:    { type: 'kraken',    skin: '#2f6b54', eye: '#ffe08a', bg: '#0a2018' },
     // elemental mermaids
@@ -82,6 +83,13 @@ window.Portraits = (function () {
         px(5, 8, 1, 1, shade(eye, 0.6)); px(10, 8, 1, 1, shade(eye, 0.6));
         px(6, 11, 4, 1, '#7a8a92'); // cold grin
         px(3, 12, 1, 2, '#1a1d24'); px(12, 12, 1, 2, '#1a1d24'); break;
+      case 'rival':
+        px(4, 3, 8, 3, p.hair); px(3, 4, 1, 2, p.hair); px(12, 4, 1, 2, p.hair); // messy black hair
+        px(2, 3, 12, 1, '#e0b96a'); px(4, 1, 8, 2, '#e8c878'); px(4, 2, 8, 1, '#b8342a'); // straw hat + red band
+        px(6, 8, 1, 1, '#1a1a1a'); px(9, 8, 1, 1, '#1a1a1a'); // eyes
+        px(6, 9, 1, 1, '#c0533a'); // scar under left eye
+        px(5, 11, 6, 1, '#3a2018'); px(6, 11, 4, 1, '#ffffff'); // big toothy grin
+        break;
       case 'mermaid':
         px(2, 2, 2, 12, p.hair); px(12, 2, 2, 12, p.hair); px(4, 1, 8, 3, p.hair); // flowing hair
         px(3, 12, 1, 3, p.hair); px(12, 12, 1, 3, p.hair);

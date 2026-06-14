@@ -91,6 +91,19 @@ window.Data = (function () {
         { id: 'd_dragoon', name: 'Dragoon Spirit', desc: '+40 Max HP', cost: 3, req: 'd_burst', kind: 'stat', stat: { hp: 40 } },
       ],
     },
+    {
+      key: 'ruffy', name: 'Ruffy', role: 'Rubber Rival', model: 'rival', temporary: true,
+      base: { hp: 158, mp: 20, atkMin: 23, atkMax: 33, crit: 0.15, big: true },
+      growth: { hp: 16, mp: 2, atk: 4 },
+      baseAbilities: [ ab('Gum-Gum Pistol', { mp: 8, min: 34, max: 48, target: 'enemy', fx: 'beam', el: 'physical' }) ],
+      tree: [
+        { id: 'r_hp', name: 'Rubber Body', desc: '+30 Max HP', cost: 1, kind: 'stat', stat: { hp: 30 } },
+        { id: 'r_gat', name: 'Gum-Gum Gatling', desc: 'A flurry of fists on all foes', cost: 1, kind: 'ability', ability: ab('Gum-Gum Gatling', { mp: 14, min: 22, max: 32, target: 'all', fx: 'beam', el: 'physical' }) },
+        { id: 'r_atk', name: 'Fighting Spirit', desc: '+5 Attack', cost: 1, req: 'r_hp', kind: 'stat', stat: { atk: 5 } },
+        { id: 'r_bazooka', name: 'Gum-Gum Bazooka', desc: 'A colossal two-fist blow', cost: 2, req: 'r_atk', kind: 'ability', ability: ab('Gum-Gum Bazooka', { mp: 16, min: 56, max: 74, target: 'enemy', fx: 'beam', el: 'physical' }) },
+        { id: 'r_gear', name: 'Gear: Boundman', desc: '+12% Crit', cost: 3, req: 'r_bazooka', kind: 'stat', stat: { crit: 0.12 } },
+      ],
+    },
   ];
 
   const ENEMIES = {
@@ -151,6 +164,11 @@ window.Data = (function () {
       { key: 'iron_lance',   name: 'Iron Lance',   atk: 0, slots: 1, price: 0, desc: 'A sturdy soldier\'s lance.' },
       { key: 'partisan',     name: 'Partisan',     atk: 12, slots: 2, price: 320, desc: '+12 ATK · 2 shell slots' },
       { key: 'dragon_lance', name: 'Dragon Lance', atk: 24, slots: 3, price: 840, desc: '+24 ATK · 3 shell slots' },
+    ],
+    ruffy: [
+      { key: 'worn_gloves',     name: 'Worn Gloves',      atk: 0, slots: 1, price: 0, desc: 'Tattered fingerless gloves.' },
+      { key: 'haki_gauntlets',  name: 'Haki Gauntlets',   atk: 14, slots: 2, price: 360, desc: '+14 ATK · 2 shell slots' },
+      { key: 'conquerors_fists', name: "Conqueror's Fists", atk: 26, slots: 3, price: 880, desc: '+26 ATK · 3 shell slots' },
     ],
   };
 
@@ -223,10 +241,11 @@ window.Data = (function () {
     mage:      { name: 'Ultima',          target: 'all',      fx: 'beam',  el: 'dark',    min: 78, max: 108, flavor: 'unleashes forbidden magic!' },
     blader:    { name: 'Finishing Touch', target: 'all',      fx: 'beam',  el: 'thunder', min: 72, max: 98, flavor: 'cuts the very air!' },
     dragoon:   { name: "Dragon's Wrath",  target: 'enemy',    fx: 'beam',  el: 'earth',   min: 120, max: 168, flavor: 'descends like a meteor!' },
+    ruffy:     { name: 'Gum-Gum King Cobra', target: 'enemy', fx: 'beam',  el: 'physical', min: 130, max: 175, flavor: 'winds up a fist the size of an island!' },
   };
 
   // ---------------- ICONS ----------------
-  const WEAPON_ICON = { pirate: '⚔️', swordsman: '🗡️', healer: '🪄', mage: '✨', blader: '🌀', dragoon: '🔱' };
+  const WEAPON_ICON = { pirate: '⚔️', swordsman: '🗡️', healer: '🪄', mage: '✨', blader: '🌀', dragoon: '🔱', ruffy: '🥊' };
   const weaponIcon = (charKey) => WEAPON_ICON[charKey] || '⚔️';
   const shellIcon = (sh) => (sh.kind === 'magic' ? '🔮' : '🛡️');
 
@@ -456,32 +475,57 @@ window.Data = (function () {
   // each beat: { name, text }
   const STORY = {
     opening: [
-      { name: 'Narrator', text: 'For a thousand years the coast of Saltmere knew only gentle tides and golden mornings...' },
-      { name: 'Narrator', text: 'Then the sea turned against the land. Beasts crawled from the foam. The horizon went grey.' },
-      { name: 'Narrator', text: 'They speak of one who walks the line between man and shark — SELACHOTH, the One-Finned Angel. He means to drown the warm world and remake it beneath the waves.' },
-      { name: 'Capt. Redbeard', text: 'Three of us answered the call. A pirate with a grudge...' },
-      { name: 'Marina', text: '...a priestess of the tides, sworn to hold back the dark...' },
-      { name: 'Lance Strider', text: '...and me. I have a score to settle with him. Let\'s move.' },
-      { name: 'Narrator', text: 'Slay his guardian, the Kraken, to open the road to his spire. Grow strong. The tide is rising.' },
+      { name: 'Narrator', text: 'For a thousand years the coast of Saltmere knew only gentle tides and golden mornings. The Free Seas were a promise: that anyone, from any shore, could chase a horizon and call it home.' },
+      { name: 'Narrator', text: 'Then the sea began to RISE. Not in a day — in a slow, drowning patience. Beaches vanished. Beasts crawled from the foam. And the people learned a name to be afraid of.' },
+      { name: 'Narrator', text: 'SELACHOTH. The One-Finned Angel. Once the greatest hero the Free Seas ever produced — now half-man, half-shark, and wholly convinced that a warm world of the living is a mistake the ocean must correct.' },
+      { name: 'Lance Strider', text: 'He was my mentor. I watched the sea take him piece by piece, and I told myself a hero couldn\'t fall. I was wrong. So I\'ll be the one to put him down.' },
+      { name: 'Marina', text: 'And I am sworn to the tides themselves. They weep under his hand. I\'ll not let the deep be turned into a tomb.' },
+      { name: 'Capt. Redbeard', text: 'Bah — speeches. I just want my coast back, and my grog dry. Whatever crew we cobble together, we sail at dawn.' },
+      { name: 'Narrator', text: 'But the road east is long, and you will not walk it alone. Some who join you chase glory, some chase ghosts — and one chases a dream so bright it will cost him everything.' },
+    ],
+    ruffyJoin: [
+      { name: '???', text: 'SHISHISHI! You lot look like you\'re off to do something STUPID and HEROIC. I LOVE stupid and heroic!' },
+      { name: 'Ruffy', text: 'Name\'s Ruffy! Rubber-man, future King of the Free Seas! That title\'s MINE — but a drowned ocean\'s got no king, so I guess I gotta help you save it first.' },
+      { name: 'Lance Strider', text: 'We\'re not running a circus, kid.' },
+      { name: 'Ruffy', text: 'Good, \'cause I\'m not funny, I\'m STRONG! Gum-Gum—! ...okay watch THIS later. I\'m coming with you. RIVALS gotta keep an eye on each other, yeah?' },
+      { name: 'Narrator', text: 'Ruffy the Rubber Rival joins your party! (Manage your active crew with the PARTY menu — press T.) He fights, levels, and grows just like the rest — for as long as he stays.' },
     ],
     krakenFall: [
-      { name: 'Narrator', text: 'The Kraken sinks beneath a ring of foam. Far to the east, a black spire stops glowing red — and turns cold and silver.' },
-      { name: 'Lance Strider', text: 'The guardian\'s down. The path to Selachoth is open.' },
-      { name: 'Marina', text: 'I feel him now... the sea itself recoils from his name. Are you ready, Lance?' },
-      { name: 'Lance Strider', text: 'I\'ve been ready for years. Let\'s end this.' },
+      { name: 'Narrator', text: 'The Kraken sinks beneath a ring of foam. Far to the east, the black spire stops glowing red — and turns cold, and silver, and patient.' },
+      { name: 'Lance Strider', text: 'The guardian\'s down. The road to Selachoth is open.' },
+      { name: 'Marina', text: 'I can feel him now... the sea recoils from his very name. But there\'s something else. A grief under the malice. He doesn\'t hate the world. He thinks he\'s SAVING it.' },
+      { name: 'Selachoth', text: '(A voice rides the wind from the spire.) "...Impressive. You killed my pet. Come, then, little tide-runners. Let me show you mercy the world never showed me."' },
+    ],
+    ruffyLeave: [
+      { name: 'Ruffy', text: 'Hey — before you charge the scary shark guy. I gotta go.' },
+      { name: 'Capt. Redbeard', text: 'Go? Now?!' },
+      { name: 'Ruffy', text: 'There\'s people trapped on the drowning isles south of here. My crew\'s out there too. A king doesn\'t leave his people under water, y\'know? I\'ll catch up. PROMISE.' },
+      { name: 'Lance Strider', text: '...Go. We\'ll hold the line. Don\'t you dare break that promise.' },
+      { name: 'Narrator', text: 'Ruffy leaves the party to save the drowning isles. (He\'s no longer available — but a promise is a promise.)' },
     ],
     selachothPre: [
-      { name: 'Selachoth', text: 'So. The little tide-runners reach my spire at last.' },
-      { name: 'Selachoth', text: 'I was a hero once, like you. I bled for a world that thanked me with rust and ruin. So I returned to the sea — and the sea made me perfect.' },
-      { name: 'Lance Strider', text: 'You were my mentor. You taught me to hold a blade. And you threw it all into the abyss.' },
-      { name: 'Selachoth', text: 'I ascended, Lance. Soon every shore will be a reef, every breath a tide. Kneel, and I will let you drown gently.' },
-      { name: 'Lance Strider', text: 'Not today. Not ever. Crew — on me!' },
+      { name: 'Selachoth', text: 'So. You climb my spire on legs the sea will soon reclaim. Lance. You grew. ...Good.' },
+      { name: 'Lance Strider', text: 'You taught me everything. Then you taught me what it looks like when a hero stops believing people are worth saving.' },
+      { name: 'Selachoth', text: 'Because they AREN\'T, boy. I gave them everything and they drowned me in their wars regardless. The ocean is honest. The ocean is CLEAN. I will give the whole world that peace.' },
+      { name: 'Marina', text: 'That isn\'t peace. That\'s a grave with no one left to grieve it.' },
+      { name: 'Selachoth', text: 'Then grieve now. The tide above this spire is a thousand fathoms high, and I have only to let it FALL.' },
+    ],
+    ruffySacrifice: [
+      { name: 'Ruffy', text: 'OI! SHARK-FOR-BRAINS!' },
+      { name: 'Capt. Redbeard', text: 'Ruffy?! You kept the promise—' },
+      { name: 'Ruffy', text: 'Told ya I\'d catch up! Saved the isles, too. SHISHI—!' },
+      { name: 'Selachoth', text: 'The wave falls NOW. Drown, all of you.' },
+      { name: 'Ruffy', text: 'Not them. GUM-GUM... CANOPY!' },
+      { name: 'Narrator', text: 'Ruffy stretches his rubber body into an impossible dome, catching a wall of ocean meant to erase the whole party. He holds. And holds. The sea screams against him.' },
+      { name: 'Ruffy', text: '(grinning, straining) "Go... finish it. A king\'s gotta... give his people a horizon... even if he doesn\'t... get to sail it. ...Become somebody worth the title, yeah?"' },
+      { name: 'Narrator', text: 'The wave breaks. Ruffy is gone beneath it — but the party stands, unbroken, fire in their eyes. (The crew fights on, emboldened: full HP/MP and limit gauges, in his memory.)' },
     ],
     selachothFall: [
-      { name: 'Selachoth', text: 'Impossible... the warm world... still... clings to its shore...' },
-      { name: 'Lance Strider', text: 'It clings because people fight for it. Something you forgot.' },
-      { name: 'Selachoth', text: 'Then remember me... as the tide that almost... turned...' },
-      { name: 'Narrator', text: 'The One-Finned Angel dissolves into seafoam. The horizon warms. The morning, at last, is gold again.' },
+      { name: 'Selachoth', text: 'Impossible... the warm world... still clings to its shore...' },
+      { name: 'Lance Strider', text: 'It clings because people fight for it. Because a kid just gave his whole dream so we could stand here. THAT\'s the thing you forgot.' },
+      { name: 'Selachoth', text: '...Perhaps. Perhaps I should have... let the morning... in.' },
+      { name: 'Marina', text: 'Rest now, old hero. The tide will carry you somewhere gentler than what you became.' },
+      { name: 'Narrator', text: 'The One-Finned Angel dissolves into seafoam. The horizon warms. And somewhere, the people of a hundred saved islands raise a cheer for a rubber-limbed king who never wore a crown.' },
     ],
   };
 

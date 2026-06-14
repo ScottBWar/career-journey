@@ -106,7 +106,7 @@ window.World = (function () {
   }
 
   function update() {
-    if (paused) return;
+    if (paused || (window.Game && Game.blocking && Game.blocking())) return;
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
     let mx = 0, mz = 0;
     if (Input.down('KeyW') || Input.down('ArrowUp')) mz += 1;
@@ -161,13 +161,14 @@ window.World = (function () {
     });
   }
 
-  function fightBoss(enemies, onWin) {
+  function fightBoss(enemies, opts, onWin) {
     locked = true; paused = true; Music.play('battle');
-    Game.startBattle(enemies, { boss: true }, (res) => {
+    Game.startBattle(enemies, Object.assign({ boss: true }, opts || {}), (res) => {
       paused = false; locked = false; Game.resumeIsland();
       if (res.won) onWin(); else { player.position.z -= 4; Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
     });
   }
+  const ruffyHere = () => { const r = Game.state.party.find(p => p.key === 'ruffy'); return r && r.recruited; };
 
   function interact() {
     if (paused || locked || !nearGate) return;
@@ -180,9 +181,20 @@ window.World = (function () {
     if (g.kind === 'boss') {
       if (Game.state.prog.finalWin) return Game.toast('Selachoth is no more. The tide is yours.');
       if (!Game.state.prog.krakenDown) {
-        Game.confirm('Enter the Maw and challenge the KRAKEN, guardian of the spire?', () => fightBoss(['kraken'], () => { Game.state.prog.krakenDown = true; Progress.save(Game.state); Game.startCutscene('krakenFall', () => Game.toast('The spire glows cold. Return to confront Selachoth.')); }));
+        Game.confirm('Enter the Maw and challenge the KRAKEN, guardian of the spire?', () => fightBoss(['kraken'], {}, () => {
+          Game.state.prog.krakenDown = true; Progress.save(Game.state);
+          Game.startCutscene('krakenFall', () => {
+            if (ruffyHere()) Game.startCutscene('ruffyLeave', () => { Progress.dismiss(Game.state, 'ruffy'); Progress.save(Game.state); Game.toast('The spire glows cold. Return to confront Selachoth.'); });
+            else Game.toast('The spire glows cold. Return to confront Selachoth.');
+          });
+        }));
       } else {
-        Game.startCutscene('selachothPre', () => fightBoss(['selachoth'], () => { Game.state.prog.finalWin = true; Progress.save(Game.state); Game.startCutscene('selachothFall', () => Game.finalEnding()); }));
+        Game.startCutscene('selachothPre', () => {
+          const goFight = () => fightBoss(['selachoth'], { fullLimit: true }, () => { Game.state.prog.finalWin = true; Progress.save(Game.state); Game.startCutscene('selachothFall', () => Game.finalEnding()); });
+          if (!Game.state.prog.ruffyGone) {
+            Game.startCutscene('ruffySacrifice', () => { Game.state.prog.ruffyGone = true; Progress.dismiss(Game.state, 'ruffy'); Progress.fullHeal(Game.state); Progress.save(Game.state); goFight(); });
+          } else goFight();
+        });
       }
     }
   }

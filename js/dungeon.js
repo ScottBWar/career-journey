@@ -65,7 +65,7 @@ window.Dungeon = (function () {
   function setLit(c, on) { c.gem.material.emissiveColor = on ? Color3.FromHexString('#ffffff') : c.baseEmis; c.node.scaling.setAll(on ? 1.25 : 1); }
 
   function update() {
-    if (paused) return;
+    if (paused || (window.Game && Game.blocking && Game.blocking())) return;
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
     let mx = 0, mz = 0;
     if (Input.down('KeyW') || Input.down('ArrowUp')) mz += 1;

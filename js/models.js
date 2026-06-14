@@ -289,6 +289,29 @@ window.Models = (function () {
     at(MB.CreateSphere('hair', { diameter: 0.6, slice: 0.55 }, scene), r, hair, 0, 2.18, 0);
     return { node: r, idle(t) { r.position.y = (r._baseY || 0) + Math.sin(t * 2 + (r._ph || 0)) * 0.04; } };
   }
+  function rival() { // "Ruffy" — straw-hat rubber pirate (Luffy homage)
+    const r = new BABYLON.TransformNode('rival', scene);
+    const skin = M('rvSkin', '#e8b48a'), vest = M('rvVest', '#c2332a'), shorts = M('rvShorts', '#2f5aa0'),
+          hair = M('rvHair', '#161616'), straw = M('rvStraw', '#e0b96a'), band = M('rvBand', '#b8342a');
+    at(MB.CreateCylinder('lL', { height: 1.0, diameter: 0.3 }, scene), r, shorts, -0.22, 0.5, 0);
+    at(MB.CreateCylinder('lR', { height: 1.0, diameter: 0.3 }, scene), r, shorts, 0.22, 0.5, 0);
+    at(MB.CreateBox('torso', { width: 0.82, height: 1.0, depth: 0.48 }, scene), r, skin, 0, 1.5, 0); // open vest = bare chest
+    at(MB.CreateBox('vestL', { width: 0.18, height: 1.0, depth: 0.5 }, scene), r, vest, -0.34, 1.5, 0);
+    at(MB.CreateBox('vestR', { width: 0.18, height: 1.0, depth: 0.5 }, scene), r, vest, 0.34, 1.5, 0);
+    at(MB.CreateBox('sash', { width: 0.86, height: 0.18, depth: 0.5 }, scene), r, band, 0, 1.05, 0);
+    at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.26 }, scene), r, skin, -0.56, 1.5, 0).rotation.z = 0.25;
+    const arm = new BABYLON.TransformNode('rvArm', scene); arm.parent = r; arm.position.set(0.56, 1.9, 0);
+    at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.26 }, scene), arm, skin, 0, -0.45, 0);
+    at(MB.CreateSphere('fist', { diameter: 0.42 }, scene), arm, skin, 0, -0.95, 0); // big fist
+    at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.35, 0);
+    at(MB.CreateSphere('hair', { diameter: 0.64, slice: 0.55 }, scene), r, hair, 0, 2.42, 0);
+    // straw hat slung back
+    const brim = at(MB.CreateCylinder('brim', { height: 0.08, diameter: 1.0 }, scene), r, straw, 0, 2.55, -0.25); brim.rotation.x = 0.5;
+    at(MB.CreateCylinder('dome', { height: 0.3, diameter: 0.6 }, scene), r, straw, 0, 2.62, -0.32).rotation.x = 0.5;
+    at(MB.CreateTorus('hatband', { diameter: 0.62, thickness: 0.06, tessellation: 16 }, scene), r, band, 0, 2.6, -0.3).rotation.x = 0.5 + Math.PI/2;
+    return { node: r, arm };
+  }
+
   function mermaid(hairHex, tailHex) {
     const r = new BABYLON.TransformNode('mermaid', scene);
     const skin = M('mmSkin', '#e8c0a0'), hair = M('mmHair', hairHex || '#3fd0e0', { emissive: '#1a1a1a' }),
@@ -387,6 +410,6 @@ window.Models = (function () {
   }
   function pillar() { const r = new BABYLON.TransformNode('pillar', scene); at(MB.CreateCylinder('p', { height: 4, diameter: 1.0, tessellation: 8 }, scene), r, M('pil', '#5a5266'), 0, 2, 0); return { node: r }; }
 
-  return { use, M, at, pirate, swordsman, healer, mage, blader, dragoon, mermaid, hero, npc, tree, palm, rock, house, sign, portal, roamer,
+  return { use, M, at, pirate, swordsman, healer, mage, blader, dragoon, rival, mermaid, hero, npc, tree, palm, rock, house, sign, portal, roamer,
            crystal, chest, pillar, enemy: (key) => ENEMY_BUILDERS[key](), ENEMY_BUILDERS };
 })();

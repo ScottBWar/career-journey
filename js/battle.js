@@ -57,7 +57,7 @@ window.Battle = (function () {
       const hp = clamp(ms.hpCur == null ? d.maxhp : ms.hpCur, 0, d.maxhp);
       const mp = clamp(ms.mpCur == null ? d.maxmp : ms.mpCur, 0, d.maxmp);
       party.push({ side:'party', ref: ms, key: ms.key, name: d.name, role: d.role, node: built.node, arm: built.arm, staffPiv: built.staffPiv,
-        maxhp: d.maxhp, hp, maxmp: d.maxmp, mp, home, baseY: 0, phase: i*1.3, alive: hp > 0, _busy: false, limit: 0,
+        maxhp: d.maxhp, hp, maxmp: d.maxmp, mp, home, baseY: 0, phase: i*1.3, alive: hp > 0, _busy: false, limit: (opts && opts.fullLimit) ? 100 : 0,
         idle: built.idle, fight: d.fight, abilities: d.abilities });
     });
 

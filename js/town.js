@@ -61,7 +61,7 @@ window.Town = (function () {
   }
 
   function update() {
-    if (paused) return;
+    if (paused || (window.Game && Game.blocking && Game.blocking())) return;
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
     let mx = 0, mz = 0;
     if (Input.down('KeyW') || Input.down('ArrowUp')) mz += 1;

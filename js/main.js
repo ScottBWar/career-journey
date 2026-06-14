@@ -36,7 +36,10 @@ window.Game = (function () {
     else toIsland(Game.state.location.island || 'tidehaven', false);
     if (!Game.state.flags.seenOpening) {
       Game.state.flags.seenOpening = true; Progress.save(Game.state);
-      Game.cutscene(Data.STORY.opening, () => Game.toast('WASD/arrows to move. Walk into glowing markers. M=Skills · G=Gear · T=Party.'));
+      Game.cutscene(Data.STORY.opening, () => Game.cutscene(Data.STORY.ruffyJoin, () => {
+        Progress.recruit(Game.state, 'ruffy'); Progress.save(Game.state);
+        Game.toast('WASD/arrows to move. Walk into glowing markers. M=Skills · G=Gear · T=Party.');
+      }));
     } else {
       Game.toast('WASD/arrows to move. M=Skills · G=Gear · T=Party. Board the ship to sail between islands.');
     }
@@ -102,10 +105,9 @@ window.Game = (function () {
   };
 
   // ---------- dialogue ----------
-  const NAME2PORT = { 'Capt. Redbeard': 'pirate', 'Lance Strider': 'swordsman', 'Marina': 'healer', 'Pip': 'mage', 'Ridge': 'blader', 'Brann': 'dragoon', 'Selachoth': 'selachoth' };
+  const NAME2PORT = { 'Capt. Redbeard': 'pirate', 'Lance Strider': 'swordsman', 'Marina': 'healer', 'Pip': 'mage', 'Ridge': 'blader', 'Brann': 'dragoon', 'Selachoth': 'selachoth', 'Ruffy': 'ruffy' };
   function dlgPortrait(name) { const k = NAME2PORT[name]; el('dlgPortrait').innerHTML = (k && Portraits.has(k)) ? Portraits.img(k) : ''; }
   Game.talk = function (npc) {
-    pauseExplore();
     const lines = npc.lines.slice(); let i = 0;
     Game.dialogueOpen = true; el('dialogue').classList.add('show'); dlgPortrait(npc.name);
     function show() {
@@ -114,7 +116,7 @@ window.Game = (function () {
     }
     Game._advanceDlg = () => {
       if (i < lines.length - 1) { i++; show(); }
-      else { closeDialogue(); if (npc.service === 'inn') openInn(); else if (npc.service === 'shop') openShop(); else resumeExplore(); }
+      else { closeDialogue(); if (npc.service === 'inn') openInn(); else if (npc.service === 'shop') openShop(); }
     };
     el('dlgNext').onclick = Game._advanceDlg;
     show();
@@ -122,11 +124,13 @@ window.Game = (function () {
   function closeDialogue() { Game.dialogueOpen = false; el('dialogue').classList.remove('show'); }
 
   // ---------- cutscenes (story beats) ----------
+  // Cutscenes/dialogue gate movement via Game.blocking() (dialogueOpen), so
+  // they never need to touch the explore pause flag — avoids stuck states
+  // when beats are chained.
   Game.cutscene = function (beats, onDone) {
-    pauseExplore();
     let i = 0; Game.dialogueOpen = true; el('dialogue').classList.add('show');
     function show() { el('dlgName').textContent = beats[i].name; el('dlgText').textContent = beats[i].text; dlgPortrait(beats[i].name); el('dlgNext').textContent = i < beats.length - 1 ? 'Next ▶' : 'Continue'; }
-    Game._advanceDlg = () => { if (i < beats.length - 1) { i++; show(); } else { closeDialogue(); Game._advanceDlg = null; if (onDone) onDone(); else resumeExplore(); } };
+    Game._advanceDlg = () => { if (i < beats.length - 1) { i++; show(); } else { closeDialogue(); Game._advanceDlg = null; if (onDone) onDone(); } };
     el('dlgNext').onclick = Game._advanceDlg;
     show();
   };
@@ -284,6 +288,7 @@ window.Game = (function () {
     el('worldPrompt').onclick = () => { if (Game.active) Game.active.interact && Game.active.interact(); };
   }
   function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.datingOpen || Game.shopOpen || Game.confirmOpen || el('shellHunt').classList.contains('show') || el('end').classList.contains('show'); }
+  Game.blocking = function () { return Game.dialogueOpen || anyModal(); };
   function route(code) {
     if (el('shellHunt').classList.contains('show')) return; // minigame handles its own input
     if (Game.datingOpen) return; // dating handles its own buttons
