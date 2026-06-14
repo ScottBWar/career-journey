@@ -21,7 +21,7 @@ window.Render = (function () {
     c.fillStyle = g; c.fillRect(0, 0, 8, 256); dt.update();
     const m = new BABYLON.StandardMaterial('skyM', scene); m.backFaceCulling = false; m.disableLighting = true;
     m.emissiveTexture = dt; m.diffuseColor = new BABYLON.Color3(0, 0, 0); m.specularColor = new BABYLON.Color3(0, 0, 0);
-    const dome = BABYLON.MeshBuilder.CreateSphere('skybox', { diameter: 900, segments: 16, sideOrientation: BABYLON.Mesh.BACKSIDE }, scene);
+    const dome = BABYLON.MeshBuilder.CreateSphere('skybox', { diameter: 1400, segments: 40, sideOrientation: BABYLON.Mesh.BACKSIDE }, scene);
     dome.material = m; dome.infiniteDistance = true; dome.isPickable = false; dome.applyFog = false;
     const [r, g2, b] = hexToRgb(horizon); scene.clearColor = new BABYLON.Color4(r / 255, g2 / 255, b / 255, 1);
     if (scene.fogMode !== BABYLON.Scene.FOGMODE_NONE) scene.fogColor = BABYLON.Color3.FromHexString(horizon);

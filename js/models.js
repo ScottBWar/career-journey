@@ -350,8 +350,17 @@ window.Models = (function () {
   }
   function palm() {
     const r = new BABYLON.TransformNode('palm', scene);
-    const trunk = at(MB.CreateCylinder('trunk', { height: 3.2, diameterTop: 0.28, diameterBottom: 0.45 }, scene), r, M('palmTrunk', '#9a6b3a'), 0, 1.6, 0); trunk.rotation.z = 0.12;
-    for (let i = 0; i < 6; i++) { const a = (i/6)*Math.PI*2; const f = at(MB.CreateBox('frond', { width: 1.8, height: 0.08, depth: 0.5 }, scene), r, M('frond', '#2f8d52', { emissive: '#0c2a18' }), Math.cos(a)*0.9, 3.2, Math.sin(a)*0.9); f.rotation.y = a; f.rotation.z = -0.3; }
+    const trunkMat = M('palmTrunk', '#9a6b3a'), frondMat = M('frond', '#2f9d54', { emissive: '#0c2a18' }), coco = M('coco', '#5a3a1e');
+    // gently curved trunk from stacked tapered segments
+    for (let i = 0; i < 4; i++) { const seg = at(MB.CreateCylinder('tr' + i, { height: 0.95, diameterTop: 0.3 - i*0.03, diameterBottom: 0.46 - i*0.03 }, scene), r, trunkMat, Math.sin(i*0.5)*0.25, 0.5 + i*0.85, 0); seg.rotation.z = -0.12 * i * 0.4; }
+    const topX = Math.sin(3*0.5)*0.25, topY = 3.7;
+    // drooping fronds: long thin tapered prisms angled downward
+    for (let i = 0; i < 7; i++) {
+      const a = (i/7)*Math.PI*2;
+      const f = at(MB.CreateCylinder('frond' + i, { height: 1.9, diameterTop: 0.04, diameterBottom: 0.34, tessellation: 4 }, scene), r, frondMat, topX + Math.cos(a)*0.7, topY + 0.2, Math.sin(a)*0.7);
+      f.rotation.z = Math.cos(a) * 1.15; f.rotation.x = -Math.sin(a) * 1.15; f.scaling.x = 0.35; // flatten into a leaf
+    }
+    [[0.18,-0.1],[-0.15,0.16],[0.05,0.2]].forEach(([cx,cz]) => at(MB.CreateSphere('coco', { diameter: 0.26 }, scene), r, coco, topX+cx, topY-0.15, cz));
     return { node: r };
   }
   function rock() {

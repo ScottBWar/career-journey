@@ -238,7 +238,7 @@ window.Progress = (function () {
       const memo = {}; const tiers = {};
       tree.forEach(n => { const t = tierOf(tree, n, memo); (tiers[t] = tiers[t] || []).push(n); });
       const maxTier = Math.max(...Object.keys(tiers).map(Number));
-      const GAP = 116, H = (maxTier + 1) * GAP + 24;
+      const GAP = 148, H = (maxTier + 1) * GAP + 24;
       const posOf = {};
       Object.keys(tiers).forEach(tk => { const arr = tiers[tk]; arr.forEach((n, i) => { posOf[n.id] = { xPct: (i + 0.5) / arr.length * 100, y: Number(tk) * GAP + 40 }; }); });
 
@@ -256,8 +256,7 @@ window.Progress = (function () {
         const b = document.createElement('button');
         b.className = 'sk-n ' + (n.kind) + (learned ? ' learned' : affordable ? ' avail' : locked ? ' locked' : '');
         b.style.left = pos.xPct + '%'; b.style.top = pos.y + 'px';
-        b.innerHTML = `<span class="sk-n-ic">${NODE_ICON[n.kind]}</span><span class="sk-n-name">${n.name}</span><span class="sk-n-sub">${learned ? 'Learned' : n.cost + ' SP'}</span>`;
-        b.title = n.desc;
+        b.innerHTML = `<span class="sk-n-ic">${NODE_ICON[n.kind]}</span><span class="sk-n-name">${n.name}</span><span class="sk-n-desc">${n.desc}</span><span class="sk-n-sub">${learned ? '✓ Learned' : n.cost + ' SP'}</span>`;
         b.disabled = learned || !affordable;
         b.onclick = () => { if (learn(state, p, n)) { if (window.SFX) SFX.play('levelup'); renderSkillTree(state, container, onClose); } };
         treeEl.appendChild(b);

@@ -37,7 +37,7 @@ window.Battle = (function () {
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.6, 0.45, 0.45); scene.fogDensity = 0.009;
     Models.use(scene);
 
-    camera = new BABYLON.ArcRotateCamera('cam', -Math.PI/2 - 0.52, 1.03, 25, new V3(0, 1.7, 0), scene);
+    camera = new BABYLON.ArcRotateCamera('cam', -Math.PI/2 - 0.5, 1.14, 16.5, new V3(0, 2.1, 0), scene);
     const hemi = new BABYLON.HemisphericLight('hemi', new V3(0.1, 1, 0.1), scene); hemi.intensity = 0.9; hemi.groundColor = new Color3(0.35, 0.3, 0.25);
     const sun = new BABYLON.DirectionalLight('sun', new V3(-0.5, -1, 0.3), scene); sun.intensity = 1.05; sun.diffuse = new Color3(1, 0.86, 0.72);
 
@@ -45,7 +45,7 @@ window.Battle = (function () {
       const g = c.createRadialGradient(32,32,0,32,32,32); g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.4,'rgba(255,255,255,0.55)'); g.addColorStop(1,'rgba(255,255,255,0)');
       c.fillStyle = g; c.fillRect(0,0,64,64); dt.hasAlpha = true; dt.update(); return dt; })();
 
-    const sand = MB.CreateGround('sand', { width: 80, height: 50 }, scene); sand.material = M('sandMat', '#e7c890', { spec: 0.05 }); sand.position.z = 4;
+    const sand = MB.CreateGround('sand', { width: 46, height: 30 }, scene); sand.material = M('sandMat', '#d8b878', { spec: 0.05 }); sand.position.z = 2;
     ocean = MB.CreateGround('ocean', { width: 200, height: 120, subdivisions: 36 }, scene);
     ocean.material = M('oceanMat', '#15486b', { spec: 0.9, specPower: 64, emissive: '#0a2740' }); ocean.position.set(0, -0.15, -28);
     oceanBase = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind).slice();
@@ -88,7 +88,7 @@ window.Battle = (function () {
 
     scene.onBeforeRenderObservable.add(() => {
       const dt = engine.getDeltaTime() / 1000; t += dt;
-      camera.alpha = -Math.PI/2 - 0.52 + Math.sin(t*0.22)*0.04;
+      camera.alpha = -Math.PI/2 - 0.5 + Math.sin(t*0.22)*0.04;
       for (const a of actors) { if (!a.alive || a._busy) continue; a.node.position.y = a.baseY + Math.sin(t*1.5 + a.phase)*0.05; if (a.idle) a.idle(t); }
       const pos = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind);
       for (let i = 0; i < pos.length; i += 3) { const x = oceanBase[i], z = oceanBase[i+2]; pos[i+1] = Math.sin(x*0.25 + t*1.3)*0.35 + Math.cos(z*0.3 + t*1.0)*0.35; }
@@ -303,12 +303,14 @@ window.Battle = (function () {
   }
   function renderTurnBar() {
     const bar = el('turnbar'); if (!bar) return;
-    const order = previewOrder(8);
-    bar.innerHTML = '<span class="tb-label">NEXT ▸</span>' + order.map((a, i) => {
+    const order = previewOrder(6);
+    bar.innerHTML = '<span class="tb-label">NEXT</span>' + order.map((a, i) => {
       const cur = i === 0 ? ' cur' : '';
-      if (a.side === 'party') return `<div class="tb-item party${cur}" title="${a.name}">${Portraits.img(a.key, 'tb-port')}</div>`;
-      const por = Portraits.has(a.keyRaw) ? Portraits.img(a.keyRaw, 'tb-port') : `<span class="tb-chip" style="background:${enemyChip(a.keyRaw)}">${a.name[0]}</span>`;
-      return `<div class="tb-item enemy${cur}" title="${a.name}">${por}</div>`;
+      const url = a.side === 'party' ? Portraits.url(a.key) : (Portraits.has(a.keyRaw) ? Portraits.url(a.keyRaw) : null);
+      const inner = url
+        ? `<img src="${url}" style="width:100%;height:100%;display:block;image-rendering:pixelated;">`
+        : `<span style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-weight:700;color:#0a0a18;background:${enemyChip(a.keyRaw)}">${a.name[0]}</span>`;
+      return `<div class="tb-item${cur}" style="width:34px;height:34px;border-radius:7px;overflow:hidden;flex:0 0 auto;">${inner}</div>`;
     }).join('');
   }
   function enemyChip(k) { return ({ shark:'#6f7f8c', crab:'#e0573a', jelly:'#d98cff', octo:'#a05bd6', gull:'#cdd6e0', golem:'#d9b779' })[k] || '#ff6b6b'; }

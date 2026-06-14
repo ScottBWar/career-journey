@@ -25,7 +25,14 @@
     .pill:hover:not(:disabled) { transform: translateY(-2px); }
     .pill:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .panel { background: linear-gradient(180deg, rgba(20,16,60,0.92), rgba(12,10,36,0.94)); border: 1px solid rgba(255,255,255,0.26); border-radius: 14px; box-shadow: 0 14px 40px rgba(0,0,0,0.5); }
+    .panel { background: linear-gradient(180deg, rgba(16,32,82,0.94), rgba(8,16,48,0.96)); border: 1px solid rgba(150,185,255,0.55); border-radius: 12px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 1px rgba(20,40,90,0.8), 0 14px 44px rgba(0,0,0,0.55); }
+    /* FF-style windows: crisp light-blue frame + inner highlight */
+    .menu, .eplate, .pmember, .hud-m, #hudGold, .enemy-plate, #bActive, #shipMsg, #turnbar {
+      border-color: rgba(150,185,255,0.5) !important;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07), 0 8px 26px rgba(0,0,0,0.5) !important;
+    }
+    .menu .title, .sk-head h2, #shop h2, .sk-name, .date-name { color: #ffe6a6 !important; }
+    .menu .cmd .cmd-label { font-size: 0.92rem; font-weight: 700; letter-spacing: 0.02em; }
 
     .back-link { position: fixed; top: 0.6rem; right: 0.8rem; z-index: 20; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.78rem; }
     .back-link:hover { color: #fff; }
@@ -41,7 +48,7 @@
     #worldHUD { position: fixed; left: 0; right: 0; top: 0; z-index: 10; display: none; justify-content: space-between; align-items: flex-start; padding: 0.7rem 0.9rem; pointer-events: none; }
     body.mode-island #worldHUD, body.mode-sea #worldHUD, body.mode-town #worldHUD, body.mode-dungeon #worldHUD { display: flex; }
     #hudParty { display: flex; gap: 0.5rem; pointer-events: auto; }
-    .hud-m { display: flex; gap: 0.45rem; align-items: center; background: rgba(12,10,36,0.82); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 0.4rem 0.55rem; min-width: 150px; }
+    .hud-m { display: flex; gap: 0.45rem; align-items: center; background: rgba(8,16,48,0.82); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 0.4rem 0.55rem; min-width: 150px; }
     .hud-m.ko { opacity: 0.45; }
     .hud-port { width: 34px; height: 34px; flex: 0 0 auto; }
     .hud-info { flex: 1; min-width: 88px; }
@@ -52,9 +59,9 @@
     .hud-bar.php > i { background: linear-gradient(90deg, #34d399, #6ee7b7); }
     .hud-bar.mp > i { background: linear-gradient(90deg, #60a5fa, #93c5fd); }
     .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; pointer-events: auto; }
-    #hudGold { background: rgba(12,10,36,0.8); border: 1px solid rgba(255,255,255,0.2); border-radius: 9px; padding: 0.4rem 0.7rem; font-weight: 700; font-size: 0.85rem; color: #fde68a; }
+    #hudGold { background: rgba(8,16,48,0.8); border: 1px solid rgba(255,255,255,0.2); border-radius: 9px; padding: 0.4rem 0.7rem; font-weight: 700; font-size: 0.85rem; color: #fde68a; }
     .hud-btns { display: flex; gap: 0.4rem; }
-    .hud-btn { font: inherit; font-weight: 700; font-size: 0.8rem; padding: 0.45rem 0.8rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.25); background: rgba(12,10,36,0.8); color: #fff; cursor: pointer; }
+    .hud-btn { font: inherit; font-weight: 700; font-size: 0.8rem; padding: 0.45rem 0.8rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.25); background: rgba(8,16,48,0.8); color: #fff; cursor: pointer; }
     .hud-btn:hover { background: rgba(129,140,248,0.4); }
 
     #worldPrompt { position: fixed; left: 50%; bottom: 8%; transform: translateX(-50%); z-index: 11; display: none; padding: 0.6rem 1.4rem; background: rgba(8,6,24,0.82); border: 1px solid rgba(252,211,77,0.6); border-radius: 999px; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
@@ -64,7 +71,7 @@
     #battleUI { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; justify-content: space-between; padding: clamp(0.6rem,1.6vw,1.3rem); pointer-events: none; }
     body.mode-battle #battleUI { display: flex; }
     .enemies { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; pointer-events: auto; }
-    .eplate { min-width: 160px; max-width: 240px; flex: 1 1 170px; background: linear-gradient(180deg, rgba(20,16,60,0.85), rgba(12,10,36,0.85)); border: 1px solid rgba(255,255,255,0.22); border-radius: 10px; padding: 0.5rem 0.7rem; box-shadow: 0 8px 24px rgba(0,0,0,0.45); transition: opacity 0.4s, transform 0.2s; }
+    .eplate { min-width: 160px; max-width: 240px; flex: 1 1 170px; background: linear-gradient(180deg, rgba(16,32,82,0.85), rgba(8,16,48,0.85)); border: 1px solid rgba(255,255,255,0.22); border-radius: 10px; padding: 0.5rem 0.7rem; box-shadow: 0 8px 24px rgba(0,0,0,0.45); transition: opacity 0.4s, transform 0.2s; }
     .eplate.dead { opacity: 0.3; }
     .eplate.targetable { cursor: pointer; }
     .eplate.targetable:hover { transform: translateY(-3px); border-color: #fcd34d; box-shadow: 0 8px 28px rgba(252,211,77,0.4); }
@@ -78,7 +85,7 @@
     .bar.mp > i { background: linear-gradient(90deg, #60a5fa, #93c5fd); }
     .bottom { display: flex; gap: 0.8rem; align-items: flex-end; justify-content: space-between; }
     .party { pointer-events: auto; display: flex; flex-direction: column; gap: 0.4rem; min-width: 240px; max-width: 330px; flex: 1; }
-    .pmember { background: linear-gradient(180deg, rgba(20,16,60,0.88), rgba(12,10,36,0.9)); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 0.45rem 0.7rem; box-shadow: 0 8px 24px rgba(0,0,0,0.45); transition: border-color 0.2s, transform 0.15s; }
+    .pmember { background: linear-gradient(180deg, rgba(16,32,82,0.88), rgba(8,16,48,0.9)); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 0.45rem 0.7rem; box-shadow: 0 8px 24px rgba(0,0,0,0.45); transition: border-color 0.2s, transform 0.15s; }
     .pmember.active { border-color: #fcd34d; box-shadow: 0 0 0 1px #fcd34d, 0 8px 28px rgba(252,211,77,0.35); transform: translateX(6px); }
     .pmember.dead { opacity: 0.4; }
     .pmember.targetable { cursor: pointer; }
@@ -88,7 +95,7 @@
     .pmember .role { font-size: 0.62rem; color: rgba(255,255,255,0.5); letter-spacing: 0.1em; text-transform: uppercase; }
     .pmember .nums { font-size: 0.64rem; color: rgba(255,255,255,0.6); }
     .twobar { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; align-items: center; }
-    .menu { pointer-events: auto; width: min(280px, 44vw); background: linear-gradient(180deg, rgba(20,16,60,0.92), rgba(12,10,36,0.94)); border: 1px solid rgba(255,255,255,0.26); border-radius: 12px; padding: 0.45rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .menu { pointer-events: auto; width: min(280px, 44vw); background: linear-gradient(180deg, rgba(16,32,82,0.92), rgba(8,16,48,0.94)); border: 1px solid rgba(255,255,255,0.26); border-radius: 12px; padding: 0.45rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .menu .title { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.5); padding: 0.25rem 0.6rem 0.4rem; }
     .menu .cmd { display: flex; flex-direction: column; align-items: stretch; gap: 0.12rem; width: 100%; text-align: left; font: inherit; font-weight: 500; color: #fff; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.7rem; cursor: pointer; transition: background 0.12s, transform 0.06s, border-color 0.12s; }
     .menu .cmd .cmd-row { display: flex; justify-content: space-between; align-items: center; }
@@ -173,7 +180,7 @@
     .sk-head h2 { font-size: 1.5rem; flex: 0 0 auto; }
     .sk-gold { color: #fde68a; font-weight: 700; flex: 1; }
     .sk-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.9rem; }
-    .sk-col { background: rgba(12,10,36,0.6); border: 1px solid rgba(255,255,255,0.16); border-radius: 12px; padding: 0.8rem; }
+    .sk-col { background: rgba(8,16,48,0.6); border: 1px solid rgba(255,255,255,0.16); border-radius: 12px; padding: 0.8rem; }
     .sk-name { font-weight: 700; }
     .sk-role { font-size: 0.66rem; color: rgba(255,255,255,0.5); letter-spacing: 0.1em; text-transform: uppercase; }
     .sk-stats { font-size: 0.72rem; color: rgba(255,255,255,0.7); margin: 0.4rem 0; line-height: 1.4; }
@@ -216,7 +223,8 @@
     .sk-svg { position: absolute; inset: 0; width: 100%; }
     .sk-line { stroke: rgba(255,255,255,0.18); stroke-width: 3; }
     .sk-line.on { stroke: #6ee7b7; stroke-width: 4; filter: drop-shadow(0 0 4px rgba(110,231,183,0.8)); }
-    .sk-n { position: absolute; transform: translate(-50%, -50%); width: 150px; display: flex; flex-direction: column; align-items: center; gap: 0.1rem; padding: 0.5rem 0.4rem; border-radius: 12px; font: inherit; color: #fff; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(30,28,55,0.92); transition: transform 0.1s, box-shadow 0.2s; z-index: 2; }
+    .sk-n { position: absolute; transform: translate(-50%, -50%); width: 176px; display: flex; flex-direction: column; align-items: center; gap: 0.12rem; padding: 0.55rem 0.5rem; border-radius: 10px; font: inherit; color: #fff; cursor: pointer; border: 1px solid rgba(130,170,255,0.45); background: linear-gradient(180deg, rgba(18,34,86,0.96), rgba(10,18,52,0.97)); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); transition: transform 0.1s, box-shadow 0.2s; z-index: 2; }
+    .sk-n-desc { font-size: 0.64rem; color: rgba(210,224,255,0.78); text-align: center; line-height: 1.22; }
     .sk-n:hover:not(:disabled) { transform: translate(-50%,-50%) scale(1.06); }
     .sk-n:disabled { cursor: default; }
     .sk-n-ic { font-size: 1.1rem; line-height: 1; }
@@ -269,7 +277,7 @@
 
     /* shipyard */
     #shipyard .sk-wrap { width: min(640px, 96vw); max-height: 90vh; overflow: auto; }
-    .ship-preview { display: flex; gap: 1rem; align-items: center; background: rgba(12,10,36,0.5); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 0.9rem; margin-bottom: 1rem; }
+    .ship-preview { display: flex; gap: 1rem; align-items: center; background: rgba(8,16,48,0.5); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 0.9rem; margin-bottom: 1rem; }
     .ship-art { position: relative; width: 96px; height: 76px; flex: 0 0 auto; }
     .ship-hull { position: absolute; bottom: 0; left: 6px; width: 84px; height: 28px; border-radius: 0 0 44px 44px; }
     .ship-sail { position: absolute; bottom: 26px; left: 40px; width: 16px; height: 40px; border-radius: 3px; }
