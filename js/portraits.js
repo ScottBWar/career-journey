@@ -13,6 +13,13 @@ window.Portraits = (function () {
     dragoon:   { type: 'dragoon',   skin: '#cf9a78', hair: '#3a2a18', bg: '#9c2f3a' },
     selachoth: { type: 'villain',   skin: '#aebfc8', hair: '#e8eef2', eye: '#ffe08a', bg: '#16181f' },
     kraken:    { type: 'kraken',    skin: '#2f6b54', eye: '#ffe08a', bg: '#0a2018' },
+    // elemental mermaids
+    ember:  { type: 'mermaid', skin: '#f0c8a8', hair: '#ff7a4a', eye: '#ffd24a', bg: '#5a1f14' },
+    nerida: { type: 'mermaid', skin: '#dfe6e0', hair: '#3fd0e0', eye: '#9be7ff', bg: '#0e3a4a' },
+    volta:  { type: 'mermaid', skin: '#f0d0b0', hair: '#ffe04a', eye: '#fff6a0', bg: '#5a4a0a' },
+    gaia:   { type: 'mermaid', skin: '#e8c8a0', hair: '#6ec06a', eye: '#cfeeb0', bg: '#1f4a18' },
+    nyx:    { type: 'mermaid', skin: '#cfc0d8', hair: '#b06aff', eye: '#e0b3ff', bg: '#2a1840' },
+    lumina: { type: 'mermaid', skin: '#f5e8d0', hair: '#fff3c0', eye: '#fffae0', bg: '#4a4636' },
   };
   const S = 16, CELL = 8;
 
@@ -75,6 +82,15 @@ window.Portraits = (function () {
         px(5, 8, 1, 1, shade(eye, 0.6)); px(10, 8, 1, 1, shade(eye, 0.6));
         px(6, 11, 4, 1, '#7a8a92'); // cold grin
         px(3, 12, 1, 2, '#1a1d24'); px(12, 12, 1, 2, '#1a1d24'); break;
+      case 'mermaid':
+        px(2, 2, 2, 12, p.hair); px(12, 2, 2, 12, p.hair); px(4, 1, 8, 3, p.hair); // flowing hair
+        px(3, 12, 1, 3, p.hair); px(12, 12, 1, 3, p.hair);
+        px(7, 2, 2, 1, '#ffffff'); px(6, 3, 4, 1, shade(p.hair, 1.3)); // shell tiara
+        px(5, 8, 2, 2, '#ffffff'); px(9, 8, 2, 2, '#ffffff'); // big eyes
+        px(6, 8, 1, 2, eye); px(9, 8, 1, 2, eye); px(6, 8, 1, 1, '#1a1a1a'); px(9, 8, 1, 1, '#1a1a1a');
+        px(5, 7, 2, 1, '#3a2a2a'); px(9, 7, 2, 1, '#3a2a2a'); // lashes
+        px(7, 11, 2, 1, '#e06a8a'); // lips
+        px(6, 13, 4, 1, shade(p.hair, 0.8)); break;
       case 'kraken':
         px(3, 3, 10, 10, p.skin); px(3, 3, 1, 1, p.bg); px(12, 3, 1, 1, p.bg); px(3, 12, 1, 1, p.bg); px(12, 12, 1, 1, p.bg);
         px(5, 6, 2, 2, eye); px(9, 6, 2, 2, eye); px(5, 6, 1, 1, '#000'); px(9, 6, 1, 1, '#000');

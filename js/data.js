@@ -251,6 +251,73 @@ window.Data = (function () {
   // ---------------- SHELL-HUNT MINIGAME ----------------
   const SHELL_HUNT = { pool: ['conch_ember', 'spiral_mend', 'nautilus_surge', 'sand_dollar', 'cowrie_focus', 'auger_edge', 'tiger_crit', 'triton_blast'] };
 
+  // ---------------- MERMAIDS (dating sim — win them over for weapon enchants) ----------------
+  // option: { t: text, love: points, r: her reply }
+  const o = (t, love, r) => ({ t, love, r });
+  const THRESH = 5;
+  const MERMAIDS = {
+    ember: { name: 'Ember', element: 'fire', color: '#ff7a4a', tail: '#c2452a', island: 'tidehaven', threshold: THRESH,
+      intro: 'A mermaid with hair like living flame lounges on a sun-warmed rock.', likes: 'boldness and a daring heart',
+      dates: [
+        { q: '"Tell me, surface-dweller — what do you do when you\'re afraid?"', options: [ o('"I charge in anyway. Fear is just fuel."', 2, 'She grins, eyes blazing. "Now THAT is an answer."'), o('"I make a careful plan first."', 1, '"Cautious. ...I can work with cautious."'), o('"I usually run, honestly."', 0, 'She wrinkles her nose. "Hmph."') ] },
+        { q: '"The sea is cold. What\'s something that sets YOU on fire?"', options: [ o('"Protecting the people I love."', 2, 'Her flames soften. "...Good. A warm answer."'), o('"A really good fight."', 1, '"Ha! A kindred spirit, maybe."'), o('"Uh... naps?"', 0, '"...Naps. Truly the heart of a hero."') ] },
+        { q: '"Would you walk through fire for someone?"', options: [ o('"Without a second thought."', 2, 'She blushes a deep ember. "You mean that, don\'t you."'), o('"If they were worth it."', 1, '"A romantic with conditions. Cute."'), o('"Depends how hot the fire is."', 0, 'She rolls her eyes, smirking.') ] },
+        { q: '"Impress me. Quickly."', options: [ o('"I sailed here just to meet you."', 2, '"...Smooth. Dangerously smooth."'), o('"I slew a Kraken once. Almost."', 1, '"Almost, hm? Honest, at least."'), o('"I, uh, have a really nice boat?"', 0, '"A boat. Be still my heart."') ] },
+      ],
+      smitten: '"You\'ve set my heart ablaze, Captain. Bring me a blade — I\'ll wreath it in fire for whoever you choose."',
+      enchant: '"Whose weapon shall I kiss with flame?"' },
+
+    nerida: { name: 'Nerida', element: 'water', color: '#3fd0e0', tail: '#2f8d9a', island: 'tidehaven', threshold: THRESH,
+      intro: 'A serene mermaid drifts in a tide pool, watching you with deep, knowing eyes.', likes: 'honesty and a gentle soul',
+      dates: [
+        { q: '"The water shows me everything. So tell me true — why are you really here?"', options: [ o('"Honestly? I wanted to meet you."', 2, 'She smiles softly. "...Honesty. How rare and lovely."'), o('"To get stronger for the journey."', 1, '"Driven. The current carries you far."'), o('"Treasure, mostly."', 0, 'She sighs like the tide pulling out.') ] },
+        { q: '"What do you do when a friend is hurting?"', options: [ o('"I sit with them. I listen."', 2, '"...You understand the deep places. Good."'), o('"I try to fix the problem."', 1, '"A doer. Sometimes they just need you, though."'), o('"I give them space, I guess?"', 0, '"Mm. Space can be lonely water."') ] },
+        { q: '"Calm seas or wild storms?"', options: [ o('"Calm seas — shared with someone I trust."', 2, 'She flushes aquamarine. "Oh. ...Oh."'), o('"Wild storms! The thrill!"', 1, '"You and Ember would get along."'), o('"Whichever gets me there faster."', 0, '"Ever the captain."') ] },
+      ],
+      smitten: '"My heart flows toward you like a tide that never ebbs. Let me bless a weapon with the deep."',
+      enchant: '"Whose blade shall the ocean claim?"' },
+
+    volta: { name: 'Volta', element: 'thunder', color: '#ffe04a', tail: '#c2a02a', island: 'dunes', threshold: THRESH,
+      intro: 'A crackling, restless mermaid zips around a rock, sparks dancing off her fins.', likes: 'quick wit and high energy',
+      dates: [
+        { q: '"Quick! Best thing about being alive — GO!"', options: [ o('"Moments like this one. With you."', 2, 'She short-circuits a little. "Bzzt— wow, okay, smooth!"'), o('"Adventure! Never a dull second!"', 1, '"YES! Finally someone gets it!"'), o('"Um... let me think about it..."', 0, '"Too slow! Lightning waits for no one!"') ] },
+        { q: '"I get bored SO fast. How would you keep me interested?"', options: [ o('"I\'d never let two days look the same."', 2, '"Ooh, a promise of chaos. I\'m listening."'), o('"With terrible jokes, mostly."', 1, 'She snorts electrically. "Acceptable."'), o('"I\'m actually pretty low-key."', 0, '"...We may have a problem, low-key boy."') ] },
+        { q: '"Race you to the reef and back — but first, why should I even bother with a slowpoke surfacer?"', options: [ o('"Because I keep up with whatever I love."', 2, 'Sparks fly — literally. "...Okay that was good."'), o('"Because I\'ll let you win."', 1, '"Pfft. I don\'t need a head start!"'), o('"You probably shouldn\'t."', 0, '"Wow. Confidence of a wet napkin."') ] },
+      ],
+      smitten: '"You\'ve got my heart racing at a thousand volts! Gimme a weapon — I\'ll charge it UP!"',
+      enchant: '"Whose weapon gets the shock treatment?!"' },
+
+    gaia: { name: 'Gaia', element: 'earth', color: '#6ec06a', tail: '#3a7a3a', island: 'dunes', threshold: THRESH,
+      intro: 'A gentle mermaid tends a little garden of sea-flowers growing from the sand.', likes: 'kindness and patience',
+      dates: [
+        { q: '"This little seedling won\'t bloom. What would you do?"', options: [ o('"Be patient. Give it time and care."', 2, 'She beams warmly. "...You\'d make a fine gardener."'), o('"Move it somewhere sunnier."', 1, '"Practical and kind. I like that."'), o('"Pull it up and plant a new one."', 0, 'She frowns. "Oh... no, no."') ] },
+        { q: '"What does \'home\' mean to you?"', options: [ o('"The people you grow alongside."', 2, 'Her cheeks go rosy as peach blossoms.'), o('"Anywhere I can rest safely."', 1, '"A place to put down roots. Lovely."'), o('"Wherever my stuff is."', 0, '"...We can work on that."') ] },
+        { q: '"Would you stay, even when things get hard and slow?"', options: [ o('"Especially then. That\'s when it matters."', 2, '"...You understand. Truly."'), o('"I\'d try my best to."', 1, '"Honest. That\'s enough for me."'), o('"I get restless, honestly."', 0, 'She nods sadly, patting the soil.') ] },
+      ],
+      smitten: '"You\'ve helped something bloom in me, dear one. Let me lend a weapon the strength of the earth."',
+      enchant: '"Whose weapon shall I root in stone?"' },
+
+    nyx: { name: 'Nyx', element: 'dark', color: '#b06aff', tail: '#5a3a8a', island: 'spire', threshold: THRESH,
+      intro: 'A mermaid wreathed in shadow regards you from the deep water, lips curled in a sly smile.', likes: 'wit, mystery, and uncomfortable honesty',
+      dates: [
+        { q: '"Everyone\'s got a darkness. What\'s yours? ...And don\'t lie, I\'ll know."', options: [ o('"I\'m terrified of being forgotten."', 2, 'Her smile turns genuine. "...Now we\'re talking."'), o('"I can be stubborn to a fault."', 1, '"Mm. A start."'), o('"I\'m basically perfect, honestly."', 0, '"Boring AND a liar. Two for one."') ] },
+        { q: '"Why do people fear the dark, do you think?"', options: [ o('"Because they fear what they can\'t control."', 2, '"...Clever creature. I might keep you."'), o('"Because they can\'t see what\'s coming."', 1, '"Practical. Acceptable."'), o('"Monsters, probably?"', 0, '"...The monsters are the interesting part, dear."') ] },
+        { q: '"If I asked you to keep a secret forever, could you?"', options: [ o('"Your secrets would die with me."', 2, 'She drifts closer through the gloom. "Dangerous words."'), o('"Depends on the secret."', 1, '"Honest. I respect honest."'), o('"I\'m a terrible gossip, sorry."', 0, '"...Noted. Loudly."') ] },
+      ],
+      smitten: '"How strange — you\'ve charmed a creature of the deep dark. Bring me a weapon; I\'ll feed it shadow."',
+      enchant: '"Whose blade shall drink the dark?"' },
+
+    lumina: { name: 'Lumina', element: 'holy', color: '#fff3c0', tail: '#d8c86a', island: 'spire', threshold: THRESH,
+      intro: 'A luminous mermaid haloed in soft golden light smiles at you with radiant warmth.', likes: 'honor, hope, and a noble heart',
+      dates: [
+        { q: '"The world is dark of late. Do you still believe in hope?"', options: [ o('"Always. Hope is why we fight at all."', 2, 'Her glow brightens. "...You shine, you know that?"'), o('"I believe in trying, at least."', 1, '"Trying is its own kind of faith."'), o('"Hope is for dreamers."', 0, 'Her light dims a little, sadly.') ] },
+        { q: '"What would you do with great power?"', options: [ o('"Protect those who can\'t protect themselves."', 2, '"A guardian\'s heart. Be still, mine."'), o('"Set right what I could."', 1, '"Noble enough. I approve."'), o('"Live like a king, obviously."', 0, '"...Ah. One of THOSE."') ] },
+        { q: '"Selachoth was a hero once, before he fell. Could you resist that temptation?"', options: [ o('"With friends to remind me who I am — yes."', 2, '"...That is the truest answer there is."'), o('"I\'d like to think so."', 1, '"Humble. The humble rarely fall."'), o('"Power\'s power, who\'s to say?"', 0, 'She looks at you with quiet worry.') ] },
+      ],
+      smitten: '"You have a heart full of light, Captain — it calls to mine. Let me sanctify a weapon for you."',
+      enchant: '"Whose weapon shall I bless with holy light?"' },
+  };
+
   // ---------------- TOWNS ----------------
   // npc: { name, color, hair, x, z, lines:[...], service?: 'inn'|'shop' }
   const TOWNS = {
@@ -314,7 +381,7 @@ window.Data = (function () {
         { x: -4, z: 9, pool: ['gull', 'jelly'], min: 1, max: 2 },
         { x: 7, z: 11, pool: ['shark', 'crab'], min: 1, max: 2 },
       ],
-      decor: { trees: 12, palms: 8, rocks: 8 }, shells: { x: 13, z: 9 },
+      decor: { trees: 12, palms: 8, rocks: 8 }, shells: { x: 13, z: 9 }, mermaids: [ { key: 'ember', x: -7, z: -5 }, { key: 'nerida', x: 7, z: -6 } ],
     },
     dunes: {
       name: 'Dunes Isle', size: 52, ground: '#cdb06a', sand: '#e7c890', water: '#1e6f96',
@@ -325,7 +392,7 @@ window.Data = (function () {
         { x: 4, z: 9, pool: ['octo', 'jelly', 'gull'], min: 2, max: 3 },
         { x: -6, z: 11, pool: ['golem', 'crab'], min: 1, max: 2 },
       ],
-      decor: { trees: 6, palms: 12, rocks: 12 }, shells: { x: -13, z: -6 },
+      decor: { trees: 6, palms: 12, rocks: 12 }, shells: { x: -13, z: -6 }, mermaids: [ { key: 'volta', x: 5, z: -7 }, { key: 'gaia', x: -5, z: -7 } ],
     },
     spire: {
       name: 'Abyssal Isle', size: 50, ground: '#4a4f63', sand: '#7a6a86', water: '#162a40',
@@ -336,7 +403,7 @@ window.Data = (function () {
         { x: -5, z: 11, pool: ['shark', 'golem', 'octo'], min: 3, max: 3 },
       ],
       boss: { x: 0, z: 12, color: '#ff3a3a' },
-      decor: { trees: 2, palms: 2, rocks: 16 }, shells: { x: 12, z: 6 },
+      decor: { trees: 2, palms: 2, rocks: 16 }, shells: { x: 12, z: 6 }, mermaids: [ { key: 'nyx', x: -6, z: -6 }, { key: 'lumina', x: 6, z: -5 } ],
     },
   };
 
@@ -430,6 +497,6 @@ window.Data = (function () {
   }
 
   return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY,
-           ELEMENT_INFO, elementOf, affMult, AFFINITIES, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT,
+           ELEMENT_INFO, elementOf, affMult, AFFINITIES, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT, MERMAIDS,
            xpForLevel, MAX_LEVEL, randomEncounter };
 })();

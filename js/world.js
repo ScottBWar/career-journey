@@ -66,6 +66,14 @@ window.World = (function () {
       gates.push({ kind: 'shells', name: 'Shell Cove', pos: new V3(def.shells.x, 0, def.shells.z), r: 3 });
     }
 
+    // mermaids (dating sim)
+    if (def.mermaids) def.mermaids.forEach(mm => {
+      const md = Data.MERMAIDS[mm.key];
+      const rk = Models.rock(); rk.node.position.set(mm.x, 0, mm.z - 0.7); rk.node.scaling.setAll(1.7);
+      const mer = Models.mermaid(md.color, md.tail); mer.node.position.set(mm.x, 0.7, mm.z); mer.node._baseY = 0.7; mer.node.rotation.y = Math.PI; idlers.push(mer);
+      gates.push({ kind: 'mermaid', key: mm.key, name: md.name, pos: new V3(mm.x, 0, mm.z), r: 3 });
+    });
+
     // boss lair (spire)
     if (def.boss) {
       const stage = Game.state.prog.finalWin ? 'A Calmed Spire' : Game.state.prog.krakenDown ? "Selachoth's Spire" : "Kraken's Lair";
@@ -134,6 +142,7 @@ window.World = (function () {
       else if (nearGate.kind === 'dungeon') label = `[E / Tap] Enter ${nearGate.name}${nearGate.solved ? ' (cleared)' : ''}`;
       else if (nearGate.kind === 'dock') label = '[E / Tap] Board the ship';
       else if (nearGate.kind === 'shells') label = '[E / Tap] Hunt for shells';
+      else if (nearGate.kind === 'mermaid') label = `[E / Tap] Talk to ${nearGate.name} 💗`;
       else if (nearGate.kind === 'boss') label = Game.state.prog.finalWin ? '[E / Tap] The spire is silent' : Game.state.prog.krakenDown ? '[E / Tap] Confront Selachoth' : '[E / Tap] Challenge the Kraken';
       prompt.textContent = label; prompt.classList.add('show');
     } else prompt.classList.remove('show');
@@ -167,6 +176,7 @@ window.World = (function () {
     if (g.kind === 'dungeon') return Game.toDungeon(g.key);
     if (g.kind === 'dock') return Game.toSea();
     if (g.kind === 'shells') return Game.openShellHunt();
+    if (g.kind === 'mermaid') return Game.openDating(g.key);
     if (g.kind === 'boss') {
       if (Game.state.prog.finalWin) return Game.toast('Selachoth is no more. The tide is yours.');
       if (!Game.state.prog.krakenDown) {

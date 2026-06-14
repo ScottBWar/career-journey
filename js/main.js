@@ -229,6 +229,10 @@ window.Game = (function () {
   function openShellHunt() { pauseExplore(); ShellHunt.start(() => resumeExplore()); }
   Game.openShellHunt = openShellHunt;
 
+  // ---------- dating (mermaids) ----------
+  function openDating(key) { Game.datingOpen = true; pauseExplore(); Dating.start(key, () => { Game.datingOpen = false; resumeExplore(); }); }
+  Game.openDating = openDating;
+
   // ---------- confirm ----------
   Game.confirm = function (text, onYes) {
     pauseExplore(); Game.confirmOpen = true; el('confirmText').textContent = text; el('confirm').classList.add('show');
@@ -279,9 +283,10 @@ window.Game = (function () {
     el('btnMusic').onclick = () => { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; };
     el('worldPrompt').onclick = () => { if (Game.active) Game.active.interact && Game.active.interact(); };
   }
-  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.shopOpen || Game.confirmOpen || el('shellHunt').classList.contains('show') || el('end').classList.contains('show'); }
+  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.datingOpen || Game.shopOpen || Game.confirmOpen || el('shellHunt').classList.contains('show') || el('end').classList.contains('show'); }
   function route(code) {
     if (el('shellHunt').classList.contains('show')) return; // minigame handles its own input
+    if (Game.datingOpen) return; // dating handles its own buttons
     if (Game.skillsOpen) { if (code === 'Escape' || code === 'KeyM') closeSkills(); return; }
     if (Game.gearOpen) { if (code === 'Escape' || code === 'KeyG') closeGear(); return; }
     if (Game.partyOpen) { if (code === 'Escape' || code === 'KeyT') closeParty(); return; }

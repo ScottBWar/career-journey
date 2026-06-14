@@ -282,6 +282,20 @@
     .sh-foot { margin-top: 0.8rem; text-align: center; color: rgba(255,255,255,0.6); font-size: 0.82rem; }
     .sh-result { text-align: center; line-height: 1.7; margin: 1rem 0; }
 
+    /* dating sim */
+    .date-box { width: min(560px, 96vw); padding: 1.2rem; }
+    .date-head { display: flex; gap: 0.9rem; align-items: center; margin-bottom: 0.8rem; }
+    .date-port { width: 84px; height: 84px; border-radius: 10px; }
+    .date-name { font-weight: 700; font-size: 1.2rem; }
+    .date-el { font-size: 0.8rem; font-weight: 700; margin-left: 0.4rem; }
+    .date-hearts { font-size: 1.1rem; margin-top: 0.3rem; letter-spacing: 0.1em; }
+    .date-text { font-size: clamp(0.95rem, 2.6vw, 1.1rem); line-height: 1.55; min-height: 3em; margin-bottom: 1rem; }
+    .date-intro { color: #fff; }
+    .date-hint { color: #93c5fd; font-size: 0.82rem; margin-top: 0.5rem; }
+    .date-opts { display: flex; flex-direction: column; gap: 0.5rem; }
+    .date-opt { text-align: left; justify-content: flex-start; text-transform: none; letter-spacing: 0.01em; font-weight: 500; }
+    .date-opt .portrait.mini, .portrait.mini { width: 22px; height: 22px; display: inline-block; vertical-align: middle; border-radius: 4px; margin-right: 0.3rem; }
+
     /* battle transition */
     #transition { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0; }
     #transition.show { animation: battleWipe 0.8s ease forwards; }
@@ -357,9 +371,10 @@
   <div id="shipMsg"></div>
   <div class="overlay" id="shipResult"><div class="box panel"><h1 id="shipResultTitle"></h1><p id="shipResultText"></p><button class="pill" id="shipResultBtn">Continue</button></div></div>
 
-  <!-- SHIPYARD + SHELL HUNT -->
+  <!-- SHIPYARD + SHELL HUNT + DATING -->
   <div class="overlay" id="shipyard"><div class="panel" id="shipyardBody" style="padding:1.2rem;"></div></div>
   <div class="overlay" id="shellHunt"></div>
+  <div class="overlay" id="date"></div>
 
   <!-- battle transition -->
   <div id="transition"></div>
@@ -397,6 +412,7 @@
   <script src="js/sea.js"></script>
   <script src="js/dungeon.js"></script>
   <script src="js/minigame.js"></script>
+  <script src="js/dating.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

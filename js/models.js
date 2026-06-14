@@ -289,6 +289,27 @@ window.Models = (function () {
     at(MB.CreateSphere('hair', { diameter: 0.6, slice: 0.55 }, scene), r, hair, 0, 2.18, 0);
     return { node: r, idle(t) { r.position.y = (r._baseY || 0) + Math.sin(t * 2 + (r._ph || 0)) * 0.04; } };
   }
+  function mermaid(hairHex, tailHex) {
+    const r = new BABYLON.TransformNode('mermaid', scene);
+    const skin = M('mmSkin', '#e8c0a0'), hair = M('mmHair', hairHex || '#3fd0e0', { emissive: '#1a1a1a' }),
+          tail = M('mmTail', tailHex || '#2fae9a', { spec: 0.5, emissive: '#0c3a33' }), top = M('mmTop', '#ff9eb0');
+    // tail curled on a rock
+    const t1 = at(MB.CreateCylinder('tail', { height: 1.8, diameterTop: 0.8, diameterBottom: 0.5 }, scene), r, tail, 0, 0.7, 0); t1.rotation.x = 0.5;
+    const fin = at(MB.CreateCylinder('fin', { height: 0.2, diameter: 1.6, tessellation: 3 }, scene), r, tail, 0, 0.2, 1.1); fin.rotation.x = Math.PI/2; fin.scaling.x = 0.5;
+    // torso + chest
+    at(MB.CreateCylinder('torso', { height: 1.1, diameterTop: 0.5, diameterBottom: 0.7 }, scene), r, skin, 0, 1.7, -0.1);
+    [-0.2, 0.2].forEach(x => at(MB.CreateSphere('top', { diameter: 0.32 }, scene), r, top, x, 1.85, 0.15));
+    // arms
+    at(MB.CreateCylinder('aL', { height: 0.8, diameter: 0.16 }, scene), r, skin, -0.4, 1.7, 0).rotation.z = 0.5;
+    at(MB.CreateCylinder('aR', { height: 0.8, diameter: 0.16 }, scene), r, skin, 0.4, 1.7, 0).rotation.z = -0.5;
+    // head + long hair
+    at(MB.CreateSphere('head', { diameter: 0.55 }, scene), r, skin, 0, 2.45, 0);
+    at(MB.CreateBox('hairBack', { width: 0.62, height: 1.4, depth: 0.22 }, scene), r, hair, 0, 2.0, -0.22);
+    at(MB.CreateSphere('hairTop', { diameter: 0.62, slice: 0.6 }, scene), r, hair, 0, 2.6, 0);
+    [-0.34, 0.34].forEach(x => at(MB.CreateBox('hairSide', { width: 0.16, height: 1.1, depth: 0.16 }, scene), r, hair, x, 2.1, 0.05));
+    return { node: r, idle(t) { r.rotation.y = Math.sin(t * 0.8) * 0.12; r.position.y = (r._baseY || 0) + Math.sin(t * 1.4) * 0.06; } };
+  }
+
   function tree() {
     const r = new BABYLON.TransformNode('tree', scene);
     at(MB.CreateCylinder('trunk', { height: 1.6, diameterTop: 0.3, diameterBottom: 0.5 }, scene), r, M('trunk', '#6b4423'), 0, 0.8, 0);
@@ -366,6 +387,6 @@ window.Models = (function () {
   }
   function pillar() { const r = new BABYLON.TransformNode('pillar', scene); at(MB.CreateCylinder('p', { height: 4, diameter: 1.0, tessellation: 8 }, scene), r, M('pil', '#5a5266'), 0, 2, 0); return { node: r }; }
 
-  return { use, M, at, pirate, swordsman, healer, mage, blader, dragoon, hero, npc, tree, palm, rock, house, sign, portal, roamer,
+  return { use, M, at, pirate, swordsman, healer, mage, blader, dragoon, mermaid, hero, npc, tree, palm, rock, house, sign, portal, roamer,
            crystal, chest, pillar, enemy: (key) => ENEMY_BUILDERS[key](), ENEMY_BUILDERS };
 })();

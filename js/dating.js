@@ -1,0 +1,84 @@
+// =====================================================================
+//  Dating — woo the six elemental mermaids. Answer well to raise her
+//  affection; once she's smitten she'll enchant a party member's weapon
+//  with her element (so their basic attacks deal that element).
+// =====================================================================
+window.Dating = (function () {
+  const el = id => document.getElementById(id);
+  let key, m, st, onClose;
+
+  function hearts(rel, max) { const filled = Math.round(rel / max * 5); let s = ''; for (let i = 0; i < 5; i++) s += i < filled ? '❤' : '🤍'; return s; }
+
+  function start(mermaidKey, close) {
+    key = mermaidKey; m = Data.MERMAIDS[key]; onClose = close;
+    if (!Game.state.mermaids[key]) Game.state.mermaids[key] = { rel: 0, idx: 0, enchanted: false };
+    st = Game.state.mermaids[key];
+    el('date').classList.add('show');
+    if (window.SFX) SFX.play('confirm');
+    render();
+  }
+
+  function frame(bodyHtml, options) {
+    const elInfo = Data.ELEMENT_INFO[m.element];
+    el('date').innerHTML = `<div class="box panel date-box">
+      <div class="date-head">${Portraits.img(key, 'date-port')}
+        <div class="date-meta"><div class="date-name">${m.name} <span class="date-el" style="color:${elInfo.c}">${elInfo.i} ${elInfo.name}</span></div>
+        <div class="date-hearts">${hearts(st.rel, m.threshold + 2)}</div></div></div>
+      <div class="date-text">${bodyHtml}</div>
+      <div class="date-opts" id="dateOpts"></div></div>`;
+    const wrap = el('dateOpts');
+    options.forEach(opt => { const b = document.createElement('button'); b.className = 'pill ghost date-opt'; b.innerHTML = opt.label; b.onclick = () => { if (window.SFX) SFX.play('select'); opt.fn(); }; wrap.appendChild(b); });
+  }
+
+  function render() {
+    // already smitten → offer enchant
+    if (st.rel >= m.threshold) {
+      const opts = [
+        { label: '💞 ' + (st.enchanted ? 'Re-enchant a weapon' : 'Ask her to enchant a weapon'), fn: chooseEnchantTarget },
+        { label: '💬 Just chat', fn: () => chat() },
+        { label: 'Leave', fn: close },
+      ];
+      frame(`<p>${m.smitten}</p>`, opts);
+      return;
+    }
+    // otherwise a date question
+    const d = m.dates[st.idx % m.dates.length];
+    const opts = d.options.map(op => ({ label: op.t, fn: () => answer(op) }));
+    frame(`<p class="date-intro">${st.idx === 0 ? m.intro + '<br><br>' : ''}${d.q}</p>`, opts);
+  }
+
+  function answer(op) {
+    st.rel = Math.min(m.threshold + 2, st.rel + op.love); st.idx++;
+    Progress.save(Game.state);
+    const justSmitten = st.rel >= m.threshold;
+    frame(`<p><i>${op.r}</i></p>${justSmitten ? `<p>${m.smitten}</p>` : `<p class="date-hint">She likes ${m.likes}.</p>`}`,
+      justSmitten ? [{ label: '💞 Enchant a weapon now', fn: chooseEnchantTarget }, { label: 'Leave', fn: close }]
+                  : [{ label: 'Continue', fn: render }, { label: 'Leave', fn: close }]);
+  }
+
+  function chat() {
+    const lines = ['"The sea is kinder when you visit, Captain."', '"Stay a while. The tide isn\'t going anywhere."', `"${m.likes.charAt(0).toUpperCase() + m.likes.slice(1)}... that\'s what won me over, you know."`];
+    frame(`<p><i>${lines[Math.floor(Math.random() * lines.length)]}</i></p>`, [{ label: 'Back', fn: render }, { label: 'Leave', fn: close }]);
+  }
+
+  function chooseEnchantTarget() {
+    const opts = Game.state.party.map(p => {
+      const d = Progress.derived(p); const cur = Game.state.enchants[p.key];
+      return { label: `${Portraits.img(p.key, 'mini')} ${d.name}${cur ? ` (${Data.ELEMENT_INFO[cur].i})` : ''}`, fn: () => enchant(p.key) };
+    });
+    opts.push({ label: 'Back', fn: render });
+    frame(`<p>${m.enchant}</p>`, opts);
+  }
+
+  function enchant(charKey) {
+    Game.state.enchants[charKey] = m.element; st.enchanted = true; Progress.save(Game.state);
+    if (window.SFX) SFX.play('levelup');
+    const elInfo = Data.ELEMENT_INFO[m.element]; const name = Progress.def(charKey).name;
+    frame(`<p><i>"${name}'s weapon now carries my ${elInfo.name.toLowerCase()}. ${elInfo.i} Strike true, my love."</i></p><p class="date-hint">${name}'s normal attacks now deal ${elInfo.name} damage.</p>`,
+      [{ label: 'Enchant another', fn: chooseEnchantTarget }, { label: 'Leave', fn: close }]);
+  }
+
+  function close() { el('date').classList.remove('show'); el('date').innerHTML = ''; onClose && onClose(); }
+
+  return { start };
+})();

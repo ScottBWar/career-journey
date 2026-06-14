@@ -25,6 +25,7 @@ window.Progress = (function () {
     const state = {
       gold: 80, pearls: 0, party, active: ['pirate', 'swordsman', 'healer'], inv, equip, ownedWeapons, shells, shellSeq,
       ship: { hull: Data.SHIP.defaults.hull, sail: Data.SHIP.defaults.sail, flag: Data.SHIP.defaults.flag, upg: {} },
+      mermaids: {}, enchants: {},
       location: { place: 'island', island: 'tidehaven', x: start.spawn.x, z: start.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z },
       islands: { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} } },
       dungeons: {}, shipsSunk: {},
@@ -84,10 +85,11 @@ window.Progress = (function () {
       });
     }
 
+    const enchant = (state && state.enchants && state.enchants[memberState.key]) || null;
     return {
-      name: d.name, role: d.role, model: d.model, weaponName,
+      name: d.name, role: d.role, model: d.model, weaponName, enchant,
       maxhp, maxmp,
-      fight: { min: d.base.atkMin + atkBonus, max: d.base.atkMax + atkBonus, crit, big: !!d.base.big },
+      fight: { min: d.base.atkMin + atkBonus, max: d.base.atkMax + atkBonus, crit, big: !!d.base.big, el: enchant || 'physical' },
       abilities,
     };
   }
@@ -178,6 +180,8 @@ window.Progress = (function () {
     if (!state.shipsSunk) state.shipsSunk = {};
     if (!state.ship) state.ship = { hull: Data.SHIP.defaults.hull, sail: Data.SHIP.defaults.sail, flag: Data.SHIP.defaults.flag, upg: {} };
     if (!state.ship.upg) state.ship.upg = {};
+    if (!state.mermaids) state.mermaids = {};
+    if (!state.enchants) state.enchants = {};
     if (!state.location) { const s = Data.ISLANDS.tidehaven; state.location = { place: 'island', island: 'tidehaven', x: s.spawn.x, z: s.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z }; }
     if (!state.equip || !state.ownedWeapons || !state.shells) {
       const equip = {}, ownedWeapons = {}, shells = []; let seq = 1;
