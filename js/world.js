@@ -1,19 +1,20 @@
 // =====================================================================
-//  World — the walkable overworld map: terrain, towns, roaming enemies,
-//  the Kraken's lair, and player movement. Touch a roamer to battle.
+//  World — a single walkable ISLAND overworld (rebuilt per island).
+//  Towns, a dungeon, roaming battles, and a dock back to the ship.
 // =====================================================================
 window.World = (function () {
   const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
-  let scene, cam, player, engine;
-  let roamers = [], gates = [], idlers = [], built = false, paused = false, locked = false;
-  let nearGate = null, t = 0;
+  let scene, cam, player, engine, def, key;
+  let roamers = [], gates = [], idlers = [], paused = false, locked = false, nearGate = null, t = 0;
   const SPEED = 9;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
-  const radiusLimit = () => Data.WORLD.size * 0.5 - 2;
+  const rlim = () => def.size * 0.5 - 2;
 
-  function build() {
-    engine = Game.engine;
+  function build(islandKey) {
+    key = islandKey; def = Data.ISLANDS[islandKey]; engine = Game.engine;
+    if (scene) scene.dispose();
+    roamers = []; gates = []; idlers = []; nearGate = null; t = 0; paused = false; locked = false;
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.6, 0.8, 0.95); scene.fogDensity = 0.006;
@@ -22,61 +23,74 @@ window.World = (function () {
     const hemi = new BABYLON.HemisphericLight('h', new V3(0.2, 1, 0.1), scene); hemi.intensity = 0.95; hemi.groundColor = new Color3(0.4, 0.45, 0.35);
     const sun = new BABYLON.DirectionalLight('s', new V3(-0.5, -1, 0.4), scene); sun.intensity = 1.0;
 
-    const W = Data.WORLD;
-    const water = MB.CreateGround('water', { width: 260, height: 260 }, scene); water.material = M('water', W.water, { spec: 0.6 }); water.position.y = -0.3;
-    const sand = MB.CreateDisc('sand', { radius: W.size * 0.6, tessellation: 48 }, scene); sand.rotation.x = Math.PI/2; sand.position.y = -0.04; sand.material = M('sand', W.sand);
-    const grass = MB.CreateDisc('grass', { radius: W.size * 0.54, tessellation: 48 }, scene); grass.rotation.x = Math.PI/2; grass.position.y = 0; grass.material = M('grass', W.ground);
+    const water = MB.CreateGround('water', { width: 280, height: 280 }, scene); water.material = M('water', def.water, { spec: 0.6 }); water.position.y = -0.3;
+    const sand = MB.CreateDisc('sand', { radius: def.size * 0.6, tessellation: 48 }, scene); sand.rotation.x = Math.PI/2; sand.position.y = -0.04; sand.material = M('sand', def.sand);
+    const grass = MB.CreateDisc('grass', { radius: def.size * 0.54, tessellation: 48 }, scene); grass.rotation.x = Math.PI/2; grass.material = M('grass', def.ground);
 
-    // decor scattered on grass
-    const place = (b, n, rad) => { for (let i = 0; i < n; i++) { const a = Math.random()*Math.PI*2, r = 4 + Math.random()*(rad-4); const o = b(); o.node.position.set(Math.cos(a)*r, 0, Math.sin(a)*r); const sc = 0.8 + Math.random()*0.6; o.node.scaling.setAll(sc); if (o.idle) idlers.push(o); } };
-    place(() => Models.tree(), W.decor.trees, W.size*0.45);
-    place(() => Models.palm(), W.decor.palms, W.size*0.5);
-    place(() => Models.rock(), W.decor.rocks, W.size*0.5);
+    const place = (b, n, rad) => { for (let i = 0; i < n; i++) { const a = Math.random()*Math.PI*2, r = 5 + Math.random()*(rad-5); const o = b(); o.node.position.set(Math.cos(a)*r, 0, Math.sin(a)*r); o.node.scaling.setAll(0.8 + Math.random()*0.6); if (o.idle) idlers.push(o); } };
+    place(() => Models.tree(), def.decor.trees, def.size*0.45);
+    place(() => Models.palm(), def.decor.palms, def.size*0.5);
+    place(() => Models.rock(), def.decor.rocks, def.size*0.5);
 
-    // towns
-    W.towns.forEach(tn => {
-      const def = Data.TOWNS[tn.key];
-      const cluster = new BABYLON.TransformNode('town_' + tn.key, scene); cluster.position.set(tn.x, 0, tn.z);
+    // dock back to ship
+    const dockMark = Models.portal('#8fd3f4'); dockMark.node.position.set(def.dock.x, 0, def.dock.z); dockMark.node._baseY = 0; idlers.push(dockMark);
+    const dockSign = Models.sign('To Ship'); dockSign.node.position.set(def.dock.x, 0, def.dock.z - 1.8);
+    // a little jetty
+    const jetty = MB.CreateBox('jetty', { width: 2, height: 0.2, depth: 4 }, scene); jetty.material = M('jetty', '#7a5230'); jetty.position.set(def.dock.x, 0.05, def.dock.z - 3.5);
+    gates.push({ kind: 'dock', name: 'the ship', pos: new V3(def.dock.x, 0, def.dock.z), r: 3 });
+
+    // town
+    if (def.town) {
+      const td = Data.TOWNS[def.town.key]; const cluster = new BABYLON.TransformNode('town', scene); cluster.position.set(def.town.x, 0, def.town.z);
       const h = Models.house({ roof: '#a0492f' }); h.node.parent = cluster; h.node.position.set(-2.5, 0, 1);
       const h2 = Models.house({ roof: '#3a6a8a', wall: '#dcc89a' }); h2.node.parent = cluster; h2.node.position.set(2.5, 0, 1);
-      const s = Models.sign(def.name); s.node.parent = cluster; s.node.position.set(0, 0, -2.2);
-      const p = Models.portal(tn.color); p.node.parent = cluster; p.node.position.set(0, 0, -2.2); p.node._baseY = 0; idlers.push(p);
-      gates.push({ kind: 'town', key: tn.key, name: def.name, pos: new V3(tn.x, 0, tn.z - 2.2), r: 3 });
-    });
+      const s = Models.sign(td.name); s.node.parent = cluster; s.node.position.set(0, 0, -2.2);
+      const p = Models.portal(def.town.color); p.node.parent = cluster; p.node.position.set(0, 0, -2.2); p.node._baseY = 0; idlers.push(p);
+      gates.push({ kind: 'town', key: def.town.key, name: td.name, pos: new V3(def.town.x, 0, def.town.z - 2.2), r: 3 });
+    }
 
-    // boss lair — Kraken's Lair until the Kraken falls, then Selachoth's Spire
-    const bossDef = W.boss;
-    const stageLabel = Game.state.world.finalWin ? 'A Calmed Spire' : Game.state.world.krakenDown ? "Selachoth's Spire" : "Kraken's Lair";
-    const stageColor = Game.state.world.finalWin ? '#8fd3f4' : Game.state.world.krakenDown ? '#c0c8ff' : bossDef.color;
-    const bp = Models.portal(stageColor); bp.node.position.set(bossDef.x, 0, bossDef.z); bp.node._baseY = 0; idlers.push(bp);
-    const bs = Models.sign(stageLabel); bs.node.position.set(bossDef.x, 0, bossDef.z - 2.4);
-    const skull = Models.rock(); skull.node.position.set(bossDef.x, 0, bossDef.z + 2); skull.node.scaling.setAll(2.2);
-    gates.push({ kind: 'boss', name: stageLabel, pos: new V3(bossDef.x, 0, bossDef.z), r: 3 });
+    // dungeon
+    if (def.dungeon) {
+      const dd = Data.DUNGEONS[def.dungeon.key]; const solved = !!Game.state.dungeons[def.dungeon.key];
+      const arch = MB.CreateTorus('arch', { diameter: 3.2, thickness: 0.5, tessellation: 6 }, scene); arch.material = M('arch', '#5a5266'); arch.position.set(def.dungeon.x, 1.4, def.dungeon.z); arch.scaling.y = 1.2;
+      const p = Models.portal(solved ? '#6ee7b7' : def.dungeon.color); p.node.position.set(def.dungeon.x, 0, def.dungeon.z); p.node._baseY = 0; idlers.push(p);
+      const s = Models.sign(dd.name + (solved ? ' ✓' : '')); s.node.position.set(def.dungeon.x, 0, def.dungeon.z - 2.0);
+      gates.push({ kind: 'dungeon', key: def.dungeon.key, name: dd.name, pos: new V3(def.dungeon.x, 0, def.dungeon.z), r: 3, solved });
+    }
 
-    // roaming enemies
-    W.encounters.forEach((enc, idx) => {
-      if (Game.state.world.cleared['e' + idx]) return;
+    // boss lair (spire)
+    if (def.boss) {
+      const stage = Game.state.prog.finalWin ? 'A Calmed Spire' : Game.state.prog.krakenDown ? "Selachoth's Spire" : "Kraken's Lair";
+      const color = Game.state.prog.finalWin ? '#8fd3f4' : Game.state.prog.krakenDown ? '#c0c8ff' : def.boss.color;
+      const p = Models.portal(color); p.node.position.set(def.boss.x, 0, def.boss.z); p.node._baseY = 0; idlers.push(p);
+      const spire = MB.CreateCylinder('spire', { height: 9, diameterTop: 0.6, diameterBottom: 3, tessellation: 6 }, scene); spire.material = M('spire', '#2a2438'); spire.position.set(def.boss.x, 4.5, def.boss.z + 3);
+      const s = Models.sign(stage); s.node.position.set(def.boss.x, 0, def.boss.z - 2.2);
+      gates.push({ kind: 'boss', name: stage, pos: new V3(def.boss.x, 0, def.boss.z), r: 3 });
+    }
+
+    // roamers
+    const cleared = Game.state.islands[key].cleared;
+    def.encounters.forEach((enc, idx) => {
+      if (cleared['e' + idx]) return;
       const colorByPool = { gull: '#cdd6e0', jelly: '#d98cff', shark: '#6f7f8c', crab: '#e0573a', octo: '#a05bd6', golem: '#d9b779' };
-      const ro = Models.roamer(colorByPool[enc.pool[0]] || '#ff6b6b');
-      ro.node.position.set(enc.x, 0, enc.z); ro.node._ph = idx;
+      const ro = Models.roamer(colorByPool[enc.pool[0]] || '#ff6b6b'); ro.node.position.set(enc.x, 0, enc.z); ro.node._ph = idx;
       roamers.push({ node: ro.node, idle: ro.idle, enc, idx, home: new V3(enc.x, 0, enc.z), ang: Math.random()*Math.PI*2, spd: 2 + Math.random()*1.5 });
       idlers.push(ro);
     });
 
-    // player avatar
-    const hero = Models.hero(); player = hero.node;
-    player.position.set(Game.state.world.x, 0, Game.state.world.z);
+    // player avatar = the active party leader
+    const leaderKey = Game.state.active[0] || 'pirate'; const leaderModel = Progress.def(leaderKey).model;
+    const hero = Models[leaderModel] ? Models[leaderModel]() : Models.hero(); player = hero.node;
+    player.position.set(Game.state.location.x, 0, Game.state.location.z);
     cam = new BABYLON.UniversalCamera('wcam', new V3(0, 18, -16), scene); cam.fov = 0.8;
 
     scene.onBeforeRenderObservable.add(update);
-    built = true;
     return scene;
   }
 
   function update() {
     if (paused) return;
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
-    // movement
     let mx = 0, mz = 0;
     if (Input.down('KeyW') || Input.down('ArrowUp')) mz += 1;
     if (Input.down('KeyS') || Input.down('ArrowDown')) mz -= 1;
@@ -84,101 +98,77 @@ window.World = (function () {
     if (Input.down('KeyD') || Input.down('ArrowRight')) mx += 1;
     if (mx || mz) {
       const len = Math.hypot(mx, mz); mx /= len; mz /= len;
-      player.position.x += mx * SPEED * dt; player.position.z += mz * SPEED * dt;
-      const rad = radiusLimit(); const d = Math.hypot(player.position.x, player.position.z);
+      player.position.x += mx*SPEED*dt; player.position.z += mz*SPEED*dt;
+      const rad = rlim(), d = Math.hypot(player.position.x, player.position.z);
       if (d > rad) { player.position.x *= rad/d; player.position.z *= rad/d; }
-      player.rotation.y = Math.atan2(mx, mz);
-      player.position.y = Math.abs(Math.sin(t * 10)) * 0.12; // little walk bob
-    } else { player.position.y = 0; }
-    Game.state.world.x = player.position.x; Game.state.world.z = player.position.z;
+      player.rotation.y = Math.atan2(mx, mz); player.position.y = Math.abs(Math.sin(t*10))*0.12;
+    } else player.position.y = 0;
+    Game.state.location.x = player.position.x; Game.state.location.z = player.position.z;
 
-    // idle anims
     idlers.forEach(o => o.idle && o.idle(t));
 
-    // roamers wander + collision
     for (const r of roamers) {
       if (!r.node.isEnabled()) continue;
-      r.node.position.x += Math.sin(r.ang) * r.spd * dt; r.node.position.z += Math.cos(r.ang) * r.spd * dt;
+      r.node.position.x += Math.sin(r.ang)*r.spd*dt; r.node.position.z += Math.cos(r.ang)*r.spd*dt;
       if (V3.Distance(r.node.position, r.home) > 4) r.ang = Math.atan2(r.home.x - r.node.position.x, r.home.z - r.node.position.z) + (Math.random()-0.5);
       if (Math.random() < 0.01) r.ang += (Math.random()-0.5);
       r.node.rotation.y = r.ang;
       if (!locked && V3.Distance(r.node.position, player.position) < 1.7) { startRoamerBattle(r); return; }
     }
 
-    // gate proximity
     nearGate = null;
     for (const g of gates) { if (V3.Distance(player.position, g.pos) < g.r) { nearGate = g; break; } }
     const prompt = document.getElementById('worldPrompt');
     if (nearGate) {
       let label;
       if (nearGate.kind === 'town') label = `[E / Tap] Enter ${nearGate.name}`;
-      else if (Game.state.world.finalWin) label = '[E / Tap] The spire is silent';
-      else if (Game.state.world.krakenDown) label = '[E / Tap] Confront Selachoth';
-      else label = '[E / Tap] Challenge the Kraken';
+      else if (nearGate.kind === 'dungeon') label = `[E / Tap] Enter ${nearGate.name}${nearGate.solved ? ' (cleared)' : ''}`;
+      else if (nearGate.kind === 'dock') label = '[E / Tap] Board the ship';
+      else if (nearGate.kind === 'boss') label = Game.state.prog.finalWin ? '[E / Tap] The spire is silent' : Game.state.prog.krakenDown ? '[E / Tap] Confront Selachoth' : '[E / Tap] Challenge the Kraken';
       prompt.textContent = label; prompt.classList.add('show');
     } else prompt.classList.remove('show');
 
-    // camera follow
     cam.position.set(player.position.x, 18, player.position.z - 16);
     cam.setTarget(player.position.add(new V3(0, 1, 2)));
-
     Game.updateHUD();
   }
 
   function startRoamerBattle(r) {
-    locked = true; paused = true;
-    const keys = Data.randomEncounter(r.enc);
-    Music.play('battle');
-    Game.startBattle(keys, {}, (res) => {
-      if (res.won) { Game.state.world.cleared['e' + r.idx] = true; r.node.setEnabled(false); Progress.save(Game.state); }
-      else { // bounce player back toward spawn so they aren't stuck on the roamer
-        const dir = player.position.subtract(r.node.position); if (dir.length() < 0.1) dir.set(0,0,-1); dir.normalize();
-        player.position.addInPlace(dir.scale(4));
-      }
-      paused = false; locked = false; Game.toWorld();
+    locked = true; paused = true; Music.play('battle');
+    Game.startBattle(Data.randomEncounter(r.enc), {}, (res) => {
+      if (res.won) { Game.state.islands[key].cleared['e' + r.idx] = true; r.node.setEnabled(false); Progress.save(Game.state); }
+      else { const dir = player.position.subtract(r.node.position); if (dir.length() < 0.1) dir.set(0,0,-1); dir.normalize(); player.position.addInPlace(dir.scale(4)); Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
+      paused = false; locked = false; Game.resumeIsland();
     });
   }
 
   function fightBoss(enemies, onWin) {
     locked = true; paused = true; Music.play('battle');
     Game.startBattle(enemies, { boss: true }, (res) => {
-      paused = false; locked = false; Game.toWorld();
-      if (res.won) onWin();
-      else { player.position.z -= 4; Game.state.world.x = player.position.x; Game.state.world.z = player.position.z; }
+      paused = false; locked = false; Game.resumeIsland();
+      if (res.won) onWin(); else { player.position.z -= 4; Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
     });
   }
+
   function interact() {
     if (paused || locked || !nearGate) return;
-    if (nearGate.kind === 'town') { Game.enterTown(nearGate.key); return; }
-    // boss gate
-    if (Game.state.world.finalWin) { Game.toast('Selachoth is no more. The tide is yours.'); return; }
-    if (!Game.state.world.krakenDown) {
-      Game.confirm('Enter the Maw and challenge the KRAKEN, guardian of the spire?', () => {
-        fightBoss(['kraken'], () => {
-          Game.state.world.krakenDown = true; Progress.save(Game.state);
-          Game.startCutscene('krakenFall', () => Game.toast('The spire glows cold. Return to confront Selachoth.'));
-        });
-      });
-    } else {
-      // confront Selachoth: pre-fight cutscene, then the final battle
-      Game.startCutscene('selachothPre', () => {
-        fightBoss(['selachoth'], () => {
-          Game.state.world.finalWin = true; Progress.save(Game.state);
-          Game.startCutscene('selachothFall', () => Game.finalEnding());
-        });
-      });
+    const g = nearGate;
+    if (g.kind === 'town') return Game.enterTown(g.key);
+    if (g.kind === 'dungeon') return Game.toDungeon(g.key);
+    if (g.kind === 'dock') return Game.toSea();
+    if (g.kind === 'boss') {
+      if (Game.state.prog.finalWin) return Game.toast('Selachoth is no more. The tide is yours.');
+      if (!Game.state.prog.krakenDown) {
+        Game.confirm('Enter the Maw and challenge the KRAKEN, guardian of the spire?', () => fightBoss(['kraken'], () => { Game.state.prog.krakenDown = true; Progress.save(Game.state); Game.startCutscene('krakenFall', () => Game.toast('The spire glows cold. Return to confront Selachoth.')); }));
+      } else {
+        Game.startCutscene('selachothPre', () => fightBoss(['selachoth'], () => { Game.state.prog.finalWin = true; Progress.save(Game.state); Game.startCutscene('selachothFall', () => Game.finalEnding()); }));
+      }
     }
   }
 
-  function enter() {
-    if (!built) build();
-    paused = false; locked = false;
-    if (player) player.position.set(Game.state.world.x, 0, Game.state.world.z);
-    Game.active = { interact };
-    return scene;
-  }
+  function enter(islandKey) { build(islandKey); Game.active = { interact }; return scene; }
   function pause() { paused = true; }
   function resume() { paused = false; }
 
-  return { enter, pause, resume, getScene: () => scene, build };
+  return { enter, pause, resume, getScene: () => scene, currentKey: () => key };
 })();

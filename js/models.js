@@ -85,7 +85,74 @@ window.Models = (function () {
     return { node: r, halo, orb, staffPiv, idle(t) { halo.rotation.z = t * 1.2; orb.scaling.setAll(1 + Math.sin(t * 3) * 0.08); } };
   }
 
-  // ---------------- ENEMIES ----------------
+  // ---- new PS1-RPG-inspired party members ----
+  function mage() { // "Pip" — tiny black mage (FF9 Vivi vibe): huge hat, glowing eyes
+    const r = new BABYLON.TransformNode('mage', scene);
+    const robe = M('mgRobe', '#3a3f6b'), robe2 = M('mgRobe2', '#2a2e52'), hat = M('mgHat', '#1c2040'),
+          glow = M('mgEye', '#ffe066', { emissive: '#ffd000' }), gold = M('mgGold', '#e0b34a', { emissive: '#5a4208' });
+    at(MB.CreateCylinder('robe', { height: 1.5, diameterTop: 0.7, diameterBottom: 1.2 }, scene), r, robe, 0, 0.75, 0);
+    at(MB.CreateBox('feet', { width: 0.7, height: 0.2, depth: 0.5 }, scene), r, M('mgFeet', '#caa84a'), 0, 0.1, 0.15);
+    at(MB.CreateSphere('head', { diameter: 0.7 }, scene), r, robe2, 0, 1.7, 0);
+    [-0.16, 0.16].forEach(x => at(MB.CreateSphere('eye', { diameter: 0.16 }, scene), r, glow, x, 1.72, 0.3));
+    // giant floppy pointed hat
+    const hatBrim = at(MB.CreateCylinder('brim', { height: 0.1, diameter: 1.5 }, scene), r, hat, 0, 2.0, 0);
+    const cone = at(MB.CreateCylinder('cone', { height: 1.6, diameterTop: 0, diameterBottom: 1.0 }, scene), r, hat, 0, 2.7, -0.1); cone.rotation.x = -0.3;
+    at(MB.CreateBox('band', { width: 1.05, height: 0.16, depth: 1.05 }, scene), r, gold, 0, 2.12, 0);
+    // arms
+    at(MB.CreateCylinder('aL', { height: 0.7, diameter: 0.18 }, scene), r, robe, -0.5, 1.1, 0).rotation.z = 0.4;
+    const staffPiv = new BABYLON.TransformNode('mgStaff', scene); staffPiv.parent = r; staffPiv.position.set(0.55, 1.0, 0.1);
+    at(MB.CreateCylinder('staff', { height: 1.8, diameter: 0.07 }, scene), staffPiv, M('mgStaffMat', '#7a5230'), 0, 0.2, 0);
+    const orb = at(MB.CreateSphere('orb', { diameter: 0.34 }, scene), staffPiv, M('mgOrb', '#ff7eb0', { emissive: '#ff3a8a' }), 0, 1.1, 0);
+    return { node: r, staffPiv, idle(t) { orb.scaling.setAll(1 + Math.sin(t * 4) * 0.1); } };
+  }
+
+  function blader() { // "Ridge" — spiky-haired katana fighter (Chrono Trigger vibe)
+    const r = new BABYLON.TransformNode('blader', scene);
+    const tunic = M('blTunic', '#3f7fae'), pants = M('blPants', '#2b3a4a'), skin = M('blSkin', '#d9a06b'),
+          hair = M('blHair', '#e2622a', { emissive: '#5a1e08' }), steel = M('blSteel', '#cdd6e0', { spec: 0.9 }), band = M('blBand', '#d83a3a');
+    at(MB.CreateCylinder('lL', { height: 1.1, diameter: 0.3 }, scene), r, pants, -0.2, 0.55, 0);
+    at(MB.CreateCylinder('lR', { height: 1.1, diameter: 0.3 }, scene), r, pants, 0.2, 0.55, 0);
+    at(MB.CreateBox('torso', { width: 0.85, height: 1.1, depth: 0.52 }, scene), r, tunic, 0, 1.6, 0);
+    at(MB.CreateBox('belt', { width: 0.9, height: 0.16, depth: 0.55 }, scene), r, M('blBelt', '#3a2a18'), 0, 1.18, 0);
+    at(MB.CreateCylinder('aL', { height: 0.9, diameter: 0.26 }, scene), r, tunic, -0.58, 1.6, 0).rotation.z = 0.22;
+    const arm = new BABYLON.TransformNode('blArm', scene); arm.parent = r; arm.position.set(0.58, 2.0, 0);
+    at(MB.CreateCylinder('aR', { height: 0.9, diameter: 0.26 }, scene), arm, tunic, 0, -0.45, 0);
+    at(MB.CreateSphere('head', { diameter: 0.58 }, scene), r, skin, 0, 2.4, 0);
+    at(MB.CreateTorus('band', { diameter: 0.62, thickness: 0.08, tessellation: 16 }, scene), r, band, 0, 2.45, 0).rotation.x = Math.PI / 2;
+    // spiky hair
+    [[0,0.4,0,0,0,0],[-0.2,0.35,0,0,0,0.6],[0.2,0.35,0,0,0,-0.6],[0,0.34,0.2,0.7,0,0],[-0.15,0.3,-0.15,0,0,1.0],[0.15,0.3,-0.15,0,0,-1.0]].forEach((s,i)=>{ const c = at(MB.CreateCylinder('hair'+i,{height:0.55,diameterTop:0,diameterBottom:0.24},scene), r, hair, s[0], 2.62+s[1]*0.2, s[2]); c.rotation.set(s[3],s[4],s[5]); });
+    // katana
+    const sw = new BABYLON.TransformNode('blSword', scene); sw.parent = arm; sw.position.set(0, -0.9, 0.1); sw.rotation.x = -0.4;
+    at(MB.CreateBox('blade', { width: 0.07, height: 1.7, depth: 0.14 }, scene), sw, steel, 0, 0.8, 0);
+    at(MB.CreateBox('guard', { width: 0.26, height: 0.08, depth: 0.2 }, scene), sw, M('blGuard', '#caa84a', { emissive: '#5a4208' }), 0, -0.05, 0);
+    at(MB.CreateCylinder('grip', { height: 0.34, diameter: 0.09 }, scene), sw, M('blGrip', '#2a2018'), 0, -0.25, 0);
+    return { node: r, arm };
+  }
+
+  function dragoon() { // "Brann" — armored spear dragoon (Legend of Dragoon vibe)
+    const r = new BABYLON.TransformNode('dragoon', scene);
+    const armor = M('dgArmor', '#9c2f3a', { spec: 0.6, specPower: 60 }), armor2 = M('dgArmor2', '#7a232c'),
+          steel = M('dgSteel', '#c9d2dc', { spec: 0.9 }), gold = M('dgGold', '#e0b34a', { emissive: '#5a4208' }), skin = M('dgSkin', '#cf9a78');
+    at(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.34 }, scene), r, armor2, -0.22, 0.57, 0);
+    at(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.34 }, scene), r, armor2, 0.22, 0.57, 0);
+    at(MB.CreateBox('torso', { width: 0.95, height: 1.2, depth: 0.6 }, scene), r, armor, 0, 1.62, 0);
+    at(MB.CreateBox('chestgem', { width: 0.3, height: 0.3, depth: 0.62 }, scene), r, M('dgGem', '#ff5e5e', { emissive: '#c01818' }), 0, 1.8, 0);
+    [-1, 1].forEach(s => at(MB.CreateSphere('pauld', { diameter: 0.7, slice: 0.6 }, scene), r, steel, s * 0.6, 2.1, 0));
+    at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.3 }, scene), r, armor, -0.62, 1.6, 0).rotation.z = 0.2;
+    const arm = new BABYLON.TransformNode('dgArm', scene); arm.parent = r; arm.position.set(0.62, 2.05, 0);
+    at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.3 }, scene), arm, armor, 0, -0.45, 0);
+    at(MB.CreateSphere('head', { diameter: 0.55 }, scene), r, skin, 0, 2.5, 0);
+    // winged helm
+    at(MB.CreateSphere('helm', { diameter: 0.66, slice: 0.62 }, scene), r, steel, 0, 2.58, 0);
+    [-1, 1].forEach(s => { const w = at(MB.CreateCylinder('wing', { height: 0.5, diameterTop: 0, diameterBottom: 0.2, tessellation: 3 }, scene), r, gold, s * 0.34, 2.7, -0.05); w.rotation.z = s * 1.1; });
+    // spear in hand
+    const sp = new BABYLON.TransformNode('dgSpear', scene); sp.parent = arm; sp.position.set(0, -0.9, 0.12); sp.rotation.x = -0.2;
+    at(MB.CreateCylinder('shaft', { height: 2.6, diameter: 0.08 }, scene), sp, M('dgShaft', '#6b4423'), 0, 0.7, 0);
+    at(MB.CreateCylinder('tip', { height: 0.6, diameterTop: 0, diameterBottom: 0.22 }, scene), sp, steel, 0, 2.1, 0);
+    return { node: r, arm };
+  }
+
+
   function shark() {
     const r = new BABYLON.TransformNode('eShark', scene);
     const grey = M('shGrey', '#6f7f8c', { spec: 0.3 }), belly = M('shBelly', '#d8dfe4'), drk = M('shDark', '#3c4750');
@@ -283,6 +350,22 @@ window.Models = (function () {
 
   const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth };
 
-  return { use, M, at, pirate, swordsman, healer, hero, npc, tree, palm, rock, house, sign, portal, roamer,
-           enemy: (key) => ENEMY_BUILDERS[key](), ENEMY_BUILDERS };
+  // dungeon props
+  function crystal(hex) {
+    const r = new BABYLON.TransformNode('crystal', scene);
+    const c = at(MB.CreateCylinder('c', { height: 1.4, diameterTop: 0, diameterBottom: 0.7, tessellation: 6 }, scene), r, M('crys', hex, { emissive: hex, alpha: 0.92 }), 0, 1.0, 0);
+    at(MB.CreateCylinder('base', { height: 0.3, diameter: 0.9, tessellation: 6 }, scene), r, M('crysBase', '#3a3550'), 0, 0.15, 0);
+    return { node: r, gem: c, idle(t) { c.rotation.y = t * 1.5; } };
+  }
+  function chest() {
+    const r = new BABYLON.TransformNode('chest', scene);
+    at(MB.CreateBox('base', { width: 1.2, height: 0.7, depth: 0.9 }, scene), r, M('chBase', '#6b4423'), 0, 0.45, 0);
+    const lid = at(MB.CreateBox('lid', { width: 1.24, height: 0.4, depth: 0.94 }, scene), r, M('chLid', '#7a5230'), 0, 0.95, 0);
+    at(MB.CreateBox('lock', { width: 0.2, height: 0.24, depth: 0.1 }, scene), r, M('chLock', '#e0b34a', { emissive: '#5a4208' }), 0, 0.8, 0.48);
+    return { node: r, lid };
+  }
+  function pillar() { const r = new BABYLON.TransformNode('pillar', scene); at(MB.CreateCylinder('p', { height: 4, diameter: 1.0, tessellation: 8 }, scene), r, M('pil', '#5a5266'), 0, 2, 0); return { node: r }; }
+
+  return { use, M, at, pirate, swordsman, healer, mage, blader, dragoon, hero, npc, tree, palm, rock, house, sign, portal, roamer,
+           crystal, chest, pillar, enemy: (key) => ENEMY_BUILDERS[key](), ENEMY_BUILDERS };
 })();

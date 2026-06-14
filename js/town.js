@@ -90,7 +90,7 @@ window.Town = (function () {
   function interact() {
     if (paused) return;
     if (nearNPC) { Game.talk(nearNPC.data); }
-    else if (nearExit) { Game.toWorld(); }
+    else if (nearExit) { Game.resumeIsland(); }
   }
 
   function enter(townKey) { build(townKey); paused = false; Game.active = { interact }; Music.play('town'); return scene; }

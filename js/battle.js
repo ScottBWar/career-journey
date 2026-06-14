@@ -48,8 +48,8 @@ window.Battle = (function () {
     ocean.material = M('oceanMat', '#15486b', { spec: 0.9, specPower: 64, emissive: '#0a2740' }); ocean.position.set(0, -0.15, -28);
     oceanBase = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind).slice();
 
-    // party
-    Game.state.party.forEach((ms, i) => {
+    // party (the active 3 of the roster)
+    Progress.activeMembers(Game.state).forEach((ms, i) => {
       const d = Progress.derived(ms);
       const built = Models[d.model]();
       const home = new V3(-4.4, 0, 3.0 - i * 2.6);
@@ -136,7 +136,7 @@ window.Battle = (function () {
   function refresh() { renderEnemies(false); renderParty(false); }
   const menuEl = () => el('bMenu');
   function clearMenu(title) { const m = menuEl(); m.innerHTML = ''; if (title) { const h = document.createElement('div'); h.className = 'title'; h.textContent = title; m.appendChild(h); } }
-  function cmd(label, sub, onClick, disabled, subClass = '') { const b = document.createElement('button'); b.className = 'cmd'; b.innerHTML = `<span>${label}</span>` + (sub ? `<span class="cost ${subClass}">${sub}</span>` : ''); b.disabled = !!disabled; b.onclick = onClick; menuEl().appendChild(b); return b; }
+  function cmd(label, sub, onClick, disabled, subClass = '') { const b = document.createElement('button'); b.className = 'cmd'; b.innerHTML = `<span>${label}</span>` + (sub ? `<span class="cost ${subClass}">${sub}</span>` : ''); b.disabled = !!disabled; b.onclick = (e) => { if (window.SFX) SFX.play('select'); onClick(e); }; menuEl().appendChild(b); return b; }
   function backBtn(fn) { cmd('↩  Back', '', fn).classList.add('back'); }
   function lockMenu() { [...menuEl().querySelectorAll('button')].forEach(b => b.disabled = true); }
 
@@ -149,12 +149,13 @@ window.Battle = (function () {
   async function swing(arm) { await rotTo(arm, 'x', 0, -2.3, 110); await rotTo(arm, 'x', -2.3, 0.6, 100); await rotTo(arm, 'x', 0.6, 0, 130); }
 
   function damageEnemy(e, dmg, color = '#ffffff') {
+    if (window.SFX) SFX.play('hit');
     e.hp = Math.max(0, e.hp - dmg); hitFlash(e.node, '#ff6060'); burst(worldOf(e.node, 0.6), ...FX.hit, 55, 6); floatDamage(e.node, String(dmg), color, 2.6);
     e._busy = true; const h = e.home.clone(); moveTo(e.node, h.add(new V3(0.5,0,0)), 90).then(() => moveTo(e.node, h, 150).then(() => { e.node.position.copyFrom(h); e._busy = false; }));
     if (e.hp <= 0) killEnemy(e); renderEnemies(false);
   }
   async function killEnemy(e) { e.alive = false; e._busy = true; await tween(k => { e.node.position.y = e.baseY - k*3; e.node.rotation.z = k*1.5; e.node.scaling.setAll((e.node.scaling.x||1) * (1 - k*0.02) || 1); }, 800); e.node.setEnabled(false); }
-  function healMember(p, amt) { p.hp = Math.min(p.maxhp, p.hp + amt); burst(worldOf(p.node, 0.2), ...FX.heal, 45, 5, -2); floatDamage(p.node, '+' + amt, '#6ee7b7', 2.6); renderParty(false); }
+  function healMember(p, amt) { if (window.SFX) SFX.play('heal'); p.hp = Math.min(p.maxhp, p.hp + amt); burst(worldOf(p.node, 0.2), ...FX.heal, 45, 5, -2); floatDamage(p.node, '+' + amt, '#6ee7b7', 2.6); renderParty(false); }
 
   function takeTurn(member) { return new Promise(done => { activeMember = member; renderParty(false); renderEnemies(false); msg(`${member.name}'s turn — choose an action.`); showMain(member, done); }); }
 
@@ -187,9 +188,10 @@ window.Battle = (function () {
   function chooseAlly(prompt, candidates, onPick, onBack) { clearMenu(prompt); msg(prompt); renderParty(true, candidates, p => { renderParty(false); onPick(p); }); backBtn(() => { renderParty(false); onBack(); }); }
   async function act(done, fn) { lockMenu(); await fn(); refresh(); activeMember = null; renderParty(false); done(); }
 
-  async function doFight(m, target) { msg(`${m.name} strikes ${target.name}!`); await dashAttack(m, target, async () => { if (m.arm) await swing(m.arm); let dmg = rnd(m.fight.min, m.fight.max); const crit = Math.random() < m.fight.crit; if (crit) dmg = Math.round(dmg*1.8); if (m.fight.big) burst(worldOf(target.node, 0.4), ...FX.beam, 50, 7); damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff'); if (crit) msg('Critical hit! ' + dmg + ' damage!'); }); }
+  async function doFight(m, target) { msg(`${m.name} strikes ${target.name}!`); await dashAttack(m, target, async () => { if (m.arm) await swing(m.arm); let dmg = rnd(m.fight.min, m.fight.max); const crit = Math.random() < m.fight.crit; if (crit) dmg = Math.round(dmg*1.8); if (m.fight.big) burst(worldOf(target.node, 0.4), ...FX.beam, 50, 7); if (crit && window.SFX) SFX.play('crit'); damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff'); if (crit) msg('Critical hit! ' + dmg + ' damage!'); }); }
   async function doDefend(m) { msg(`${m.name} braces for impact.`); m._defend = true; await wait(300); }
   async function doSpell(m, s, targets) {
+    if (window.SFX) SFX.play(s.fx === 'fire' ? 'fire' : s.fx === 'water' ? 'water' : s.heal ? 'heal' : 'magic');
     m.mp = Math.max(0, m.mp - s.mp); renderParty(false);
     if (s.heal) { msg(`${m.name} casts ${s.name}!`); if (m.staffPiv) await rotTo(m.staffPiv, 'z', 0, -0.5, 150).then(() => rotTo(m.staffPiv, 'z', -0.5, 0, 200)); for (const p of targets) healMember(p, rnd(s.min, s.max)); await wait(600); return; }
     if (s.proj || s.fx === 'beam') { msg(`${m.name} unleashes ${s.name}!`); if (m.arm && s.fx === 'beam') swing(m.arm);
@@ -213,7 +215,7 @@ window.Battle = (function () {
     e.node.position.copyFrom(home); e._busy = false; await wait(200);
   }
   function applyToMember(p, dmg) { p.hp = Math.max(0, p.hp - dmg); hitFlash(p.node, '#ff5050'); burst(worldOf(p.node, 0.0), ...FX.hit, 50, 6); floatDamage(p.node, String(dmg), '#ff8a8a', 2.4); if (p.hp <= 0 && p.alive) koMember(p); renderParty(false); }
-  async function koMember(p) { p.alive = false; tween(k => { p.node.rotation.x = k*1.4; p.node.position.y = p.baseY - k*0.4; }, 500); }
+  async function koMember(p) { if (window.SFX) SFX.play('ko'); p.alive = false; tween(k => { p.node.rotation.x = k*1.4; p.node.position.y = p.baseY - k*0.4; }, 500); }
 
   // ----- loop / end -----
   function checkEnd() { if (aliveEnemies().length === 0 && !over) { finish(true); return true; } if (aliveParty().length === 0 && !over) { finish(false); return true; } return false; }
@@ -231,7 +233,7 @@ window.Battle = (function () {
     party.forEach(p => { p.ref.hpCur = Math.max(0, p.hp); p.ref.mpCur = Math.max(0, p.mp); });
     let levelUps = [], xp = 0, gold = 0;
     if (won) { enemies.forEach(e => { xp += e.xp; gold += e.gold; }); levelUps = Progress.reward(Game.state, xp, gold); Music.play('victory', Game.musicForReturn()); }
-    else { Music.play('world'); }
+    else { Music.play('island'); }
     await wait(700);
     el('bResultTitle').textContent = won ? 'Victory!' : 'Defeated';
     let body = won ? `Gained <b>${xp} XP</b> and <b>${gold} gold</b>.` : 'Your party was overwhelmed by the tide.';

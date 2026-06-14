@@ -49,6 +49,48 @@ window.Data = (function () {
         { id: 'h_tsunami', name: 'Tsunami', desc: 'Water damage to all', cost: 3, req: 'h_mega', kind: 'ability', ability: ab('Tsunami', { mp: 26, min: 38, max: 52, target: 'all', fx: 'water' }) },
       ],
     },
+    {
+      key: 'mage', name: 'Pip', role: 'Black Mage', model: 'mage',
+      base: { hp: 95, mp: 46, atkMin: 6, atkMax: 12, crit: 0.05 },
+      growth: { hp: 10, mp: 6, atk: 1 },
+      baseAbilities: [
+        ab('Flare Bolt', { mp: 8, min: 30, max: 44, target: 'enemy', fx: 'fire', proj: true }),
+        ab('Frost', { mp: 8, min: 28, max: 40, target: 'enemy', fx: 'water', proj: true }),
+      ],
+      tree: [
+        { id: 'm_mp1', name: 'Mana Font', desc: '+18 Max MP', cost: 1, kind: 'stat', stat: { mp: 18 } },
+        { id: 'm_firaga', name: 'Firaga', desc: 'Fire damage to all foes', cost: 1, kind: 'ability', ability: ab('Firaga', { mp: 18, min: 30, max: 44, target: 'all', fx: 'fire' }) },
+        { id: 'm_atk', name: 'Spell Focus', desc: '+4 Attack', cost: 1, req: 'm_mp1', kind: 'stat', stat: { atk: 4 } },
+        { id: 'm_thundara', name: 'Thundara', desc: 'Heavy bolt on one foe', cost: 2, req: 'm_firaga', kind: 'ability', ability: ab('Thundara', { mp: 14, min: 48, max: 66, target: 'enemy', fx: 'beam' }) },
+        { id: 'm_meteor', name: 'Meteor', desc: 'Catastrophe on all foes', cost: 3, req: 'm_thundara', kind: 'ability', ability: ab('Meteor', { mp: 28, min: 44, max: 60, target: 'all', fx: 'fire' }) },
+      ],
+    },
+    {
+      key: 'blader', name: 'Ridge', role: 'Wanderer', model: 'blader',
+      base: { hp: 140, mp: 18, atkMin: 20, atkMax: 30, crit: 0.15 },
+      growth: { hp: 15, mp: 2, atk: 4 },
+      baseAbilities: [ ab('Cyclone', { mp: 10, min: 20, max: 30, target: 'all', fx: 'beam' }) ],
+      tree: [
+        { id: 'b_atk', name: 'Keen Edge', desc: '+5 Attack', cost: 1, kind: 'stat', stat: { atk: 5 } },
+        { id: 'b_bolt', name: 'Lightning', desc: 'Bolt strike on one foe', cost: 1, kind: 'ability', ability: ab('Lightning', { mp: 10, min: 38, max: 52, target: 'enemy', fx: 'beam' }) },
+        { id: 'b_hp', name: 'Endurance', desc: '+28 Max HP', cost: 1, req: 'b_atk', kind: 'stat', stat: { hp: 28 } },
+        { id: 'b_crit', name: 'Quickblade', desc: '+12% Crit', cost: 2, req: 'b_bolt', kind: 'stat', stat: { crit: 0.12 } },
+        { id: 'b_luminaire', name: 'Luminaire', desc: 'Radiant burst on all foes', cost: 3, req: 'b_crit', kind: 'ability', ability: ab('Luminaire', { mp: 22, min: 40, max: 56, target: 'all', fx: 'beam' }) },
+      ],
+    },
+    {
+      key: 'dragoon', name: 'Brann', role: 'Dragoon', model: 'dragoon',
+      base: { hp: 165, mp: 20, atkMin: 22, atkMax: 32, crit: 0.12, big: true },
+      growth: { hp: 17, mp: 3, atk: 4 },
+      baseAbilities: [ ab('Jump', { mp: 10, min: 40, max: 56, target: 'enemy', fx: 'beam' }) ],
+      tree: [
+        { id: 'd_hp', name: 'Iron Will', desc: '+32 Max HP', cost: 1, kind: 'stat', stat: { hp: 32 } },
+        { id: 'd_breath', name: 'Dragon Breath', desc: 'Fire to all foes', cost: 1, kind: 'ability', ability: ab('Dragon Breath', { mp: 16, min: 26, max: 38, target: 'all', fx: 'fire' }) },
+        { id: 'd_atk', name: 'Lance Mastery', desc: '+5 Attack', cost: 1, req: 'd_hp', kind: 'stat', stat: { atk: 5 } },
+        { id: 'd_burst', name: 'Final Burst', desc: 'Devastating single thrust', cost: 2, req: 'd_atk', kind: 'ability', ability: ab('Final Burst', { mp: 14, min: 54, max: 72, target: 'enemy', fx: 'beam' }) },
+        { id: 'd_dragoon', name: 'Dragoon Spirit', desc: '+40 Max HP', cost: 3, req: 'd_burst', kind: 'stat', stat: { hp: 40 } },
+      ],
+    },
   ];
 
   const ENEMIES = {
@@ -94,6 +136,21 @@ window.Data = (function () {
       { key: 'coral_staff',        name: 'Coral Staff',        atk: 0, slots: 2, price: 0, desc: 'A staff of living coral.' },
       { key: 'pearl_rod',          name: 'Pearl Rod',          atk: 4, slots: 3, price: 300, desc: '+4 ATK · 3 shell slots' },
       { key: 'leviathan_scepter',  name: 'Leviathan Scepter',  atk: 8, slots: 4, price: 760, desc: '+8 ATK · 4 shell slots' },
+    ],
+    mage: [
+      { key: 'apprentice_wand', name: 'Apprentice Wand', atk: 0, slots: 2, price: 0, desc: 'A simple starter wand.' },
+      { key: 'star_rod',        name: 'Star Rod',        atk: 4, slots: 3, price: 280, desc: '+4 ATK · 3 shell slots' },
+      { key: 'doomstaff',       name: 'Doomstaff',       atk: 8, slots: 4, price: 740, desc: '+8 ATK · 4 shell slots' },
+    ],
+    blader: [
+      { key: 'wood_katana',  name: 'Wooden Katana', atk: 0, slots: 1, price: 0, desc: 'A practice blade.' },
+      { key: 'steel_katana', name: 'Steel Katana',  atk: 10, slots: 2, price: 300, desc: '+10 ATK · 2 shell slots' },
+      { key: 'rainbow_edge', name: 'Rainbow Edge',  atk: 22, slots: 3, price: 820, desc: '+22 ATK · 3 shell slots' },
+    ],
+    dragoon: [
+      { key: 'iron_lance',   name: 'Iron Lance',   atk: 0, slots: 1, price: 0, desc: 'A sturdy soldier\'s lance.' },
+      { key: 'partisan',     name: 'Partisan',     atk: 12, slots: 2, price: 320, desc: '+12 ATK · 2 shell slots' },
+      { key: 'dragon_lance', name: 'Dragon Lance', atk: 24, slots: 3, price: 840, desc: '+24 ATK · 3 shell slots' },
     ],
   };
 
@@ -177,25 +234,83 @@ window.Data = (function () {
     },
   };
 
-  // ---------------- WORLD MAP ----------------
-  // Encounters: { x, z, color, enemies:[keys], boss? } — touch the roamer to fight.
-  const WORLD = {
-    size: 64, ground: '#5fa86a', sand: '#e7c890', water: '#1e6f96',
-    spawn: { x: 0, z: -6 },
-    towns: [
-      { key: 'tidehaven', x: -14, z: 6, color: '#8fd3f4' },
-      { key: 'dunesport', x: 16, z: -2, color: '#ffd166' },
+  // ---------------- ISLANDS (each is its own walkable overworld) ----------------
+  // Reach islands by ship from the SEA map. Each has a town (with shop), a
+  // dungeon, roaming encounters, and a dock back to the ship.
+  const ISLANDS = {
+    tidehaven: {
+      name: 'Tidehaven Isle', size: 52, ground: '#5fa86a', sand: '#e7c890', water: '#1e6f96',
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      town: { key: 'tidehaven', x: -13, z: 5, color: '#8fd3f4' },
+      dungeon: { key: 'tide_cave', x: 11, z: 7, color: '#9be7ff' },
+      encounters: [
+        { x: -4, z: 9, pool: ['gull', 'jelly'], min: 1, max: 2 },
+        { x: 7, z: 11, pool: ['shark', 'crab'], min: 1, max: 2 },
+      ],
+      decor: { trees: 12, palms: 8, rocks: 8 },
+    },
+    dunes: {
+      name: 'Dunes Isle', size: 52, ground: '#cdb06a', sand: '#e7c890', water: '#1e6f96',
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      town: { key: 'dunesport', x: 13, z: 3, color: '#ffd166' },
+      dungeon: { key: 'dune_tomb', x: -11, z: 8, color: '#ffcf6a' },
+      encounters: [
+        { x: 4, z: 9, pool: ['octo', 'jelly', 'gull'], min: 2, max: 3 },
+        { x: -6, z: 11, pool: ['golem', 'crab'], min: 1, max: 2 },
+      ],
+      decor: { trees: 6, palms: 12, rocks: 12 },
+    },
+    spire: {
+      name: 'Abyssal Isle', size: 50, ground: '#4a4f63', sand: '#7a6a86', water: '#162a40',
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      dungeon: { key: 'abyss_vault', x: -11, z: 6, color: '#c0c8ff' },
+      encounters: [
+        { x: 6, z: 9, pool: ['golem', 'octo'], min: 2, max: 3 },
+        { x: -5, z: 11, pool: ['shark', 'golem', 'octo'], min: 3, max: 3 },
+      ],
+      boss: { x: 0, z: 12, color: '#ff3a3a' },
+      decor: { trees: 2, palms: 2, rocks: 16 },
+    },
+  };
+
+  // ---------------- SEA (sail between islands) ----------------
+  const SEA = {
+    size: 130, spawn: { x: 0, z: -10 },
+    islands: [
+      { key: 'tidehaven', x: -34, z: 8 },
+      { key: 'dunes', x: 30, z: -2 },
+      { key: 'spire', x: 4, z: -42 },
     ],
-    encounters: [
-      { x: -4, z: 8,  pool: ['gull', 'jelly'], min: 1, max: 2 },
-      { x: 6, z: 10,  pool: ['shark', 'crab'], min: 1, max: 2 },
-      { x: 12, z: 12, pool: ['octo', 'jelly', 'gull'], min: 2, max: 3 },
-      { x: -10, z: -8, pool: ['crab', 'golem'], min: 1, max: 2 },
-      { x: 2, z: -12, pool: ['shark', 'octo', 'golem'], min: 2, max: 3 },
-      { x: 20, z: 8,  pool: ['golem', 'crab', 'octo'], min: 3, max: 3 },
-    ],
-    boss: { x: 24, z: -14, color: '#ff3a3a', enemies: ['kraken'], boss: true },
-    decor: { trees: 14, palms: 10, rocks: 12 },
+  };
+
+  // ---------------- DUNGEONS (one per island, with a crystal-order puzzle) ----------------
+  // Touch the colored crystals in the order the riddle hints. Solve it to open
+  // the vault and claim the treasure, then take the exit back to the island.
+  const DUNGEONS = {
+    tide_cave: {
+      name: 'Tide Cave', island: 'tidehaven', ground: '#3a4a5a', wall: '#2a3340',
+      spawn: { x: 0, z: -8 }, exit: { x: 0, z: -10 }, gate: { x: 0, z: 8 }, chest: { x: 0, z: 11 },
+      hint: 'Riddle: "Sunset bleeds, then deepest sea, then the meadow welcomes thee."',
+      crystals: [ { color: '#ff5e5e', name: 'red', x: -6, z: 2 }, { color: '#5e8bff', name: 'blue', x: 0, z: 4 }, { color: '#5eff8b', name: 'green', x: 6, z: 2 } ],
+      sequence: [0, 1, 2],
+      reward: { gold: 120, shell: 'triton_blast' },
+    },
+    dune_tomb: {
+      name: 'Dune Tomb', island: 'dunes', ground: '#6a5a3a', wall: '#4a3f2a',
+      spawn: { x: 0, z: -8 }, exit: { x: 0, z: -10 }, gate: { x: 0, z: 8 }, chest: { x: 0, z: 11 },
+      hint: 'Riddle: "Gold of the dune, green of the oasis, blue of the well — in that order, seek your grace."',
+      crystals: [ { color: '#ffcf4a', name: 'gold', x: -6, z: 2 }, { color: '#5eff8b', name: 'green', x: 6, z: 2 }, { color: '#5e8bff', name: 'blue', x: 0, z: 4 } ],
+      sequence: [0, 1, 2],
+      reward: { gold: 200, shell: 'nautilus_surge' },
+    },
+    abyss_vault: {
+      name: 'Abyssal Vault', island: 'spire', ground: '#23283a', wall: '#161a28',
+      spawn: { x: 0, z: -8 }, exit: { x: 0, z: -10 }, gate: { x: 0, z: 8 }, chest: { x: 0, z: 11 },
+      hint: 'Riddle: "Violet abyss, pale moon, then the dying ember last of all."',
+      crystals: [ { color: '#b06aff', name: 'violet', x: -6, z: 2 }, { color: '#dfe7ef', name: 'white', x: 0, z: 4 }, { color: '#ff7e3a', name: 'ember', x: 6, z: 2 } ],
+      sequence: [0, 1, 2],
+      reward: { gold: 400, shell: 'tiger_crit' },
+    },
   };
 
   // ---------------- STORY (cutscene beats) ----------------
@@ -242,5 +357,5 @@ window.Data = (function () {
     return keys;
   }
 
-  return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, WORLD, STORY, xpForLevel, MAX_LEVEL, randomEncounter };
+  return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY, xpForLevel, MAX_LEVEL, randomEncounter };
 })();

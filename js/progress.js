@@ -19,18 +19,22 @@ window.Progress = (function () {
       ownedWeapons[def.key] = [startW.key];
       equip[def.key] = { weapon: startW.key, slots: new Array(startW.slots).fill(null) };
     });
-    // a few starter seashells in the pouch
     ['conch_ember', 'spiral_mend'].forEach(key => shells.push({ id: shellSeq++, key, level: 1, ap: 0 }));
 
+    const start = Data.ISLANDS.tidehaven;
     const state = {
-      gold: 80, party, inv, equip, ownedWeapons, shells, shellSeq,
-      world: { x: Data.WORLD.spawn.x, z: Data.WORLD.spawn.z, cleared: {}, krakenDown: false, finalWin: false },
+      gold: 80, party, active: ['pirate', 'swordsman', 'healer'], inv, equip, ownedWeapons, shells, shellSeq,
+      location: { place: 'island', island: 'tidehaven', x: start.spawn.x, z: start.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z },
+      islands: { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} } },
+      dungeons: {},
+      prog: { krakenDown: false, finalWin: false },
       flags: {},
     };
     party.forEach(p => { const d = derived(p, state); p.hpCur = d.maxhp; p.mpCur = d.maxmp; });
     return state;
   }
   const shellById = (state, id) => state.shells.find(s => s.id === id);
+  const activeMembers = (state) => state.active.map(k => state.party.find(p => p.key === k)).filter(Boolean);
 
   function def(key) { return Data.PARTY.find(p => p.key === key); }
 
@@ -92,7 +96,7 @@ window.Progress = (function () {
     state.gold += gold;
     const ups = [], shellUps = [];
     const ap = Math.max(8, Math.round(xp * 0.5));
-    state.party.forEach(p => {
+    activeMembers(state).forEach(p => {
       if (p.hpCur <= 0) return; // KO'd members earn nothing
       p.xp += xp;
       let leveled = false;
@@ -158,56 +162,84 @@ window.Progress = (function () {
   function save(state) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {} }
   function migrate(state) {
     if (!state) return state;
-    if (!state.world) state.world = { x: Data.WORLD.spawn.x, z: Data.WORLD.spawn.z, cleared: {}, krakenDown: false, finalWin: false };
-    if (state.world.finalWin == null) state.world.finalWin = false;
     if (!state.flags) state.flags = {};
+    // older saves used state.world; carry over progress flags
+    const oldWorld = state.world || {};
+    if (!state.prog) state.prog = { krakenDown: !!oldWorld.krakenDown, finalWin: !!oldWorld.finalWin };
+    // ensure every roster member exists (new characters added in updates)
+    if (!state.party) state.party = [];
+    Data.PARTY.forEach(def => { if (!state.party.find(p => p.key === def.key)) state.party.push({ key: def.key, level: 1, xp: 0, sp: 0, learned: {}, hpCur: null, mpCur: null }); });
+    if (!state.active || state.active.length !== 3) state.active = ['pirate', 'swordsman', 'healer'];
+    if (!state.islands) state.islands = { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} } };
+    ['tidehaven', 'dunes', 'spire'].forEach(k => { if (!state.islands[k]) state.islands[k] = { cleared: {} }; });
+    if (!state.dungeons) state.dungeons = {};
+    if (!state.location) { const s = Data.ISLANDS.tidehaven; state.location = { place: 'island', island: 'tidehaven', x: s.spawn.x, z: s.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z }; }
     if (!state.equip || !state.ownedWeapons || !state.shells) {
       const equip = {}, ownedWeapons = {}, shells = []; let seq = 1;
       Data.PARTY.forEach(def => { const w = Data.WEAPONS[def.key][0]; ownedWeapons[def.key] = [w.key]; equip[def.key] = { weapon: w.key, slots: new Array(w.slots).fill(null) }; });
       ['conch_ember', 'spiral_mend'].forEach(key => shells.push({ id: seq++, key, level: 1, ap: 0 }));
       state.equip = equip; state.ownedWeapons = ownedWeapons; state.shells = shells; state.shellSeq = seq;
     }
+    // backfill equipment for any newly-added characters
+    Data.PARTY.forEach(def => { if (!state.equip[def.key]) { const w = Data.WEAPONS[def.key][0]; state.ownedWeapons[def.key] = [w.key]; state.equip[def.key] = { weapon: w.key, slots: new Array(w.slots).fill(null) }; } });
+    // initialise HP/MP for any uninitialised members
+    state.party.forEach(p => { if (p.hpCur == null) { const d = derived(p, state); p.hpCur = d.maxhp; p.mpCur = d.maxmp; } });
     return state;
   }
   function load() { try { const s = localStorage.getItem(SAVE_KEY); return s ? migrate(JSON.parse(s)) : null; } catch (e) { return null; } }
   function clear() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
 
-  // ---------------- SKILL TREE UI ----------------
+  // ---------------- SKILL TREE UI (branching, with connectors) ----------------
+  const NODE_ICON = { stat: '◆', ability: '✦' };
+  function tierOf(tree, node, memo = {}) { if (memo[node.id] != null) return memo[node.id]; if (!node.req) return memo[node.id] = 0; const parent = tree.find(t => t.id === node.req); return memo[node.id] = (parent ? tierOf(tree, parent, memo) + 1 : 0); }
+
   function renderSkillTree(state, container, onClose) {
     container.innerHTML = '';
     const wrap = document.createElement('div'); wrap.className = 'sk-wrap';
     const head = document.createElement('div'); head.className = 'sk-head';
-    head.innerHTML = `<h2>Skill Trees</h2><div class="sk-gold">⛃ ${state.gold} gold</div>`;
-    const close = document.createElement('button'); close.className = 'pill ghost'; close.textContent = 'Close';
-    close.onclick = onClose; head.appendChild(close);
+    head.innerHTML = `<h2>Skill Trees</h2><div class="sk-gold">Spend SP earned from leveling</div>`;
+    const close = document.createElement('button'); close.className = 'pill ghost'; close.textContent = 'Close'; close.onclick = onClose; head.appendChild(close);
     wrap.appendChild(head);
 
-    const cols = document.createElement('div'); cols.className = 'sk-cols';
     state.party.forEach(p => {
-      const d = derived(p);
-      const col = document.createElement('div'); col.className = 'sk-col';
+      const tree = def(p.key).tree; const d = derived(p, state);
+      const block = document.createElement('div'); block.className = 'sk-block';
       const need = p.level < Data.MAX_LEVEL ? Data.xpForLevel(p.level) : 0;
-      col.innerHTML = `<div class="sk-name">${d.name} <span class="sk-role">${d.role}</span></div>
-        <div class="sk-stats">Lv ${p.level} · SP ${p.sp}<br>HP ${d.maxhp} · MP ${d.maxmp} · ATK ${d.fight.min}-${d.fight.max} · Crit ${Math.round(d.fight.crit*100)}%</div>
-        <div class="sk-xp"><i style="width:${need ? Math.min(100, p.xp/need*100) : 100}%"></i></div>
-        <div class="sk-xptxt">${need ? `XP ${p.xp}/${need}` : 'MAX LEVEL'}</div>`;
-      const nodes = document.createElement('div'); nodes.className = 'sk-nodes';
-      def(p.key).tree.forEach(node => {
-        const learned = !!p.learned[node.id];
-        const locked = node.req && !p.learned[node.req];
-        const affordable = Progress.canLearn(state, p, node);
+      block.innerHTML = `<div class="sk-bhead"><div><span class="sk-name">${d.name}</span> <span class="sk-role">${d.role}</span></div>
+        <div class="sk-sp">Lv ${p.level} · <b>${p.sp} SP</b></div></div>
+        <div class="sk-bstats">HP ${d.maxhp} · MP ${d.maxmp} · ATK ${d.fight.min}-${d.fight.max} · Crit ${Math.round(d.fight.crit*100)}% · ${need ? `XP ${p.xp}/${need}` : 'MAX'}</div>`;
+
+      // layout by tier
+      const memo = {}; const tiers = {};
+      tree.forEach(n => { const t = tierOf(tree, n, memo); (tiers[t] = tiers[t] || []).push(n); });
+      const maxTier = Math.max(...Object.keys(tiers).map(Number));
+      const GAP = 116, H = (maxTier + 1) * GAP + 24;
+      const posOf = {};
+      Object.keys(tiers).forEach(tk => { const arr = tiers[tk]; arr.forEach((n, i) => { posOf[n.id] = { xPct: (i + 0.5) / arr.length * 100, y: Number(tk) * GAP + 40 }; }); });
+
+      const treeEl = document.createElement('div'); treeEl.className = 'sk-tree'; treeEl.style.height = H + 'px';
+      // connector SVG (scales to width; y in px)
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('class', 'sk-svg'); svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('viewBox', `0 0 1000 ${H}`); svg.setAttribute('height', H);
+      tree.forEach(n => { if (!n.req) return; const a = posOf[n.req], b = posOf[n.id]; if (!a || !b) return;
+        const ln = document.createElementNS(svgNS, 'line'); ln.setAttribute('x1', a.xPct * 10); ln.setAttribute('y1', a.y); ln.setAttribute('x2', b.xPct * 10); ln.setAttribute('y2', b.y);
+        ln.setAttribute('class', p.learned[n.id] ? 'sk-line on' : 'sk-line'); svg.appendChild(ln); });
+      treeEl.appendChild(svg);
+
+      tree.forEach(n => {
+        const pos = posOf[n.id]; const learned = !!p.learned[n.id]; const locked = n.req && !p.learned[n.req]; const affordable = canLearn(state, p, n);
         const b = document.createElement('button');
-        b.className = 'sk-node' + (learned ? ' learned' : '') + (locked ? ' locked' : '');
-        b.innerHTML = `<div class="sk-node-top"><span>${node.name}</span><span class="sk-cost">${learned ? '✓' : node.cost + ' SP'}</span></div>
-          <div class="sk-desc">${node.desc}${node.req && !learned ? ` <em>(needs ${def(p.key).tree.find(t=>t.id===node.req).name})</em>` : ''}</div>`;
+        b.className = 'sk-n ' + (n.kind) + (learned ? ' learned' : affordable ? ' avail' : locked ? ' locked' : '');
+        b.style.left = pos.xPct + '%'; b.style.top = pos.y + 'px';
+        b.innerHTML = `<span class="sk-n-ic">${NODE_ICON[n.kind]}</span><span class="sk-n-name">${n.name}</span><span class="sk-n-sub">${learned ? 'Learned' : n.cost + ' SP'}</span>`;
+        b.title = n.desc;
         b.disabled = learned || !affordable;
-        b.onclick = () => { if (Progress.learn(state, p, node)) renderSkillTree(state, container, onClose); };
-        nodes.appendChild(b);
+        b.onclick = () => { if (learn(state, p, n)) { if (window.SFX) SFX.play('levelup'); renderSkillTree(state, container, onClose); } };
+        treeEl.appendChild(b);
       });
-      col.appendChild(nodes);
-      cols.appendChild(col);
+      block.appendChild(treeEl);
+      wrap.appendChild(block);
     });
-    wrap.appendChild(cols);
     container.appendChild(wrap);
   }
 
@@ -279,6 +311,35 @@ window.Progress = (function () {
     container.appendChild(wrap);
   }
 
-  return { freshState, derived, reward, fullHeal, canLearn, learn, save, load, clear, renderSkillTree, renderGear,
-           equipWeapon, equipShell, unequipSlot, addShell, buyWeapon, pouchShells, def };
+  // ---------------- PARTY MANAGEMENT (swap active 3 of 6) ----------------
+  function toggleActive(state, key) {
+    const i = state.active.indexOf(key);
+    if (i >= 0) { if (state.active.length > 1) state.active.splice(i, 1); }
+    else { if (state.active.length >= 3) state.active.shift(); state.active.push(key); }
+    save(state);
+  }
+  function renderRoster(state, container, onClose) {
+    container.innerHTML = '';
+    const wrap = document.createElement('div'); wrap.className = 'sk-wrap';
+    const head = document.createElement('div'); head.className = 'sk-head';
+    head.innerHTML = `<h2>Party</h2><div class="sk-gold">Active: ${state.active.length}/3 · pick who fights</div>`;
+    const close = document.createElement('button'); close.className = 'pill ghost'; close.textContent = 'Close'; close.onclick = onClose; head.appendChild(close);
+    wrap.appendChild(head);
+    const grid = document.createElement('div'); grid.className = 'sk-cols';
+    state.party.forEach(p => {
+      const d = derived(p, state); const isActive = state.active.includes(p.key);
+      const col = document.createElement('button'); col.className = 'roster-card' + (isActive ? ' on' : '');
+      col.innerHTML = `<div class="rc-top"><span class="rc-name">${d.name}</span><span class="rc-tag">${isActive ? 'IN PARTY' : 'Bench'}</span></div>
+        <div class="rc-role">${d.role} · Lv ${p.level}</div>
+        <div class="sk-stats">HP ${d.maxhp} · MP ${d.maxmp} · ATK ${d.fight.min}-${d.fight.max}</div>
+        <div class="rc-weap">⚔ ${d.weaponName || '—'}</div>`;
+      col.onclick = () => { toggleActive(state, p.key); renderRoster(state, container, onClose); };
+      grid.appendChild(col);
+    });
+    wrap.appendChild(grid);
+    container.appendChild(wrap);
+  }
+
+  return { freshState, derived, reward, fullHeal, canLearn, learn, save, load, clear, renderSkillTree, renderGear, renderRoster,
+           toggleActive, activeMembers, equipWeapon, equipShell, unequipSlot, addShell, buyWeapon, pouchShells, def };
 })();

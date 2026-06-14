@@ -11,9 +11,11 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; font-family: 'Space Grotesk', system-ui, sans-serif; color: #fff; user-select: none; -webkit-user-select: none; }
     body { background: linear-gradient(180deg, #1b1145 0%, #5b2a86 35%, #c2557b 62%, #ef8f6e 100%); transition: background 0.6s ease; }
-    body.mode-world { background: linear-gradient(180deg, #2a4a8a 0%, #4a86c8 40%, #9fd0e8 75%, #d8eef5 100%); }
-    body.mode-town  { background: linear-gradient(180deg, #3a5a9a 0%, #6aa0d0 45%, #c9e2ee 100%); }
-    body.mode-battle{ background: linear-gradient(180deg, #1b1145 0%, #5b2a86 32%, #c2557b 58%, #ef8f6e 82%, #ffd9a0 100%); }
+    body.mode-island { background: linear-gradient(180deg, #2a4a8a 0%, #4a86c8 40%, #9fd0e8 75%, #d8eef5 100%); }
+    body.mode-sea    { background: linear-gradient(180deg, #1c4f8a 0%, #2f7ec0 45%, #8fc6e8 100%); }
+    body.mode-town   { background: linear-gradient(180deg, #3a5a9a 0%, #6aa0d0 45%, #c9e2ee 100%); }
+    body.mode-dungeon{ background: linear-gradient(180deg, #07060f 0%, #14122a 100%); }
+    body.mode-battle { background: linear-gradient(180deg, #1b1145 0%, #5b2a86 32%, #c2557b 58%, #ef8f6e 82%, #ffd9a0 100%); }
     #renderCanvas { position: fixed; inset: 0; width: 100%; height: 100%; outline: none; touch-action: none; z-index: 0; }
 
     .pill { font: inherit; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.85rem 2rem; border-radius: 999px; border: none; cursor: pointer; color: #05060f; background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4); box-shadow: 0 10px 30px rgba(165,180,252,0.4); text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
@@ -36,7 +38,7 @@
 
     /* ---------- WORLD/TOWN HUD ---------- */
     #worldHUD { position: fixed; left: 0; right: 0; top: 0; z-index: 10; display: none; justify-content: space-between; align-items: flex-start; padding: 0.7rem 0.9rem; pointer-events: none; }
-    body.mode-world #worldHUD, body.mode-town #worldHUD { display: flex; }
+    body.mode-island #worldHUD, body.mode-sea #worldHUD, body.mode-town #worldHUD, body.mode-dungeon #worldHUD { display: flex; }
     #hudParty { display: flex; gap: 0.5rem; pointer-events: auto; }
     .hud-m { background: rgba(12,10,36,0.8); border: 1px solid rgba(255,255,255,0.2); border-radius: 9px; padding: 0.4rem 0.6rem; min-width: 120px; }
     .hud-m.ko { opacity: 0.45; }
@@ -193,10 +195,50 @@
     #endText { margin-top: 0.8rem; color: rgba(255,255,255,0.85); line-height: 1.6; }
     #end .actions { margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
 
+    /* redesigned skill trees */
+    #skills .sk-wrap { width: min(960px, 96vw); }
+    #partyScr .sk-wrap { width: min(900px, 96vw); max-height: 90vh; overflow: auto; }
+    .sk-block { background: linear-gradient(180deg, rgba(18,20,40,0.7), rgba(10,12,28,0.7)); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 0.9rem 1rem; margin-bottom: 1rem; }
+    .sk-bhead { display: flex; justify-content: space-between; align-items: baseline; }
+    .sk-bhead .sk-name { font-size: 1.05rem; font-weight: 700; }
+    .sk-sp { font-size: 0.85rem; color: rgba(255,255,255,0.75); }
+    .sk-sp b { color: #fcd34d; }
+    .sk-bstats { font-size: 0.72rem; color: rgba(255,255,255,0.6); margin: 0.3rem 0 0.5rem; }
+    .sk-tree { position: relative; width: 100%; }
+    .sk-svg { position: absolute; inset: 0; width: 100%; }
+    .sk-line { stroke: rgba(255,255,255,0.18); stroke-width: 3; }
+    .sk-line.on { stroke: #6ee7b7; stroke-width: 4; filter: drop-shadow(0 0 4px rgba(110,231,183,0.8)); }
+    .sk-n { position: absolute; transform: translate(-50%, -50%); width: 150px; display: flex; flex-direction: column; align-items: center; gap: 0.1rem; padding: 0.5rem 0.4rem; border-radius: 12px; font: inherit; color: #fff; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(30,28,55,0.92); transition: transform 0.1s, box-shadow 0.2s; z-index: 2; }
+    .sk-n:hover:not(:disabled) { transform: translate(-50%,-50%) scale(1.06); }
+    .sk-n:disabled { cursor: default; }
+    .sk-n-ic { font-size: 1.1rem; line-height: 1; }
+    .sk-n.ability .sk-n-ic { color: #f0abfc; }
+    .sk-n.stat .sk-n-ic { color: #93c5fd; }
+    .sk-n-name { font-weight: 700; font-size: 0.78rem; text-align: center; }
+    .sk-n-sub { font-size: 0.66rem; color: #fcd34d; }
+    .sk-n.learned { border-color: #6ee7b7; background: rgba(52,211,153,0.2); box-shadow: 0 0 14px rgba(52,211,153,0.45); }
+    .sk-n.learned .sk-n-sub { color: #6ee7b7; }
+    .sk-n.avail { border-color: #fcd34d; box-shadow: 0 0 0 1px #fcd34d, 0 0 18px rgba(252,211,77,0.5); animation: skpulse 1.6s ease-in-out infinite; }
+    @keyframes skpulse { 0%,100%{ box-shadow: 0 0 0 1px #fcd34d, 0 0 10px rgba(252,211,77,0.35); } 50%{ box-shadow: 0 0 0 1px #fcd34d, 0 0 22px rgba(252,211,77,0.7); } }
+    .sk-n.locked { opacity: 0.45; }
+
+    /* party roster cards */
+    .roster-card { text-align: left; font: inherit; color: #fff; background: rgba(18,20,40,0.7); border: 1px solid rgba(255,255,255,0.16); border-radius: 12px; padding: 0.8rem; cursor: pointer; transition: border-color 0.15s, transform 0.1s, box-shadow 0.2s; }
+    .roster-card:hover { transform: translateY(-2px); }
+    .roster-card.on { border-color: #fcd34d; box-shadow: 0 0 0 1px #fcd34d, 0 8px 26px rgba(252,211,77,0.3); background: rgba(252,211,77,0.1); }
+    .rc-top { display: flex; justify-content: space-between; align-items: baseline; }
+    .rc-name { font-weight: 700; font-size: 1rem; }
+    .rc-tag { font-size: 0.66rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.5); }
+    .roster-card.on .rc-tag { color: #fcd34d; }
+    .rc-role { font-size: 0.72rem; color: rgba(255,255,255,0.6); margin: 0.2rem 0 0.4rem; }
+    .rc-weap { font-size: 0.74rem; color: #93c5fd; margin-top: 0.3rem; }
+
     @media (max-width: 680px) {
       #bMessage { bottom: 188px; }
-      .hud-m { min-width: 92px; }
+      .hud-m { min-width: 78px; }
+      .hud-btn { padding: 0.4rem 0.55rem; font-size: 0.72rem; }
       #start h1 { font-size: 3rem; }
+      .sk-n { width: 116px; }
     }
   </style>
 </head>
@@ -210,6 +252,7 @@
     <div class="hud-right">
       <div id="hudGold">⛃ 0</div>
       <div class="hud-btns">
+        <button class="hud-btn" id="btnParty">Party (T)</button>
         <button class="hud-btn" id="btnSkills">Skills (M)</button>
         <button class="hud-btn" id="btnGear">Gear (G)</button>
         <button class="hud-btn" id="btnMusic">🔊</button>
@@ -254,6 +297,9 @@
   <!-- GEAR / SEASHELLS -->
   <div class="overlay" id="gear"><div class="panel" id="gearBody" style="padding:1.2rem;"></div></div>
 
+  <!-- PARTY -->
+  <div class="overlay" id="partyScr"><div class="panel" id="partyBody" style="padding:1.2rem;"></div></div>
+
   <!-- TOAST + ENDING -->
   <div id="toast"></div>
   <div class="overlay" id="end"><div class="box"><h1 id="endTitle"></h1><p id="endText"></p><div class="actions"><button class="pill" id="endContinue">Keep Playing</button><a class="pill ghost" href="coming-soon.html">Back to Site</a></div></div></div>
@@ -266,6 +312,8 @@
   <script src="js/battle.js"></script>
   <script src="js/town.js"></script>
   <script src="js/world.js"></script>
+  <script src="js/sea.js"></script>
+  <script src="js/dungeon.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

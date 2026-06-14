@@ -32,37 +32,40 @@ window.Game = (function () {
 
   function beginGame() {
     el('start').classList.remove('show');
-    toWorld();
+    if (Game.state.location.place === 'sea') toSea();
+    else toIsland(Game.state.location.island || 'tidehaven', false);
     if (!Game.state.flags.seenOpening) {
       Game.state.flags.seenOpening = true; Progress.save(Game.state);
-      Game.cutscene(Data.STORY.opening, () => Game.toast('Use WASD / arrows to move. Walk into glowing gates and monsters. Press M for Skills.'));
+      Game.cutscene(Data.STORY.opening, () => Game.toast('WASD/arrows to move. Walk into glowing markers. M=Skills · G=Gear · T=Party.'));
     } else {
-      Game.toast('Use WASD / arrows to move. Walk into glowing gates and monsters. Press M for Skills.');
+      Game.toast('WASD/arrows to move. M=Skills · G=Gear · T=Party. Board the ship to sail between islands.');
     }
   }
 
   // ---------- modes ----------
+  const EXPLORE = { island: () => World, sea: () => Sea, dungeon: () => Dungeon, town: () => Town };
+  const HUD_MODES = ['island', 'sea', 'dungeon', 'town'];
   function setMode(name) {
     Game.mode = name;
     document.body.className = 'mode-' + name;
-    if (name !== 'world' && name !== 'town') el('worldPrompt').classList.remove('show');
+    if (!HUD_MODES.includes(name)) el('worldPrompt').classList.remove('show');
   }
+  function pauseCurrentExplore() { const m = EXPLORE[Game.mode]; if (m) m().pause(); }
 
-  function toWorld() {
-    if (Game.mode === 'town') Town.pause();
-    const s = World.enter(); Game.scene = s; setMode('world');
-    if (!Game.state.world.krakenDown || true) Music.play('world');
-    Progress.save(Game.state);
+  function toIsland(key, fromSea) {
+    pauseCurrentExplore();
+    Game.state.location.place = 'island'; Game.state.location.island = key;
+    if (fromSea) { const s = Data.ISLANDS[key]; Game.state.location.x = s.spawn.x; Game.state.location.z = s.spawn.z; }
+    const sc = World.enter(key); Game.scene = sc; setMode('island'); Music.play('island'); Progress.save(Game.state);
   }
-  function enterTown(key) {
-    World.pause();
-    const s = Town.enter(key); Game.scene = s; setMode('town');
-    Progress.save(Game.state);
-  }
-  Game.toWorld = toWorld; Game.enterTown = enterTown;
+  function resumeIsland() { const sc = World.getScene(); Game.scene = sc; setMode('island'); World.resume(); Music.play('island'); }
+  function toSea() { if (Game.mode === 'island') World.pause(); Game.state.location.place = 'sea'; const sc = Sea.enter(); Game.scene = sc; setMode('sea'); Music.play('sea'); Progress.save(Game.state); }
+  function enterTown(key) { World.pause(); const sc = Town.enter(key); Game.scene = sc; setMode('town'); Progress.save(Game.state); }
+  function toDungeon(key) { World.pause(); const sc = Dungeon.enter(key); Game.scene = sc; setMode('dungeon'); Progress.save(Game.state); }
+  Game.toIsland = toIsland; Game.resumeIsland = resumeIsland; Game.toSea = toSea; Game.enterTown = enterTown; Game.toDungeon = toDungeon;
 
   // ---------- battle bridge ----------
-  Game.musicForReturn = () => (Game.mode === 'town' ? 'town' : 'world');
+  Game.musicForReturn = () => 'island';
   Game.startBattle = function (keys, opts, onEnd) {
     setMode('battle');
     const s = Battle.build(keys, opts, onEnd);
@@ -75,7 +78,7 @@ window.Game = (function () {
     const now = performance.now();
     if (now - Game._hudT < 180) return; Game._hudT = now;
     const wrap = el('hudParty'); let html = '';
-    Game.state.party.forEach(p => {
+    Progress.activeMembers(Game.state).forEach(p => {
       const d = Progress.derived(p);
       const hp = clamp(p.hpCur, 0, d.maxhp), mp = clamp(p.mpCur, 0, d.maxmp);
       html += `<div class="hud-m${hp<=0?' ko':''}"><div class="hud-row"><span>${d.name}</span><span class="hud-lv">Lv${p.level}</span></div>
@@ -168,7 +171,7 @@ window.Game = (function () {
 
   // ---------- skills ----------
   function openSkills() {
-    if (Game.mode !== 'world' && Game.mode !== 'town') return;
+    if (!HUD_MODES.includes(Game.mode)) return;
     if (Game.skillsOpen) return closeSkills();
     Game.skillsOpen = true; pauseExplore(); el('skills').classList.add('show');
     Progress.renderSkillTree(Game.state, el('skillBody'), closeSkills);
@@ -178,13 +181,23 @@ window.Game = (function () {
 
   // ---------- gear / seashells ----------
   function openGear() {
-    if (Game.mode !== 'world' && Game.mode !== 'town') return;
+    if (!HUD_MODES.includes(Game.mode)) return;
     if (Game.gearOpen) return closeGear();
     Game.gearOpen = true; pauseExplore(); el('gear').classList.add('show');
     Progress.renderGear(Game.state, el('gearBody'), closeGear);
   }
   function closeGear() { Game.gearOpen = false; el('gear').classList.remove('show'); Progress.save(Game.state); resumeExplore(); }
   Game.openGear = openGear;
+
+  // ---------- party (swap active 3 of 6) ----------
+  function openParty() {
+    if (!HUD_MODES.includes(Game.mode)) return;
+    if (Game.partyOpen) return closeParty();
+    Game.partyOpen = true; pauseExplore(); el('partyScr').classList.add('show');
+    Progress.renderRoster(Game.state, el('partyBody'), closeParty);
+  }
+  function closeParty() { Game.partyOpen = false; el('partyScr').classList.remove('show'); Progress.save(Game.state); resumeExplore(); }
+  Game.openParty = openParty;
 
   // ---------- confirm ----------
   Game.confirm = function (text, onYes) {
@@ -201,18 +214,18 @@ window.Game = (function () {
   Game.victoryEnding = function () {
     el('endTitle').textContent = 'The Kraken Falls!';
     el('endText').innerHTML = 'With a final, earth-shaking blow, the Kraken sinks into the depths. The high seas are calm once more — and your legend is sealed.<br><br>You can keep exploring, or return to the site.';
-    el('end').classList.add('show'); Music.play('victory', 'world');
+    el('end').classList.add('show'); Music.play('victory', 'island');
   };
   Game.finalEnding = function () {
     el('endTitle').textContent = 'The Tide Turns';
     el('endText').innerHTML = 'Selachoth dissolves into seafoam, and the grey horizon blushes gold. Saltmere is saved — and the legend of the three who turned the tide will be sung on every shore.<br><br><b>Thanks for playing!</b> You can keep exploring, or return to the site.';
-    el('end').classList.add('show'); Music.play('victory', 'world');
+    el('end').classList.add('show'); Music.play('victory', 'island');
   };
   el('endContinue') && (el('endContinue').onclick = () => el('end').classList.remove('show'));
 
   // ---------- explore pause helpers ----------
-  function pauseExplore() { if (Game.mode === 'world') World.pause(); else if (Game.mode === 'town') Town.pause(); }
-  function resumeExplore() { if (Game.mode === 'world') World.resume(); else if (Game.mode === 'town') Town.resume(); }
+  function pauseExplore() { const m = EXPLORE[Game.mode]; if (m) m().pause(); }
+  function resumeExplore() { const m = EXPLORE[Game.mode]; if (m) m().resume(); }
 
   // ---------- input ----------
   const ACTION = new Set(['KeyE', 'Space', 'Enter']);
@@ -226,22 +239,25 @@ window.Game = (function () {
     });
     window.addEventListener('keyup', e => Input.keys.delete(e.code));
     // tap-to-interact (mobile / mouse)
-    Game.canvasTap = () => { if (Game.dialogueOpen) return Game._advanceDlg && Game._advanceDlg(); if (anyModal()) return; if ((Game.mode === 'world' || Game.mode === 'town') && Game.active) Game.active.interact && Game.active.interact(); };
+    Game.canvasTap = () => { if (Game.dialogueOpen) return Game._advanceDlg && Game._advanceDlg(); if (anyModal()) return; if (HUD_MODES.includes(Game.mode) && Game.active) Game.active.interact && Game.active.interact(); };
     document.addEventListener('pointerdown', e => { if (e.target && e.target.id === 'renderCanvas') Game.canvasTap(); });
     el('btnSkills').onclick = openSkills;
     el('btnGear').onclick = openGear;
+    el('btnParty').onclick = openParty;
     el('btnMusic').onclick = () => { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; };
     el('worldPrompt').onclick = () => { if (Game.active) Game.active.interact && Game.active.interact(); };
   }
-  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.shopOpen || Game.confirmOpen || el('end').classList.contains('show'); }
+  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shopOpen || Game.confirmOpen || el('end').classList.contains('show'); }
   function route(code) {
     if (Game.skillsOpen) { if (code === 'Escape' || code === 'KeyM') closeSkills(); return; }
     if (Game.gearOpen) { if (code === 'Escape' || code === 'KeyG') closeGear(); return; }
+    if (Game.partyOpen) { if (code === 'Escape' || code === 'KeyT') closeParty(); return; }
     if (Game.confirmOpen) { if (code === 'Enter' || code === 'KeyE') el('confirmYes').click(); else if (code === 'Escape') el('confirmNo').click(); return; }
     if (Game.shopOpen) { if (code === 'Escape') closeShop(); return; }
     if (Game.dialogueOpen) { if (ACTION.has(code)) Game._advanceDlg && Game._advanceDlg(); return; }
     if (code === 'KeyM') return openSkills();
     if (code === 'KeyG') return openGear();
+    if (code === 'KeyT') return openParty();
     if (code === 'KeyP') { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; return; }
     if (ACTION.has(code) && Game.active && Game.active.interact) Game.active.interact();
   }
