@@ -23,10 +23,11 @@ window.Progress = (function () {
 
     const start = Data.ISLANDS.tidehaven;
     const state = {
-      gold: 80, party, active: ['pirate', 'swordsman', 'healer'], inv, equip, ownedWeapons, shells, shellSeq,
+      gold: 80, pearls: 0, party, active: ['pirate', 'swordsman', 'healer'], inv, equip, ownedWeapons, shells, shellSeq,
+      ship: { hull: Data.SHIP.defaults.hull, sail: Data.SHIP.defaults.sail, flag: Data.SHIP.defaults.flag, upg: {} },
       location: { place: 'island', island: 'tidehaven', x: start.spawn.x, z: start.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z },
       islands: { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} } },
-      dungeons: {},
+      dungeons: {}, shipsSunk: {},
       prog: { krakenDown: false, finalWin: false },
       flags: {},
     };
@@ -173,6 +174,10 @@ window.Progress = (function () {
     if (!state.islands) state.islands = { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} } };
     ['tidehaven', 'dunes', 'spire'].forEach(k => { if (!state.islands[k]) state.islands[k] = { cleared: {} }; });
     if (!state.dungeons) state.dungeons = {};
+    if (state.pearls == null) state.pearls = 0;
+    if (!state.shipsSunk) state.shipsSunk = {};
+    if (!state.ship) state.ship = { hull: Data.SHIP.defaults.hull, sail: Data.SHIP.defaults.sail, flag: Data.SHIP.defaults.flag, upg: {} };
+    if (!state.ship.upg) state.ship.upg = {};
     if (!state.location) { const s = Data.ISLANDS.tidehaven; state.location = { place: 'island', island: 'tidehaven', x: s.spawn.x, z: s.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z }; }
     if (!state.equip || !state.ownedWeapons || !state.shells) {
       const equip = {}, ownedWeapons = {}, shells = []; let seq = 1;
@@ -273,7 +278,7 @@ window.Progress = (function () {
     Data.WEAPONS[gearSel].forEach(w => {
       const owned = state.ownedWeapons[gearSel].includes(w.key); const on = eq.weapon === w.key;
       const b = document.createElement('button'); b.className = 'gear-item' + (on ? ' on' : '');
-      b.innerHTML = `<div class="gi-top"><span>${w.name}</span><span class="gi-tag">${on ? 'Equipped' : owned ? 'Equip' : 'Locked'}</span></div><div class="gi-desc">${w.desc} · ${w.slots} slot${w.slots>1?'s':''}</div>`;
+      b.innerHTML = `<div class="gi-top"><span>${Data.weaponIcon(gearSel)} ${w.name}</span><span class="gi-tag">${on ? 'Equipped' : owned ? 'Equip' : 'Locked'}</span></div><div class="gi-desc">${w.desc} · ${w.slots} slot${w.slots>1?'s':''}</div>`;
       b.disabled = !owned || on; b.onclick = () => { equipWeapon(state, gearSel, w.key); renderGear(state, container, onClose); };
       wSec.appendChild(b);
     });
@@ -300,7 +305,7 @@ window.Progress = (function () {
       const sh = Data.SHELLS[inst.key]; const need = inst.level < sh.maxLevel ? sh.ap[inst.level] : null;
       const b = document.createElement('button'); b.className = 'gear-item';
       const effect = sh.kind === 'magic' ? Data.shellAbility(inst.key, inst.level).name : `+${sh.stat==='crit'? Math.round(sh.perLevel*inst.level*100)+'%':sh.perLevel*inst.level} ${sh.stat.toUpperCase()}`;
-      b.innerHTML = `<div class="gi-top"><span><span class="shell-dot ${sh.kind}"></span>${sh.name} <span class="slot-lv">Lv${inst.level}</span></span><span class="gi-tag">Equip</span></div>
+      b.innerHTML = `<div class="gi-top"><span>${Data.shellIcon(sh)} ${sh.name} <span class="slot-lv">Lv${inst.level}</span></span><span class="gi-tag">Equip</span></div>
         <div class="gi-desc">${sh.desc} · grants ${effect}${need!=null?` · AP ${inst.ap}/${need}`:' · MAX'}</div>`;
       b.disabled = !hasSlot; b.onclick = () => { if (equipShell(state, gearSel, inst.id)) renderGear(state, container, onClose); };
       pSec.appendChild(b);
@@ -340,6 +345,44 @@ window.Progress = (function () {
     container.appendChild(wrap);
   }
 
-  return { freshState, derived, reward, fullHeal, canLearn, learn, save, load, clear, renderSkillTree, renderGear, renderRoster,
-           toggleActive, activeMembers, equipWeapon, equipShell, unequipSlot, addShell, buyWeapon, pouchShells, def };
+  // ---------------- SHIP ----------------
+  function shipStats(state) { const u = state.ship.upg || {}; return { hp: Data.SHIP.baseHp + (u.hull || 0) * 40, atk: Data.SHIP.baseAtk + (u.cannons || 0) * 6, def: Data.SHIP.baseDef + (u.plating || 0) * 3 }; }
+  function renderShipyard(state, container, onClose) {
+    container.innerHTML = '';
+    const wrap = document.createElement('div'); wrap.className = 'sk-wrap';
+    const head = document.createElement('div'); head.className = 'sk-head';
+    head.innerHTML = `<h2>Shipyard</h2><div class="sk-gold">⛃ ${state.gold} gold · 🦪 ${state.pearls} pearls</div>`;
+    const close = document.createElement('button'); close.className = 'pill ghost'; close.textContent = 'Close'; close.onclick = onClose; head.appendChild(close);
+    wrap.appendChild(head);
+
+    const st = shipStats(state);
+    const prev = document.createElement('div'); prev.className = 'ship-preview';
+    prev.innerHTML = `<div class="ship-art"><span class="ship-flag">${state.ship.flag}</span><div class="ship-sail" style="background:${state.ship.sail}"></div><div class="ship-hull" style="background:${state.ship.hull}"></div></div>
+      <div class="ship-stats">⛵ Your Ship<br>HP ${st.hp} · Cannons ${st.atk} · Armor ${st.def}</div>`;
+    wrap.appendChild(prev);
+
+    function section(title) { const h = document.createElement('div'); h.className = 'shop-head'; h.textContent = title; wrap.appendChild(h); return h; }
+    function row(label, sub, priceLabel, disabled, onBuy) {
+      const r = document.createElement('div'); r.className = 'shop-row';
+      r.innerHTML = `<div class="shop-info"><b>${label}</b><span>${sub}</span></div>`;
+      const b = document.createElement('button'); b.className = 'pill small'; b.textContent = priceLabel; b.disabled = disabled;
+      b.onclick = () => { onBuy(); renderShipyard(state, container, onClose); };
+      r.appendChild(b); wrap.appendChild(r);
+    }
+
+    section('🎨 Hull (gold)');
+    Data.SHIP_CUSTOM.hulls.forEach(h => { const on = state.ship.hull === h.color; row(h.name, on ? 'Equipped' : `Hull color`, on ? '✓' : '⛃ ' + h.price, on || state.gold < h.price, () => { state.gold -= h.price; state.ship.hull = h.color; save(state); }); });
+    section('⛵ Sails (gold)');
+    Data.SHIP_CUSTOM.sails.forEach(h => { const on = state.ship.sail === h.color; row(h.name, on ? 'Equipped' : 'Sail color', on ? '✓' : '⛃ ' + h.price, on || state.gold < h.price, () => { state.gold -= h.price; state.ship.sail = h.color; save(state); }); });
+    section('🚩 Flag (gold)');
+    Data.SHIP_CUSTOM.flags.forEach(f => { const on = state.ship.flag === f.emoji; row(f.emoji + ' Flag', on ? 'Equipped' : 'Banner', on ? '✓' : '⛃ ' + f.price, on || state.gold < f.price, () => { state.gold -= f.price; state.ship.flag = f.emoji; save(state); }); });
+    section('🔧 Upgrades (pearls)');
+    Data.SHIP_UPGRADES.forEach(u => { const lvl = (state.ship.upg[u.id] || 0); const maxed = lvl >= u.max; const cost = u.basePearls * (lvl + 1);
+      row(`${u.name} (Lv ${lvl}/${u.max})`, u.desc, maxed ? 'MAX' : '🦪 ' + cost, maxed || state.pearls < cost, () => { state.pearls -= cost; state.ship.upg[u.id] = lvl + 1; save(state); }); });
+
+    container.appendChild(wrap);
+  }
+
+  return { freshState, derived, reward, fullHeal, canLearn, learn, save, load, clear, renderSkillTree, renderGear, renderRoster, renderShipyard,
+           toggleActive, activeMembers, shipStats, equipWeapon, equipShell, unequipSlot, addShell, buyWeapon, pouchShells, def };
 })();

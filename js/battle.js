@@ -56,8 +56,8 @@ window.Battle = (function () {
       built.node.position.copyFrom(home); built.node.rotation.y = Math.PI/2.2;
       const hp = clamp(ms.hpCur == null ? d.maxhp : ms.hpCur, 0, d.maxhp);
       const mp = clamp(ms.mpCur == null ? d.maxmp : ms.mpCur, 0, d.maxmp);
-      party.push({ side:'party', ref: ms, name: d.name, role: d.role, node: built.node, arm: built.arm, staffPiv: built.staffPiv,
-        maxhp: d.maxhp, hp, maxmp: d.maxmp, mp, home, baseY: 0, phase: i*1.3, alive: hp > 0, _busy: false,
+      party.push({ side:'party', ref: ms, key: ms.key, name: d.name, role: d.role, node: built.node, arm: built.arm, staffPiv: built.staffPiv,
+        maxhp: d.maxhp, hp, maxmp: d.maxmp, mp, home, baseY: 0, phase: i*1.3, alive: hp > 0, _busy: false, limit: 0,
         idle: built.idle, fight: d.fight, abilities: d.abilities });
     });
 
@@ -74,7 +74,7 @@ window.Battle = (function () {
       if (boss) built.node.scaling.setAll(1.3);
       seen[key] = (seen[key] || 0) + 1;
       const suffix = placed.filter(k => k === key).length > 1 ? ' ' + 'ABC'[seen[key]-1] : '';
-      enemies.push({ side:'enemy', name: def.name + suffix, node: built.node, baseY: def.baseY, maxhp: def.hp, hp: def.hp,
+      enemies.push({ side:'enemy', keyRaw: key, name: def.name + suffix, node: built.node, baseY: def.baseY, maxhp: def.hp, hp: def.hp,
         home, phase: i*1.7 + 0.5, alive: true, _busy: false, idle: built.idle, moves: def.moves, xp: def.xp, gold: def.gold });
     });
 
@@ -122,15 +122,18 @@ window.Battle = (function () {
   function renderEnemies(targetMode, onPick) {
     const wrap = el('bEnemies'); wrap.innerHTML = '';
     enemies.forEach(e => { const d = document.createElement('div'); d.className = 'eplate' + (e.alive ? '' : ' dead');
-      d.innerHTML = `<div class="row"><span class="name">${e.name}</span><span class="hpnum">${Math.max(0,e.hp)}/${e.maxhp}</span></div><div class="bar hp"><i style="width:${clamp(e.hp/e.maxhp*100,0,100)}%"></i></div>`;
+      const port = Portraits.has(e.keyRaw) ? `<div class="eportrait">${Portraits.img(e.keyRaw)}</div>` : '';
+      d.innerHTML = `${port}<div class="einfo"><div class="row"><span class="name">${e.name}</span><span class="hpnum">${Math.max(0,e.hp)}/${e.maxhp}</span></div><div class="bar hp"><i style="width:${clamp(e.hp/e.maxhp*100,0,100)}%"></i></div></div>`;
+      if (Portraits.has(e.keyRaw)) d.classList.add('boss');
       if (targetMode && e.alive) { d.classList.add('targetable'); d.onclick = () => onPick(e); } wrap.appendChild(d); });
   }
   function renderParty(targetMode, candidates, onPick) {
     const wrap = el('bParty'); wrap.innerHTML = '';
-    party.forEach(p => { const d = document.createElement('div'); d.className = 'pmember' + (p === activeMember ? ' active' : '') + (p.alive ? '' : ' dead');
-      d.innerHTML = `<div class="row"><span class="name">${p.name}</span><span class="role">${p.role}</span></div>
-        <div class="twobar"><div class="bar php"><i style="width:${clamp(p.hp/p.maxhp*100,0,100)}%"></i></div><span class="nums">HP ${Math.max(0,p.hp)}/${p.maxhp}</span></div>
-        <div class="twobar"><div class="bar mp"><i style="width:${clamp(p.mp/p.maxmp*100,0,100)}%"></i></div><span class="nums">MP ${p.mp}/${p.maxmp}</span></div>`;
+    party.forEach(p => { const d = document.createElement('div'); d.className = 'pmember' + (p === activeMember ? ' active' : '') + (p.alive ? '' : ' dead') + (p.limit >= 100 ? ' limitready' : '');
+      d.innerHTML = `<div class="pm-head">${Portraits.img(p.key, 'pm-port')}<div class="pm-meta"><div class="row"><span class="name">${p.name}</span><span class="role">${p.role}</span></div>
+        <div class="twobar"><div class="bar php"><i style="width:${clamp(p.hp/p.maxhp*100,0,100)}%"></i></div><span class="nums">${Math.max(0,p.hp)}/${p.maxhp}</span></div>
+        <div class="twobar"><div class="bar mp"><i style="width:${clamp(p.mp/p.maxmp*100,0,100)}%"></i></div><span class="nums">${p.mp}/${p.maxmp}</span></div>
+        <div class="bar lim"><i style="width:${clamp(p.limit,0,100)}%"></i></div></div></div>`;
       if (targetMode && candidates.includes(p)) { d.classList.add('targetable'); d.onclick = () => onPick(p); } wrap.appendChild(d); });
   }
   function refresh() { renderEnemies(false); renderParty(false); }
@@ -148,9 +151,17 @@ window.Battle = (function () {
   async function dashAttack(attacker, target, onHit) { attacker._busy = true; const home = attacker.home.clone(); const dest = home.add(target.home.subtract(home).scale(0.62)); dest.y = attacker.baseY; await moveTo(attacker.node, dest, 260); await onHit(); await moveTo(attacker.node, home, 320); attacker.node.position.copyFrom(home); attacker._busy = false; }
   async function swing(arm) { await rotTo(arm, 'x', 0, -2.3, 110); await rotTo(arm, 'x', -2.3, 0.6, 100); await rotTo(arm, 'x', 0.6, 0, 130); }
 
-  function damageEnemy(e, dmg, color = '#ffffff') {
-    if (window.SFX) SFX.play('hit');
-    e.hp = Math.max(0, e.hp - dmg); hitFlash(e.node, '#ff6060'); burst(worldOf(e.node, 0.6), ...FX.hit, 55, 6); floatDamage(e.node, String(dmg), color, 2.6);
+  function damageEnemy(e, dmg, color = '#ffffff', element = 'physical') {
+    const mult = Data.affMult(e.keyRaw, element);
+    if (mult < 0) { // absorb → enemy heals
+      const heal = Math.round(dmg * 0.6); e.hp = Math.min(e.maxhp, e.hp + heal);
+      burst(worldOf(e.node, 0.6), ...FX.heal, 40, 5, -2); floatDamage(e.node, '+' + heal + ' absorb', '#6ee7b7', 2.6); renderEnemies(false); return;
+    }
+    if (mult === 0) { floatDamage(e.node, 'Null', '#9aa6b4', 2.6); return; }
+    dmg = Math.round(dmg * mult);
+    if (window.SFX) SFX.play(mult > 1 ? 'crit' : 'hit');
+    e.hp = Math.max(0, e.hp - dmg); hitFlash(e.node, mult > 1 ? '#fff0a0' : '#ff6060'); burst(worldOf(e.node, 0.6), ...FX.hit, mult > 1 ? 80 : 55, mult > 1 ? 9 : 6);
+    floatDamage(e.node, dmg + (mult > 1 ? ' Weak!' : mult < 1 ? ' Resist' : ''), mult > 1 ? '#fde047' : color, 2.6);
     e._busy = true; const h = e.home.clone(); moveTo(e.node, h.add(new V3(0.5,0,0)), 90).then(() => moveTo(e.node, h, 150).then(() => { e.node.position.copyFrom(h); e._busy = false; }));
     if (e.hp <= 0) killEnemy(e); renderEnemies(false);
   }
@@ -159,11 +170,27 @@ window.Battle = (function () {
 
   function takeTurn(member) { return new Promise(done => { activeMember = member; renderParty(false); renderEnemies(false); msg(`${member.name}'s turn — choose an action.`); showMain(member, done); }); }
 
+  function gainLimit(m, amt) { m.limit = clamp(m.limit + amt, 0, 100); }
   function showMain(m, done) { clearMenu(m.name);
     cmd('⚔️  Fight', '', () => chooseEnemy('Attack which foe?', e => act(done, () => doFight(m, e)), () => showMain(m, done)));
     cmd('✨  Magic', '', () => showMagic(m, done));
     cmd('🎒  Item', '', () => showItems(m, done));
+    const L = Data.LIMITS[m.key];
+    if (L && m.limit >= 100) cmd('💥  Limit: ' + L.name, 'READY', () => {
+      if (L.target === 'enemy') chooseEnemy('Unleash ' + L.name + ' on?', e => act(done, () => doLimit(m, [e])), () => showMain(m, done));
+      else act(done, () => doLimit(m, L.target === 'allparty' ? party.slice() : aliveEnemies()));
+    }, false, 'lim');
     cmd('🛡️  Defend', '', () => act(done, () => doDefend(m)));
+  }
+  async function doLimit(m, targets) {
+    const L = Data.LIMITS[m.key]; m.limit = 0;
+    if (window.SFX) SFX.play('crit'); msg(`💥 LIMIT BREAK — ${m.name} ${L.flavor}`);
+    if (L.heal) {
+      for (const p of party) { if (!p.alive && L.revive) { p.alive = true; p.node.setEnabled(true); p.node.position.copyFrom(p.home); p.node.rotation.x = 0; } if (p.alive) healMember(p, L.min); }
+      burst(worldOf(m.node, 0.5), ...FX.heal, 90, 7, -2); await wait(700); return;
+    }
+    for (const e of targets) { burst(worldOf(e.node, 0.4), ...FX[L.fx], 110, 12); hitFlash(e.node, FX[L.fx][0], 280); damageEnemy(e, rnd(L.min, L.max), '#fde047', L.el); await wait(140); }
+    await wait(450);
   }
   function showMagic(m, done) { clearMenu(m.name + ' · Magic');
     m.abilities.forEach(s => { const label = s.name + (s.target === 'all' || s.target === 'allparty' ? '  (all)' : '');
@@ -188,22 +215,23 @@ window.Battle = (function () {
   function chooseAlly(prompt, candidates, onPick, onBack) { clearMenu(prompt); msg(prompt); renderParty(true, candidates, p => { renderParty(false); onPick(p); }); backBtn(() => { renderParty(false); onBack(); }); }
   async function act(done, fn) { lockMenu(); await fn(); refresh(); activeMember = null; renderParty(false); done(); }
 
-  async function doFight(m, target) { msg(`${m.name} strikes ${target.name}!`); await dashAttack(m, target, async () => { if (m.arm) await swing(m.arm); let dmg = rnd(m.fight.min, m.fight.max); const crit = Math.random() < m.fight.crit; if (crit) dmg = Math.round(dmg*1.8); if (m.fight.big) burst(worldOf(target.node, 0.4), ...FX.beam, 50, 7); if (crit && window.SFX) SFX.play('crit'); damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff'); if (crit) msg('Critical hit! ' + dmg + ' damage!'); }); }
+  async function doFight(m, target) { msg(`${m.name} strikes ${target.name}!`); await dashAttack(m, target, async () => { if (m.arm) await swing(m.arm); let dmg = rnd(m.fight.min, m.fight.max); const crit = Math.random() < m.fight.crit; if (crit) dmg = Math.round(dmg*1.8); if (m.fight.big) burst(worldOf(target.node, 0.4), ...FX.beam, 50, 7); if (crit && window.SFX) SFX.play('crit'); damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff', 'physical'); if (crit) msg('Critical hit! ' + dmg + ' damage!'); }); gainLimit(m, 8); }
   async function doDefend(m) { msg(`${m.name} braces for impact.`); m._defend = true; await wait(300); }
   async function doSpell(m, s, targets) {
     if (window.SFX) SFX.play(s.fx === 'fire' ? 'fire' : s.fx === 'water' ? 'water' : s.heal ? 'heal' : 'magic');
     m.mp = Math.max(0, m.mp - s.mp); renderParty(false);
     if (s.heal) { msg(`${m.name} casts ${s.name}!`); if (m.staffPiv) await rotTo(m.staffPiv, 'z', 0, -0.5, 150).then(() => rotTo(m.staffPiv, 'z', -0.5, 0, 200)); for (const p of targets) healMember(p, rnd(s.min, s.max)); await wait(600); return; }
+    const elem = Data.elementOf(s);
     if (s.proj || s.fx === 'beam') { msg(`${m.name} unleashes ${s.name}!`); if (m.arm && s.fx === 'beam') swing(m.arm);
-      for (const e of targets) { const ball = MB.CreateSphere('p', { diameter: s.fx === 'beam' ? 0.6 : 0.4 }, scene); ball.material = M('pMat', s.fx === 'beam' ? '#c7d2fe' : '#1c1c1c', { emissive: s.fx === 'beam' ? '#6366f1' : '#000' }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(e.node, -0.2), 300); ball.dispose(); burst(worldOf(e.node, 0.2), ...FX[s.fx], 80, 9); damageEnemy(e, rnd(s.min, s.max), s.fx === 'beam' ? '#a5b4fc' : '#ffd1d1'); } await wait(380); return; }
-    msg(`${m.name} unleashes ${s.name}!`); for (const e of targets) { burst(worldOf(e.node, 0.4), ...FX[s.fx], 70, 8); hitFlash(e.node, FX[s.fx][0]); damageEnemy(e, rnd(s.min, s.max), s.fx === 'water' ? '#5eead4' : '#a5b4fc'); await wait(110); } await wait(360);
+      for (const e of targets) { const ball = MB.CreateSphere('p', { diameter: s.fx === 'beam' ? 0.6 : 0.4 }, scene); ball.material = M('pMat', s.fx === 'beam' ? '#c7d2fe' : '#1c1c1c', { emissive: s.fx === 'beam' ? '#6366f1' : '#000' }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(e.node, -0.2), 300); ball.dispose(); burst(worldOf(e.node, 0.2), ...FX[s.fx], 80, 9); damageEnemy(e, rnd(s.min, s.max), s.fx === 'beam' ? '#a5b4fc' : '#ffd1d1', elem); } gainLimit(m, 8); await wait(380); return; }
+    msg(`${m.name} unleashes ${s.name}!`); for (const e of targets) { burst(worldOf(e.node, 0.4), ...FX[s.fx], 70, 8); hitFlash(e.node, FX[s.fx][0]); damageEnemy(e, rnd(s.min, s.max), s.fx === 'water' ? '#5eead4' : '#a5b4fc', elem); await wait(110); } gainLimit(m, 8); await wait(360);
   }
   async function doItem(m, key, it, targets) {
     Game.state.inv[key] = Math.max(0, (Game.state.inv[key] || 0) - 1);
     if (it.kind === 'heal') { msg(`${m.name} uses ${it.name}.`); healMember(targets[0], it.amount); await wait(550); }
     else if (it.kind === 'mana') { const p = targets[0]; p.mp = Math.min(p.maxmp, p.mp + it.amount); msg(`${m.name} uses ${it.name}. +${it.amount} MP!`); burst(worldOf(p.node, 0.2), ...FX.mana, 45, 5, -2); floatDamage(p.node, '+' + it.amount + ' MP', '#93c5fd', 2.6); renderParty(false); await wait(550); }
     else if (it.kind === 'revive') { const p = targets[0]; p.alive = true; p.node.setEnabled(true); p.node.position.copyFrom(p.home); p.node.rotation.x = 0; p.hp = Math.round(p.maxhp*0.5); msg(`${p.name} is revived!`); burst(worldOf(p.node, 0.5), '#fff6c2', '#fde68a', 80, 6, -1); floatDamage(p.node, '+' + p.hp, '#fde68a', 2.6); renderParty(false); await wait(650); }
-    else { msg(`${m.name} hurls a ${it.name}!`); const ball = MB.CreateSphere('b', { diameter: 0.4 }, scene); ball.material = M('bMat', '#222', { emissive: '#1a0a00' }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(targets[0].node, -0.2), 340); ball.dispose(); burst(worldOf(targets[0].node, 0.2), ...FX.fire, 100, 11); damageEnemy(targets[0], rnd(it.min, it.max), '#fca5a5'); await wait(450); }
+    else { msg(`${m.name} hurls a ${it.name}!`); const ball = MB.CreateSphere('b', { diameter: 0.4 }, scene); ball.material = M('bMat', '#222', { emissive: '#1a0a00' }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(targets[0].node, -0.2), 340); ball.dispose(); burst(worldOf(targets[0].node, 0.2), ...FX.fire, 100, 11); damageEnemy(targets[0], rnd(it.min, it.max), '#fca5a5', 'fire'); await wait(450); }
   }
 
   // ----- enemy AI -----
@@ -214,7 +242,7 @@ window.Battle = (function () {
     else { const target = targetsAlive[rnd(0, targetsAlive.length - 1)]; msg(`${e.name} ${move.name} at ${target.name}!`); const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY; await moveTo(e.node, dest, 240); let dmg = rnd(move.min, move.max); if (target._defend) dmg = Math.round(dmg*0.5); applyToMember(target, dmg); await wait(160); await moveTo(e.node, home, 340); }
     e.node.position.copyFrom(home); e._busy = false; await wait(200);
   }
-  function applyToMember(p, dmg) { p.hp = Math.max(0, p.hp - dmg); hitFlash(p.node, '#ff5050'); burst(worldOf(p.node, 0.0), ...FX.hit, 50, 6); floatDamage(p.node, String(dmg), '#ff8a8a', 2.4); if (p.hp <= 0 && p.alive) koMember(p); renderParty(false); }
+  function applyToMember(p, dmg) { p.hp = Math.max(0, p.hp - dmg); p.limit = clamp(p.limit + Math.round(dmg / p.maxhp * 60) + 5, 0, 100); hitFlash(p.node, '#ff5050'); burst(worldOf(p.node, 0.0), ...FX.hit, 50, 6); floatDamage(p.node, String(dmg), '#ff8a8a', 2.4); if (p.hp <= 0 && p.alive) koMember(p); renderParty(false); }
   async function koMember(p) { if (window.SFX) SFX.play('ko'); p.alive = false; tween(k => { p.node.rotation.x = k*1.4; p.node.position.y = p.baseY - k*0.4; }, 500); }
 
   // ----- loop / end -----

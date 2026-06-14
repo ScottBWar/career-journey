@@ -58,6 +58,14 @@ window.World = (function () {
       gates.push({ kind: 'dungeon', key: def.dungeon.key, name: dd.name, pos: new V3(def.dungeon.x, 0, def.dungeon.z), r: 3, solved });
     }
 
+    // shell cove (minigame)
+    if (def.shells) {
+      const cove = Models.portal('#ffd166'); cove.node.position.set(def.shells.x, 0, def.shells.z); cove.node._baseY = 0; idlers.push(cove);
+      const cs = Models.sign('Shell Cove'); cs.node.position.set(def.shells.x, 0, def.shells.z - 1.8);
+      for (let i = 0; i < 3; i++) { const sh = Models.crystal(['#ffd166','#ff9eb0','#9be7ff'][i]); sh.node.position.set(def.shells.x - 2 + i*2, 0, def.shells.z + 1.5); sh.node.scaling.setAll(0.4); idlers.push(sh); }
+      gates.push({ kind: 'shells', name: 'Shell Cove', pos: new V3(def.shells.x, 0, def.shells.z), r: 3 });
+    }
+
     // boss lair (spire)
     if (def.boss) {
       const stage = Game.state.prog.finalWin ? 'A Calmed Spire' : Game.state.prog.krakenDown ? "Selachoth's Spire" : "Kraken's Lair";
@@ -124,6 +132,7 @@ window.World = (function () {
       if (nearGate.kind === 'town') label = `[E / Tap] Enter ${nearGate.name}`;
       else if (nearGate.kind === 'dungeon') label = `[E / Tap] Enter ${nearGate.name}${nearGate.solved ? ' (cleared)' : ''}`;
       else if (nearGate.kind === 'dock') label = '[E / Tap] Board the ship';
+      else if (nearGate.kind === 'shells') label = '[E / Tap] Hunt for shells';
       else if (nearGate.kind === 'boss') label = Game.state.prog.finalWin ? '[E / Tap] The spire is silent' : Game.state.prog.krakenDown ? '[E / Tap] Confront Selachoth' : '[E / Tap] Challenge the Kraken';
       prompt.textContent = label; prompt.classList.add('show');
     } else prompt.classList.remove('show');
@@ -156,6 +165,7 @@ window.World = (function () {
     if (g.kind === 'town') return Game.enterTown(g.key);
     if (g.kind === 'dungeon') return Game.toDungeon(g.key);
     if (g.kind === 'dock') return Game.toSea();
+    if (g.kind === 'shells') return Game.openShellHunt();
     if (g.kind === 'boss') {
       if (Game.state.prog.finalWin) return Game.toast('Selachoth is no more. The tide is yours.');
       if (!Game.state.prog.krakenDown) {

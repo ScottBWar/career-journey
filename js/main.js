@@ -60,17 +60,29 @@ window.Game = (function () {
   }
   function resumeIsland() { const sc = World.getScene(); Game.scene = sc; setMode('island'); World.resume(); Music.play('island'); }
   function toSea() { if (Game.mode === 'island') World.pause(); Game.state.location.place = 'sea'; const sc = Sea.enter(); Game.scene = sc; setMode('sea'); Music.play('sea'); Progress.save(Game.state); }
+  function resumeSea() { const sc = Sea.getScene(); Game.scene = sc; setMode('sea'); Sea.resume(); Music.play('sea'); }
   function enterTown(key) { World.pause(); const sc = Town.enter(key); Game.scene = sc; setMode('town'); Progress.save(Game.state); }
   function toDungeon(key) { World.pause(); const sc = Dungeon.enter(key); Game.scene = sc; setMode('dungeon'); Progress.save(Game.state); }
-  Game.toIsland = toIsland; Game.resumeIsland = resumeIsland; Game.toSea = toSea; Game.enterTown = enterTown; Game.toDungeon = toDungeon;
+  Game.toIsland = toIsland; Game.resumeIsland = resumeIsland; Game.toSea = toSea; Game.resumeSea = resumeSea; Game.enterTown = enterTown; Game.toDungeon = toDungeon;
+
+  // ---------- battle transition ----------
+  function transition(cb) {
+    const tEl = el('transition'); tEl.classList.remove('show'); void tEl.offsetWidth; tEl.classList.add('show');
+    if (window.SFX) SFX.play('confirm');
+    setTimeout(cb, 360);
+    setTimeout(() => tEl.classList.remove('show'), 800);
+  }
+  Game.transition = transition;
 
   // ---------- battle bridge ----------
-  Game.musicForReturn = () => 'island';
+  Game.musicForReturn = () => (Game.mode === 'sea' || Game.mode === 'shipbattle') ? 'sea' : 'island';
   Game.startBattle = function (keys, opts, onEnd) {
-    setMode('battle');
-    const s = Battle.build(keys, opts, onEnd);
-    Game.scene = s;
-    setTimeout(() => { if (Game.scene === s) Battle.startLoop(); }, 450);
+    Music.play('battle');
+    transition(() => { setMode('battle'); const s = Battle.build(keys, opts, onEnd); Game.scene = s; setTimeout(() => { if (Game.scene === s) Battle.startLoop(); }, 350); });
+  };
+  Game.startShipBattle = function (type, onEnd) {
+    Music.play('battle');
+    transition(() => { setMode('shipbattle'); const s = ShipBattle.build(type, onEnd); Game.scene = s; setTimeout(() => { if (Game.scene === s) ShipBattle.startLoop(); }, 350); });
   };
 
   // ---------- HUD ----------
@@ -86,14 +98,16 @@ window.Game = (function () {
         <div class="hud-bar mp"><i style="width:${mp/d.maxmp*100}%"></i></div></div>`;
     });
     wrap.innerHTML = html;
-    el('hudGold').textContent = '⛃ ' + Game.state.gold;
+    el('hudGold').innerHTML = '⛃ ' + Game.state.gold + ' &nbsp; 🦪 ' + (Game.state.pearls || 0);
   };
 
   // ---------- dialogue ----------
+  const NAME2PORT = { 'Capt. Redbeard': 'pirate', 'Lance Strider': 'swordsman', 'Marina': 'healer', 'Pip': 'mage', 'Ridge': 'blader', 'Brann': 'dragoon', 'Selachoth': 'selachoth' };
+  function dlgPortrait(name) { const k = NAME2PORT[name]; el('dlgPortrait').innerHTML = (k && Portraits.has(k)) ? Portraits.img(k) : ''; }
   Game.talk = function (npc) {
     pauseExplore();
     const lines = npc.lines.slice(); let i = 0;
-    Game.dialogueOpen = true; el('dialogue').classList.add('show');
+    Game.dialogueOpen = true; el('dialogue').classList.add('show'); dlgPortrait(npc.name);
     function show() {
       el('dlgName').textContent = npc.name; el('dlgText').textContent = lines[i];
       el('dlgNext').textContent = i < lines.length - 1 ? 'Next ▶' : (npc.service === 'inn' ? 'Rest ✓' : npc.service === 'shop' ? 'Open Shop 🛒' : 'Close');
@@ -111,7 +125,7 @@ window.Game = (function () {
   Game.cutscene = function (beats, onDone) {
     pauseExplore();
     let i = 0; Game.dialogueOpen = true; el('dialogue').classList.add('show');
-    function show() { el('dlgName').textContent = beats[i].name; el('dlgText').textContent = beats[i].text; el('dlgNext').textContent = i < beats.length - 1 ? 'Next ▶' : 'Continue'; }
+    function show() { el('dlgName').textContent = beats[i].name; el('dlgText').textContent = beats[i].text; dlgPortrait(beats[i].name); el('dlgNext').textContent = i < beats.length - 1 ? 'Next ▶' : 'Continue'; }
     Game._advanceDlg = () => { if (i < beats.length - 1) { i++; show(); } else { closeDialogue(); Game._advanceDlg = null; if (onDone) onDone(); else resumeExplore(); } };
     el('dlgNext').onclick = Game._advanceDlg;
     show();
@@ -153,7 +167,7 @@ window.Game = (function () {
     Data.SHOP_SHELLS.forEach(key => {
       const sh = Data.SHELLS[key];
       const grants = sh.kind === 'magic' ? `grants ${sh.ability.name}` : sh.desc;
-      shopRow(list, sh.name, `${grants}`, sh.price, false, () => Progress.addShell(Game.state, key));
+      shopRow(list, `${Data.shellIcon(sh)} ${sh.name}`, `${grants}`, sh.price, false, () => Progress.addShell(Game.state, key));
     });
 
     shopHeading(list, '⚔️ Weapons');
@@ -162,7 +176,7 @@ window.Game = (function () {
       Data.WEAPONS[p.key].forEach(w => {
         if (w.price <= 0) return;
         const owned = Game.state.ownedWeapons[p.key].includes(w.key);
-        shopRow(list, `${w.name}`, `${d.name} · ${w.desc}` + (owned ? ' · owned' : ''), w.price, owned, () => Progress.buyWeapon(Game.state, p.key, w.key));
+        shopRow(list, `${Data.weaponIcon(p.key)} ${w.name}`, `${d.name} · ${w.desc}` + (owned ? ' · owned' : ''), w.price, owned, () => Progress.buyWeapon(Game.state, p.key, w.key));
       });
     });
   }
@@ -198,6 +212,22 @@ window.Game = (function () {
   }
   function closeParty() { Game.partyOpen = false; el('partyScr').classList.remove('show'); Progress.save(Game.state); resumeExplore(); }
   Game.openParty = openParty;
+
+  // ---------- shipyard ----------
+  function openShipyard() {
+    if (Game.shipyardOpen) return closeShipyard();
+    Game.shipyardOpen = true; pauseExplore(); el('shipyard').classList.add('show');
+    Progress.renderShipyard(Game.state, el('shipyardBody'), closeShipyard);
+  }
+  function closeShipyard() {
+    Game.shipyardOpen = false; el('shipyard').classList.remove('show'); Progress.save(Game.state);
+    if (Game.mode === 'sea') { const sc = Sea.enter(); Game.scene = sc; } else resumeExplore(); // rebuild to show new colors
+  }
+  Game.openShipyard = openShipyard;
+
+  // ---------- shell hunt ----------
+  function openShellHunt() { pauseExplore(); ShellHunt.start(() => resumeExplore()); }
+  Game.openShellHunt = openShellHunt;
 
   // ---------- confirm ----------
   Game.confirm = function (text, onYes) {
@@ -247,17 +277,20 @@ window.Game = (function () {
     el('btnMusic').onclick = () => { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; };
     el('worldPrompt').onclick = () => { if (Game.active) Game.active.interact && Game.active.interact(); };
   }
-  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shopOpen || Game.confirmOpen || el('end').classList.contains('show'); }
+  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.shopOpen || Game.confirmOpen || el('shellHunt').classList.contains('show') || el('end').classList.contains('show'); }
   function route(code) {
+    if (el('shellHunt').classList.contains('show')) return; // minigame handles its own input
     if (Game.skillsOpen) { if (code === 'Escape' || code === 'KeyM') closeSkills(); return; }
     if (Game.gearOpen) { if (code === 'Escape' || code === 'KeyG') closeGear(); return; }
     if (Game.partyOpen) { if (code === 'Escape' || code === 'KeyT') closeParty(); return; }
+    if (Game.shipyardOpen) { if (code === 'Escape' || code === 'KeyC') closeShipyard(); return; }
     if (Game.confirmOpen) { if (code === 'Enter' || code === 'KeyE') el('confirmYes').click(); else if (code === 'Escape') el('confirmNo').click(); return; }
     if (Game.shopOpen) { if (code === 'Escape') closeShop(); return; }
     if (Game.dialogueOpen) { if (ACTION.has(code)) Game._advanceDlg && Game._advanceDlg(); return; }
     if (code === 'KeyM') return openSkills();
     if (code === 'KeyG') return openGear();
     if (code === 'KeyT') return openParty();
+    if (code === 'KeyC' && Game.mode === 'sea') return openShipyard();
     if (code === 'KeyP') { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; return; }
     if (ACTION.has(code) && Game.active && Game.active.interact) Game.active.interact();
   }

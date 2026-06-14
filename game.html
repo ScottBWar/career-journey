@@ -16,6 +16,7 @@
     body.mode-town   { background: linear-gradient(180deg, #3a5a9a 0%, #6aa0d0 45%, #c9e2ee 100%); }
     body.mode-dungeon{ background: linear-gradient(180deg, #07060f 0%, #14122a 100%); }
     body.mode-battle { background: linear-gradient(180deg, #1b1145 0%, #5b2a86 32%, #c2557b 58%, #ef8f6e 82%, #ffd9a0 100%); }
+    body.mode-shipbattle { background: linear-gradient(180deg, #20407a 0%, #3a6ea8 45%, #8fb8d8 100%); }
     #renderCanvas { position: fixed; inset: 0; width: 100%; height: 100%; outline: none; touch-action: none; z-index: 0; }
 
     .pill { font: inherit; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.85rem 2rem; border-radius: 999px; border: none; cursor: pointer; color: #05060f; background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4); box-shadow: 0 10px 30px rgba(165,180,252,0.4); text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
@@ -233,6 +234,65 @@
     .rc-role { font-size: 0.72rem; color: rgba(255,255,255,0.6); margin: 0.2rem 0 0.4rem; }
     .rc-weap { font-size: 0.74rem; color: #93c5fd; margin-top: 0.3rem; }
 
+    /* portraits */
+    .portrait { image-rendering: pixelated; image-rendering: crisp-edges; width: 38px; height: 38px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25); display: block; }
+    .pm-head { display: flex; gap: 0.5rem; align-items: center; }
+    .pm-port { width: 44px; height: 44px; flex: 0 0 auto; }
+    .pm-meta { flex: 1; min-width: 0; }
+    .pmember.limitready { box-shadow: 0 0 0 1px #fde047, 0 0 16px rgba(253,224,71,0.6); }
+    .bar.lim { height: 5px; }
+    .bar.lim > i { background: linear-gradient(90deg, #fcd34d, #fde047); }
+    .eplate.boss { display: flex; gap: 0.5rem; align-items: center; }
+    .eplate .einfo { flex: 1; min-width: 0; }
+    .eportrait img { width: 46px; height: 46px; }
+    .cmd .cost.lim { color: #fde047; }
+
+    /* dialogue portrait */
+    .dlg-row { display: flex; gap: 0.8rem; align-items: flex-start; }
+    .dlg-port { flex: 0 0 auto; }
+    .dlg-port img { width: 58px; height: 58px; image-rendering: pixelated; border-radius: 8px; }
+    .dlg-body { flex: 1; }
+
+    /* ship battle */
+    #shipUI { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; justify-content: space-between; padding: clamp(0.6rem,1.6vw,1.3rem); pointer-events: none; }
+    body.mode-shipbattle #shipUI { display: flex; }
+    #shipUI .topbar { display: flex; justify-content: center; }
+    #shipMsg { position: fixed; left: 50%; bottom: 210px; transform: translateX(-50%); z-index: 11; pointer-events: none; padding: 0.5rem 1.3rem; background: rgba(8,6,24,0.78); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; font-size: clamp(0.8rem,2.2vw,1rem); max-width: 92vw; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.45); display: none; }
+    body.mode-shipbattle #shipMsg { display: block; }
+
+    /* shipyard */
+    #shipyard .sk-wrap { width: min(640px, 96vw); max-height: 90vh; overflow: auto; }
+    .ship-preview { display: flex; gap: 1rem; align-items: center; background: rgba(12,10,36,0.5); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; padding: 0.9rem; margin-bottom: 1rem; }
+    .ship-art { position: relative; width: 96px; height: 76px; flex: 0 0 auto; }
+    .ship-hull { position: absolute; bottom: 0; left: 6px; width: 84px; height: 28px; border-radius: 0 0 44px 44px; }
+    .ship-sail { position: absolute; bottom: 26px; left: 40px; width: 16px; height: 40px; border-radius: 3px; }
+    .ship-flag { position: absolute; top: -4px; left: 44px; font-size: 1.2rem; }
+    .ship-stats { font-size: 0.9rem; line-height: 1.6; }
+
+    /* shell hunt */
+    .sh-panel { width: min(560px, 96vw); padding: 1.2rem; }
+    .sh-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+    .sh-hud { font-weight: 700; color: #fde68a; }
+    .sh-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+    .sh-cell { aspect-ratio: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .sh-shell { font: inherit; font-size: 1.9rem; background: none; border: none; cursor: pointer; line-height: 1; animation: shellpop 0.14s ease; }
+    .sh-shell.caught { animation: shellcatch 0.14s ease forwards; }
+    @keyframes shellpop { from { transform: scale(0); } to { transform: scale(1); } }
+    @keyframes shellcatch { to { transform: scale(1.7); opacity: 0; } }
+    .sh-foot { margin-top: 0.8rem; text-align: center; color: rgba(255,255,255,0.6); font-size: 0.82rem; }
+    .sh-result { text-align: center; line-height: 1.7; margin: 1rem 0; }
+
+    /* battle transition */
+    #transition { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0; }
+    #transition.show { animation: battleWipe 0.8s ease forwards; }
+    @keyframes battleWipe {
+      0% { opacity: 0; clip-path: circle(0% at 50% 50%); background: #0a0a18; }
+      22% { opacity: 1; clip-path: circle(170% at 50% 50%); background: #0a0a18; }
+      44% { opacity: 1; background: #ffffff; }
+      60% { opacity: 1; background: #ffffff; }
+      100% { opacity: 0; background: #ffffff; }
+    }
+
     @media (max-width: 680px) {
       #bMessage { bottom: 188px; }
       .hud-m { min-width: 78px; }
@@ -283,7 +343,25 @@
   </div>
 
   <!-- DIALOGUE -->
-  <div class="overlay" id="dialogue"><div class="box panel"><div id="dlgName"></div><div id="dlgText"></div><button class="pill small" id="dlgNext">Next ▶</button></div></div>
+  <div class="overlay" id="dialogue"><div class="box panel"><div class="dlg-row"><div class="dlg-port" id="dlgPortrait"></div><div class="dlg-body"><div id="dlgName"></div><div id="dlgText"></div></div></div><button class="pill small" id="dlgNext">Next ▶</button></div></div>
+
+  <!-- SHIP BATTLE -->
+  <div id="shipUI">
+    <div class="topbar"><div class="eplate boss" style="max-width:360px"><div class="row"><span class="name" id="shipEName"></span><span class="hpnum" id="shipEHPn"></span></div><div class="bar hp"><i id="shipEHP"></i></div></div></div>
+    <div class="bottom">
+      <div class="party"><div class="pmember"><div class="row"><span class="name">⛵ Your Ship</span></div><div class="twobar"><div class="bar php"><i id="shipMHP"></i></div><span class="nums" id="shipMHPn"></span></div></div></div>
+      <div class="menu" id="shipMenu"></div>
+    </div>
+  </div>
+  <div id="shipMsg"></div>
+  <div class="overlay" id="shipResult"><div class="box panel"><h1 id="shipResultTitle"></h1><p id="shipResultText"></p><button class="pill" id="shipResultBtn">Continue</button></div></div>
+
+  <!-- SHIPYARD + SHELL HUNT -->
+  <div class="overlay" id="shipyard"><div class="panel" id="shipyardBody" style="padding:1.2rem;"></div></div>
+  <div class="overlay" id="shellHunt"></div>
+
+  <!-- battle transition -->
+  <div id="transition"></div>
 
   <!-- CONFIRM -->
   <div class="overlay" id="confirm"><div class="box panel"><div id="confirmText"></div><div class="actions"><button class="pill" id="confirmYes">Yes</button><button class="pill ghost" id="confirmNo">No</button></div></div></div>
@@ -306,14 +384,17 @@
 
   <!-- scripts (classic, load order matters) -->
   <script src="js/audio.js"></script>
+  <script src="js/portraits.js"></script>
   <script src="js/models.js"></script>
   <script src="js/data.js"></script>
   <script src="js/progress.js"></script>
   <script src="js/battle.js"></script>
+  <script src="js/shipbattle.js"></script>
   <script src="js/town.js"></script>
   <script src="js/world.js"></script>
   <script src="js/sea.js"></script>
   <script src="js/dungeon.js"></script>
+  <script src="js/minigame.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

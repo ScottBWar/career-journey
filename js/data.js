@@ -184,6 +184,73 @@ window.Data = (function () {
     return a;
   }
 
+  // ---------------- ELEMENTS & AFFINITIES ----------------
+  const ELEMENT_INFO = {
+    fire:     { c: '#ff7b3a', i: '🔥', name: 'Fire' },
+    water:    { c: '#5eead4', i: '💧', name: 'Water' },
+    thunder:  { c: '#fde047', i: '⚡', name: 'Thunder' },
+    earth:    { c: '#c2a062', i: '⛰️', name: 'Earth' },
+    dark:     { c: '#b06aff', i: '🌑', name: 'Dark' },
+    holy:     { c: '#fff0a0', i: '✨', name: 'Holy' },
+    physical: { c: '#ffffff', i: '', name: 'Physical' },
+  };
+  function elementOf(a) { if (a.el) return a.el; return ({ fire: 'fire', water: 'water', beam: 'thunder' })[a.fx] || 'physical'; }
+  // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
+  const AFFINITIES = {
+    shark:  { weak: ['thunder'], resist: ['water'] },
+    crab:   { weak: ['thunder'], resist: ['physical'] },
+    jelly:  { weak: ['thunder'], absorb: ['water'] },
+    octo:   { weak: ['thunder'], resist: ['water'] },
+    gull:   { weak: ['thunder'], resist: ['earth'] },
+    golem:  { weak: ['water'], resist: ['fire'] },
+    kraken: { weak: ['thunder'], resist: ['water'] },
+    selachoth: { weak: ['thunder', 'holy'], absorb: ['water'] },
+  };
+  function affMult(enemyKey, element) {
+    const a = AFFINITIES[enemyKey]; if (!a || !element || element === 'physical') return 1;
+    if (a.absorb && a.absorb.includes(element)) return -1;
+    if (a.nullify && a.nullify.includes(element)) return 0;
+    if (a.weak && a.weak.includes(element)) return 1.5;
+    if (a.resist && a.resist.includes(element)) return 0.5;
+    return 1;
+  }
+
+  // ---------------- LIMIT BREAKS (one per hero; uses the limit gauge) ----------------
+  const LIMITS = {
+    pirate:    { name: 'Full Broadside',  target: 'all',      fx: 'fire',  el: 'fire',    min: 58, max: 82, flavor: 'unloads every cannon at once!' },
+    swordsman: { name: 'Omnislash',       target: 'all',      fx: 'beam',  el: 'thunder', min: 68, max: 92, flavor: 'becomes a blur of steel!' },
+    healer:    { name: "Ocean's Grace",   target: 'allparty', fx: 'heal',  heal: true, revive: true, min: 200, max: 200, flavor: 'calls the tide to mend all wounds!' },
+    mage:      { name: 'Ultima',          target: 'all',      fx: 'beam',  el: 'dark',    min: 78, max: 108, flavor: 'unleashes forbidden magic!' },
+    blader:    { name: 'Finishing Touch', target: 'all',      fx: 'beam',  el: 'thunder', min: 72, max: 98, flavor: 'cuts the very air!' },
+    dragoon:   { name: "Dragon's Wrath",  target: 'enemy',    fx: 'beam',  el: 'earth',   min: 120, max: 168, flavor: 'descends like a meteor!' },
+  };
+
+  // ---------------- ICONS ----------------
+  const WEAPON_ICON = { pirate: '⚔️', swordsman: '🗡️', healer: '🪄', mage: '✨', blader: '🌀', dragoon: '🔱' };
+  const weaponIcon = (charKey) => WEAPON_ICON[charKey] || '⚔️';
+  const shellIcon = (sh) => (sh.kind === 'magic' ? '🔮' : '🛡️');
+
+  // ---------------- SHIP (customization + stats + enemy ships) ----------------
+  const SHIP = { baseHp: 120, baseAtk: 22, baseDef: 6, defaults: { hull: '#7a5230', sail: '#f3ead9', flag: '🏴‍☠️' } };
+  const SHIP_CUSTOM = {
+    hulls: [ { name: 'Oak', color: '#7a5230', price: 0 }, { name: 'Mahogany', color: '#5b2a1e', price: 120 }, { name: 'Ebony', color: '#2a2430', price: 200 }, { name: 'Ivory', color: '#e8dcc0', price: 200 }, { name: 'Crimson', color: '#7a1f1f', price: 260 } ],
+    sails: [ { name: 'Canvas', color: '#f3ead9', price: 0 }, { name: 'Crimson', color: '#c2415a', price: 100 }, { name: 'Royal Blue', color: '#3a5ac0', price: 140 }, { name: 'Emerald', color: '#2f8d52', price: 140 }, { name: 'Midnight', color: '#23253a', price: 180 } ],
+    flags: [ { emoji: '🏴‍☠️', price: 0 }, { emoji: '⚓', price: 60 }, { emoji: '🦈', price: 90 }, { emoji: '🐙', price: 90 }, { emoji: '🌊', price: 60 }, { emoji: '⭐', price: 120 } ],
+  };
+  const SHIP_UPGRADES = [
+    { id: 'hull', name: 'Reinforced Hull', stat: 'hp', per: 40, max: 5, basePearls: 2, desc: '+40 Ship HP per level' },
+    { id: 'cannons', name: 'Heavier Cannons', stat: 'atk', per: 6, max: 5, basePearls: 2, desc: '+6 Cannon power per level' },
+    { id: 'plating', name: 'Iron Plating', stat: 'def', per: 3, max: 5, basePearls: 2, desc: '+3 Ship defense per level' },
+  ];
+  const ENEMY_SHIPS = {
+    sloop:   { name: 'Brigand Sloop',   hp: 90,  atk: 16, def: 3, hull: '#5b3a1e', sail: '#d8c7a0', flag: '🏴', gold: 90,  pearls: 2 },
+    frigate: { name: 'Corsair Frigate', hp: 150, atk: 24, def: 6, hull: '#3a2a18', sail: '#c2415a', flag: '⚔️', gold: 170, pearls: 4 },
+    ghost:   { name: 'The Wraith',      hp: 230, atk: 32, def: 9, hull: '#2a3a3a', sail: '#bfe6e0', flag: '💀', ghost: true, gold: 320, pearls: 9, shell: 'triton_blast' },
+  };
+
+  // ---------------- SHELL-HUNT MINIGAME ----------------
+  const SHELL_HUNT = { pool: ['conch_ember', 'spiral_mend', 'nautilus_surge', 'sand_dollar', 'cowrie_focus', 'auger_edge', 'tiger_crit', 'triton_blast'] };
+
   // ---------------- TOWNS ----------------
   // npc: { name, color, hair, x, z, lines:[...], service?: 'inn'|'shop' }
   const TOWNS = {
@@ -247,7 +314,7 @@ window.Data = (function () {
         { x: -4, z: 9, pool: ['gull', 'jelly'], min: 1, max: 2 },
         { x: 7, z: 11, pool: ['shark', 'crab'], min: 1, max: 2 },
       ],
-      decor: { trees: 12, palms: 8, rocks: 8 },
+      decor: { trees: 12, palms: 8, rocks: 8 }, shells: { x: 13, z: 9 },
     },
     dunes: {
       name: 'Dunes Isle', size: 52, ground: '#cdb06a', sand: '#e7c890', water: '#1e6f96',
@@ -258,7 +325,7 @@ window.Data = (function () {
         { x: 4, z: 9, pool: ['octo', 'jelly', 'gull'], min: 2, max: 3 },
         { x: -6, z: 11, pool: ['golem', 'crab'], min: 1, max: 2 },
       ],
-      decor: { trees: 6, palms: 12, rocks: 12 },
+      decor: { trees: 6, palms: 12, rocks: 12 }, shells: { x: -13, z: -6 },
     },
     spire: {
       name: 'Abyssal Isle', size: 50, ground: '#4a4f63', sand: '#7a6a86', water: '#162a40',
@@ -269,7 +336,7 @@ window.Data = (function () {
         { x: -5, z: 11, pool: ['shark', 'golem', 'octo'], min: 3, max: 3 },
       ],
       boss: { x: 0, z: 12, color: '#ff3a3a' },
-      decor: { trees: 2, palms: 2, rocks: 16 },
+      decor: { trees: 2, palms: 2, rocks: 16 }, shells: { x: 12, z: 6 },
     },
   };
 
@@ -280,6 +347,11 @@ window.Data = (function () {
       { key: 'tidehaven', x: -34, z: 8 },
       { key: 'dunes', x: 30, z: -2 },
       { key: 'spire', x: 4, z: -42 },
+    ],
+    ships: [
+      { id: 's0', type: 'sloop', x: -10, z: 20 },
+      { id: 's1', type: 'frigate', x: 22, z: 24 },
+      { id: 's2', type: 'ghost', x: -16, z: -28 },
     ],
   };
 
@@ -357,5 +429,7 @@ window.Data = (function () {
     return keys;
   }
 
-  return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY, xpForLevel, MAX_LEVEL, randomEncounter };
+  return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY,
+           ELEMENT_INFO, elementOf, affMult, AFFINITIES, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT,
+           xpForLevel, MAX_LEVEL, randomEncounter };
 })();

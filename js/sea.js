@@ -5,20 +5,25 @@
 window.Sea = (function () {
   const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
   let scene, cam, ship, engine, ocean, oceanBase;
-  let isles = [], idlers = [], paused = false, nearIsle = null, t = 0;
+  let isles = [], idlers = [], foes = [], paused = false, locked = false, nearTarget = null, t = 0, buoy = null;
   const SPEED = 11;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
 
-  function buildShip() {
+  function buildShip(hullHex, sailHex, flagEmoji, ghost) {
     const r = new BABYLON.TransformNode('ship', scene);
-    const wood = M('shWood', '#7a5230'), wood2 = M('shWood2', '#5b3a1e'), sail = M('shSail', '#f3ead9'), sail2 = M('shSail2', '#d9c7a0');
+    const a = ghost ? 0.55 : 1;
+    const wood = M('shWood', hullHex, { alpha: a }), wood2 = M('shWood2', '#3a2a18', { alpha: a }), sail = M('shSail', sailHex, { alpha: a });
     const hull = MB.CreateCylinder('hull', { height: 4.2, diameterTop: 2.2, diameterBottom: 1.2, tessellation: 10 }, scene); hull.rotation.x = Math.PI/2; hull.scaling.z = 0.55; hull.material = wood; hull.parent = r; hull.position.y = 0.5;
     const deck = MB.CreateCylinder('deck', { height: 0.2, diameter: 2.0, tessellation: 10 }, scene); deck.scaling.x = 0.7; deck.material = wood2; deck.parent = r; deck.position.set(0, 0.9, 0);
     const mast = MB.CreateCylinder('mast', { height: 4, diameter: 0.18 }, scene); mast.material = wood2; mast.parent = r; mast.position.set(0, 2.6, 0);
     const s1 = MB.CreateBox('sail', { width: 0.1, height: 1.8, depth: 2.2 }, scene); s1.material = sail; s1.parent = r; s1.position.set(0, 3.0, 0);
-    const s2 = MB.CreateBox('sail2', { width: 0.1, height: 1.2, depth: 1.6 }, scene); s2.material = sail2; s2.parent = r; s2.position.set(0, 1.7, 0.1);
-    const flag = MB.CreateBox('flag', { width: 0.05, height: 0.4, depth: 0.6 }, scene); flag.material = M('shFlag', '#d83a3a'); flag.parent = r; flag.position.set(0, 4.5, 0.3);
+    const s2 = MB.CreateBox('sail2', { width: 0.1, height: 1.2, depth: 1.6 }, scene); s2.material = sail; s2.parent = r; s2.position.set(0, 1.7, 0.1);
+    if (flagEmoji) { // flag as a tiny dynamic-texture banner
+      const dt = new BABYLON.DynamicTexture('fl', { width: 64, height: 64 }, scene, false); dt.hasAlpha = true; const c = dt.getContext(); c.font = '48px sans'; c.textAlign = 'center'; c.fillText(flagEmoji, 32, 48); dt.update();
+      const fm = new BABYLON.StandardMaterial('flm', scene); fm.diffuseTexture = dt; fm.diffuseTexture.hasAlpha = true; fm.emissiveColor = new Color3(1,1,1); fm.specularColor = new Color3(0,0,0); fm.backFaceCulling = false;
+      const flag = MB.CreatePlane('flag', { size: 0.9 }, scene); flag.material = fm; flag.parent = r; flag.position.set(0, 4.5, 0); flag.rotation.y = Math.PI/2;
+    }
     return r;
   }
 
@@ -49,7 +54,21 @@ window.Sea = (function () {
       isles.push({ key: isle.key, name: idef.name, pos: new V3(isle.x, 0, isle.z), dock: new V3(isle.x, 0, isle.z + 7), r: 12 });
     });
 
-    ship = buildShip();
+    // roaming enemy ships
+    foes = [];
+    (Data.SEA.ships || []).forEach(sp => {
+      if (Game.state.shipsSunk[sp.id]) return;
+      const e = Data.ENEMY_SHIPS[sp.type];
+      const node = buildShip(e.hull, e.sail, e.flag, e.ghost); node.position.set(sp.x, 0, sp.z);
+      foes.push({ id: sp.id, type: sp.type, node, home: new V3(sp.x, 0, sp.z), ang: Math.random() * Math.PI * 2, spd: e.ghost ? 3.4 : 2.6, ghost: e.ghost });
+    });
+
+    // shipwright buoy (open the shipyard)
+    const b = Models.portal('#ffd166'); b.node.position.set(Data.SEA.spawn.x + 6, 0.1, Data.SEA.spawn.z); b.node._baseY = 0.1; idlers.push(b);
+    const bs = Models.sign('Shipwright'); bs.node.position.set(Data.SEA.spawn.x + 6, 0.05, Data.SEA.spawn.z - 2);
+    buoy = new V3(Data.SEA.spawn.x + 6, 0, Data.SEA.spawn.z);
+
+    ship = buildShip(Game.state.ship.hull, Game.state.ship.sail, Game.state.ship.flag, false);
     ship.position.set(Game.state.location.shipX, 0, Game.state.location.shipZ);
     cam = new BABYLON.UniversalCamera('scam', new V3(0, 22, -20), scene); cam.fov = 0.85;
 
@@ -71,21 +90,45 @@ window.Sea = (function () {
 
     idlers.forEach(o => o.idle && o.idle(t));
 
+    // roaming enemy ships + collision
+    for (const f of foes) {
+      if (!f.node.isEnabled()) continue;
+      f.node.position.x += Math.sin(f.ang) * f.spd * dt; f.node.position.z += Math.cos(f.ang) * f.spd * dt;
+      f.node.position.y = Math.sin(t * 1.3 + f.spd) * 0.18; f.node.rotation.y = f.ang + Math.PI/2;
+      if (V3.Distance(f.node.position, f.home) > 14) f.ang = Math.atan2(f.home.x - f.node.position.x, f.home.z - f.node.position.z);
+      if (Math.random() < 0.008) f.ang += (Math.random() - 0.5);
+      if (!locked && V3.Distance(f.node.position, ship.position) < 5) { startShipFight(f); return; }
+    }
+
     // animate ocean
     const pos = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind);
     for (let i = 0; i < pos.length; i += 3) { const x = oceanBase[i], z = oceanBase[i+2]; pos[i+1] = Math.sin(x*0.12 + t*1.1)*0.4 + Math.cos(z*0.15 + t*0.9)*0.4; }
     ocean.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
 
-    nearIsle = null;
-    for (const isle of isles) { if (V3.Distance(ship.position, isle.pos) < isle.r) { nearIsle = isle; break; } }
+    nearTarget = null;
+    for (const isle of isles) { if (V3.Distance(ship.position, isle.pos) < isle.r) { nearTarget = { kind: 'island', isle }; break; } }
+    if (!nearTarget && buoy && V3.Distance(ship.position, buoy) < 4) nearTarget = { kind: 'shipyard' };
     const prompt = document.getElementById('worldPrompt');
-    if (nearIsle) { prompt.textContent = `[E / Tap] Land at ${nearIsle.name}`; prompt.classList.add('show'); } else prompt.classList.remove('show');
+    if (nearTarget) { prompt.textContent = nearTarget.kind === 'island' ? `[E / Tap] Land at ${nearTarget.isle.name}` : '[E / Tap] Visit the Shipwright'; prompt.classList.add('show'); } else prompt.classList.remove('show');
 
     cam.position.set(ship.position.x, 22, ship.position.z - 20); cam.setTarget(ship.position.add(new V3(0, 1, 3)));
     Game.updateHUD();
   }
 
-  function interact() { if (paused || !nearIsle) return; if (window.SFX) SFX.play('confirm'); Game.toIsland(nearIsle.key, true); }
+  function startShipFight(f) {
+    locked = true; paused = true;
+    Game.startShipBattle(f.type, (res) => {
+      if (res.won) { Game.state.shipsSunk[f.id] = true; f.node.setEnabled(false); Progress.save(Game.state); }
+      else { const dir = ship.position.subtract(f.node.position); if (dir.length() < 0.1) dir.set(0,0,1); dir.normalize(); ship.position.addInPlace(dir.scale(8)); }
+      paused = false; locked = false; Game.resumeSea();
+    });
+  }
+
+  function interact() {
+    if (paused || locked || !nearTarget) return;
+    if (nearTarget.kind === 'island') { if (window.SFX) SFX.play('confirm'); Game.toIsland(nearTarget.isle.key, true); }
+    else if (nearTarget.kind === 'shipyard') { Game.openShipyard(); }
+  }
   function enter() { build(); Game.active = { interact }; if (window.SFX) SFX.play('sail'); return scene; }
   function pause() { paused = true; }
   function resume() { paused = false; }
