@@ -200,8 +200,9 @@ window.World = (function () {
   }
 
   function enter(islandKey) { build(islandKey); Game.active = { interact }; return scene; }
+  function focus() { Game.active = { interact }; }
   function pause() { paused = true; }
-  function resume() { paused = false; }
+  function resume() { paused = false; locked = false; }
 
-  return { enter, pause, resume, getScene: () => scene, currentKey: () => key };
+  return { enter, focus, pause, resume, getScene: () => scene, currentKey: () => key };
 })();

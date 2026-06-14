@@ -59,34 +59,52 @@
   function hat(time, dest = musicBus) { noise(time, 0.04, { cutoff: 9000, hp: true, peak: 0.07, dest }); }
 
   // ---------------- MUSIC ----------------
-  const C = n => 60 + n; // helper offsets not used; chords are raw midi
+  // Each track has a hand-written melody + bassline over a chord progression.
+  // mel/bassP: one entry per 16th step (0 = rest). mel loops independently of bars.
+  const _ = 0;
   const TRACKS = {
-    island: { bpm: 100, drums: 'soft', padWave: 'sawtooth', leadWave: 'triangle', cut: 1800,
-      bars: [[60,64,67],[55,59,62],[57,60,64],[53,57,60]] },
-    sea:    { bpm: 84, drums: 'soft', padWave: 'sawtooth', leadWave: 'sine', cut: 1500,
-      bars: [[60,64,67],[59,62,67],[57,60,64],[55,59,62]] },
-    town:   { bpm: 132, drums: 'full', padWave: 'square', leadWave: 'square', cut: 2400,
-      bars: [[60,64,67],[53,57,60],[55,59,62],[60,64,67]] },
-    battle: { bpm: 154, drums: 'full', padWave: 'sawtooth', leadWave: 'square', cut: 2600,
-      bars: [[57,60,64],[53,57,60],[60,64,67],[55,59,62]] },
-    dungeon:{ bpm: 76, drums: 'none', padWave: 'sawtooth', leadWave: 'triangle', cut: 1100,
-      bars: [[57,60,64],[52,55,59],[50,53,57],[57,60,64]] },
-    victory:{ bpm: 140, drums: 'full', padWave: 'square', leadWave: 'square', cut: 2600, once: true,
-      bars: [[60,64,67],[55,59,67],[60,64,72],[60,64,72]] },
+    island: { bpm: 106, drums: 'soft', padWave: 'sawtooth', leadWave: 'triangle', cut: 2000,
+      bars: [[60,64,67],[55,59,62],[57,60,64],[53,57,60]],
+      bassP: [0,_,7,_, 0,_,7,_, 0,_,7,_, 0,_,5,7],
+      mel: [64,_,_,67, 72,_,71,_, 69,_,67,_, 64,_,_,_,  62,_,64,_, 67,_,_,69, 71,_,72,_, 67,_,_,_] },
+    sea: { bpm: 90, drums: 'soft', padWave: 'sawtooth', leadWave: 'sine', cut: 1600,
+      bars: [[60,64,67],[52,55,59],[53,57,60],[55,59,62]],
+      bassP: [0,_,_,_, 0,_,_,7, 0,_,_,_, 7,_,_,_],
+      mel: [67,_,_,_, 72,_,_,71, 67,_,64,_, _,_,_,_,  64,_,67,_, 72,_,74,_, 71,_,67,_, 69,_,_,_] },
+    town: { bpm: 136, drums: 'full', padWave: 'square', leadWave: 'square', cut: 2600,
+      bars: [[60,64,67],[53,57,60],[55,59,62],[60,64,67]],
+      bassP: [0,_,0,7, 0,_,0,7, 0,_,0,7, 0,7,5,7],
+      mel: [72,_,72,74, 76,_,74,72, 77,_,76,74, 72,_,_,_,  74,_,76,_, 79,_,77,76, 74,_,72,74, 71,_,_,_] },
+    battle: { bpm: 158, drums: 'full', padWave: 'sawtooth', leadWave: 'square', cut: 2800,
+      bars: [[57,60,64],[53,57,60],[60,64,67],[55,59,62]],
+      bassP: [0,0,12,0, 0,0,12,0, 0,0,12,0, 0,7,0,7],
+      mel: [69,_,72,_, 76,_,72,69, 65,_,69,_, 72,_,69,65,  67,_,71,_, 74,_,71,67, 76,_,79,76, 74,72,71,_] },
+    dungeon: { bpm: 80, drums: 'none', padWave: 'sawtooth', leadWave: 'triangle', cut: 1100,
+      bars: [[57,60,64],[52,55,59],[50,53,57],[57,60,64]],
+      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_],
+      mel: [57,_,_,_, _,_,60,_, 59,_,_,_, _,_,_,_,  55,_,_,57, _,_,_,_, 59,_,60,_, 57,_,_,_] },
+    victory: { bpm: 146, drums: 'full', padWave: 'square', leadWave: 'square', cut: 2800, once: true,
+      bars: [[60,64,67],[55,59,67],[60,64,72],[60,64,72]],
+      bassP: [0,_,7,_, 0,_,_,_, 0,_,0,_, 0,_,_,_],
+      mel: [72,76,79,84, _,79,84,_, 83,_,84,_, _,_,_,_,  72,76,79,84, _,84,_,_, 84,_,_,_, _,_,_,_] },
   };
 
-  let current = null, sched = null, nextTime = 0, step = 0, bar = 0, _after = 'island';
-  const STEPS = 16; // 16th notes per bar
+  let current = null, sched = null, nextTime = 0, step = 0, bar = 0, gstep = 0, _after = 'island';
+  const STEPS = 16;
 
   function scheduleStep(tk, time) {
     const chord = tk.bars[bar % tk.bars.length];
-    const beat = 60 / tk.bpm / 4; // 16th
+    const beat = 60 / tk.bpm / 4;
     // pad chord at bar start
-    if (step === 0) chord.forEach(n => voice(midi(n - 12), time, beat * STEPS * 0.95, { type: tk.padWave, peak: 0.07, cutoff: tk.cut, a: 0.08, d: 0.3, s: 0.7, r: 0.6 }));
-    // bass on quarters
-    if (step % 4 === 0) voice(midi(chord[0] - 24), time, beat * 3.6, { type: 'triangle', peak: 0.16, cutoff: 700, a: 0.005, d: 0.1, s: 0.6, r: 0.15 });
-    // arpeggio / lead on eighths
-    if (step % 2 === 0) { const n = chord[(step / 2) % chord.length] + (step % 4 === 0 ? 12 : 0); voice(midi(n), time, beat * 1.5, { type: tk.leadWave, peak: 0.11, cutoff: tk.cut + 600, a: 0.005, d: 0.08, s: 0.35, r: 0.18 }); }
+    if (step === 0) chord.forEach(n => voice(midi(n - 12), time, beat * STEPS * 0.95, { type: tk.padWave, peak: 0.05, cutoff: tk.cut, a: 0.12, d: 0.4, s: 0.75, r: 0.7 }));
+    // bassline from pattern
+    const bp = tk.bassP[step]; if (bp !== _) voice(midi(chord[0] - 24 + bp), time, beat * 1.8, { type: 'triangle', peak: 0.18, cutoff: 760, a: 0.005, d: 0.12, s: 0.6, r: 0.18 });
+    // melody (loops on its own length for variety)
+    const note = tk.mel[gstep % tk.mel.length];
+    if (note) {
+      voice(midi(note), time, beat * 1.7, { type: tk.leadWave, peak: 0.13, cutoff: tk.cut + 800, a: 0.006, d: 0.1, s: 0.42, r: 0.22 });
+      voice(midi(note + 12), time, beat * 0.8, { type: 'sine', peak: 0.028, cutoff: 4200, a: 0.005, d: 0.06, s: 0.2, r: 0.12 });
+    }
     // drums
     if (tk.drums !== 'none') {
       if (step === 0 || step === 8) kick(time);
@@ -94,7 +112,7 @@
       if (tk.drums === 'full' && step % 2 === 0) hat(time);
       else if (tk.drums === 'soft' && step % 4 === 2) hat(time);
     }
-    step++; if (step >= STEPS) { step = 0; bar++; if (tk.once && bar >= tk.bars.length) { current = null; setTimeout(() => play(_after), 150); } }
+    step++; gstep++; if (step >= STEPS) { step = 0; bar++; if (tk.once && bar >= tk.bars.length) { current = null; setTimeout(() => play(_after), 150); } }
   }
   function tick() {
     if (!ctx || !current) return; const tk = TRACKS[current]; const beat = 60 / tk.bpm / 4;
@@ -102,8 +120,7 @@
   }
   function play(name, after) {
     ensure(); if (after) _after = after; if (current === name) return;
-    current = name; step = 0; bar = 0; nextTime = ctx.currentTime + 0.06;
-    // brief duck for a smoother switch
+    current = name; step = 0; bar = 0; gstep = 0; nextTime = ctx.currentTime + 0.06;
     musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setValueAtTime(0.0001, ctx.currentTime); musicBus.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 0.25);
     if (!sched) sched = setInterval(tick, 25);
   }

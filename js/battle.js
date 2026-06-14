@@ -140,9 +140,45 @@ window.Battle = (function () {
   function refresh() { renderEnemies(false); renderParty(false); }
   const menuEl = () => el('bMenu');
   function clearMenu(title) { const m = menuEl(); m.innerHTML = ''; if (title) { const h = document.createElement('div'); h.className = 'title'; h.textContent = title; m.appendChild(h); } }
-  function cmd(label, sub, onClick, disabled, subClass = '') { const b = document.createElement('button'); b.className = 'cmd'; b.innerHTML = `<span>${label}</span>` + (sub ? `<span class="cost ${subClass}">${sub}</span>` : ''); b.disabled = !!disabled; b.onclick = (e) => { if (window.SFX) SFX.play('select'); onClick(e); }; menuEl().appendChild(b); return b; }
+  function cmd(label, sub, onClick, disabled, subClass = '', desc = '') {
+    const b = document.createElement('button'); b.className = 'cmd';
+    b.innerHTML = `<span class="cmd-row"><span class="cmd-label">${label}</span>` + (sub ? `<span class="cost ${subClass}">${sub}</span>` : '') + `</span>` + (desc ? `<span class="cmd-desc">${desc}</span>` : '');
+    b.disabled = !!disabled; b.onclick = (e) => { if (window.SFX) SFX.play('select'); onClick(e); };
+    menuEl().appendChild(b); return b;
+  }
   function backBtn(fn) { cmd('↩  Back', '', fn).classList.add('back'); }
-  function lockMenu() { [...menuEl().querySelectorAll('button')].forEach(b => b.disabled = true); }
+  function lockMenu() { [...menuEl().querySelectorAll('button')].forEach(b => b.disabled = true); navItems = []; }
+  // describe an ability/skill so the menu says what it does
+  const TGT = { enemy: '1 foe', all: 'all foes', ally: '1 ally', allparty: 'party' };
+  function describe(s) {
+    const tgt = TGT[s.target] || '';
+    if (s.heal) return `Heal ${s.min}-${s.max} · ${tgt}`;
+    const e = Data.elementOf(s); const ei = Data.ELEMENT_INFO[e];
+    return `${s.min}-${s.max} ${ei ? ei.i + ei.name : e} · ${tgt}`;
+  }
+  function describeItem(it) {
+    if (it.kind === 'heal') return `Restore ${it.amount} HP · 1 ally`;
+    if (it.kind === 'mana') return `Restore ${it.amount} MP · 1 ally`;
+    if (it.kind === 'revive') return 'Revive a fallen ally';
+    return `${it.min}-${it.max} 🔥Fire · 1 foe`;
+  }
+
+  // ---- keyboard navigation ----
+  let navItems = [], navIndex = 0;
+  function captureNav() {
+    const plates = [...document.querySelectorAll('#bEnemies .eplate.targetable, #bParty .pmember.targetable')];
+    const btns = [...menuEl().querySelectorAll('button:not(:disabled)')];
+    navItems = plates.concat(btns); navIndex = 0; highlightNav();
+  }
+  function highlightNav() { navItems.forEach((n, i) => n.classList.toggle('kbfocus', i === navIndex)); const cur = navItems[navIndex]; if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' }); }
+  function onKey(code) {
+    if (el('bResult').classList.contains('show')) { if (['Enter', 'Space', 'KeyE'].includes(code)) el('bResultBtn').click(); return; }
+    if (!navItems.length) return;
+    if (['ArrowDown', 'ArrowRight', 'KeyS', 'KeyD'].includes(code)) { navIndex = (navIndex + 1) % navItems.length; highlightNav(); }
+    else if (['ArrowUp', 'ArrowLeft', 'KeyW', 'KeyA'].includes(code)) { navIndex = (navIndex - 1 + navItems.length) % navItems.length; highlightNav(); }
+    else if (['Enter', 'Space', 'KeyE'].includes(code)) { const it = navItems[navIndex]; if (it && !it.disabled) it.click(); }
+    else if (['Escape', 'Backspace'].includes(code)) { const back = menuEl().querySelector('button.back'); if (back) back.click(); }
+  }
 
   const aliveEnemies = () => enemies.filter(e => e.alive);
   const aliveParty = () => party.filter(p => p.alive);
@@ -172,16 +208,18 @@ window.Battle = (function () {
   function takeTurn(member) { return new Promise(done => { activeMember = member; renderParty(false); renderEnemies(false); msg(`${member.name}'s turn — choose an action.`); showMain(member, done); }); }
 
   function gainLimit(m, amt) { m.limit = clamp(m.limit + amt, 0, 100); }
-  function showMain(m, done) { clearMenu(m.name);
-    cmd('⚔️  Fight', '', () => chooseEnemy('Attack which foe?', e => act(done, () => doFight(m, e)), () => showMain(m, done)));
-    cmd('✨  Magic', '', () => showMagic(m, done));
-    cmd('🎒  Item', '', () => showItems(m, done));
+  function showMain(m, done) { clearMenu(m.name + " — choose action");
+    const fe = m.fight.el && m.fight.el !== 'physical' ? Data.ELEMENT_INFO[m.fight.el] : null;
+    cmd('⚔️  Fight', '', () => chooseEnemy('Attack which foe?', e => act(done, () => doFight(m, e)), () => showMain(m, done)), false, '', `${m.fight.min}-${m.fight.max} ${fe ? fe.i + fe.name : '⚔️Physical'} · 1 foe`);
+    cmd('✨  Magic', m.abilities.length + '', () => showMagic(m, done), false, '', 'Spells & abilities');
+    cmd('🎒  Item', '', () => showItems(m, done), false, '', 'Use a consumable');
     const L = Data.LIMITS[m.key];
     if (L && m.limit >= 100) cmd('💥  Limit: ' + L.name, 'READY', () => {
       if (L.target === 'enemy') chooseEnemy('Unleash ' + L.name + ' on?', e => act(done, () => doLimit(m, [e])), () => showMain(m, done));
       else act(done, () => doLimit(m, L.target === 'allparty' ? party.slice() : aliveEnemies()));
-    }, false, 'lim');
-    cmd('🛡️  Defend', '', () => act(done, () => doDefend(m)));
+    }, false, 'lim', L.heal ? `Heal & revive whole party` : `${L.min}-${L.max} ${(Data.ELEMENT_INFO[L.el]||{}).name||''} · ${TGT[L.target]||''}`);
+    cmd('🛡️  Defend', '', () => act(done, () => doDefend(m)), false, '', 'Halve damage this turn');
+    captureNav();
   }
   async function doLimit(m, targets) {
     const L = Data.LIMITS[m.key]; m.limit = 0;
@@ -200,8 +238,8 @@ window.Battle = (function () {
         else if (s.target === 'ally') chooseAlly('Cast ' + s.name + ' on?', aliveParty(), p => act(done, () => doSpell(m, s, [p])), () => showMagic(m, done));
         else if (s.target === 'all') act(done, () => doSpell(m, s, aliveEnemies()));
         else if (s.target === 'allparty') act(done, () => doSpell(m, s, aliveParty()));
-      }, m.mp < s.mp); });
-    backBtn(() => showMain(m, done));
+      }, m.mp < s.mp, '', describe(s)); });
+    backBtn(() => showMain(m, done)); captureNav();
   }
   function showItems(m, done) { clearMenu(m.name + ' · Items'); const inv = Game.state.inv;
     for (const key of Object.keys(Data.ITEM_DEFS)) { const it = Data.ITEM_DEFS[key]; const qty = inv[key] || 0; let disabled = qty <= 0; if (it.target === 'dead' && deadParty().length === 0) disabled = true;
@@ -209,11 +247,11 @@ window.Battle = (function () {
         if (it.target === 'enemy') chooseEnemy('Throw ' + it.name + ' at?', e => act(done, () => doItem(m, key, it, [e])), () => showItems(m, done));
         else if (it.target === 'ally') chooseAlly('Use ' + it.name + ' on?', aliveParty(), p => act(done, () => doItem(m, key, it, [p])), () => showItems(m, done));
         else if (it.target === 'dead') chooseAlly('Revive whom?', deadParty(), p => act(done, () => doItem(m, key, it, [p])), () => showItems(m, done));
-      }, disabled, 'qty'); }
-    backBtn(() => showMain(m, done));
+      }, disabled, 'qty', describeItem(it)); }
+    backBtn(() => showMain(m, done)); captureNav();
   }
-  function chooseEnemy(prompt, onPick, onBack) { clearMenu(prompt); msg(prompt); renderEnemies(true, e => { renderEnemies(false); onPick(e); }); backBtn(() => { renderEnemies(false); onBack(); }); }
-  function chooseAlly(prompt, candidates, onPick, onBack) { clearMenu(prompt); msg(prompt); renderParty(true, candidates, p => { renderParty(false); onPick(p); }); backBtn(() => { renderParty(false); onBack(); }); }
+  function chooseEnemy(prompt, onPick, onBack) { clearMenu(prompt); msg(prompt); renderEnemies(true, e => { renderEnemies(false); onPick(e); }); backBtn(() => { renderEnemies(false); onBack(); }); captureNav(); }
+  function chooseAlly(prompt, candidates, onPick, onBack) { clearMenu(prompt); msg(prompt); renderParty(true, candidates, p => { renderParty(false); onPick(p); }); backBtn(() => { renderParty(false); onBack(); }); captureNav(); }
   async function act(done, fn) { lockMenu(); await fn(); refresh(); activeMember = null; renderParty(false); done(); }
 
   async function doFight(m, target) { msg(`${m.name} strikes ${target.name}!`); await dashAttack(m, target, async () => { if (m.arm) await swing(m.arm); let dmg = rnd(m.fight.min, m.fight.max); const crit = Math.random() < m.fight.crit; if (crit) dmg = Math.round(dmg*1.8); const elem = m.fight.el || 'physical'; if (elem !== 'physical') burst(worldOf(target.node, 0.4), ...(FX[({fire:'fire',water:'water',thunder:'beam',earth:'beam',dark:'beam',holy:'beam'})[elem]] || FX.beam), 40, 6); else if (m.fight.big) burst(worldOf(target.node, 0.4), ...FX.beam, 50, 7); if (crit && window.SFX) SFX.play('crit'); damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff', elem); if (crit) msg('Critical hit! ' + dmg + ' damage!'); }); gainLimit(m, 8); }
@@ -278,5 +316,5 @@ window.Battle = (function () {
 
   function startLoop() { msg('The battle begins!'); refresh(); loop(); }
 
-  return { build, startLoop, getScene: () => scene };
+  return { build, startLoop, onKey, getScene: () => scene };
 })();

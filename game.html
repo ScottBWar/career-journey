@@ -41,8 +41,10 @@
     #worldHUD { position: fixed; left: 0; right: 0; top: 0; z-index: 10; display: none; justify-content: space-between; align-items: flex-start; padding: 0.7rem 0.9rem; pointer-events: none; }
     body.mode-island #worldHUD, body.mode-sea #worldHUD, body.mode-town #worldHUD, body.mode-dungeon #worldHUD { display: flex; }
     #hudParty { display: flex; gap: 0.5rem; pointer-events: auto; }
-    .hud-m { background: rgba(12,10,36,0.8); border: 1px solid rgba(255,255,255,0.2); border-radius: 9px; padding: 0.4rem 0.6rem; min-width: 120px; }
+    .hud-m { display: flex; gap: 0.45rem; align-items: center; background: rgba(12,10,36,0.82); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 0.4rem 0.55rem; min-width: 150px; }
     .hud-m.ko { opacity: 0.45; }
+    .hud-port { width: 34px; height: 34px; flex: 0 0 auto; }
+    .hud-info { flex: 1; min-width: 88px; }
     .hud-row { display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; gap: 0.5rem; }
     .hud-lv { color: #fcd34d; }
     .hud-bar { height: 6px; border-radius: 4px; background: rgba(0,0,0,0.45); overflow: hidden; margin-top: 0.25rem; }
@@ -88,14 +90,19 @@
     .twobar { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; align-items: center; }
     .menu { pointer-events: auto; width: min(280px, 44vw); background: linear-gradient(180deg, rgba(20,16,60,0.92), rgba(12,10,36,0.94)); border: 1px solid rgba(255,255,255,0.26); border-radius: 12px; padding: 0.45rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .menu .title { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.5); padding: 0.25rem 0.6rem 0.4rem; }
-    .menu .cmd { display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left; font: inherit; font-weight: 500; color: #fff; background: transparent; border: none; border-radius: 8px; padding: 0.5rem 0.75rem; cursor: pointer; transition: background 0.12s, transform 0.06s; }
-    .menu .cmd:hover:not(:disabled) { background: rgba(129,140,248,0.28); }
+    .menu .cmd { display: flex; flex-direction: column; align-items: stretch; gap: 0.12rem; width: 100%; text-align: left; font: inherit; font-weight: 500; color: #fff; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.7rem; cursor: pointer; transition: background 0.12s, transform 0.06s, border-color 0.12s; }
+    .menu .cmd .cmd-row { display: flex; justify-content: space-between; align-items: center; }
+    .menu .cmd .cmd-desc { font-size: 0.68rem; color: rgba(255,255,255,0.55); font-weight: 400; }
+    .menu .cmd:hover:not(:disabled), .menu .cmd.kbfocus { background: rgba(129,140,248,0.3); border-color: rgba(165,180,252,0.6); }
     .menu .cmd:active:not(:disabled) { transform: scale(0.98); }
     .menu .cmd:disabled { opacity: 0.32; cursor: not-allowed; }
+    .eplate.kbfocus, .pmember.kbfocus { outline: 2px solid #fcd34d; outline-offset: 1px; box-shadow: 0 0 18px rgba(252,211,77,0.6); }
+    .pmember.active .pm-port { box-shadow: 0 0 0 2px #fcd34d, 0 0 14px rgba(252,211,77,0.7); transform: scale(1.08); }
     .menu .cmd .cost { font-size: 0.74rem; color: #93c5fd; }
     .menu .cmd .cost.qty { color: #fcd34d; }
     .menu .cmd.back { color: rgba(255,255,255,0.6); }
-    #bMessage { position: fixed; left: 50%; bottom: 210px; transform: translateX(-50%); z-index: 11; pointer-events: none; padding: 0.5rem 1.3rem; background: rgba(8,6,24,0.78); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; font-size: clamp(0.8rem,2.2vw,1rem); max-width: 92vw; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
+    #bMessage { position: fixed; left: 50%; bottom: 210px; transform: translateX(-50%); z-index: 11; pointer-events: none; padding: 0.5rem 1.3rem; background: rgba(8,6,24,0.78); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; font-size: clamp(0.8rem,2.2vw,1rem); max-width: 92vw; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.45); display: none; }
+    body.mode-battle #bMessage { display: block; }
 
     .float { position: fixed; z-index: 14; pointer-events: none; font-weight: 700; font-size: 1.6rem; text-shadow: 0 2px 6px rgba(0,0,0,0.7); transform: translate(-50%,-50%); animation: floatUp 0.95s ease-out forwards; }
     @keyframes floatUp { 0%{opacity:0;transform:translate(-50%,-30%) scale(0.6);} 20%{opacity:1;transform:translate(-50%,-90%) scale(1.15);} 100%{opacity:0;transform:translate(-50%,-200%) scale(1);} }

@@ -131,8 +131,9 @@ window.Sea = (function () {
     else if (nearTarget.kind === 'shipyard') { Game.openShipyard(); }
   }
   function enter() { build(); Game.active = { interact }; if (window.SFX) SFX.play('sail'); return scene; }
+  function focus() { Game.active = { interact }; }
   function pause() { paused = true; }
-  function resume() { paused = false; }
+  function resume() { paused = false; locked = false; }
 
-  return { enter, pause, resume, getScene: () => scene };
+  return { enter, focus, pause, resume, getScene: () => scene };
 })();

@@ -79,6 +79,16 @@ window.ShipBattle = (function () {
     mk('🏳️  Flee', '', () => act(flee));
   }
   function lock() { [...el('shipMenu').querySelectorAll('button')].forEach(b => b.disabled = true); }
+  let snav = 0;
+  function onKey(code) {
+    if (el('shipResult').classList.contains('show')) { if (['Enter','Space','KeyE'].includes(code)) el('shipResultBtn').click(); return; }
+    const btns = [...el('shipMenu').querySelectorAll('button:not(:disabled)')]; if (!btns.length) return;
+    if (snav >= btns.length) snav = 0;
+    if (['ArrowDown','ArrowRight','KeyS','KeyD'].includes(code)) snav = (snav + 1) % btns.length;
+    else if (['ArrowUp','ArrowLeft','KeyW','KeyA'].includes(code)) snav = (snav - 1 + btns.length) % btns.length;
+    else if (['Enter','Space','KeyE'].includes(code)) { btns[snav].click(); return; }
+    btns.forEach((b, i) => b.classList.toggle('kbfocus', i === snav));
+  }
 
   async function act(fn) { lock(); await fn(); refresh(); if (over) return; if (foe.hp <= 0) return finish(true); await wait(300); await enemyTurn(); refresh(); if (over) return; if (my.hp <= 0) return finish(false); menu(); }
 
@@ -113,5 +123,5 @@ window.ShipBattle = (function () {
   function cleanup() { if (scene) { scene.dispose(); scene = null; } }
   function startLoop() { msg('A ship blocks your course! Battle stations!'); menu(); }
 
-  return { build, startLoop };
+  return { build, startLoop, onKey };
 })();

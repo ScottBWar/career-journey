@@ -61,9 +61,9 @@ window.Game = (function () {
     if (fromSea) { const s = Data.ISLANDS[key]; Game.state.location.x = s.spawn.x; Game.state.location.z = s.spawn.z; }
     const sc = World.enter(key); Game.scene = sc; setMode('island'); Music.play('island'); Progress.save(Game.state);
   }
-  function resumeIsland() { const sc = World.getScene(); Game.scene = sc; setMode('island'); World.resume(); Music.play('island'); }
+  function resumeIsland() { const sc = World.getScene(); if (!sc) return; Game.dialogueOpen = false; Game.scene = sc; setMode('island'); World.resume(); World.focus(); Music.play('island'); }
   function toSea() { if (Game.mode === 'island') World.pause(); Game.state.location.place = 'sea'; const sc = Sea.enter(); Game.scene = sc; setMode('sea'); Music.play('sea'); Progress.save(Game.state); }
-  function resumeSea() { const sc = Sea.getScene(); Game.scene = sc; setMode('sea'); Sea.resume(); Music.play('sea'); }
+  function resumeSea() { const sc = Sea.getScene(); if (!sc) return; Game.dialogueOpen = false; Game.scene = sc; setMode('sea'); Sea.resume(); Sea.focus(); Music.play('sea'); }
   function enterTown(key) { World.pause(); const sc = Town.enter(key); Game.scene = sc; setMode('town'); Progress.save(Game.state); }
   function toDungeon(key) { World.pause(); const sc = Dungeon.enter(key); Game.scene = sc; setMode('dungeon'); Progress.save(Game.state); }
   Game.toIsland = toIsland; Game.resumeIsland = resumeIsland; Game.toSea = toSea; Game.resumeSea = resumeSea; Game.enterTown = enterTown; Game.toDungeon = toDungeon;
@@ -96,9 +96,9 @@ window.Game = (function () {
     Progress.activeMembers(Game.state).forEach(p => {
       const d = Progress.derived(p);
       const hp = clamp(p.hpCur, 0, d.maxhp), mp = clamp(p.mpCur, 0, d.maxmp);
-      html += `<div class="hud-m${hp<=0?' ko':''}"><div class="hud-row"><span>${d.name}</span><span class="hud-lv">Lv${p.level}</span></div>
+      html += `<div class="hud-m${hp<=0?' ko':''}">${Portraits.img(p.key, 'hud-port')}<div class="hud-info"><div class="hud-row"><span>${d.name}</span><span class="hud-lv">Lv${p.level}</span></div>
         <div class="hud-bar php"><i style="width:${hp/d.maxhp*100}%"></i></div>
-        <div class="hud-bar mp"><i style="width:${mp/d.maxmp*100}%"></i></div></div>`;
+        <div class="hud-bar mp"><i style="width:${mp/d.maxmp*100}%"></i></div></div></div>`;
     });
     wrap.innerHTML = html;
     el('hudGold').innerHTML = '⛃ ' + Game.state.gold + ' &nbsp; 🦪 ' + (Game.state.pearls || 0);
@@ -292,6 +292,8 @@ window.Game = (function () {
   function route(code) {
     if (el('shellHunt').classList.contains('show')) return; // minigame handles its own input
     if (Game.datingOpen) return; // dating handles its own buttons
+    if (Game.mode === 'battle') { if (code === 'KeyP') { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; } else Battle.onKey(code); return; }
+    if (Game.mode === 'shipbattle') { if (window.ShipBattle && ShipBattle.onKey) ShipBattle.onKey(code); return; }
     if (Game.skillsOpen) { if (code === 'Escape' || code === 'KeyM') closeSkills(); return; }
     if (Game.gearOpen) { if (code === 'Escape' || code === 'KeyG') closeGear(); return; }
     if (Game.partyOpen) { if (code === 'Escape' || code === 'KeyT') closeParty(); return; }

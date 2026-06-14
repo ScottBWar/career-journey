@@ -37,7 +37,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('brim', { height: 0.08, diameter: 0.95 }, scene), r, dark, 0, 2.83, 0);
     at(MB.CreateSphere('htop', { diameter: 0.62, slice: 0.5 }, scene), r, dark, 0, 2.85, 0);
     at(MB.CreateBox('skull', { width: 0.16, height: 0.16, depth: 0.05 }, scene), r, M('skullP', '#f2ead9', { emissive: '#3a3528' }), 0, 2.97, 0.3);
-    const sw = new BABYLON.TransformNode('swR', scene); sw.parent = arm; sw.position.set(0, -0.95, 0.1); sw.rotation.x = -0.4;
+    const sw = new BABYLON.TransformNode('swR', scene); sw.parent = arm; sw.position.set(0, -0.7, 0.3); sw.rotation.x = 1.35;
     at(MB.CreateBox('blade', { width: 0.08, height: 1.3, depth: 0.16 }, scene), sw, steel, 0, 0.55, 0);
     at(MB.CreateBox('guard', { width: 0.32, height: 0.1, depth: 0.22 }, scene), sw, gold, 0, -0.05, 0);
     return { node: r, arm };
@@ -58,7 +58,7 @@ window.Models = (function () {
     at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.5, 0);
     const sp = [[0,0.45,0,0,0,0],[-0.18,0.42,0.05,0,0,0.5],[0.18,0.42,0.05,0,0,-0.5],[0,0.4,0.22,0.6,0,0],[0,0.4,-0.2,-0.6,0,0],[-0.22,0.3,-0.05,0,0,0.9],[0.22,0.3,-0.05,0,0,-0.9]];
     sp.forEach((s, i) => { const c = at(MB.CreateCylinder('hair'+i, { height: 0.6, diameterTop: 0, diameterBottom: 0.26 }, scene), r, hair, s[0], 2.72 + s[1]*0.2, s[2]); c.rotation.set(s[3], s[4], s[5]); });
-    const sw = new BABYLON.TransformNode('swR', scene); sw.parent = arm; sw.position.set(0.1, -0.95, 0.12); sw.rotation.x = -0.5;
+    const sw = new BABYLON.TransformNode('swR', scene); sw.parent = arm; sw.position.set(0.1, -0.7, 0.3); sw.rotation.x = 1.3;
     at(MB.CreateBox('blade', { width: 0.38, height: 2.7, depth: 0.09 }, scene), sw, M('busterBlade', '#cdd6e0', { spec: 0.9, specPower: 80 }), 0, 1.25, 0);
     at(MB.CreateBox('edge', { width: 0.1, height: 2.6, depth: 0.11 }, scene), sw, M('busterEdge', '#9aa6b4', { spec: 0.9 }), 0.14, 1.25, 0);
     at(MB.CreateBox('guard', { width: 0.5, height: 0.14, depth: 0.2 }, scene), sw, steel, 0, -0.1, 0);
@@ -122,7 +122,7 @@ window.Models = (function () {
     // spiky hair
     [[0,0.4,0,0,0,0],[-0.2,0.35,0,0,0,0.6],[0.2,0.35,0,0,0,-0.6],[0,0.34,0.2,0.7,0,0],[-0.15,0.3,-0.15,0,0,1.0],[0.15,0.3,-0.15,0,0,-1.0]].forEach((s,i)=>{ const c = at(MB.CreateCylinder('hair'+i,{height:0.55,diameterTop:0,diameterBottom:0.24},scene), r, hair, s[0], 2.62+s[1]*0.2, s[2]); c.rotation.set(s[3],s[4],s[5]); });
     // katana
-    const sw = new BABYLON.TransformNode('blSword', scene); sw.parent = arm; sw.position.set(0, -0.9, 0.1); sw.rotation.x = -0.4;
+    const sw = new BABYLON.TransformNode('blSword', scene); sw.parent = arm; sw.position.set(0, -0.7, 0.3); sw.rotation.x = 1.35;
     at(MB.CreateBox('blade', { width: 0.07, height: 1.7, depth: 0.14 }, scene), sw, steel, 0, 0.8, 0);
     at(MB.CreateBox('guard', { width: 0.26, height: 0.08, depth: 0.2 }, scene), sw, M('blGuard', '#caa84a', { emissive: '#5a4208' }), 0, -0.05, 0);
     at(MB.CreateCylinder('grip', { height: 0.34, diameter: 0.09 }, scene), sw, M('blGrip', '#2a2018'), 0, -0.25, 0);
@@ -146,7 +146,7 @@ window.Models = (function () {
     at(MB.CreateSphere('helm', { diameter: 0.66, slice: 0.62 }, scene), r, steel, 0, 2.58, 0);
     [-1, 1].forEach(s => { const w = at(MB.CreateCylinder('wing', { height: 0.5, diameterTop: 0, diameterBottom: 0.2, tessellation: 3 }, scene), r, gold, s * 0.34, 2.7, -0.05); w.rotation.z = s * 1.1; });
     // spear in hand
-    const sp = new BABYLON.TransformNode('dgSpear', scene); sp.parent = arm; sp.position.set(0, -0.9, 0.12); sp.rotation.x = -0.2;
+    const sp = new BABYLON.TransformNode('dgSpear', scene); sp.parent = arm; sp.position.set(0, -0.7, 0.35); sp.rotation.x = 1.45;
     at(MB.CreateCylinder('shaft', { height: 2.6, diameter: 0.08 }, scene), sp, M('dgShaft', '#6b4423'), 0, 0.7, 0);
     at(MB.CreateCylinder('tip', { height: 0.6, diameterTop: 0, diameterBottom: 0.22 }, scene), sp, steel, 0, 2.1, 0);
     return { node: r, arm };
@@ -252,7 +252,7 @@ window.Models = (function () {
     // right arm holds Tidemourn
     const arm = new BABYLON.TransformNode('selArm', scene); arm.parent = r; arm.position.set(0.6, 2.75, 0.1);
     at(MB.CreateCylinder('aR', { height: 1.4, diameter: 0.24 }, scene), arm, coat2, 0, -0.7, 0);
-    const sw = new BABYLON.TransformNode('selSword', scene); sw.parent = arm; sw.position.set(0, -1.4, 0.15); sw.rotation.x = -0.15;
+    const sw = new BABYLON.TransformNode('selSword', scene); sw.parent = arm; sw.position.set(0, -1.0, 0.4); sw.rotation.x = 1.2;
     at(MB.CreateBox('blade', { width: 0.1, height: 5.2, depth: 0.04 }, scene), sw, steel, 0, 2.7, 0);
     at(MB.CreateBox('bladeGlow', { width: 0.04, height: 5.0, depth: 0.06 }, scene), sw, teal, 0.05, 2.7, 0);
     at(MB.CreateCylinder('grip', { height: 0.5, diameter: 0.09 }, scene), sw, dark, 0, -0.05, 0);
