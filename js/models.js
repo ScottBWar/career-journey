@@ -129,26 +129,35 @@ window.Models = (function () {
     return { node: r, arm };
   }
 
-  function dragoon() { // "Brann" — armored spear dragoon (Legend of Dragoon vibe)
+  function dragoon() { // "Quint" — grizzled harpoon-fisherman (Moby Dick whaler)
     const r = new BABYLON.TransformNode('dragoon', scene);
-    const armor = M('dgArmor', '#9c2f3a', { spec: 0.6, specPower: 60 }), armor2 = M('dgArmor2', '#7a232c'),
-          steel = M('dgSteel', '#c9d2dc', { spec: 0.9 }), gold = M('dgGold', '#e0b34a', { emissive: '#5a4208' }), skin = M('dgSkin', '#cf9a78');
-    at(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.34 }, scene), r, armor2, -0.22, 0.57, 0);
-    at(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.34 }, scene), r, armor2, 0.22, 0.57, 0);
-    at(MB.CreateBox('torso', { width: 0.95, height: 1.2, depth: 0.6 }, scene), r, armor, 0, 1.62, 0);
-    at(MB.CreateBox('chestgem', { width: 0.3, height: 0.3, depth: 0.62 }, scene), r, M('dgGem', '#ff5e5e', { emissive: '#c01818' }), 0, 1.8, 0);
-    [-1, 1].forEach(s => at(MB.CreateSphere('pauld', { diameter: 0.7, slice: 0.6 }, scene), r, steel, s * 0.6, 2.1, 0));
-    at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.3 }, scene), r, armor, -0.62, 1.6, 0).rotation.z = 0.2;
+    const coat = M('dgCoat', '#3a5a55', { spec: 0.2 }), coat2 = M('dgCoat2', '#2d4742'), pants = M('dgPants', '#3a3024'),
+          steel = M('dgSteel', '#c9d2dc', { spec: 0.9 }), skin = M('dgSkin', '#c89a72'), hair = M('dgHair', '#8a7a66'),
+          dark = M('dgDark', '#1a1410'), rope = M('dgRope', '#caa86a');
+    at(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.34 }, scene), r, pants, -0.22, 0.57, 0);
+    at(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.34 }, scene), r, pants, 0.22, 0.57, 0);
+    at(MB.CreateBox('boots', { width: 0.95, height: 0.3, depth: 0.7 }, scene), r, dark, 0, 0.15, 0.05);
+    at(MB.CreateBox('torso', { width: 0.95, height: 1.2, depth: 0.6 }, scene), r, coat, 0, 1.62, 0);
+    at(MB.CreateBox('vest', { width: 0.55, height: 1.1, depth: 0.62 }, scene), r, coat2, 0, 1.6, 0);
+    at(MB.CreateBox('belt', { width: 1.0, height: 0.16, depth: 0.62 }, scene), r, dark, 0, 1.12, 0);
+    at(MB.CreateCylinder('aL', { height: 0.98, diameter: 0.3 }, scene), r, coat, -0.62, 1.6, 0).rotation.z = 0.2;
     const arm = new BABYLON.TransformNode('dgArm', scene); arm.parent = r; arm.position.set(0.62, 2.05, 0);
-    at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.3 }, scene), arm, armor, 0, -0.45, 0);
-    at(MB.CreateSphere('head', { diameter: 0.55 }, scene), r, skin, 0, 2.5, 0);
-    // winged helm
-    at(MB.CreateSphere('helm', { diameter: 0.66, slice: 0.62 }, scene), r, steel, 0, 2.58, 0);
-    [-1, 1].forEach(s => { const w = at(MB.CreateCylinder('wing', { height: 0.5, diameterTop: 0, diameterBottom: 0.2, tessellation: 3 }, scene), r, gold, s * 0.34, 2.7, -0.05); w.rotation.z = s * 1.1; });
-    // spear in hand
+    at(MB.CreateCylinder('aR', { height: 0.98, diameter: 0.3 }, scene), arm, coat, 0, -0.45, 0);
+    at(MB.CreateSphere('head', { diameter: 0.58 }, scene), r, skin, 0, 2.52, 0);
+    at(MB.CreateBox('beard', { width: 0.5, height: 0.4, depth: 0.3 }, scene), r, hair, 0, 2.28, 0.16); // grizzled beard
+    // long flowing hair down the back + sides
+    at(MB.CreateSphere('hairTop', { diameter: 0.62, slice: 0.5 }, scene), r, hair, 0, 2.6, -0.02);
+    at(MB.CreateBox('hairBack', { width: 0.55, height: 1.3, depth: 0.2 }, scene), r, hair, 0, 2.0, -0.26);
+    [-0.3, 0.3].forEach(x => at(MB.CreateBox('hairSide', { width: 0.16, height: 1.0, depth: 0.16 }, scene), r, hair, x, 2.2, 0.06));
+    // eyepatch
+    at(MB.CreateBox('patch', { width: 0.2, height: 0.18, depth: 0.06 }, scene), r, dark, 0.15, 2.56, 0.28);
+    at(MB.CreateBox('strap', { width: 0.62, height: 0.05, depth: 0.5 }, scene), r, dark, 0, 2.62, 0.05);
+    // harpoon in hand: shaft, rope coil, barbed tip
     const sp = new BABYLON.TransformNode('dgSpear', scene); sp.parent = arm; sp.position.set(0, -0.7, 0.35); sp.rotation.x = 1.45;
-    at(MB.CreateCylinder('shaft', { height: 2.6, diameter: 0.08 }, scene), sp, M('dgShaft', '#6b4423'), 0, 0.7, 0);
-    at(MB.CreateCylinder('tip', { height: 0.6, diameterTop: 0, diameterBottom: 0.22 }, scene), sp, steel, 0, 2.1, 0);
+    at(MB.CreateCylinder('shaft', { height: 2.8, diameter: 0.09 }, scene), sp, M('dgShaft', '#6b4423'), 0, 0.7, 0);
+    at(MB.CreateTorus('coil', { diameter: 0.4, thickness: 0.07, tessellation: 12 }, scene), sp, rope, 0, 0.0, 0).rotation.x = Math.PI / 2;
+    at(MB.CreateCylinder('tip', { height: 0.55, diameterTop: 0, diameterBottom: 0.2 }, scene), sp, steel, 0, 2.2, 0);
+    [-1, 1].forEach(s => at(MB.CreateCylinder('barb', { height: 0.3, diameterTop: 0, diameterBottom: 0.12 }, scene), sp, steel, s * 0.12, 1.95, 0).rotation.z = s * 1.0);
     return { node: r, arm };
   }
 
@@ -411,7 +420,32 @@ window.Models = (function () {
     return { node: r, body, idle(t) { body.scaling.y = 1 + Math.sin(t * 6 + (r._ph || 0)) * 0.12; } };
   }
 
-  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth };
+  function leviathan() { // reaper-style deep-sea horror
+    const r = new BABYLON.TransformNode('eLeviathan', scene);
+    const body = M('lvBody', '#2a4a5a', { spec: 0.3, emissive: '#08161e' }), body2 = M('lvBody2', '#1f3a47'),
+          teeth = M('lvTeeth', '#e8e0d0'), eye = M('lvEye', '#7fffd0', { emissive: '#2fffb0' });
+    for (let i = 0; i < 5; i++) at(MB.CreateSphere('s' + i, { diameterX: 2.2 - i * 0.32, diameterY: 1.6 - i * 0.22, diameterZ: 1.6 - i * 0.22, segments: 12 }, scene), r, i % 2 ? body2 : body, -1.6 - i * 1.2, 1.2 + Math.sin(i * 0.7) * 0.35, 0);
+    at(MB.CreateSphere('head', { diameterX: 2.4, diameterY: 1.9, diameterZ: 1.9, segments: 14 }, scene), r, body, 0.4, 1.3, 0);
+    const jt = at(MB.CreateCylinder('jt', { height: 1.7, diameterTop: 0, diameterBottom: 1.3, tessellation: 8 }, scene), r, body, 1.7, 1.6, 0); jt.rotation.z = -Math.PI / 2;
+    const jb = at(MB.CreateCylinder('jb', { height: 1.7, diameterTop: 0, diameterBottom: 1.3, tessellation: 8 }, scene), r, body2, 1.7, 1.0, 0); jb.rotation.z = -Math.PI / 2;
+    for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; at(MB.CreateCylinder('t', { height: 0.45, diameterTop: 0, diameterBottom: 0.2 }, scene), r, teeth, 1.5, 1.3 + Math.cos(a) * 0.55, Math.sin(a) * 0.55).rotation.x = Math.cos(a) > 0 ? Math.PI : 0; }
+    [-0.55, 0.55].forEach(z => at(MB.CreateSphere('e', { diameter: 0.34 }, scene), r, eye, 0.9, 1.95, z));
+    [-1, 1].forEach(s => { const f = at(MB.CreateCylinder('mand', { height: 2.0, diameterTop: 0, diameterBottom: 0.45, tessellation: 6 }, scene), r, body2, 1.2, 1.3, s * 1.1); f.rotation.x = s * Math.PI / 2; f.rotation.z = -0.6; });
+    return { node: r, idle(t) { r.rotation.z = Math.sin(t * 1.2) * 0.05; r.position.y = (r._baseY || 0) + Math.sin(t * 0.9) * 0.2; } };
+  }
+  function angler() { // anglerfish abyss horror with a glowing lure
+    const r = new BABYLON.TransformNode('eAngler', scene);
+    const body = M('agBody', '#1a2230', { spec: 0.2, emissive: '#050d16' }), mouth = M('agMouth', '#3a0a14'),
+          teeth = M('agTeeth', '#e8e0d0'), lure = M('agLure', '#aef0ff', { emissive: '#6fe0ff' });
+    at(MB.CreateSphere('body', { diameterX: 3, diameterY: 2.6, diameterZ: 2.6, segments: 14 }, scene), r, body, 0, 1.7, 0);
+    at(MB.CreateBox('mouth', { width: 1.7, height: 1.0, depth: 2.3 }, scene), r, mouth, 1.3, 1.3, 0);
+    for (let i = 0; i < 6; i++) { at(MB.CreateCylinder('tu', { height: 0.45, diameterTop: 0, diameterBottom: 0.18 }, scene), r, teeth, 1.7, 1.7, -0.8 + i * 0.32).rotation.x = Math.PI; at(MB.CreateCylinder('td', { height: 0.45, diameterTop: 0, diameterBottom: 0.18 }, scene), r, teeth, 1.7, 1.0, -0.8 + i * 0.32); }
+    [-0.55, 0.55].forEach(z => { at(MB.CreateSphere('ew', { diameter: 0.5 }, scene), r, M('agW', '#d8d0b0'), 0.9, 2.2, z); at(MB.CreateSphere('eb', { diameter: 0.26 }, scene), r, M('agB', '#0a0a0a'), 1.1, 2.2, z); });
+    at(MB.CreateCylinder('stalk', { height: 1.7, diameter: 0.1 }, scene), r, body, 1.0, 3.1, 0).rotation.z = -0.4;
+    const bulb = at(MB.CreateSphere('lure', { diameter: 0.55 }, scene), r, lure, 1.9, 3.7, 0);
+    return { node: r, idle(t) { bulb.scaling.setAll(1 + Math.sin(t * 3) * 0.22); } };
+  }
+  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler };
 
   // dungeon props
   function crystal(hex) {

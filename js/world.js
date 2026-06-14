@@ -138,6 +138,9 @@ window.World = (function () {
       if (!locked && V3.Distance(r.node.position, player.position) < 1.7) { startRoamerBattle(r); return; }
     }
 
+    // rare deep-sea ambush — you never know when they'll get ya
+    if (!locked && Game.state.prog.krakenDown !== undefined && Math.random() < 0.00018) { ambush(); return; }
+
     nearGate = null;
     for (const g of gates) { if (V3.Distance(player.position, g.pos) < g.r) { nearGate = g; break; } }
     const prompt = document.getElementById('worldPrompt');
@@ -154,7 +157,18 @@ window.World = (function () {
 
     const off = 16; cam.position.set(player.position.x + Math.sin(camYaw)*off, 18, player.position.z - Math.cos(camYaw)*off);
     cam.setTarget(player.position.add(new V3(0, 1, 0)));
-    Game.updateHUD();
+    Game.updateHUD(); drawMinimap();
+  }
+
+  function drawMinimap() {
+    const cv = document.getElementById('minimap'); if (!cv) return; const c = cv.getContext('2d'); const W = cv.width, H = cv.height;
+    c.clearRect(0, 0, W, H); const R = def.size * 0.54, sc = (W * 0.46) / R, cx = W / 2, cy = H / 2;
+    const px = (x, z) => [cx + x * sc, cy + z * sc];
+    c.fillStyle = def.ground; c.beginPath(); c.arc(cx, cy, R * sc, 0, 7); c.fill();
+    const COL = { town: '#8fd3f4', dungeon: '#9be7ff', dock: '#ffffff', shells: '#ffd166', mermaid: '#ff9ec0', boss: '#ff5e5e' };
+    gates.forEach(g => { const [gx, gy] = px(g.pos.x, g.pos.z); c.fillStyle = COL[g.kind] || '#fff'; c.beginPath(); c.arc(gx, gy, 3, 0, 7); c.fill(); });
+    roamers.forEach(r => { if (!r.node.isEnabled()) return; const [rx, ry] = px(r.node.position.x, r.node.position.z); c.fillStyle = '#ff4040'; c.fillRect(rx - 1.5, ry - 1.5, 3, 3); });
+    const [Px, Py] = px(player.position.x, player.position.z); c.fillStyle = '#fde047'; c.beginPath(); c.arc(Px, Py, 4, 0, 7); c.fill(); c.strokeStyle = '#000'; c.lineWidth = 1; c.stroke();
   }
 
   // overworld weapon swing — hit a nearby roamer to open battle with FIRST STRIKE
@@ -182,6 +196,12 @@ window.World = (function () {
       paused = false; locked = false; Game.resumeIsland();
       if (res.won) onWin(); else { player.position.z -= 4; Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
     });
+  }
+  function ambush() {
+    locked = true; paused = true; Music.play('boss');
+    Game.toast('⚠ SOMETHING ERUPTS FROM THE SURF...');
+    const key = Data.AMBUSH[Math.floor(Math.random() * Data.AMBUSH.length)];
+    Game.startBattle([key], { boss: true, ambush: true }, () => { paused = false; locked = false; Game.resumeIsland(); });
   }
   const ruffyHere = () => { const r = Game.state.party.find(p => p.key === 'ruffy'); return r && r.recruited; };
 

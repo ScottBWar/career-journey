@@ -79,16 +79,16 @@ window.Data = (function () {
       ],
     },
     {
-      key: 'dragoon', name: 'Brann', role: 'Dragoon', model: 'dragoon',
+      key: 'dragoon', name: 'Quint', role: 'Harpooner', model: 'dragoon',
       base: { hp: 165, mp: 20, atkMin: 22, atkMax: 32, crit: 0.12, big: true },
       growth: { hp: 17, mp: 3, atk: 4 },
-      baseAbilities: [ ab('Jump', { mp: 10, min: 40, max: 56, target: 'enemy', fx: 'beam' }) ],
+      baseAbilities: [ ab('Harpoon Cast', { mp: 10, min: 40, max: 56, target: 'enemy', fx: 'beam', el: 'physical' }) ],
       tree: [
-        { id: 'd_hp', name: 'Iron Will', desc: '+32 Max HP', cost: 1, kind: 'stat', stat: { hp: 32 } },
-        { id: 'd_breath', name: 'Dragon Breath', desc: 'Fire to all foes', cost: 1, kind: 'ability', ability: ab('Dragon Breath', { mp: 16, min: 26, max: 38, target: 'all', fx: 'fire' }) },
-        { id: 'd_atk', name: 'Lance Mastery', desc: '+5 Attack', cost: 1, req: 'd_hp', kind: 'stat', stat: { atk: 5 } },
-        { id: 'd_burst', name: 'Final Burst', desc: 'Devastating single thrust', cost: 2, req: 'd_atk', kind: 'ability', ability: ab('Final Burst', { mp: 14, min: 54, max: 72, target: 'enemy', fx: 'beam' }) },
-        { id: 'd_dragoon', name: 'Dragoon Spirit', desc: '+40 Max HP', cost: 3, req: 'd_burst', kind: 'stat', stat: { hp: 40 } },
+        { id: 'd_hp', name: 'Old Sea Dog', desc: '+32 Max HP', cost: 1, kind: 'stat', stat: { hp: 32 } },
+        { id: 'd_breath', name: 'Oil Fire', desc: 'Burning oil over all foes', cost: 1, kind: 'ability', ability: ab('Oil Fire', { mp: 16, min: 26, max: 38, target: 'all', fx: 'fire' }) },
+        { id: 'd_atk', name: 'Harpoon Mastery', desc: '+5 Attack', cost: 1, req: 'd_hp', kind: 'stat', stat: { atk: 5 } },
+        { id: 'd_burst', name: 'The White Whale', desc: 'A legendary killing throw', cost: 2, req: 'd_atk', kind: 'ability', ability: ab('The White Whale', { mp: 14, min: 54, max: 72, target: 'enemy', fx: 'beam', el: 'physical' }) },
+        { id: 'd_dragoon', name: 'Salt of the Deep', desc: '+40 Max HP', cost: 3, req: 'd_burst', kind: 'stat', stat: { hp: 40 } },
       ],
     },
     {
@@ -114,6 +114,13 @@ window.Data = (function () {
     gull:   { name: 'Dive-Bomb Gull',    model: 'gull',  hp: 56,  xp: 16, gold: 9,  baseY: 1.4, moves: [ { name: 'pecks rapidly', min: 9, max: 14 }, { name: 'dive-bombs', min: 18, max: 26 } ] },
     golem:  { name: 'Sandcastle Golem',  model: 'golem', hp: 140, xp: 34, gold: 26, baseY: 0,   moves: [ { name: 'slams a sandy fist', min: 16, max: 24 }, { name: 'crumbles down', min: 12, max: 19, all: true } ] },
     kraken: { name: 'The Kraken',        model: 'kraken', hp: 360, xp: 160, gold: 200, baseY: 0, boss: true, moves: [ { name: 'crushes with a tentacle', min: 24, max: 34 }, { name: 'unleashes a maelstrom', min: 18, max: 26, all: true }, { name: 'snaps its colossal beak', min: 30, max: 42 } ] },
+    leviathan: { name: 'Reaper Leviathan', model: 'leviathan', hp: 520, xp: 380, gold: 600, baseY: 0.5, boss: true, moves: [
+      { name: 'lunges with gaping jaws', min: 34, max: 48 },
+      { name: 'looses a deafening roar', min: 22, max: 30, all: true },
+      { name: 'thrashes in a frenzy', min: 40, max: 56 } ] },
+    angler: { name: 'Abyss Angler', model: 'angler', hp: 380, xp: 280, gold: 420, baseY: 0.4, boss: true, moves: [
+      { name: 'snaps its enormous jaws', min: 30, max: 44 },
+      { name: 'mesmerizes with its lure', min: 18, max: 26, all: true } ] },
     selachoth: { name: 'Selachoth', model: 'selachoth', hp: 560, xp: 500, gold: 800, baseY: 0.2, boss: true, moves: [
       { name: 'cleaves with Tidemourn', min: 34, max: 46 },
       { name: 'sweeps the blade in an arc', min: 22, max: 30, all: true },
@@ -161,9 +168,9 @@ window.Data = (function () {
       { key: 'rainbow_edge', name: 'Rainbow Edge',  atk: 22, slots: 3, price: 820, desc: '+22 ATK · 3 shell slots' },
     ],
     dragoon: [
-      { key: 'iron_lance',   name: 'Iron Lance',   atk: 0, slots: 1, price: 0, desc: 'A sturdy soldier\'s lance.' },
-      { key: 'partisan',     name: 'Partisan',     atk: 12, slots: 2, price: 320, desc: '+12 ATK · 2 shell slots' },
-      { key: 'dragon_lance', name: 'Dragon Lance', atk: 24, slots: 3, price: 840, desc: '+24 ATK · 3 shell slots' },
+      { key: 'iron_lance',   name: "Whaler's Harpoon", atk: 0, slots: 1, price: 0, desc: 'A weathered iron harpoon.' },
+      { key: 'partisan',     name: 'Barbed Harpoon',   atk: 12, slots: 2, price: 320, desc: '+12 ATK · 2 shell slots' },
+      { key: 'dragon_lance', name: 'Leviathan Harpoon', atk: 24, slots: 3, price: 840, desc: '+24 ATK · 3 shell slots' },
     ],
     ruffy: [
       { key: 'worn_gloves',     name: 'Worn Gloves',      atk: 0, slots: 1, price: 0, desc: 'Tattered fingerless gloves.' },
@@ -223,7 +230,10 @@ window.Data = (function () {
     golem:  { weak: ['water'], resist: ['fire'] },
     kraken: { weak: ['thunder'], resist: ['water'] },
     selachoth: { weak: ['thunder', 'holy'], absorb: ['water'] },
+    leviathan: { weak: ['thunder'], resist: ['water'] },
+    angler: { weak: ['fire', 'holy'], resist: ['dark'] },
   };
+  const AMBUSH = ['leviathan', 'angler']; // random deep-sea ambush bosses
   function affMult(enemyKey, element) {
     const a = AFFINITIES[enemyKey]; if (!a || !element || element === 'physical') return 1;
     if (a.absorb && a.absorb.includes(element)) return -1;
@@ -240,7 +250,7 @@ window.Data = (function () {
     healer:    { name: "Ocean's Grace",   target: 'allparty', fx: 'heal',  heal: true, revive: true, min: 200, max: 200, flavor: 'calls the tide to mend all wounds!' },
     mage:      { name: 'Ultima',          target: 'all',      fx: 'beam',  el: 'dark',    min: 78, max: 108, flavor: 'unleashes forbidden magic!' },
     blader:    { name: 'Finishing Touch', target: 'all',      fx: 'beam',  el: 'thunder', min: 72, max: 98, flavor: 'cuts the very air!' },
-    dragoon:   { name: "Dragon's Wrath",  target: 'enemy',    fx: 'beam',  el: 'earth',   min: 120, max: 168, flavor: 'descends like a meteor!' },
+    dragoon:   { name: "Leviathan's End", target: 'enemy',    fx: 'beam',  el: 'water',   min: 120, max: 168, flavor: 'hurls the great harpoon with a vengeance!' },
     ruffy:     { name: 'Gum-Gum King Cobra', target: 'enemy', fx: 'beam',  el: 'physical', min: 130, max: 175, flavor: 'winds up a fist the size of an island!' },
   };
 
@@ -553,6 +563,6 @@ window.Data = (function () {
   }
 
   return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY,
-           ELEMENT_INFO, elementOf, affMult, AFFINITIES, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT, MERMAIDS,
+           ELEMENT_INFO, elementOf, affMult, AFFINITIES, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT, MERMAIDS, AMBUSH,
            xpForLevel, MAX_LEVEL, randomEncounter };
 })();

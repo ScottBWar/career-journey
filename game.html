@@ -64,6 +64,8 @@
     .hud-btn { font: inherit; font-weight: 700; font-size: 0.8rem; padding: 0.45rem 0.8rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.25); background: rgba(8,16,48,0.8); color: #fff; cursor: pointer; }
     .hud-btn:hover { background: rgba(129,140,248,0.4); }
 
+    #minimap { position: fixed; right: 10px; bottom: 10px; z-index: 11; display: none; border-radius: 50%; border: 2px solid rgba(150,185,255,0.5); background: rgba(8,16,48,0.55); box-shadow: 0 6px 20px rgba(0,0,0,0.5); width: 120px; height: 120px; }
+    body.mode-island #minimap, body.mode-sea #minimap { display: block; }
     #worldPrompt { position: fixed; left: 50%; bottom: 8%; transform: translateX(-50%); z-index: 11; display: none; padding: 0.6rem 1.4rem; background: rgba(8,6,24,0.82); border: 1px solid rgba(252,211,77,0.6); border-radius: 999px; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
     #worldPrompt.show { display: block; }
 
@@ -428,6 +430,7 @@
     </div>
   </div>
   <div id="worldPrompt"></div>
+  <canvas id="minimap" width="150" height="150"></canvas>
 
   <!-- BATTLE -->
   <div id="battleUI">

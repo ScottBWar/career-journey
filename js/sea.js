@@ -102,6 +102,8 @@ window.Sea = (function () {
       if (Math.random() < 0.008) f.ang += (Math.random() - 0.5);
       if (!locked && V3.Distance(f.node.position, ship.position) < 5) { startShipFight(f); return; }
     }
+    // rare deep-sea leviathan ambush
+    if (!locked && Math.random() < 0.0004) { ambush(); return; }
 
     // animate ocean
     const pos = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind);
@@ -115,7 +117,7 @@ window.Sea = (function () {
     if (nearTarget) { prompt.textContent = nearTarget.kind === 'island' ? `[F / Tap] Land at ${nearTarget.isle.name}` : '[F / Tap] Visit the Shipwright'; prompt.classList.add('show'); } else prompt.classList.remove('show');
 
     const off = 20; cam.position.set(ship.position.x + Math.sin(camYaw)*off, 22, ship.position.z - Math.cos(camYaw)*off); cam.setTarget(ship.position.add(new V3(0, 1, 0)));
-    Game.updateHUD();
+    Game.updateHUD(); drawMinimap();
   }
 
   function startShipFight(f) {
@@ -127,6 +129,21 @@ window.Sea = (function () {
     });
   }
 
+  function drawMinimap() {
+    const cv = document.getElementById('minimap'); if (!cv) return; const c = cv.getContext('2d'); const W = cv.width, H = cv.height;
+    c.clearRect(0, 0, W, H); const R = Data.SEA.size * 0.5, sc = (W * 0.46) / R, cx = W / 2, cy = H / 2;
+    const px = (x, z) => [cx + x * sc, cy + z * sc];
+    c.fillStyle = '#0e3550'; c.beginPath(); c.arc(cx, cy, W * 0.47, 0, 7); c.fill();
+    isles.forEach(i => { const [ix, iy] = px(i.pos.x, i.pos.z); c.fillStyle = i.key === 'spire' ? '#ff8a6a' : '#7fd06a'; c.beginPath(); c.arc(ix, iy, 4, 0, 7); c.fill(); });
+    foes.forEach(f => { if (!f.node.isEnabled()) return; const [fx, fy] = px(f.node.position.x, f.node.position.z); c.fillStyle = f.ghost ? '#bfe6e0' : '#ff5e5e'; c.fillRect(fx - 1.5, fy - 1.5, 3, 3); });
+    const [Px, Py] = px(ship.position.x, ship.position.z); c.fillStyle = '#fde047'; c.beginPath(); c.arc(Px, Py, 4, 0, 7); c.fill(); c.strokeStyle = '#000'; c.lineWidth = 1; c.stroke();
+  }
+  function ambush() {
+    locked = true; paused = true; Music.play('boss');
+    Game.toast('⚠ SOMETHING STIRS IN THE DEEP...');
+    const key = Data.AMBUSH[Math.floor(Math.random() * Data.AMBUSH.length)];
+    Game.startBattle([key], { boss: true, ambush: true }, () => { paused = false; locked = false; Game.resumeSea(); });
+  }
   function interact() {
     if (paused || locked || !nearTarget) return;
     if (nearTarget.kind === 'island') { if (window.SFX) SFX.play('confirm'); Game.toIsland(nearTarget.isle.key, true); }
