@@ -300,7 +300,10 @@
     /* dating sim — per-element animated scene backgrounds */
     #date.show[class*="scene-"] { backdrop-filter: none; }
     #date[class*="scene-"]::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+    #date { align-items: flex-end; padding-bottom: 3vh; }
     .date-box { position: relative; z-index: 1; width: min(560px, 96vw); padding: 1.2rem; }
+    .date-char { position: absolute; top: 7%; left: 50%; transform: translateX(-50%); z-index: 1; pointer-events: none; }
+    .date-char img { width: clamp(150px, 30vh, 260px); height: clamp(150px, 30vh, 260px); image-rendering: pixelated; border-radius: 14px; border: 2px solid rgba(255,255,255,0.25); box-shadow: 0 16px 40px rgba(0,0,0,0.6); }
     .date-head { display: flex; gap: 0.9rem; align-items: center; margin-bottom: 0.8rem; }
     .date-port { width: 84px; height: 84px; border-radius: 10px; }
     .date-name { font-weight: 700; font-size: 1.2rem; }

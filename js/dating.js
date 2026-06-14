@@ -5,23 +5,25 @@
 // =====================================================================
 window.Dating = (function () {
   const el = id => document.getElementById(id);
-  let key, m, st, onClose;
+  let key, m, st, onClose, mood = 'neutral';
 
   function hearts(rel, max) { const filled = Math.round(rel / max * 5); let s = ''; for (let i = 0; i < 5; i++) s += i < filled ? '❤' : '🤍'; return s; }
 
   function start(mermaidKey, close) {
     key = mermaidKey; m = Data.MERMAIDS[key]; onClose = close;
     if (!Game.state.mermaids[key]) Game.state.mermaids[key] = { rel: 0, idx: 0, enchanted: false };
-    st = Game.state.mermaids[key];
+    st = Game.state.mermaids[key]; mood = st.rel >= m.threshold ? 'happy' : 'shy';
     el('date').className = 'overlay show scene-' + m.element; // element-themed scene background
     if (window.SFX) SFX.play('confirm');
+    if (window.Music) Music.play('date');
     render();
   }
 
   function frame(bodyHtml, options) {
     const elInfo = Data.ELEMENT_INFO[m.element];
-    el('date').innerHTML = `<div class="box panel date-box">
-      <div class="date-head">${Portraits.img(key, 'date-port')}
+    el('date').innerHTML = `<div class="date-char"><img src="${Portraits.url(key, mood)}" alt=""></div>
+      <div class="box panel date-box">
+      <div class="date-head">${Portraits.img(key, 'date-port', mood)}
         <div class="date-meta"><div class="date-name">${m.name} <span class="date-el" style="color:${elInfo.c}">${elInfo.i} ${elInfo.name}</span></div>
         <div class="date-hearts">${hearts(st.rel, m.threshold + 2)}</div></div></div>
       <div class="date-text">${bodyHtml}</div>
@@ -50,7 +52,8 @@ window.Dating = (function () {
   function answer(op) {
     st.rel = Math.min(m.threshold + 2, st.rel + op.love); st.idx++;
     Progress.save(Game.state);
-    const justSmitten = st.rel >= m.threshold;
+    mood = op.love >= 2 ? 'happy' : op.love >= 1 ? 'neutral' : 'upset';
+    const justSmitten = st.rel >= m.threshold; if (justSmitten) mood = 'happy';
     frame(`<p><i>${op.r}</i></p>${justSmitten ? `<p>${m.smitten}</p>` : `<p class="date-hint">She likes ${m.likes}.</p>`}`,
       justSmitten ? [{ label: '💞 Enchant a weapon now', fn: chooseEnchantTarget }, { label: 'Leave', fn: close }]
                   : [{ label: 'Continue', fn: render }, { label: 'Leave', fn: close }]);
@@ -72,7 +75,7 @@ window.Dating = (function () {
 
   function enchant(charKey) {
     Game.state.enchants[charKey] = m.element; st.enchanted = true; Progress.save(Game.state);
-    if (window.SFX) SFX.play('levelup');
+    mood = 'happy'; if (window.SFX) SFX.play('levelup');
     const elInfo = Data.ELEMENT_INFO[m.element]; const name = Progress.def(charKey).name;
     frame(`<p><i>"${name}'s weapon now carries my ${elInfo.name.toLowerCase()}. ${elInfo.i} Strike true, my love."</i></p><p class="date-hint">${name}'s normal attacks now deal ${elInfo.name} damage.</p>`,
       [{ label: 'Enchant another', fn: chooseEnchantTarget }, { label: 'Leave', fn: close }]);

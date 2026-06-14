@@ -255,7 +255,7 @@ window.Game = (function () {
   Game.openShellHunt = openShellHunt;
 
   // ---------- dating (mermaids) ----------
-  function openDating(key) { Game.datingOpen = true; pauseExplore(); Dating.start(key, () => { Game.datingOpen = false; resumeExplore(); }); }
+  function openDating(key) { Game.datingOpen = true; pauseExplore(); Dating.start(key, () => { Game.datingOpen = false; Music.play(Game.mode === 'town' ? 'town' : 'island'); resumeExplore(); }); }
   Game.openDating = openDating;
 
   // ---------- confirm ----------

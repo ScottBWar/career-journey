@@ -24,7 +24,7 @@ window.Portraits = (function () {
   };
   const S = 16, CELL = 8;
 
-  function draw(key) {
+  function draw(key, mood) {
     const p = SPEC[key]; if (!p) return null;
     const cv = document.createElement('canvas'); cv.width = cv.height = S * CELL;
     const c = cv.getContext('2d');
@@ -98,7 +98,11 @@ window.Portraits = (function () {
         px(5, 8, 2, 2, '#ffffff'); px(9, 8, 2, 2, '#ffffff'); // big eyes
         px(6, 8, 1, 2, eye); px(9, 8, 1, 2, eye); px(6, 8, 1, 1, '#1a1a1a'); px(9, 8, 1, 1, '#1a1a1a');
         px(5, 7, 2, 1, '#3a2a2a'); px(9, 7, 2, 1, '#3a2a2a'); // lashes
-        px(7, 11, 2, 1, '#e06a8a'); // lips
+        // expression
+        if (mood === 'happy') { px(6, 11, 4, 1, '#e06a8a'); px(6, 12, 4, 1, '#c0466a'); px(3, 9, 2, 1, '#ff9ab0'); px(11, 9, 2, 1, '#ff9ab0'); }
+        else if (mood === 'shy') { px(7, 11, 2, 1, '#e06a8a'); px(3, 9, 2, 1, '#ff9ab0'); px(11, 9, 2, 1, '#ff9ab0'); }
+        else if (mood === 'upset') { px(6, 7, 2, 1, '#3a2a2a'); px(9, 7, 2, 1, '#3a2a2a'); px(6, 12, 4, 1, '#9a4a5a'); }
+        else px(7, 11, 2, 1, '#e06a8a'); // neutral lips
         px(6, 13, 4, 1, shade(p.hair, 0.8)); break;
       case 'kraken':
         px(3, 3, 10, 10, p.skin); px(3, 3, 1, 1, p.bg); px(12, 3, 1, 1, p.bg); px(3, 12, 1, 1, p.bg); px(12, 12, 1, 1, p.bg);
@@ -109,10 +113,10 @@ window.Portraits = (function () {
     return cv.toDataURL();
   }
 
-  function url(key) { if (cache[key] === undefined) cache[key] = draw(key); return cache[key]; }
+  function url(key, mood) { const ck = key + '|' + (mood || 'neutral'); if (cache[ck] === undefined) cache[ck] = draw(key, mood); return cache[ck]; }
   function has(key) { return !!SPEC[key]; }
   // small <img> element string for inline use
-  function img(key, cls) { const u = url(key); return u ? `<img class="portrait ${cls || ''}" src="${u}" alt="">` : ''; }
+  function img(key, cls, mood) { const u = url(key, mood); return u ? `<img class="portrait ${cls || ''}" src="${u}" alt="">` : ''; }
 
   return { url, has, img };
 })();
