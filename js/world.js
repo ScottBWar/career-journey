@@ -44,11 +44,14 @@ window.World = (function () {
       gates.push({ kind: 'town', key: tn.key, name: def.name, pos: new V3(tn.x, 0, tn.z - 2.2), r: 3 });
     });
 
-    // boss lair
-    const bossDef = W.boss; const bp = Models.portal(bossDef.color); bp.node.position.set(bossDef.x, 0, bossDef.z); bp.node._baseY = 0; idlers.push(bp);
-    const bs = Models.sign("Kraken's Lair"); bs.node.position.set(bossDef.x, 0, bossDef.z - 2.4);
+    // boss lair — Kraken's Lair until the Kraken falls, then Selachoth's Spire
+    const bossDef = W.boss;
+    const stageLabel = Game.state.world.finalWin ? 'A Calmed Spire' : Game.state.world.krakenDown ? "Selachoth's Spire" : "Kraken's Lair";
+    const stageColor = Game.state.world.finalWin ? '#8fd3f4' : Game.state.world.krakenDown ? '#c0c8ff' : bossDef.color;
+    const bp = Models.portal(stageColor); bp.node.position.set(bossDef.x, 0, bossDef.z); bp.node._baseY = 0; idlers.push(bp);
+    const bs = Models.sign(stageLabel); bs.node.position.set(bossDef.x, 0, bossDef.z - 2.4);
     const skull = Models.rock(); skull.node.position.set(bossDef.x, 0, bossDef.z + 2); skull.node.scaling.setAll(2.2);
-    gates.push({ kind: 'boss', name: "the Kraken's Lair", pos: new V3(bossDef.x, 0, bossDef.z), r: 3, enemies: bossDef.enemies });
+    gates.push({ kind: 'boss', name: stageLabel, pos: new V3(bossDef.x, 0, bossDef.z), r: 3 });
 
     // roaming enemies
     W.encounters.forEach((enc, idx) => {
@@ -106,8 +109,14 @@ window.World = (function () {
     nearGate = null;
     for (const g of gates) { if (V3.Distance(player.position, g.pos) < g.r) { nearGate = g; break; } }
     const prompt = document.getElementById('worldPrompt');
-    if (nearGate) { prompt.textContent = nearGate.kind === 'town' ? `[E / Tap] Enter ${nearGate.name}` : `[E / Tap] Challenge ${nearGate.name}`; prompt.classList.add('show'); }
-    else prompt.classList.remove('show');
+    if (nearGate) {
+      let label;
+      if (nearGate.kind === 'town') label = `[E / Tap] Enter ${nearGate.name}`;
+      else if (Game.state.world.finalWin) label = '[E / Tap] The spire is silent';
+      else if (Game.state.world.krakenDown) label = '[E / Tap] Confront Selachoth';
+      else label = '[E / Tap] Challenge the Kraken';
+      prompt.textContent = label; prompt.classList.add('show');
+    } else prompt.classList.remove('show');
 
     // camera follow
     cam.position.set(player.position.x, 18, player.position.z - 16);
@@ -130,16 +139,32 @@ window.World = (function () {
     });
   }
 
+  function fightBoss(enemies, onWin) {
+    locked = true; paused = true; Music.play('battle');
+    Game.startBattle(enemies, { boss: true }, (res) => {
+      paused = false; locked = false; Game.toWorld();
+      if (res.won) onWin();
+      else { player.position.z -= 4; Game.state.world.x = player.position.x; Game.state.world.z = player.position.z; }
+    });
+  }
   function interact() {
     if (paused || locked || !nearGate) return;
-    if (nearGate.kind === 'town') { Game.enterTown(nearGate.key); }
-    else if (nearGate.kind === 'boss') {
-      if (Game.state.world.krakenDown) { Game.toast('The Kraken has already been vanquished. The seas are calm.'); return; }
-      Game.confirm(`Challenge the KRAKEN? This is a tough fight.`, () => {
-        locked = true; paused = true; Music.play('battle');
-        Game.startBattle(nearGate.enemies, { boss: true }, (res) => {
-          if (res.won) { Game.state.world.krakenDown = true; Progress.save(Game.state); paused = false; locked = false; Game.toWorld(); Game.victoryEnding(); }
-          else { player.position.z -= 4; paused = false; locked = false; Game.toWorld(); }
+    if (nearGate.kind === 'town') { Game.enterTown(nearGate.key); return; }
+    // boss gate
+    if (Game.state.world.finalWin) { Game.toast('Selachoth is no more. The tide is yours.'); return; }
+    if (!Game.state.world.krakenDown) {
+      Game.confirm('Enter the Maw and challenge the KRAKEN, guardian of the spire?', () => {
+        fightBoss(['kraken'], () => {
+          Game.state.world.krakenDown = true; Progress.save(Game.state);
+          Game.startCutscene('krakenFall', () => Game.toast('The spire glows cold. Return to confront Selachoth.'));
+        });
+      });
+    } else {
+      // confront Selachoth: pre-fight cutscene, then the final battle
+      Game.startCutscene('selachothPre', () => {
+        fightBoss(['selachoth'], () => {
+          Game.state.world.finalWin = true; Progress.save(Game.state);
+          Game.startCutscene('selachothFall', () => Game.finalEnding());
         });
       });
     }

@@ -33,7 +33,12 @@ window.Game = (function () {
   function beginGame() {
     el('start').classList.remove('show');
     toWorld();
-    Game.toast('Use WASD / arrows to move. Walk into glowing gates and monsters. Press M for Skills.');
+    if (!Game.state.flags.seenOpening) {
+      Game.state.flags.seenOpening = true; Progress.save(Game.state);
+      Game.cutscene(Data.STORY.opening, () => Game.toast('Use WASD / arrows to move. Walk into glowing gates and monsters. Press M for Skills.'));
+    } else {
+      Game.toast('Use WASD / arrows to move. Walk into glowing gates and monsters. Press M for Skills.');
+    }
   }
 
   // ---------- modes ----------
@@ -99,6 +104,17 @@ window.Game = (function () {
   };
   function closeDialogue() { Game.dialogueOpen = false; el('dialogue').classList.remove('show'); }
 
+  // ---------- cutscenes (story beats) ----------
+  Game.cutscene = function (beats, onDone) {
+    pauseExplore();
+    let i = 0; Game.dialogueOpen = true; el('dialogue').classList.add('show');
+    function show() { el('dlgName').textContent = beats[i].name; el('dlgText').textContent = beats[i].text; el('dlgNext').textContent = i < beats.length - 1 ? 'Next ▶' : 'Continue'; }
+    Game._advanceDlg = () => { if (i < beats.length - 1) { i++; show(); } else { closeDialogue(); Game._advanceDlg = null; if (onDone) onDone(); else resumeExplore(); } };
+    el('dlgNext').onclick = Game._advanceDlg;
+    show();
+  };
+  Game.startCutscene = function (key, onDone) { Game.cutscene(Data.STORY[key], onDone); };
+
   // ---------- inn ----------
   function openInn() {
     Progress.fullHeal(Game.state);
@@ -110,18 +126,41 @@ window.Game = (function () {
   function openShop() {
     Game.shopOpen = true; el('shop').classList.add('show'); renderShop();
   }
+  function shopRow(list, name, desc, price, disabled, onBuy) {
+    const row = document.createElement('div'); row.className = 'shop-row';
+    row.innerHTML = `<div class="shop-info"><b>${name}</b><span>${desc}</span></div>`;
+    const buy = document.createElement('button'); buy.className = 'pill small'; buy.textContent = '⛃ ' + price;
+    buy.disabled = disabled || Game.state.gold < price;
+    buy.onclick = () => { if (Game.state.gold >= price) { Game.state.gold -= price; onBuy(); Progress.save(Game.state); renderShop(); } };
+    row.appendChild(buy); list.appendChild(row);
+  }
+  function shopHeading(list, text) { const h = document.createElement('div'); h.className = 'shop-head'; h.textContent = text; list.appendChild(h); }
   function renderShop() {
     el('shopGold').textContent = '⛃ ' + Game.state.gold;
     const list = el('shopList'); list.innerHTML = '';
+
+    shopHeading(list, '🧪 Items');
     Data.SHOP_STOCK.forEach(key => {
       const it = Data.ITEM_DEFS[key]; const have = Game.state.inv[key] || 0;
-      const row = document.createElement('div'); row.className = 'shop-row';
-      const desc = it.kind === 'heal' ? `Restore ${it.amount} HP` : it.kind === 'mana' ? `Restore ${it.amount} MP` : it.kind === 'revive' ? 'Revive a fallen ally' : `${it.min}-${it.max} damage`;
-      row.innerHTML = `<div class="shop-info"><b>${it.name}</b><span>${desc} · owned ×${have}</span></div>`;
-      const buy = document.createElement('button'); buy.className = 'pill small'; buy.textContent = '⛃ ' + it.price;
-      buy.disabled = Game.state.gold < it.price;
-      buy.onclick = () => { if (Game.state.gold >= it.price) { Game.state.gold -= it.price; Game.state.inv[key] = (Game.state.inv[key]||0)+1; Progress.save(Game.state); renderShop(); } };
-      row.appendChild(buy); list.appendChild(row);
+      const desc = (it.kind === 'heal' ? `Restore ${it.amount} HP` : it.kind === 'mana' ? `Restore ${it.amount} MP` : it.kind === 'revive' ? 'Revive a fallen ally' : `${it.min}-${it.max} damage`) + ` · owned ×${have}`;
+      shopRow(list, it.name, desc, it.price, false, () => { Game.state.inv[key] = (Game.state.inv[key]||0)+1; });
+    });
+
+    shopHeading(list, '🐚 Seashells (materia)');
+    Data.SHOP_SHELLS.forEach(key => {
+      const sh = Data.SHELLS[key];
+      const grants = sh.kind === 'magic' ? `grants ${sh.ability.name}` : sh.desc;
+      shopRow(list, sh.name, `${grants}`, sh.price, false, () => Progress.addShell(Game.state, key));
+    });
+
+    shopHeading(list, '⚔️ Weapons');
+    Game.state.party.forEach(p => {
+      const d = Progress.derived(p);
+      Data.WEAPONS[p.key].forEach(w => {
+        if (w.price <= 0) return;
+        const owned = Game.state.ownedWeapons[p.key].includes(w.key);
+        shopRow(list, `${w.name}`, `${d.name} · ${w.desc}` + (owned ? ' · owned' : ''), w.price, owned, () => Progress.buyWeapon(Game.state, p.key, w.key));
+      });
     });
   }
   function closeShop() { Game.shopOpen = false; el('shop').classList.remove('show'); resumeExplore(); }
@@ -136,6 +175,16 @@ window.Game = (function () {
   }
   function closeSkills() { Game.skillsOpen = false; el('skills').classList.remove('show'); Progress.save(Game.state); resumeExplore(); }
   Game.openSkills = openSkills;
+
+  // ---------- gear / seashells ----------
+  function openGear() {
+    if (Game.mode !== 'world' && Game.mode !== 'town') return;
+    if (Game.gearOpen) return closeGear();
+    Game.gearOpen = true; pauseExplore(); el('gear').classList.add('show');
+    Progress.renderGear(Game.state, el('gearBody'), closeGear);
+  }
+  function closeGear() { Game.gearOpen = false; el('gear').classList.remove('show'); Progress.save(Game.state); resumeExplore(); }
+  Game.openGear = openGear;
 
   // ---------- confirm ----------
   Game.confirm = function (text, onYes) {
@@ -152,6 +201,11 @@ window.Game = (function () {
   Game.victoryEnding = function () {
     el('endTitle').textContent = 'The Kraken Falls!';
     el('endText').innerHTML = 'With a final, earth-shaking blow, the Kraken sinks into the depths. The high seas are calm once more — and your legend is sealed.<br><br>You can keep exploring, or return to the site.';
+    el('end').classList.add('show'); Music.play('victory', 'world');
+  };
+  Game.finalEnding = function () {
+    el('endTitle').textContent = 'The Tide Turns';
+    el('endText').innerHTML = 'Selachoth dissolves into seafoam, and the grey horizon blushes gold. Saltmere is saved — and the legend of the three who turned the tide will be sung on every shore.<br><br><b>Thanks for playing!</b> You can keep exploring, or return to the site.';
     el('end').classList.add('show'); Music.play('victory', 'world');
   };
   el('endContinue') && (el('endContinue').onclick = () => el('end').classList.remove('show'));
@@ -175,16 +229,19 @@ window.Game = (function () {
     Game.canvasTap = () => { if (Game.dialogueOpen) return Game._advanceDlg && Game._advanceDlg(); if (anyModal()) return; if ((Game.mode === 'world' || Game.mode === 'town') && Game.active) Game.active.interact && Game.active.interact(); };
     document.addEventListener('pointerdown', e => { if (e.target && e.target.id === 'renderCanvas') Game.canvasTap(); });
     el('btnSkills').onclick = openSkills;
+    el('btnGear').onclick = openGear;
     el('btnMusic').onclick = () => { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; };
     el('worldPrompt').onclick = () => { if (Game.active) Game.active.interact && Game.active.interact(); };
   }
-  function anyModal() { return Game.skillsOpen || Game.shopOpen || Game.confirmOpen || el('end').classList.contains('show'); }
+  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.shopOpen || Game.confirmOpen || el('end').classList.contains('show'); }
   function route(code) {
     if (Game.skillsOpen) { if (code === 'Escape' || code === 'KeyM') closeSkills(); return; }
+    if (Game.gearOpen) { if (code === 'Escape' || code === 'KeyG') closeGear(); return; }
     if (Game.confirmOpen) { if (code === 'Enter' || code === 'KeyE') el('confirmYes').click(); else if (code === 'Escape') el('confirmNo').click(); return; }
     if (Game.shopOpen) { if (code === 'Escape') closeShop(); return; }
     if (Game.dialogueOpen) { if (ACTION.has(code)) Game._advanceDlg && Game._advanceDlg(); return; }
     if (code === 'KeyM') return openSkills();
+    if (code === 'KeyG') return openGear();
     if (code === 'KeyP') { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; return; }
     if (ACTION.has(code) && Game.active && Game.active.interact) Game.active.interact();
   }

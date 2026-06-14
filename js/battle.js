@@ -236,6 +236,7 @@ window.Battle = (function () {
     el('bResultTitle').textContent = won ? 'Victory!' : 'Defeated';
     let body = won ? `Gained <b>${xp} XP</b> and <b>${gold} gold</b>.` : 'Your party was overwhelmed by the tide.';
     if (won && levelUps.length) body += '<br>' + levelUps.map(u => `⭐ ${u.name} reached Lv ${u.level}!`).join('<br>');
+    if (won && levelUps.shellUps && levelUps.shellUps.length) body += '<br>' + levelUps.shellUps.map(u => `🐚 ${u.name} shell → Lv ${u.level}!`).join('<br>');
     if (!won) body += '<br>You are carried back to safety, healed but humbled.';
     el('bResultText').innerHTML = body;
     el('bResult').classList.add('show');

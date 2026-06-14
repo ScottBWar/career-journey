@@ -162,6 +162,53 @@ window.Models = (function () {
     return { node: r, idle(t) { arms.forEach((tn, i) => tn.rotation.y = Math.sin(t*1.6 + i)*0.25); } };
   }
 
+  // Selachoth — the One-Finned Angel: an elegant silver-haired shark-man
+  // in a long black coat, wielding the impossibly long katana "Tidemourn".
+  function selachoth() {
+    const r = new BABYLON.TransformNode('eSelachoth', scene);
+    const coat = M('selCoat', '#16181f', { spec: 0.25 }), coat2 = M('selCoat2', '#22252f'),
+          skin = M('selSkin', '#aebfc8', { spec: 0.4 }), hair = M('selHair', '#e8eef2', { emissive: '#3a4248' }),
+          steel = M('selSteel', '#dfe7ef', { spec: 0.95, specPower: 120 }), teal = M('selTeal', '#3fe0d0', { emissive: '#1fb0a8' }),
+          dark = M('selDark', '#0c0e13'), gold = M('selGold', '#ffe08a', { emissive: '#d8a830' });
+    // tall, slim build
+    at(MB.CreateCylinder('coatLower', { height: 2.0, diameterTop: 0.7, diameterBottom: 1.3 }, scene), r, coat, 0, 1.0, 0);
+    at(MB.CreateBox('coatSplit', { width: 0.18, height: 2.0, depth: 0.1 }, scene), r, dark, 0, 1.0, 0.62);
+    at(MB.CreateBox('torso', { width: 0.85, height: 1.25, depth: 0.5 }, scene), r, coat, 0, 2.25, 0);
+    at(MB.CreateBox('chest', { width: 0.5, height: 1.0, depth: 0.52 }, scene), r, coat2, 0, 2.2, 0.02);
+    at(MB.CreateBox('beltsash', { width: 0.9, height: 0.16, depth: 0.54 }, scene), r, teal, 0, 1.78, 0);
+    // high collar
+    const collar = at(MB.CreateCylinder('collar', { height: 0.7, diameterTop: 1.2, diameterBottom: 0.7, tessellation: 16 }, scene), r, coat, 0, 3.0, -0.15); collar.scaling.z = 0.6;
+    // shoulders
+    [-1, 1].forEach(s => at(MB.CreateSphere('pauld', { diameter: 0.6, slice: 0.6 }, scene), r, steel, s*0.55, 2.75, 0));
+    // left arm
+    const aL = at(MB.CreateCylinder('aL', { height: 1.4, diameter: 0.24 }, scene), r, coat2, -0.6, 2.1, 0); aL.rotation.z = 0.18;
+    // right arm holds Tidemourn
+    const arm = new BABYLON.TransformNode('selArm', scene); arm.parent = r; arm.position.set(0.6, 2.75, 0.1);
+    at(MB.CreateCylinder('aR', { height: 1.4, diameter: 0.24 }, scene), arm, coat2, 0, -0.7, 0);
+    const sw = new BABYLON.TransformNode('selSword', scene); sw.parent = arm; sw.position.set(0, -1.4, 0.15); sw.rotation.x = -0.15;
+    at(MB.CreateBox('blade', { width: 0.1, height: 5.2, depth: 0.04 }, scene), sw, steel, 0, 2.7, 0);
+    at(MB.CreateBox('bladeGlow', { width: 0.04, height: 5.0, depth: 0.06 }, scene), sw, teal, 0.05, 2.7, 0);
+    at(MB.CreateCylinder('grip', { height: 0.5, diameter: 0.09 }, scene), sw, dark, 0, -0.05, 0);
+    at(MB.CreateBox('tsuba', { width: 0.3, height: 0.06, depth: 0.18 }, scene), sw, gold, 0, 0.22, 0);
+    // head — pale, slit gold eyes, gills, sharp grin
+    at(MB.CreateSphere('head', { diameterX: 0.6, diameterY: 0.68, diameterZ: 0.66 }, scene), r, skin, 0, 3.35, 0.05);
+    at(MB.CreateBox('mouth', { width: 0.36, height: 0.08, depth: 0.1 }, scene), r, M('selGrin', '#f4f7fa'), 0, 3.18, 0.34);
+    [-0.16, 0.16].forEach(x => at(MB.CreateBox('eye', { width: 0.13, height: 0.05, depth: 0.05 }, scene), r, gold, x, 3.4, 0.32));
+    [-0.22, 0.22].forEach(x => [0,1,2].forEach(i => at(MB.CreateBox('gill', { width: 0.04, height: 0.16, depth: 0.05 }, scene), r, dark, x + (x>0?1:-1)*0 + (x>0? -0.04*i : 0.04*i), 3.0, 0.18)));
+    // long flowing silver hair
+    at(MB.CreateSphere('hairTop', { diameter: 0.72, slice: 0.55 }, scene), r, hair, 0, 3.5, -0.02);
+    at(MB.CreateBox('hairBack', { width: 0.55, height: 2.4, depth: 0.18 }, scene), r, hair, 0, 2.4, -0.3);
+    [-0.3, 0.3].forEach(x => at(MB.CreateBox('hairSide', { width: 0.16, height: 1.8, depth: 0.16 }, scene), r, hair, x, 2.7, 0.1));
+    [-0.12, 0.12].forEach(x => { const bang = at(MB.CreateCylinder('bang', { height: 0.7, diameterTop: 0, diameterBottom: 0.16 }, scene), r, hair, x, 3.5, 0.32); bang.rotation.x = 0.5; });
+    // the single great dorsal "wing" fin
+    const wing = at(MB.CreateCylinder('wing', { height: 0.2, diameter: 4.2, tessellation: 3 }, scene), r, M('selWing', '#1a1d24', { emissive: '#0c2a2a' }), 0.1, 3.0, -0.7);
+    wing.rotation.x = Math.PI / 2; wing.rotation.z = 0.5; wing.scaling.x = 0.55;
+    at(MB.CreateCylinder('wingEdge', { height: 0.22, diameter: 4.0, tessellation: 3 }, scene), r, teal, 0.12, 3.0, -0.72).rotation.set(Math.PI/2, 0, 0.5);
+    r.scaling.setAll(1.15);
+    return { node: r, idle(t) { wing.rotation.z = 0.5 + Math.sin(t * 0.8) * 0.08; r.rotation.y = -Math.PI/2.1 + Math.sin(t * 0.5) * 0.04; } };
+  }
+
+
   // ---------------- OVERWORLD / TOWN PROPS ----------------
   function hero() { // walking avatar (the SOLDIER), simplified swing not needed
     return swordsman();
@@ -234,7 +281,7 @@ window.Models = (function () {
     return { node: r, body, idle(t) { body.scaling.y = 1 + Math.sin(t * 6 + (r._ph || 0)) * 0.12; } };
   }
 
-  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken };
+  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth };
 
   return { use, M, at, pirate, swordsman, healer, hero, npc, tree, palm, rock, house, sign, portal, roamer,
            enemy: (key) => ENEMY_BUILDERS[key](), ENEMY_BUILDERS };

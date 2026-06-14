@@ -121,6 +121,34 @@
     .shop-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.7rem 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.12); }
     .shop-info { display: flex; flex-direction: column; }
     .shop-info span { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+    .shop-head { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: #fcd34d; margin: 1rem 0 0.2rem; }
+
+    /* gear / seashells */
+    #gear .sk-wrap { width: min(760px, 96vw); max-height: 90vh; overflow: auto; }
+    .gear-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .gear-tab { font: inherit; font-weight: 700; font-size: 0.82rem; padding: 0.5rem 0.9rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); color: #fff; cursor: pointer; }
+    .gear-tab.on { border-color: #fcd34d; background: rgba(252,211,77,0.16); }
+    .gear-body { display: flex; flex-direction: column; gap: 0.9rem; }
+    .gear-stats .sk-stats { font-size: 0.78rem; }
+    .gear-abil { font-size: 0.76rem; color: rgba(255,255,255,0.78); margin-top: 0.3rem; }
+    .gear-abil b { color: #a5b4fc; }
+    .gear-sec h3 { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 0.45rem; }
+    .gear-item { display: block; width: 100%; text-align: left; font: inherit; color: #fff; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16); border-radius: 9px; padding: 0.5rem 0.7rem; margin-bottom: 0.4rem; cursor: pointer; transition: background 0.12s, border-color 0.12s; }
+    .gear-item:hover:not(:disabled) { background: rgba(129,140,248,0.28); }
+    .gear-item:disabled { opacity: 0.5; cursor: default; }
+    .gear-item.on { border-color: #6ee7b7; background: rgba(52,211,153,0.14); }
+    .gi-top { display: flex; justify-content: space-between; font-weight: 700; font-size: 0.86rem; }
+    .gi-tag { font-size: 0.72rem; color: #fcd34d; }
+    .gear-item.on .gi-tag { color: #6ee7b7; }
+    .gi-desc { font-size: 0.72rem; color: rgba(255,255,255,0.68); margin-top: 0.2rem; }
+    .slot-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .slot { display: flex; align-items: center; gap: 0.4rem; font: inherit; font-size: 0.82rem; font-weight: 600; color: #fff; background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.3); border-radius: 999px; padding: 0.45rem 0.9rem; cursor: pointer; }
+    .slot.filled { border-style: solid; border-color: rgba(129,140,248,0.6); background: rgba(129,140,248,0.16); }
+    .slot:disabled { opacity: 0.6; cursor: default; }
+    .slot-lv { font-size: 0.66rem; color: #fcd34d; }
+    .shell-dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; display: inline-block; }
+    .shell-dot.magic { background: radial-gradient(circle at 35% 30%, #fff, #6366f1); }
+    .shell-dot.support { background: radial-gradient(circle at 35% 30%, #fff, #34d399); }
 
     /* result (battle end) */
     #bResult { z-index: 16; }
@@ -183,6 +211,7 @@
       <div id="hudGold">⛃ 0</div>
       <div class="hud-btns">
         <button class="hud-btn" id="btnSkills">Skills (M)</button>
+        <button class="hud-btn" id="btnGear">Gear (G)</button>
         <button class="hud-btn" id="btnMusic">🔊</button>
       </div>
     </div>
@@ -221,6 +250,9 @@
 
   <!-- SKILLS -->
   <div class="overlay" id="skills"><div class="panel" id="skillBody" style="padding:1.2rem;"></div></div>
+
+  <!-- GEAR / SEASHELLS -->
+  <div class="overlay" id="gear"><div class="panel" id="gearBody" style="padding:1.2rem;"></div></div>
 
   <!-- TOAST + ENDING -->
   <div id="toast"></div>
