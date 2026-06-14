@@ -5,7 +5,7 @@
 window.Town = (function () {
   const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
   let scene, cam, player, engine, def, key;
-  let npcs = [], idlers = [], paused = false, t = 0, nearNPC = null, nearExit = false;
+  let npcs = [], idlers = [], paused = false, t = 0, nearNPC = null, nearExit = false, camYaw = 0;
   const SPEED = 8;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
@@ -32,7 +32,7 @@ window.Town = (function () {
     def.buildings.forEach(b => {
       let built;
       if (b.kind === 'inn') { built = Models.house({ wall: '#e8d5b0', roof: '#3a7a5a', w: 5, d: 5 }); placeSign(b.x + 0, b.z + 2.8, 'INN'); }
-      else if (b.kind === 'shop') { built = Models.house({ wall: '#e0d0aa', roof: '#7a5aa0', w: 5, d: 5 }); placeSign(b.x + 0, b.z + 2.8, 'SHOP'); }
+      else if (b.kind === 'shop') { built = Models.house({ wall: '#e0d0aa', roof: '#7a5aa0', w: 5, d: 5 }); placeSign(b.x + 0, b.z + 2.8, (b.label || 'SHOP').toUpperCase()); }
       else built = Models.house(b);
       built.node.position.set(b.x, 0, b.z);
     });
@@ -48,8 +48,9 @@ window.Town = (function () {
       npcs.push({ data: n, node: m.node, pos: new V3(n.x, 0, n.z) });
     });
 
-    // player
-    const hero = Models.hero(); player = hero.node;
+    // player = the active party leader (consistent with overworld)
+    const leaderModel = Progress.def(Game.state.active[0] || 'pirate').model;
+    const hero = Models[leaderModel] ? Models[leaderModel]() : Models.hero(); player = hero.node;
     player.position.set(def.exit.x, 0, def.exit.z + 3);
     cam = new BABYLON.UniversalCamera('tcam', new V3(0, 15, -14), scene); cam.fov = 0.85;
 
@@ -63,12 +64,14 @@ window.Town = (function () {
   function update() {
     if (paused || (window.Game && Game.blocking && Game.blocking())) return;
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
+    if (Input.down('KeyQ')) camYaw -= 1.7 * dt;
+    if (Input.down('KeyE')) camYaw += 1.7 * dt;
     let mx = 0, mz = 0;
     if (Input.down('KeyW') || Input.down('ArrowUp')) mz += 1;
     if (Input.down('KeyS') || Input.down('ArrowDown')) mz -= 1;
     if (Input.down('KeyA') || Input.down('ArrowLeft')) mx -= 1;
     if (Input.down('KeyD') || Input.down('ArrowRight')) mx += 1;
-    if (mx || mz) { const len = Math.hypot(mx, mz); mx /= len; mz /= len; player.position.x = clamp(player.position.x + mx*SPEED*dt, -26, 26); player.position.z = clamp(player.position.z + mz*SPEED*dt, -26, 26); player.rotation.y = Math.atan2(mx, mz); player.position.y = Math.abs(Math.sin(t*10))*0.12; }
+    if (mx || mz) { const len = Math.hypot(mx, mz); mx /= len; mz /= len; const fX=-Math.sin(camYaw), fZ=Math.cos(camYaw), rX=Math.cos(camYaw), rZ=Math.sin(camYaw); const wx=mx*rX+mz*fX, wz=mx*rZ+mz*fZ; player.position.x = clamp(player.position.x + wx*SPEED*dt, -26, 26); player.position.z = clamp(player.position.z + wz*SPEED*dt, -26, 26); player.rotation.y = Math.atan2(wx, wz); player.position.y = Math.abs(Math.sin(t*10))*0.12; }
     else player.position.y = 0;
 
     idlers.forEach(o => o.idle && o.idle(t));
@@ -78,12 +81,12 @@ window.Town = (function () {
     nearExit = V3.Distance(player.position, new V3(def.exit.x, 0, def.exit.z)) < 2.2;
 
     const prompt = document.getElementById('worldPrompt');
-    if (nearNPC) { prompt.textContent = `[E / Tap] Talk to ${nearNPC.data.name}`; prompt.classList.add('show'); }
-    else if (nearExit) { prompt.textContent = '[E / Tap] Leave town'; prompt.classList.add('show'); }
+    if (nearNPC) { prompt.textContent = `[F / Tap] Talk to ${nearNPC.data.name}`; prompt.classList.add('show'); }
+    else if (nearExit) { prompt.textContent = '[F / Tap] Leave town'; prompt.classList.add('show'); }
     else prompt.classList.remove('show');
 
-    cam.position.set(player.position.x, 15, player.position.z - 14);
-    cam.setTarget(player.position.add(new V3(0, 1, 2)));
+    const off = 14; cam.position.set(player.position.x + Math.sin(camYaw)*off, 15, player.position.z - Math.cos(camYaw)*off);
+    cam.setTarget(player.position.add(new V3(0, 1, 0)));
     Game.updateHUD();
   }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }

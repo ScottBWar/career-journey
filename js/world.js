@@ -5,7 +5,7 @@
 window.World = (function () {
   const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
   let scene, cam, player, engine, def, key;
-  let roamers = [], gates = [], idlers = [], paused = false, locked = false, nearGate = null, t = 0;
+  let roamers = [], gates = [], idlers = [], paused = false, locked = false, nearGate = null, t = 0, camYaw = 0, playerArm = null, swingT = 0;
   const SPEED = 9;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
@@ -96,7 +96,7 @@ window.World = (function () {
 
     // player avatar = the active party leader
     const leaderKey = Game.state.active[0] || 'pirate'; const leaderModel = Progress.def(leaderKey).model;
-    const hero = Models[leaderModel] ? Models[leaderModel]() : Models.hero(); player = hero.node;
+    const hero = Models[leaderModel] ? Models[leaderModel]() : Models.hero(); player = hero.node; playerArm = hero.arm || hero.staffPiv || null;
     player.position.set(Game.state.location.x, 0, Game.state.location.z);
     cam = new BABYLON.UniversalCamera('wcam', new V3(0, 18, -16), scene); cam.fov = 0.8;
 
@@ -108,6 +108,9 @@ window.World = (function () {
   function update() {
     if (paused || (window.Game && Game.blocking && Game.blocking())) return;
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
+    if (Input.down('KeyQ')) camYaw -= 1.7 * dt;
+    if (Input.down('KeyE')) camYaw += 1.7 * dt;
+    if (swingT > 0 && playerArm) { swingT -= dt; playerArm.rotation.x = -Math.sin(Math.max(0, swingT) / 0.25 * Math.PI) * 1.4; if (swingT <= 0) playerArm.rotation.x = 0; }
     let mx = 0, mz = 0;
     if (Input.down('KeyW') || Input.down('ArrowUp')) mz += 1;
     if (Input.down('KeyS') || Input.down('ArrowDown')) mz -= 1;
@@ -115,11 +118,13 @@ window.World = (function () {
     if (Input.down('KeyD') || Input.down('ArrowRight')) mx += 1;
     if (mx || mz) {
       const len = Math.hypot(mx, mz); mx /= len; mz /= len;
-      player.position.x += mx*SPEED*dt; player.position.z += mz*SPEED*dt;
+      const fX = -Math.sin(camYaw), fZ = Math.cos(camYaw), rX = Math.cos(camYaw), rZ = Math.sin(camYaw);
+      const wx = mx*rX + mz*fX, wz = mx*rZ + mz*fZ;
+      player.position.x += wx*SPEED*dt; player.position.z += wz*SPEED*dt;
       const rad = rlim(), d = Math.hypot(player.position.x, player.position.z);
       if (d > rad) { player.position.x *= rad/d; player.position.z *= rad/d; }
-      player.rotation.y = Math.atan2(mx, mz); player.position.y = Math.abs(Math.sin(t*10))*0.12;
-    } else player.position.y = 0;
+      player.rotation.y = Math.atan2(wx, wz); player.position.y = Math.abs(Math.sin(t*10))*0.12;
+    } else if (swingT <= 0) player.position.y = 0;
     Game.state.location.x = player.position.x; Game.state.location.z = player.position.z;
 
     idlers.forEach(o => o.idle && o.idle(t));
@@ -138,23 +143,33 @@ window.World = (function () {
     const prompt = document.getElementById('worldPrompt');
     if (nearGate) {
       let label;
-      if (nearGate.kind === 'town') label = `[E / Tap] Enter ${nearGate.name}`;
-      else if (nearGate.kind === 'dungeon') label = `[E / Tap] Enter ${nearGate.name}${nearGate.solved ? ' (cleared)' : ''}`;
-      else if (nearGate.kind === 'dock') label = '[E / Tap] Board the ship';
-      else if (nearGate.kind === 'shells') label = '[E / Tap] Hunt for shells';
-      else if (nearGate.kind === 'mermaid') label = `[E / Tap] Talk to ${nearGate.name} 💗`;
-      else if (nearGate.kind === 'boss') label = Game.state.prog.finalWin ? '[E / Tap] The spire is silent' : Game.state.prog.krakenDown ? '[E / Tap] Confront Selachoth' : '[E / Tap] Challenge the Kraken';
+      if (nearGate.kind === 'town') label = `[F / Tap] Enter ${nearGate.name}`;
+      else if (nearGate.kind === 'dungeon') label = `[F / Tap] Enter ${nearGate.name}${nearGate.solved ? ' (cleared)' : ''}`;
+      else if (nearGate.kind === 'dock') label = '[F / Tap] Board the ship';
+      else if (nearGate.kind === 'shells') label = '[F / Tap] Hunt for shells';
+      else if (nearGate.kind === 'mermaid') label = `[F / Tap] Talk to ${nearGate.name} 💗`;
+      else if (nearGate.kind === 'boss') label = Game.state.prog.finalWin ? '[F / Tap] The spire is silent' : Game.state.prog.krakenDown ? '[F / Tap] Confront Selachoth' : '[F / Tap] Challenge the Kraken';
       prompt.textContent = label; prompt.classList.add('show');
     } else prompt.classList.remove('show');
 
-    cam.position.set(player.position.x, 18, player.position.z - 16);
-    cam.setTarget(player.position.add(new V3(0, 1, 2)));
+    const off = 16; cam.position.set(player.position.x + Math.sin(camYaw)*off, 18, player.position.z - Math.cos(camYaw)*off);
+    cam.setTarget(player.position.add(new V3(0, 1, 0)));
     Game.updateHUD();
   }
 
-  function startRoamerBattle(r) {
+  // overworld weapon swing — hit a nearby roamer to open battle with FIRST STRIKE
+  function attack() {
+    if (paused || locked) return;
+    swingT = 0.25; if (window.SFX) SFX.play('hit');
+    let best = null, bd = 3.2;
+    for (const r of roamers) { if (!r.node.isEnabled()) continue; const d = V3.Distance(r.node.position, player.position); if (d < bd) { bd = d; best = r; } }
+    if (best) startRoamerBattle(best, true);
+  }
+
+  function startRoamerBattle(r, firstStrike) {
     locked = true; paused = true; Music.play('battle');
-    Game.startBattle(Data.randomEncounter(r.enc), {}, (res) => {
+    if (firstStrike) Game.toast('First strike!');
+    Game.startBattle(Data.randomEncounter(r.enc), { firstStrike: !!firstStrike }, (res) => {
       if (res.won) { Game.state.islands[key].cleared['e' + r.idx] = true; r.node.setEnabled(false); Progress.save(Game.state); }
       else { const dir = player.position.subtract(r.node.position); if (dir.length() < 0.1) dir.set(0,0,-1); dir.normalize(); player.position.addInPlace(dir.scale(4)); Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
       paused = false; locked = false; Game.resumeIsland();
@@ -199,8 +214,8 @@ window.World = (function () {
     }
   }
 
-  function enter(islandKey) { build(islandKey); Game.active = { interact }; return scene; }
-  function focus() { Game.active = { interact }; }
+  function enter(islandKey) { build(islandKey); Game.active = { interact, attack }; return scene; }
+  function focus() { Game.active = { interact, attack }; }
   function pause() { paused = true; }
   function resume() { paused = false; locked = false; }
 

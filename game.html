@@ -335,6 +335,29 @@
     #date.scene-holy::after { background: conic-gradient(from 0deg at 50% 38%, transparent 0deg, rgba(255,255,255,0.22) 14deg, transparent 30deg, rgba(255,255,255,0.18) 56deg, transparent 74deg, rgba(255,255,255,0.22) 100deg, transparent 120deg, rgba(255,255,255,0.18) 150deg, transparent 170deg, rgba(255,255,255,0.22) 200deg, transparent 220deg, rgba(255,255,255,0.18) 250deg, transparent 270deg, rgba(255,255,255,0.22) 300deg, transparent 320deg, rgba(255,255,255,0.18) 348deg, transparent 360deg); animation: dsRays 26s linear infinite; transform-origin: 50% 38%; }
     @keyframes dsRays { to { transform: rotate(360deg); } }
 
+    /* active-turn banner */
+    #bActive { position: fixed; left: 0.9rem; bottom: 252px; z-index: 11; display: none; align-items: center; gap: 0.5rem; padding: 0.3rem 0.9rem 0.3rem 0.3rem; background: rgba(8,6,24,0.82); border: 1px solid #fcd34d; border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+    body.mode-battle #bActive.show { display: flex; }
+    .ba-port { width: 42px; height: 42px; }
+    .ba-meta { display: flex; flex-direction: column; line-height: 1.1; }
+    .ba-name { font-weight: 700; font-size: 0.88rem; }
+    .ba-turn { font-size: 0.6rem; color: #fcd34d; letter-spacing: 0.12em; text-transform: uppercase; }
+
+    /* FF10-style turn-order bar */
+    #turnbar { position: fixed; top: 64px; right: 8px; z-index: 11; display: none; flex-direction: column; align-items: center; gap: 5px; padding: 6px; background: rgba(8,6,24,0.55); border: 1px solid rgba(255,255,255,0.16); border-radius: 12px; }
+    body.mode-battle #turnbar { display: flex; }
+    .tb-label { font-size: 0.55rem; letter-spacing: 0.18em; color: rgba(255,255,255,0.6); }
+    .tb-item { width: 36px; height: 36px; border-radius: 7px; overflow: hidden; border: 1px solid rgba(255,255,255,0.22); opacity: 0.72; transition: transform 0.2s, opacity 0.2s; }
+    .tb-item.cur { opacity: 1; border-color: #fcd34d; box-shadow: 0 0 12px rgba(252,211,77,0.7); transform: scale(1.2); }
+    .tb-item.enemy { border-color: rgba(255,120,120,0.45); }
+    .tb-port { width: 100%; height: 100%; border-radius: 0; border: none; display: block; }
+    .tb-chip { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-weight: 700; color: #0a0a18; }
+    .float.big { font-size: 2.4rem; }
+
+    /* start-screen party portraits */
+    #startPortraits { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.4rem; flex-wrap: wrap; }
+    #startPortraits .start-port { width: 56px; height: 56px; box-shadow: 0 6px 18px rgba(0,0,0,0.5); }
+
     /* battle transition */
     #transition { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0; }
     #transition.show { animation: battleWipe 0.8s ease forwards; }
@@ -384,12 +407,15 @@
     </div>
   </div>
   <div id="bMessage"></div>
+  <div id="bActive"></div>
+  <div id="turnbar"></div>
   <div class="overlay" id="bResult"><div class="box panel"><h1 id="bResultTitle">Victory!</h1><p id="bResultText"></p><button class="pill" id="bResultBtn">Continue</button></div></div>
 
   <!-- START -->
   <div id="start">
     <h1>Beach Brawl</h1>
-    <p>A high-seas RPG · explore, battle, level up, and slay the Kraken</p>
+    <p>A high-seas RPG · explore, battle, level up, romance mermaids, and turn the tide</p>
+    <div id="startPortraits"></div>
     <div class="actions">
       <button class="pill" id="startNew">New Game</button>
       <button class="pill ghost" id="startContinue">Continue</button>

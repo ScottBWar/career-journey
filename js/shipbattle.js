@@ -81,12 +81,12 @@ window.ShipBattle = (function () {
   function lock() { [...el('shipMenu').querySelectorAll('button')].forEach(b => b.disabled = true); }
   let snav = 0;
   function onKey(code) {
-    if (el('shipResult').classList.contains('show')) { if (['Enter','Space','KeyE'].includes(code)) el('shipResultBtn').click(); return; }
+    if (el('shipResult').classList.contains('show')) { if (['Enter','Space','KeyE','KeyF'].includes(code)) el('shipResultBtn').click(); return; }
     const btns = [...el('shipMenu').querySelectorAll('button:not(:disabled)')]; if (!btns.length) return;
     if (snav >= btns.length) snav = 0;
     if (['ArrowDown','ArrowRight','KeyS','KeyD'].includes(code)) snav = (snav + 1) % btns.length;
     else if (['ArrowUp','ArrowLeft','KeyW','KeyA'].includes(code)) snav = (snav - 1 + btns.length) % btns.length;
-    else if (['Enter','Space','KeyE'].includes(code)) { btns[snav].click(); return; }
+    else if (['Enter','Space','KeyE','KeyF'].includes(code)) { btns[snav].click(); return; }
     btns.forEach((b, i) => b.classList.toggle('kbfocus', i === snav));
   }
 

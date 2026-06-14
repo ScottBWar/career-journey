@@ -24,6 +24,7 @@ window.Game = (function () {
     setupInput();
 
     const save = Progress.load();
+    if (window.Portraits) el('startPortraits').innerHTML = ['pirate', 'swordsman', 'healer', 'mage', 'blader', 'dragoon'].map(k => Portraits.img(k, 'start-port')).join('');
     el('startContinue').style.display = save ? 'inline-flex' : 'none';
     el('startNew').onclick = () => { Music.start(); Progress.clear(); Game.state = Progress.freshState(); beginGame(); };
     el('startContinue').onclick = () => { Music.start(); Game.state = save || Progress.freshState(); beginGame(); };
@@ -38,10 +39,10 @@ window.Game = (function () {
       Game.state.flags.seenOpening = true; Progress.save(Game.state);
       Game.cutscene(Data.STORY.opening, () => Game.cutscene(Data.STORY.ruffyJoin, () => {
         Progress.recruit(Game.state, 'ruffy'); Progress.save(Game.state);
-        Game.toast('WASD/arrows to move. Walk into glowing markers. M=Skills · G=Gear · T=Party.');
+        Game.toast('WASD move · Q/E rotate camera · F interact · Space swing for a first strike!');
       }));
     } else {
-      Game.toast('WASD/arrows to move. M=Skills · G=Gear · T=Party. Board the ship to sail between islands.');
+      Game.toast('WASD move · Q/E rotate camera · F interact · Space swing (first strike!) · M Skills · G Gear · T Party.');
     }
   }
 
@@ -266,11 +267,11 @@ window.Game = (function () {
   function resumeExplore() { const m = EXPLORE[Game.mode]; if (m) m().resume(); }
 
   // ---------- input ----------
-  const ACTION = new Set(['KeyE', 'Space', 'Enter']);
+  const ACTION = new Set(['KeyF', 'Enter']); // interact / confirm (E freed for camera)
   const MOVE = new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
   function setupInput() {
     window.addEventListener('keydown', e => {
-      if (MOVE.has(e.code) || ACTION.has(e.code)) e.preventDefault();
+      if (MOVE.has(e.code) || ACTION.has(e.code) || e.code === 'Space') e.preventDefault();
       Input.keys.add(e.code);
       if (e.repeat) return;
       route(e.code);
@@ -298,14 +299,15 @@ window.Game = (function () {
     if (Game.gearOpen) { if (code === 'Escape' || code === 'KeyG') closeGear(); return; }
     if (Game.partyOpen) { if (code === 'Escape' || code === 'KeyT') closeParty(); return; }
     if (Game.shipyardOpen) { if (code === 'Escape' || code === 'KeyC') closeShipyard(); return; }
-    if (Game.confirmOpen) { if (code === 'Enter' || code === 'KeyE') el('confirmYes').click(); else if (code === 'Escape') el('confirmNo').click(); return; }
+    if (Game.confirmOpen) { if (code === 'Enter' || code === 'KeyF') el('confirmYes').click(); else if (code === 'Escape') el('confirmNo').click(); return; }
     if (Game.shopOpen) { if (code === 'Escape') closeShop(); return; }
-    if (Game.dialogueOpen) { if (ACTION.has(code)) Game._advanceDlg && Game._advanceDlg(); return; }
+    if (Game.dialogueOpen) { if (ACTION.has(code) || code === 'Space') Game._advanceDlg && Game._advanceDlg(); return; }
     if (code === 'KeyM') return openSkills();
     if (code === 'KeyG') return openGear();
     if (code === 'KeyT') return openParty();
     if (code === 'KeyC' && Game.mode === 'sea') return openShipyard();
     if (code === 'KeyP') { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; return; }
+    if (code === 'Space' && Game.active && Game.active.attack) return Game.active.attack();
     if (ACTION.has(code) && Game.active && Game.active.interact) Game.active.interact();
   }
 

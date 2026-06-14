@@ -15,6 +15,8 @@ window.Battle = (function () {
   let party = [], enemies = [], actors = [], over, onEndCb, activeMember, t;
 
   const FX = { fire:['#ffb347','#ff5e3a'], water:['#5eead4','#3b82f6'], beam:['#a5b4fc','#e0e7ff'], heal:['#6ee7b7','#bbf7d0'], mana:['#60a5fa','#bfdbfe'], hit:['#ff6b6b','#ffd1d1'] };
+  const PSPD = { pirate: 11, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12 };
+  const ESPD = { shark: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12 };
 
   function M(name, hex, opt = {}) {
     const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene);
@@ -79,6 +81,10 @@ window.Battle = (function () {
     });
 
     actors = party.concat(enemies);
+    // CTB turn timing: lower ct acts sooner; faster speed = more frequent turns
+    const fs = opts && opts.firstStrike;
+    party.forEach(p => { p.spd = PSPD[p.key] || 10; p.ct = fs ? 0 : 100 / p.spd; });
+    enemies.forEach(e => { e.spd = ESPD[e.keyRaw] || 8; e.ct = fs ? 320 / e.spd : 100 / e.spd; });
 
     scene.onBeforeRenderObservable.add(() => {
       const dt = engine.getDeltaTime() / 1000; t += dt;
@@ -110,16 +116,18 @@ window.Battle = (function () {
     ps.minAngularSpeed = 0; ps.maxAngularSpeed = Math.PI; ps.targetStopDuration = 0.18; ps.disposeOnStop = true; ps.start();
   }
   const worldOf = (node, dy = 2.4) => node.getAbsolutePosition().add(new V3(0, dy, 0));
-  function floatDamage(node, text, color, dy = 2.4) {
+  function floatDamage(node, text, color, dy = 2.4, cls = '') {
     const rw = engine.getRenderWidth(), rh = engine.getRenderHeight();
     const p = BABYLON.Vector3.Project(worldOf(node, dy), BABYLON.Matrix.Identity(), scene.getTransformMatrix(), new BABYLON.Viewport(0,0,rw,rh));
-    const d = document.createElement('div'); d.className = 'float'; d.textContent = text; d.style.color = color;
+    const d = document.createElement('div'); d.className = 'float ' + cls; d.textContent = text; d.style.color = color;
     d.style.left = (p.x * (canvas.clientWidth/rw)) + 'px'; d.style.top = (p.y * (canvas.clientHeight/rh)) + 'px';
     document.body.appendChild(d); setTimeout(() => d.remove(), 1000);
   }
 
   // ----- UI -----
   function msg(text) { el('bMessage').textContent = text; }
+  function setBanner(m) { const b = el('bActive'); if (!b) return; b.innerHTML = `${Portraits.img(m.key, 'ba-port')}<span class="ba-meta"><span class="ba-name">${m.name}</span><span class="ba-turn">your move</span></span>`; b.classList.add('show'); }
+  function clearBanner() { const b = el('bActive'); if (b) b.classList.remove('show'); }
   function renderEnemies(targetMode, onPick) {
     const wrap = el('bEnemies'); wrap.innerHTML = '';
     enemies.forEach(e => { const d = document.createElement('div'); d.className = 'eplate' + (e.alive ? '' : ' dead');
@@ -172,11 +180,11 @@ window.Battle = (function () {
   }
   function highlightNav() { navItems.forEach((n, i) => n.classList.toggle('kbfocus', i === navIndex)); const cur = navItems[navIndex]; if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' }); }
   function onKey(code) {
-    if (el('bResult').classList.contains('show')) { if (['Enter', 'Space', 'KeyE'].includes(code)) el('bResultBtn').click(); return; }
+    if (el('bResult').classList.contains('show')) { if (['Enter', 'Space', 'KeyE', 'KeyF'].includes(code)) el('bResultBtn').click(); return; }
     if (!navItems.length) return;
     if (['ArrowDown', 'ArrowRight', 'KeyS', 'KeyD'].includes(code)) { navIndex = (navIndex + 1) % navItems.length; highlightNav(); }
     else if (['ArrowUp', 'ArrowLeft', 'KeyW', 'KeyA'].includes(code)) { navIndex = (navIndex - 1 + navItems.length) % navItems.length; highlightNav(); }
-    else if (['Enter', 'Space', 'KeyE'].includes(code)) { const it = navItems[navIndex]; if (it && !it.disabled) it.click(); }
+    else if (['Enter', 'Space', 'KeyE', 'KeyF'].includes(code)) { const it = navItems[navIndex]; if (it && !it.disabled) it.click(); }
     else if (['Escape', 'Backspace'].includes(code)) { const back = menuEl().querySelector('button.back'); if (back) back.click(); }
   }
 
@@ -198,14 +206,14 @@ window.Battle = (function () {
     dmg = Math.round(dmg * mult);
     if (window.SFX) SFX.play(mult > 1 ? 'crit' : 'hit');
     e.hp = Math.max(0, e.hp - dmg); hitFlash(e.node, mult > 1 ? '#fff0a0' : '#ff6060'); burst(worldOf(e.node, 0.6), ...FX.hit, mult > 1 ? 80 : 55, mult > 1 ? 9 : 6);
-    floatDamage(e.node, dmg + (mult > 1 ? ' Weak!' : mult < 1 ? ' Resist' : ''), mult > 1 ? '#fde047' : color, 2.6);
+    floatDamage(e.node, dmg + (mult > 1 ? ' Weak!' : mult < 1 ? ' Resist' : ''), mult > 1 ? '#fde047' : color, 2.6, mult > 1 ? 'big' : '');
     e._busy = true; const h = e.home.clone(); moveTo(e.node, h.add(new V3(0.5,0,0)), 90).then(() => moveTo(e.node, h, 150).then(() => { e.node.position.copyFrom(h); e._busy = false; }));
     if (e.hp <= 0) killEnemy(e); renderEnemies(false);
   }
   async function killEnemy(e) { e.alive = false; e._busy = true; await tween(k => { e.node.position.y = e.baseY - k*3; e.node.rotation.z = k*1.5; e.node.scaling.setAll((e.node.scaling.x||1) * (1 - k*0.02) || 1); }, 800); e.node.setEnabled(false); }
   function healMember(p, amt) { if (window.SFX) SFX.play('heal'); p.hp = Math.min(p.maxhp, p.hp + amt); burst(worldOf(p.node, 0.2), ...FX.heal, 45, 5, -2); floatDamage(p.node, '+' + amt, '#6ee7b7', 2.6); renderParty(false); }
 
-  function takeTurn(member) { return new Promise(done => { activeMember = member; renderParty(false); renderEnemies(false); msg(`${member.name}'s turn — choose an action.`); showMain(member, done); }); }
+  function takeTurn(member) { return new Promise(done => { activeMember = member; renderParty(false); renderEnemies(false); setBanner(member); msg(`${member.name}'s turn — choose an action.`); showMain(member, done); }); }
 
   function gainLimit(m, amt) { m.limit = clamp(m.limit + amt, 0, 100); }
   function showMain(m, done) { clearMenu(m.name + " — choose action");
@@ -252,7 +260,7 @@ window.Battle = (function () {
   }
   function chooseEnemy(prompt, onPick, onBack) { clearMenu(prompt); msg(prompt); renderEnemies(true, e => { renderEnemies(false); onPick(e); }); backBtn(() => { renderEnemies(false); onBack(); }); captureNav(); }
   function chooseAlly(prompt, candidates, onPick, onBack) { clearMenu(prompt); msg(prompt); renderParty(true, candidates, p => { renderParty(false); onPick(p); }); backBtn(() => { renderParty(false); onBack(); }); captureNav(); }
-  async function act(done, fn) { lockMenu(); await fn(); refresh(); activeMember = null; renderParty(false); done(); }
+  async function act(done, fn) { lockMenu(); clearBanner(); await fn(); refresh(); activeMember = null; renderParty(false); done(); }
 
   async function doFight(m, target) { msg(`${m.name} strikes ${target.name}!`); await dashAttack(m, target, async () => { if (m.arm) await swing(m.arm); let dmg = rnd(m.fight.min, m.fight.max); const crit = Math.random() < m.fight.crit; if (crit) dmg = Math.round(dmg*1.8); const elem = m.fight.el || 'physical'; if (elem !== 'physical') burst(worldOf(target.node, 0.4), ...(FX[({fire:'fire',water:'water',thunder:'beam',earth:'beam',dark:'beam',holy:'beam'})[elem]] || FX.beam), 40, 6); else if (m.fight.big) burst(worldOf(target.node, 0.4), ...FX.beam, 50, 7); if (crit && window.SFX) SFX.play('crit'); damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff', elem); if (crit) msg('Critical hit! ' + dmg + ' damage!'); }); gainLimit(m, 8); }
   async function doDefend(m) { msg(`${m.name} braces for impact.`); m._defend = true; await wait(300); }
@@ -284,18 +292,44 @@ window.Battle = (function () {
   function applyToMember(p, dmg) { p.hp = Math.max(0, p.hp - dmg); p.limit = clamp(p.limit + Math.round(dmg / p.maxhp * 60) + 5, 0, 100); hitFlash(p.node, '#ff5050'); burst(worldOf(p.node, 0.0), ...FX.hit, 50, 6); floatDamage(p.node, String(dmg), '#ff8a8a', 2.4); if (p.hp <= 0 && p.alive) koMember(p); renderParty(false); }
   async function koMember(p) { if (window.SFX) SFX.play('ko'); p.alive = false; tween(k => { p.node.rotation.x = k*1.4; p.node.position.y = p.baseY - k*0.4; }, 500); }
 
+  // ----- CTB turn order -----
+  const speedOf = (a) => a.spd || 10;
+  const aliveActors = () => actors.filter(a => a.alive);
+  function nextActor() { const al = aliveActors(); if (!al.length) return null; al.sort((x, y) => (x.ct - y.ct) || (x.side === 'party' ? -1 : 1)); return al[0]; }
+  function previewOrder(n) {
+    const sim = aliveActors().map(a => ({ a, ct: a.ct })); const out = [];
+    for (let i = 0; i < n; i++) { sim.sort((x, y) => (x.ct - y.ct) || (x.a.side === 'party' ? -1 : 1)); const top = sim[0]; out.push(top.a); top.ct += 100 / speedOf(top.a); }
+    return out;
+  }
+  function renderTurnBar() {
+    const bar = el('turnbar'); if (!bar) return;
+    const order = previewOrder(8);
+    bar.innerHTML = '<span class="tb-label">NEXT ▸</span>' + order.map((a, i) => {
+      const cur = i === 0 ? ' cur' : '';
+      if (a.side === 'party') return `<div class="tb-item party${cur}" title="${a.name}">${Portraits.img(a.key, 'tb-port')}</div>`;
+      const por = Portraits.has(a.keyRaw) ? Portraits.img(a.keyRaw, 'tb-port') : `<span class="tb-chip" style="background:${enemyChip(a.keyRaw)}">${a.name[0]}</span>`;
+      return `<div class="tb-item enemy${cur}" title="${a.name}">${por}</div>`;
+    }).join('');
+  }
+  function enemyChip(k) { return ({ shark:'#6f7f8c', crab:'#e0573a', jelly:'#d98cff', octo:'#a05bd6', gull:'#cdd6e0', golem:'#d9b779' })[k] || '#ff6b6b'; }
+
   // ----- loop / end -----
   function checkEnd() { if (aliveEnemies().length === 0 && !over) { finish(true); return true; } if (aliveParty().length === 0 && !over) { finish(false); return true; } return false; }
   async function loop() {
     while (!over) {
-      for (const m of party) { if (over) break; if (!m.alive) continue; m._defend = false; await takeTurn(m); if (checkEnd()) return; await wait(220); }
-      if (over) break;
-      for (const e of enemies) { if (over) break; if (!e.alive) continue; await enemyAct(e); if (checkEnd()) return; }
+      const a = nextActor(); if (!a) break;
+      const minCt = a.ct; actors.forEach(x => { if (x.alive) x.ct -= minCt; }); // normalize so current = 0
+      renderTurnBar();
+      if (a.side === 'party') { a._defend = false; await takeTurn(a); } else { await enemyAct(a); }
+      a.ct += 100 / speedOf(a);
+      if (checkEnd()) return;
+      await wait(140);
     }
   }
 
   async function finish(won) {
-    over = true; lockMenu(); activeMember = null; renderParty(false);
+    over = true; lockMenu(); clearBanner(); activeMember = null; renderParty(false);
+    const bar = el('turnbar'); if (bar) bar.innerHTML = '';
     // write HP/MP back to persistent state
     party.forEach(p => { p.ref.hpCur = Math.max(0, p.hp); p.ref.mpCur = Math.max(0, p.mp); });
     let levelUps = [], xp = 0, gold = 0;

@@ -5,7 +5,7 @@
 window.Sea = (function () {
   const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
   let scene, cam, ship, engine, ocean, oceanBase;
-  let isles = [], idlers = [], foes = [], paused = false, locked = false, nearTarget = null, t = 0, buoy = null;
+  let isles = [], idlers = [], foes = [], paused = false, locked = false, nearTarget = null, t = 0, buoy = null, camYaw = 0;
   const SPEED = 11;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
@@ -80,12 +80,14 @@ window.Sea = (function () {
   function update() {
     if (paused || (window.Game && Game.blocking && Game.blocking())) return;
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
+    if (Input.down('KeyQ')) camYaw -= 1.7 * dt;
+    if (Input.down('KeyE')) camYaw += 1.7 * dt;
     let mx = 0, mz = 0;
     if (Input.down('KeyW') || Input.down('ArrowUp')) mz += 1;
     if (Input.down('KeyS') || Input.down('ArrowDown')) mz -= 1;
     if (Input.down('KeyA') || Input.down('ArrowLeft')) mx -= 1;
     if (Input.down('KeyD') || Input.down('ArrowRight')) mx += 1;
-    if (mx || mz) { const len = Math.hypot(mx, mz); mx /= len; mz /= len; ship.position.x += mx*SPEED*dt; ship.position.z += mz*SPEED*dt; const rad = Data.SEA.size*0.5; const d = Math.hypot(ship.position.x, ship.position.z); if (d > rad) { ship.position.x *= rad/d; ship.position.z *= rad/d; } ship.rotation.y = Math.atan2(mx, mz); }
+    if (mx || mz) { const len = Math.hypot(mx, mz); mx /= len; mz /= len; const fX=-Math.sin(camYaw), fZ=Math.cos(camYaw), rX=Math.cos(camYaw), rZ=Math.sin(camYaw); const wx=mx*rX+mz*fX, wz=mx*rZ+mz*fZ; ship.position.x += wx*SPEED*dt; ship.position.z += wz*SPEED*dt; const rad = Data.SEA.size*0.5; const d = Math.hypot(ship.position.x, ship.position.z); if (d > rad) { ship.position.x *= rad/d; ship.position.z *= rad/d; } ship.rotation.y = Math.atan2(wx, wz); }
     ship.position.y = Math.sin(t * 1.5) * 0.18; ship.rotation.z = Math.sin(t * 1.1) * 0.04;
     Game.state.location.shipX = ship.position.x; Game.state.location.shipZ = ship.position.z;
 
@@ -110,9 +112,9 @@ window.Sea = (function () {
     for (const isle of isles) { if (V3.Distance(ship.position, isle.pos) < isle.r) { nearTarget = { kind: 'island', isle }; break; } }
     if (!nearTarget && buoy && V3.Distance(ship.position, buoy) < 4) nearTarget = { kind: 'shipyard' };
     const prompt = document.getElementById('worldPrompt');
-    if (nearTarget) { prompt.textContent = nearTarget.kind === 'island' ? `[E / Tap] Land at ${nearTarget.isle.name}` : '[E / Tap] Visit the Shipwright'; prompt.classList.add('show'); } else prompt.classList.remove('show');
+    if (nearTarget) { prompt.textContent = nearTarget.kind === 'island' ? `[F / Tap] Land at ${nearTarget.isle.name}` : '[F / Tap] Visit the Shipwright'; prompt.classList.add('show'); } else prompt.classList.remove('show');
 
-    cam.position.set(ship.position.x, 22, ship.position.z - 20); cam.setTarget(ship.position.add(new V3(0, 1, 3)));
+    const off = 20; cam.position.set(ship.position.x + Math.sin(camYaw)*off, 22, ship.position.z - Math.cos(camYaw)*off); cam.setTarget(ship.position.add(new V3(0, 1, 0)));
     Game.updateHUD();
   }
 

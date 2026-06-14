@@ -75,7 +75,7 @@
       bars: [[60,64,67],[53,57,60],[55,59,62],[60,64,67]],
       bassP: [0,_,0,7, 0,_,0,7, 0,_,0,7, 0,7,5,7],
       mel: [72,_,72,74, 76,_,74,72, 77,_,76,74, 72,_,_,_,  74,_,76,_, 79,_,77,76, 74,_,72,74, 71,_,_,_] },
-    battle: { bpm: 158, drums: 'full', padWave: 'sawtooth', leadWave: 'square', cut: 2800,
+    battle: { bpm: 158, drums: 'full', padWave: 'sawtooth', leadWave: 'square', cut: 2800, horns: true,
       bars: [[57,60,64],[53,57,60],[60,64,67],[55,59,62]],
       bassP: [0,0,12,0, 0,0,12,0, 0,0,12,0, 0,7,0,7],
       mel: [69,_,72,_, 76,_,72,69, 65,_,69,_, 72,_,69,65,  67,_,71,_, 74,_,71,67, 76,_,79,76, 74,72,71,_] },
@@ -83,7 +83,7 @@
       bars: [[57,60,64],[52,55,59],[50,53,57],[57,60,64]],
       bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_],
       mel: [57,_,_,_, _,_,60,_, 59,_,_,_, _,_,_,_,  55,_,_,57, _,_,_,_, 59,_,60,_, 57,_,_,_] },
-    victory: { bpm: 146, drums: 'full', padWave: 'square', leadWave: 'square', cut: 2800, once: true,
+    victory: { bpm: 146, drums: 'full', padWave: 'square', leadWave: 'square', cut: 2800, once: true, horns: true,
       bars: [[60,64,67],[55,59,67],[60,64,72],[60,64,72]],
       bassP: [0,_,7,_, 0,_,_,_, 0,_,0,_, 0,_,_,_],
       mel: [72,76,79,84, _,79,84,_, 83,_,84,_, _,_,_,_,  72,76,79,84, _,84,_,_, 84,_,_,_, _,_,_,_] },
@@ -97,6 +97,8 @@
     const beat = 60 / tk.bpm / 4;
     // pad chord at bar start
     if (step === 0) chord.forEach(n => voice(midi(n - 12), time, beat * STEPS * 0.95, { type: tk.padWave, peak: 0.05, cutoff: tk.cut, a: 0.12, d: 0.4, s: 0.75, r: 0.7 }));
+    // brass horn stabs (FF battle flavor)
+    if (tk.horns && (step === 0 || step === 6 || step === 8 || step === 12)) chord.forEach(n => voice(midi(n), time, beat * 2.6, { type: 'sawtooth', detune: 11, peak: 0.08, cutoff: 1700, a: 0.03, d: 0.16, s: 0.66, r: 0.28 }));
     // bassline from pattern
     const bp = tk.bassP[step]; if (bp !== _) voice(midi(chord[0] - 24 + bp), time, beat * 1.8, { type: 'triangle', peak: 0.18, cutoff: 760, a: 0.005, d: 0.12, s: 0.6, r: 0.18 });
     // melody (loops on its own length for variety)

@@ -6,7 +6,7 @@
 window.Dungeon = (function () {
   const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
   let scene, cam, player, engine, def, key;
-  let crystals = [], gate, chest, idlers = [], targets = [], paused = false, t = 0;
+  let crystals = [], gate, chest, idlers = [], targets = [], paused = false, t = 0, camYaw = 0;
   let step = 0, solvedPuzzle = false, chestLooted = false, nearTarget = null;
   const SPEED = 8;
 
@@ -67,12 +67,14 @@ window.Dungeon = (function () {
   function update() {
     if (paused || (window.Game && Game.blocking && Game.blocking())) return;
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
+    if (Input.down('KeyQ')) camYaw -= 1.7 * dt;
+    if (Input.down('KeyE')) camYaw += 1.7 * dt;
     let mx = 0, mz = 0;
     if (Input.down('KeyW') || Input.down('ArrowUp')) mz += 1;
     if (Input.down('KeyS') || Input.down('ArrowDown')) mz -= 1;
     if (Input.down('KeyA') || Input.down('ArrowLeft')) mx -= 1;
     if (Input.down('KeyD') || Input.down('ArrowRight')) mx += 1;
-    if (mx || mz) { const len = Math.hypot(mx, mz); mx /= len; mz /= len; player.position.x = clamp(player.position.x + mx*SPEED*dt, -12, 12); player.position.z = clamp(player.position.z + mz*SPEED*dt, -15, 17); player.rotation.y = Math.atan2(mx, mz); player.position.y = Math.abs(Math.sin(t*10))*0.12; } else player.position.y = 0;
+    if (mx || mz) { const len = Math.hypot(mx, mz); mx /= len; mz /= len; const fX=-Math.sin(camYaw), fZ=Math.cos(camYaw), rX=Math.cos(camYaw), rZ=Math.sin(camYaw); const wx=mx*rX+mz*fX, wz=mx*rZ+mz*fZ; player.position.x = clamp(player.position.x + wx*SPEED*dt, -12, 12); player.position.z = clamp(player.position.z + wz*SPEED*dt, -15, 17); player.rotation.y = Math.atan2(wx, wz); player.position.y = Math.abs(Math.sin(t*10))*0.12; } else player.position.y = 0;
 
     idlers.forEach(o => o.idle && o.idle(t));
 
@@ -80,14 +82,14 @@ window.Dungeon = (function () {
     for (const tg of targets) { if (tg.kind === 'chest' && (chestLooted || !solvedPuzzle)) continue; if (V3.Distance(player.position, tg.pos) < tg.r) { nearTarget = tg; break; } }
     const prompt = document.getElementById('worldPrompt');
     if (nearTarget) {
-      let label = '[E / Tap] ';
+      let label = '[F / Tap] ';
       if (nearTarget.kind === 'crystal') label += `Touch the ${crystals[nearTarget.idx].name} crystal`;
       else if (nearTarget.kind === 'chest') label += 'Open the vault chest';
       else label += 'Leave the dungeon';
       prompt.textContent = label; prompt.classList.add('show');
     } else prompt.classList.remove('show');
 
-    cam.position.set(player.position.x, 16, player.position.z - 15); cam.setTarget(player.position.add(new V3(0, 1, 2)));
+    const off = 15; cam.position.set(player.position.x + Math.sin(camYaw)*off, 16, player.position.z - Math.cos(camYaw)*off); cam.setTarget(player.position.add(new V3(0, 1, 0)));
     Game.updateHUD();
   }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
