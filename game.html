@@ -366,6 +366,26 @@
     #startPortraits { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.4rem; flex-wrap: wrap; }
     #startPortraits .start-port { width: 56px; height: 56px; box-shadow: 0 6px 18px rgba(0,0,0,0.5); }
 
+    /* limit-break banner */
+    #limitBanner { position: fixed; left: 50%; top: 32%; transform: translate(-50%,-50%); z-index: 38; display: none; flex-direction: column; align-items: center; text-align: center; pointer-events: none; }
+    #limitBanner.show { display: flex; animation: lbSlam 1.7s ease forwards; }
+    .lb-tag { font-size: 0.85rem; letter-spacing: 0.32em; color: #fde047; font-weight: 700; }
+    .lb-name { font-size: clamp(2.2rem, 8vw, 4.5rem); font-weight: 700; background: linear-gradient(120deg, #fff, #fde047, #ff9e3a); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 4px 22px rgba(253,224,71,0.65)); }
+    @keyframes lbSlam { 0% { opacity: 0; transform: translate(-50%,-50%) scale(2.3); } 12% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 82% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.1); } }
+
+    /* intro crawl */
+    #introSeq { position: fixed; inset: 0; z-index: 35; display: none; overflow: hidden; background: radial-gradient(circle at 50% 28%, #0c1238 0%, #03040c 72%); }
+    #introSeq.show { display: block; }
+    #introSeq::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 60%, #cdd, transparent), radial-gradient(1px 1px at 40% 80%, #fff, transparent), radial-gradient(1px 1px at 85% 25%, #bcd, transparent), radial-gradient(1px 1px at 55% 45%, #fff, transparent); background-size: 220px 220px; opacity: 0.5; animation: introStars 6s linear infinite; }
+    @keyframes introStars { to { transform: translateY(-220px); } }
+    #introCrawl { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); width: min(680px, 90vw); text-align: center; animation: introCrawl 22s linear forwards; }
+    @keyframes introCrawl { from { top: 100%; } to { top: -170%; } }
+    .ic-title { font-size: clamp(2.6rem, 9vw, 5.5rem); font-weight: 700; letter-spacing: 0.08em; background: linear-gradient(120deg, #a5b4fc, #f0abfc, #5eead4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.2rem; filter: drop-shadow(0 6px 30px rgba(165,180,252,0.5)); }
+    .ic-sub { letter-spacing: 0.42em; color: #fcd34d; font-size: 0.95rem; margin-bottom: 2.4rem; }
+    .ic-body p { font-size: clamp(1rem, 2.7vw, 1.45rem); line-height: 1.75; color: #dbe4ff; margin-bottom: 1.5rem; }
+    .ic-body p:first-child { color: #fde047; letter-spacing: 0.22em; font-weight: 700; }
+    #introBegin { position: fixed; bottom: 1.4rem; right: 1.4rem; z-index: 36; }
+
     /* battle transition */
     #transition { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0; }
     #transition.show { animation: battleWipe 0.8s ease forwards; }
@@ -417,6 +437,13 @@
   <div id="bMessage"></div>
   <div id="bActive"></div>
   <div id="turnbar"></div>
+  <div id="limitBanner"></div>
+
+  <!-- 90s-style intro crawl -->
+  <div id="introSeq">
+    <div id="introCrawl"></div>
+    <button class="pill small" id="introBegin">▶ Begin</button>
+  </div>
   <div class="overlay" id="bResult"><div class="box panel"><h1 id="bResultTitle">Victory!</h1><p id="bResultText"></p><button class="pill" id="bResultBtn">Continue</button></div></div>
 
   <!-- START -->

@@ -84,8 +84,9 @@ window.Portraits = (function () {
         px(6, 11, 4, 1, '#7a8a92'); // cold grin
         px(3, 12, 1, 2, '#1a1d24'); px(12, 12, 1, 2, '#1a1d24'); break;
       case 'rival':
-        px(4, 3, 8, 3, p.hair); px(3, 4, 1, 2, p.hair); px(12, 4, 1, 2, p.hair); // messy black hair
-        px(2, 3, 12, 1, '#e0b96a'); px(4, 1, 8, 2, '#e8c878'); px(4, 2, 8, 1, '#b8342a'); // straw hat + red band
+        px(4, 4, 8, 2, p.hair); px(3, 5, 1, 1, p.hair); px(12, 5, 1, 1, p.hair); // messy black hair under hat
+        px(1, 3, 14, 1, '#d8b15a'); px(0, 4, 16, 1, '#caa24a'); // wide straw brim
+        px(4, 1, 8, 2, '#e8c878'); px(4, 2, 8, 1, '#c0392c'); px(5, 0, 6, 1, '#e8c878'); // dome + red band
         px(6, 8, 1, 1, '#1a1a1a'); px(9, 8, 1, 1, '#1a1a1a'); // eyes
         px(6, 9, 1, 1, '#c0533a'); // scar under left eye
         px(5, 11, 6, 1, '#3a2018'); px(6, 11, 4, 1, '#ffffff'); // big toothy grin

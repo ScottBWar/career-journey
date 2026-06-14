@@ -26,22 +26,42 @@ window.Game = (function () {
     const save = Progress.load();
     if (window.Portraits) el('startPortraits').innerHTML = ['pirate', 'swordsman', 'healer', 'mage', 'blader', 'dragoon'].map(k => Portraits.img(k, 'start-port')).join('');
     el('startContinue').style.display = save ? 'inline-flex' : 'none';
-    el('startNew').onclick = () => { Music.start(); Progress.clear(); Game.state = Progress.freshState(); beginGame(); };
-    el('startContinue').onclick = () => { Music.start(); Game.state = save || Progress.freshState(); beginGame(); };
+    el('startNew').onclick = () => { Music.start(); Progress.clear(); Game.state = Progress.freshState(); beginGame(true); };
+    el('startContinue').onclick = () => { Music.start(); Game.state = save || Progress.freshState(); beginGame(false); };
     setMode('start');
   }
 
-  function beginGame() {
+  const INTRO_TEXT = `
+    <div class="ic-title">BEACH BRAWL</div>
+    <div class="ic-sub">A HIGH-SEAS SAGA</div>
+    <div class="ic-body">
+      <p>IN THE YEAR 20XX...</p>
+      <p>The Free Seas were a promise — that anyone, from any shore, could chase a horizon and call it home.</p>
+      <p>Then the tide turned. The ocean began to RISE. Beaches vanished. Beasts crawled from the foam.</p>
+      <p>They learned a name to fear — SELACHOTH, the One-Finned Angel. A fallen hero who would drown the warm world to remake it beneath the waves.</p>
+      <p>Three souls answered the call: a pirate with a grudge, a priestess of the tides, and a swordsman with a score to settle.</p>
+      <p>The tide is rising. Their legend begins... now.</p>
+    </div>`;
+  function playIntro(onDone) {
+    const seq = el('introSeq'); el('introCrawl').innerHTML = INTRO_TEXT;
+    el('introCrawl').style.animation = 'none'; void el('introCrawl').offsetWidth; el('introCrawl').style.animation = '';
+    seq.classList.add('show'); Music.play('intro');
+    let done = false;
+    const finish = () => { if (done) return; done = true; clearTimeout(Game._introTimer); seq.classList.remove('show'); onDone(); };
+    el('introBegin').onclick = finish; Game._introFinish = finish;
+    Game._introTimer = setTimeout(finish, 22000);
+  }
+  function beginGame(fresh) {
     el('start').classList.remove('show');
-    if (Game.state.location.place === 'sea') toSea();
-    else toIsland(Game.state.location.island || 'tidehaven', false);
-    if (!Game.state.flags.seenOpening) {
-      Game.state.flags.seenOpening = true; Progress.save(Game.state);
-      Game.cutscene(Data.STORY.opening, () => Game.cutscene(Data.STORY.ruffyJoin, () => {
-        Progress.recruit(Game.state, 'ruffy'); Progress.save(Game.state);
-        Game.toast('WASD move · Q/E rotate camera · F interact · Space swing for a first strike!');
-      }));
+    const intoWorld = () => { if (Game.state.location.place === 'sea') toSea(); else toIsland(Game.state.location.island || 'tidehaven', false); };
+    if (fresh && !Game.state.flags.seenOpening) {
+      playIntro(() => {
+        Game.state.flags.seenOpening = true; Progress.save(Game.state);
+        intoWorld();
+        Game.cutscene(Data.STORY.ruffyJoin, () => { Progress.recruit(Game.state, 'ruffy'); Progress.save(Game.state); Game.toast('WASD move · Q/E rotate camera · F interact · Space swing for a first strike!'); });
+      });
     } else {
+      intoWorld();
       Game.toast('WASD move · Q/E rotate camera · F interact · Space swing (first strike!) · M Skills · G Gear · T Party.');
     }
   }
@@ -81,7 +101,7 @@ window.Game = (function () {
   // ---------- battle bridge ----------
   Game.musicForReturn = () => (Game.mode === 'sea' || Game.mode === 'shipbattle') ? 'sea' : 'island';
   Game.startBattle = function (keys, opts, onEnd) {
-    Music.play('battle');
+    Music.play(opts && opts.boss ? 'boss' : 'battle');
     transition(() => { setMode('battle'); const s = Battle.build(keys, opts, onEnd); Game.scene = s; setTimeout(() => { if (Game.scene === s) Battle.startLoop(); }, 350); });
   };
   Game.startShipBattle = function (type, onEnd) {
@@ -279,7 +299,7 @@ window.Game = (function () {
     window.addEventListener('keyup', e => Input.keys.delete(e.code));
     // tap-to-interact (mobile / mouse)
     Game.canvasTap = () => { if (Game.dialogueOpen) return Game._advanceDlg && Game._advanceDlg(); if (anyModal()) return; if (HUD_MODES.includes(Game.mode) && Game.active) Game.active.interact && Game.active.interact(); };
-    document.addEventListener('pointerdown', e => { if (e.target && e.target.id === 'renderCanvas') Game.canvasTap(); });
+    document.addEventListener('pointerdown', e => { if (el('introSeq').classList.contains('show')) { if (Game._introFinish) Game._introFinish(); return; } if (e.target && e.target.id === 'renderCanvas') Game.canvasTap(); });
     el('btnSkills').onclick = openSkills;
     el('btnGear').onclick = openGear;
     el('btnParty').onclick = openParty;
@@ -291,6 +311,7 @@ window.Game = (function () {
   function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.datingOpen || Game.shopOpen || Game.confirmOpen || el('shellHunt').classList.contains('show') || el('end').classList.contains('show'); }
   Game.blocking = function () { return Game.dialogueOpen || anyModal(); };
   function route(code) {
+    if (el('introSeq').classList.contains('show')) { if (Game._introFinish) Game._introFinish(); return; }
     if (el('shellHunt').classList.contains('show')) return; // minigame handles its own input
     if (Game.datingOpen) return; // dating handles its own buttons
     if (Game.mode === 'battle') { if (code === 'KeyP') { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; } else Battle.onKey(code); return; }

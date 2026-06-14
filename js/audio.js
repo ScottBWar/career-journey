@@ -79,10 +79,18 @@
       bars: [[57,60,64],[53,57,60],[60,64,67],[55,59,62]],
       bassP: [0,0,12,0, 0,0,12,0, 0,0,12,0, 0,7,0,7],
       mel: [69,_,72,_, 76,_,72,69, 65,_,69,_, 72,_,69,65,  67,_,71,_, 74,_,71,67, 76,_,79,76, 74,72,71,_] },
+    boss: { bpm: 132, drums: 'full', padWave: 'sawtooth', leadWave: 'square', cut: 2600, horns: true, choir: true,
+      bars: [[57,60,64],[56,59,63],[53,57,60],[52,56,59]],
+      bassP: [0,0,0,0, 0,0,0,12, 0,0,0,0, 0,0,7,0],
+      mel: [57,_,60,_, 64,_,63,_, 60,_,_,_, 59,_,57,_,  53,_,56,_, 60,_,59,_, 52,_,56,_, 59,60,63,_] },
     dungeon: { bpm: 80, drums: 'none', padWave: 'sawtooth', leadWave: 'triangle', cut: 1100,
       bars: [[57,60,64],[52,55,59],[50,53,57],[57,60,64]],
       bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_],
       mel: [57,_,_,_, _,_,60,_, 59,_,_,_, _,_,_,_,  55,_,_,57, _,_,_,_, 59,_,60,_, 57,_,_,_] },
+    intro: { bpm: 98, drums: 'none', padWave: 'sawtooth', leadWave: 'triangle', cut: 1900, choir: true,
+      bars: [[57,60,64],[53,57,60],[60,64,67],[55,59,62]],
+      bassP: [0,_,_,_, 0,_,_,_, 0,_,_,_, 0,_,_,_],
+      mel: [64,67,72,76, 72,67,64,_, 60,64,67,72, 67,64,60,_,  62,65,69,74, 69,65,62,_, 67,71,74,79, 74,71,67,_] },
     victory: { bpm: 146, drums: 'full', padWave: 'square', leadWave: 'square', cut: 2800, once: true, horns: true,
       bars: [[60,64,67],[55,59,67],[60,64,72],[60,64,72]],
       bassP: [0,_,7,_, 0,_,_,_, 0,_,0,_, 0,_,_,_],
@@ -99,6 +107,8 @@
     if (step === 0) chord.forEach(n => voice(midi(n - 12), time, beat * STEPS * 0.95, { type: tk.padWave, peak: 0.05, cutoff: tk.cut, a: 0.12, d: 0.4, s: 0.75, r: 0.7 }));
     // brass horn stabs (FF battle flavor)
     if (tk.horns && (step === 0 || step === 6 || step === 8 || step === 12)) chord.forEach(n => voice(midi(n), time, beat * 2.6, { type: 'sawtooth', detune: 11, peak: 0.08, cutoff: 1700, a: 0.03, d: 0.16, s: 0.66, r: 0.28 }));
+    // ominous choir pad (boss)
+    if (tk.choir && step === 0) chord.forEach(n => voice(midi(n + 12), time, beat * STEPS * 0.98, { type: 'sine', detune: 7, peak: 0.05, cutoff: 3200, a: 0.5, d: 0.7, s: 0.85, r: 1.1 }));
     // bassline from pattern
     const bp = tk.bassP[step]; if (bp !== _) voice(midi(chord[0] - 24 + bp), time, beat * 1.8, { type: 'triangle', peak: 0.18, cutoff: 760, a: 0.005, d: 0.12, s: 0.6, r: 0.18 });
     // melody (loops on its own length for variety)

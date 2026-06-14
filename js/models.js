@@ -304,11 +304,11 @@ window.Models = (function () {
     at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.26 }, scene), arm, skin, 0, -0.45, 0);
     at(MB.CreateSphere('fist', { diameter: 0.42 }, scene), arm, skin, 0, -0.95, 0); // big fist
     at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.35, 0);
-    at(MB.CreateSphere('hair', { diameter: 0.64, slice: 0.55 }, scene), r, hair, 0, 2.42, 0);
-    // straw hat slung back
-    const brim = at(MB.CreateCylinder('brim', { height: 0.08, diameter: 1.0 }, scene), r, straw, 0, 2.55, -0.25); brim.rotation.x = 0.5;
-    at(MB.CreateCylinder('dome', { height: 0.3, diameter: 0.6 }, scene), r, straw, 0, 2.62, -0.32).rotation.x = 0.5;
-    at(MB.CreateTorus('hatband', { diameter: 0.62, thickness: 0.06, tessellation: 16 }, scene), r, band, 0, 2.6, -0.3).rotation.x = 0.5 + Math.PI/2;
+    at(MB.CreateSphere('hair', { diameter: 0.64, slice: 0.5 }, scene), r, hair, 0, 2.4, 0);
+    // iconic straw hat worn ON the head
+    at(MB.CreateCylinder('brim', { height: 0.07, diameter: 1.1, tessellation: 20 }, scene), r, straw, 0, 2.62, 0);
+    at(MB.CreateTorus('hatband', { diameter: 0.66, thickness: 0.08, tessellation: 18 }, scene), r, band, 0, 2.66, 0).rotation.x = Math.PI/2;
+    at(MB.CreateCylinder('dome', { height: 0.34, diameterTop: 0.5, diameterBottom: 0.64, tessellation: 20 }, scene), r, straw, 0, 2.82, 0);
     return { node: r, arm };
   }
 
@@ -374,8 +374,10 @@ window.Models = (function () {
     const wall = M('wall', opts.wall || '#e8d5b0'), roof = M('roof', opts.roof || '#a0492f'), door = M('door', '#5b3a1e');
     const w = opts.w || 4, h = opts.h || 3, d = opts.d || 4;
     at(MB.CreateBox('walls', { width: w, height: h, depth: d }, scene), r, wall, 0, h/2, 0);
-    const rf = at(MB.CreateCylinder('roof', { height: w + 0.6, diameter: d + 1.2, tessellation: 4 }, scene), r, roof, 0, h + 0.5, 0);
-    rf.rotation.z = Math.PI/2; rf.rotation.y = Math.PI/4; rf.scaling.y = 0.8;
+    // pitched gable roof: two slanted panels meeting at a ridge (properly sized)
+    [-1, 1].forEach(s => { const p = at(MB.CreateBox('roof', { width: w * 0.62, height: 0.16, depth: d + 0.7 }, scene), r, roof, s * w * 0.22, h + 0.42, 0); p.rotation.z = -s * 0.72; });
+    at(MB.CreateBox('ridge', { width: 0.18, height: 0.16, depth: d + 0.7 }, scene), r, roof, 0, h + 0.78, 0);
+    at(MB.CreateBox('eave', { width: w + 0.2, height: 0.12, depth: d + 0.2 }, scene), r, roof, 0, h + 0.06, 0);
     at(MB.CreateBox('door', { width: 0.9, height: 1.6, depth: 0.1 }, scene), r, door, 0, 0.8, d/2 + 0.01);
     at(MB.CreateBox('win1', { width: 0.7, height: 0.7, depth: 0.1 }, scene), r, M('win', '#9be7ff', { emissive: '#3a6a80' }), -1.1, 1.7, d/2 + 0.01);
     at(MB.CreateBox('win2', { width: 0.7, height: 0.7, depth: 0.1 }, scene), r, M('win2', '#9be7ff', { emissive: '#3a6a80' }), 1.1, 1.7, d/2 + 0.01);
