@@ -274,6 +274,8 @@ window.Game = (function () {
     el('btnSkills').onclick = openSkills;
     el('btnGear').onclick = openGear;
     el('btnParty').onclick = openParty;
+    if (window.Render) el('btnFx').textContent = Render.isHigh() ? '✨' : '▫️';
+    el('btnFx').onclick = () => { const q = Render.toggle(); el('btnFx').textContent = q === 'high' ? '✨' : '▫️'; Game.toast('Graphics: ' + (q === 'high' ? 'High' : 'Low') + ' — applies when you next enter an area or battle.'); };
     el('btnMusic').onclick = () => { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; };
     el('worldPrompt').onclick = () => { if (Game.active) Game.active.interact && Game.active.interact(); };
   }

@@ -72,6 +72,7 @@ window.Sea = (function () {
     ship.position.set(Game.state.location.shipX, 0, Game.state.location.shipZ);
     cam = new BABYLON.UniversalCamera('scam', new V3(0, 22, -20), scene); cam.fov = 0.85;
 
+    if (window.Render) Render.setup(scene, cam, { skyTop: '#1c4f8a', skyHorizon: '#bfe0f0', sun });
     scene.onBeforeRenderObservable.add(update);
     return scene;
   }

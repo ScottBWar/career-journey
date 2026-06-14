@@ -53,6 +53,7 @@ window.Town = (function () {
     player.position.set(def.exit.x, 0, def.exit.z + 3);
     cam = new BABYLON.UniversalCamera('tcam', new V3(0, 15, -14), scene); cam.fov = 0.85;
 
+    if (window.Render) Render.setup(scene, cam, { skyTop: '#3a5a9a', skyHorizon: '#cfe6f0', sun });
     scene.onBeforeRenderObservable.add(update);
     return scene;
 

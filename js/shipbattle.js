@@ -53,6 +53,7 @@ window.ShipBattle = (function () {
       for (let i = 0; i < pos.length; i += 3) pos[i + 1] = Math.sin(base[i] * 0.15 + t) * 0.3 + Math.cos(base[i + 2] * 0.18 + t) * 0.3;
       ocean.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
     });
+    if (window.Render) Render.setup(scene, cam, { skyTop: '#20407a', skyHorizon: '#cfe2f0', sun });
     el('shipResult').classList.remove('show');
     refresh();
     return scene;

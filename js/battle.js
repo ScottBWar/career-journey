@@ -89,6 +89,7 @@ window.Battle = (function () {
       ocean.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
     });
 
+    if (window.Render) Render.setup(scene, camera, { skyTop: '#2a1a4a', skyHorizon: '#ffb27a', sun });
     el('bResult').classList.remove('show');
     refresh();
     return scene;

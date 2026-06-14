@@ -57,6 +57,7 @@ window.Dungeon = (function () {
     player.position.set(def.spawn.x, 0, def.spawn.z);
     cam = new BABYLON.UniversalCamera('dcam', new V3(0, 16, -15), scene); cam.fov = 0.9;
 
+    if (window.Render) Render.setup(scene, cam, { skyTop: '#05050f', skyHorizon: '#1a1430' });
     scene.onBeforeRenderObservable.add(update);
     return scene;
   }
