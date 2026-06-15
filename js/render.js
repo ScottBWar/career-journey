@@ -70,12 +70,26 @@ window.Render = (function () {
     new BABYLON.LensFlare(0.05, 1.1, new BABYLON.Color3(0.8, 0.9, 1), u, sys);
   }
 
+  function shadows(scene, sun) {
+    sun.position = sun.direction.scale(-70);
+    sun.shadowMinZ = 1; sun.shadowMaxZ = 240; sun.autoUpdateExtends = true;
+    const sg = new BABYLON.ShadowGenerator(1024, sun);
+    sg.useBlurExponentialShadowMap = true; sg.blurKernel = 24; sg.darkness = 0.4; sg.bias = 0.002;
+    const rl = sg.getShadowMap().renderList;
+    scene.meshes.forEach(m => {
+      if (!m || !m.name) return;
+      if (/water|ocean|sand|grass|floor|sea|skybox|isle|beach|plaza|sunE|jetty/i.test(m.name)) { m.receiveShadows = true; }
+      else { rl.push(m); m.receiveShadows = true; }
+    });
+  }
+
   // apply everything to a freshly-built scene
   function setup(scene, camera, opts) {
     opts = opts || {};
     try { sky(scene, opts.skyTop, opts.skyHorizon); } catch (e) { console.warn('sky', e); }
     try { pipeline(scene, camera); } catch (e) { console.warn('pipeline', e); }
     if (high()) { try { ssao(scene, camera); } catch (e) { console.warn('ssao', e); } }
+    if (high() && opts.sun) { try { shadows(scene, opts.sun); } catch (e) { console.warn('shadow', e); } }
     if (opts.sun) { try { lensFlare(scene, opts.sun); } catch (e) { console.warn('flare', e); } }
   }
 

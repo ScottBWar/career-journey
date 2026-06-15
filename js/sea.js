@@ -36,8 +36,8 @@ window.Sea = (function () {
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.55, 0.78, 0.95); scene.fogDensity = 0.004;
     Models.use(scene);
 
-    const hemi = new BABYLON.HemisphericLight('h', new V3(0.2, 1, 0.1), scene); hemi.intensity = 0.98; hemi.groundColor = new Color3(0.3, 0.45, 0.5);
-    const sun = new BABYLON.DirectionalLight('s', new V3(-0.5, -1, 0.3), scene); sun.intensity = 1.0;
+    const hemi = new BABYLON.HemisphericLight('h', new V3(0.2, 1, 0.1), scene); hemi.intensity = 0.6; hemi.groundColor = new Color3(0.25, 0.4, 0.5);
+    const sun = new BABYLON.DirectionalLight("s", new V3(-0.5, -1, 0.3), scene); sun.intensity = 1.3; sun.specular = new Color3(1, 0.95, 0.85);
 
     ocean = MB.CreateGround('ocean', { width: 360, height: 360, subdivisions: 48 }, scene);
     ocean.material = M('ocean', '#1e6f96', { spec: 0.7 }); ocean.material.specularPower = 64; ocean.position.y = -0.2;

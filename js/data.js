@@ -451,7 +451,7 @@ window.Data = (function () {
   // dungeon, roaming encounters, and a dock back to the ship.
   const ISLANDS = {
     tidehaven: {
-      name: 'Tidehaven Isle', size: 52, ground: '#5fa86a', sand: '#e7c890', water: '#1e6f96',
+      name: 'Tidehaven Isle', size: 52, ground: '#5fa86a', sand: '#e7c890', water: '#1e6f96', sky: { top: '#2a5a9a', horizon: '#dfeef8' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'tidehaven', x: -13, z: 5, color: '#8fd3f4' },
       dungeon: { key: 'tide_cave', x: 11, z: 7, color: '#9be7ff' },
@@ -462,7 +462,7 @@ window.Data = (function () {
       decor: { trees: 12, palms: 8, rocks: 8 }, shells: { x: 13, z: 9 }, mermaids: [ { key: 'ember', x: -7, z: -5 }, { key: 'nerida', x: 7, z: -6 } ],
     },
     dunes: {
-      name: 'Dunes Isle', size: 52, ground: '#cdb06a', sand: '#e7c890', water: '#1e6f96',
+      name: 'Dunes Isle', size: 52, ground: '#cdb06a', sand: '#e7c890', water: '#1e6f96', sky: { top: '#3a6a9a', horizon: '#f3e3b8' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'dunesport', x: 13, z: 3, color: '#ffd166' },
       dungeon: { key: 'dune_tomb', x: -11, z: 8, color: '#ffcf6a' },
@@ -473,7 +473,7 @@ window.Data = (function () {
       decor: { trees: 6, palms: 12, rocks: 12 }, shells: { x: -13, z: -6 }, mermaids: [ { key: 'volta', x: 5, z: -7 }, { key: 'gaia', x: -5, z: -7 } ],
     },
     spire: {
-      name: 'Abyssal Isle', size: 50, ground: '#4a4f63', sand: '#7a6a86', water: '#162a40',
+      name: 'Abyssal Isle', size: 50, ground: '#3a3a52', sand: '#5a5070', water: '#10182e', sky: { top: '#070a18', horizon: '#3a2f52' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       dungeon: { key: 'abyss_vault', x: -11, z: 6, color: '#c0c8ff' },
       encounters: [
@@ -481,10 +481,10 @@ window.Data = (function () {
         { x: -5, z: 11, pool: ['shark', 'golem', 'octo'], min: 3, max: 3 },
       ],
       boss: { x: 0, z: 12, color: '#ff3a3a' },
-      decor: { trees: 2, palms: 2, rocks: 16 }, shells: { x: 12, z: 6 }, mermaids: [ { key: 'nyx', x: -6, z: -6 }, { key: 'lumina', x: 6, z: -5 } ],
+      decor: { trees: 2, palms: 2, rocks: 9 }, shells: { x: 12, z: 6 }, mermaids: [ { key: 'nyx', x: -6, z: -6 }, { key: 'lumina', x: 6, z: -5 } ],
     },
     mall: {
-      name: 'Mall Isle', size: 46, ground: '#b8b0c8', sand: '#d8d0e0', water: '#1e6f96',
+      name: 'Mall Isle', size: 46, ground: '#b8b0c8', sand: '#d8d0e0', water: '#1e6f96', sky: { top: '#6a5ab0', horizon: '#f3d8ee' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'mall', x: 0, z: 5, color: '#ff9ec0' },
       encounters: [],

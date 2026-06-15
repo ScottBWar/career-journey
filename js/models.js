@@ -360,22 +360,30 @@ window.Models = (function () {
   function palm() {
     const r = new BABYLON.TransformNode('palm', scene);
     const trunkMat = M('palmTrunk', '#9a6b3a'), frondMat = M('frond', '#2f9d54', { emissive: '#0c2a18' }), coco = M('coco', '#5a3a1e');
-    // gently curved trunk from stacked tapered segments
-    for (let i = 0; i < 4; i++) { const seg = at(MB.CreateCylinder('tr' + i, { height: 0.95, diameterTop: 0.3 - i*0.03, diameterBottom: 0.46 - i*0.03 }, scene), r, trunkMat, Math.sin(i*0.5)*0.25, 0.5 + i*0.85, 0); seg.rotation.z = -0.12 * i * 0.4; }
-    const topX = Math.sin(3*0.5)*0.25, topY = 3.7;
-    // drooping fronds: long thin tapered prisms angled downward
+    // gently curved trunk
+    for (let i = 0; i < 4; i++) { const seg = at(MB.CreateCylinder('tr' + i, { height: 0.95, diameterTop: 0.3 - i*0.03, diameterBottom: 0.46 - i*0.03 }, scene), r, trunkMat, Math.sin(i*0.5)*0.25, 0.5 + i*0.85, 0); seg.rotation.z = -0.1 * i; }
+    const tx = Math.sin(1.5)*0.25, ty = 3.7;
+    at(MB.CreateSphere('knot', { diameter: 0.55 }, scene), r, frondMat, tx, ty, 0);
+    // drooping fronds — flat blades fanning out and bending downward
     for (let i = 0; i < 7; i++) {
       const a = (i/7)*Math.PI*2;
-      const f = at(MB.CreateCylinder('frond' + i, { height: 1.9, diameterTop: 0.04, diameterBottom: 0.34, tessellation: 4 }, scene), r, frondMat, topX + Math.cos(a)*0.7, topY + 0.2, Math.sin(a)*0.7);
-      f.rotation.z = Math.cos(a) * 1.15; f.rotation.x = -Math.sin(a) * 1.15; f.scaling.x = 0.35; // flatten into a leaf
+      const f = MB.CreateBox('frond', { width: 0.5, height: 0.08, depth: 2.0 }, scene); f.material = frondMat; f.parent = r;
+      f.position.set(tx + Math.cos(a)*1.0, ty - 0.15, Math.sin(a)*1.0);
+      f.rotation.y = -a; f.rotation.x = 0.5; // angle the far end down for a droop
     }
-    [[0.18,-0.1],[-0.15,0.16],[0.05,0.2]].forEach(([cx,cz]) => at(MB.CreateSphere('coco', { diameter: 0.26 }, scene), r, coco, topX+cx, topY-0.15, cz));
+    [[0.16,-0.1],[-0.12,0.14],[0.04,0.16]].forEach(([cx,cz]) => at(MB.CreateSphere('coco', { diameter: 0.24 }, scene), r, coco, tx+cx, ty-0.25, cz));
     return { node: r };
   }
   function rock() {
     const r = new BABYLON.TransformNode('rock', scene);
-    const s = at(MB.CreateSphere('r', { diameterX: 1.6, diameterY: 1.1, diameterZ: 1.4, segments: 4 }, scene), r, M('rock', '#8a8f96', { spec: 0.1 }), 0, 0.5, 0);
-    s.rotation.set(Math.random(), Math.random(), Math.random());
+    const tints = ['#8a8f96', '#7a7068', '#6f7a72', '#9a9088', '#6a6f7a'];
+    const col = tints[Math.floor(Math.random() * tints.length)];
+    const mat = M('rock', col, { spec: 0.12 });
+    const n = 1 + (Math.random() < 0.6 ? 1 : 0); // 1-2 lumps for variety
+    for (let i = 0; i < n; i++) {
+      const s = at(MB.CreateSphere('r' + i, { diameterX: 1.4 + Math.random()*0.8, diameterY: 0.9 + Math.random()*0.6, diameterZ: 1.2 + Math.random()*0.7, segments: 3 }, scene), r, mat, (Math.random()-0.5)*0.7, 0.45 + i*0.25, (Math.random()-0.5)*0.7);
+      s.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3);
+    }
     return { node: r };
   }
   function house(opts = {}) {

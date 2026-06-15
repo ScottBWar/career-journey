@@ -40,8 +40,8 @@ window.Battle = (function () {
     Models.use(scene);
 
     camera = new BABYLON.ArcRotateCamera('cam', -Math.PI/2 - 0.5, 1.14, 16.5, new V3(0, 2.1, 0), scene);
-    const hemi = new BABYLON.HemisphericLight('hemi', new V3(0.1, 1, 0.1), scene); hemi.intensity = 0.9; hemi.groundColor = new Color3(0.35, 0.3, 0.25);
-    const sun = new BABYLON.DirectionalLight('sun', new V3(-0.5, -1, 0.3), scene); sun.intensity = 1.05; sun.diffuse = new Color3(1, 0.86, 0.72);
+    const hemi = new BABYLON.HemisphericLight('hemi', new V3(0.1, 1, 0.1), scene); hemi.intensity = 0.55; hemi.groundColor = new Color3(0.3, 0.28, 0.3);
+    const sun = new BABYLON.DirectionalLight("sun", new V3(-0.5, -1, 0.3), scene); sun.intensity = 1.4; sun.diffuse = new Color3(1, 0.88, 0.74); sun.specular = new Color3(1, 0.95, 0.85);
 
     flare = (() => { const dt = new BABYLON.DynamicTexture('flare', 64, scene, false); const c = dt.getContext();
       const g = c.createRadialGradient(32,32,0,32,32,32); g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.4,'rgba(255,255,255,0.55)'); g.addColorStop(1,'rgba(255,255,255,0)');

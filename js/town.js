@@ -20,8 +20,8 @@ window.Town = (function () {
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.7, 0.7, 0.8); scene.fogDensity = 0.008;
     Models.use(scene);
 
-    const hemi = new BABYLON.HemisphericLight('h', new V3(0.2, 1, 0.1), scene); hemi.intensity = 0.95; hemi.groundColor = new Color3(0.4, 0.4, 0.35);
-    const sun = new BABYLON.DirectionalLight('s', new V3(-0.4, -1, 0.3), scene); sun.intensity = 0.95;
+    const hemi = new BABYLON.HemisphericLight('h', new V3(0.2, 1, 0.1), scene); hemi.intensity = 0.55; hemi.groundColor = new Color3(0.3, 0.32, 0.38);
+    const sun = new BABYLON.DirectionalLight("s", new V3(-0.45, -1, 0.3), scene); sun.intensity = 1.3; sun.specular = new Color3(1, 0.95, 0.85);
 
     const ground = MB.CreateGround('g', { width: 60, height: 60 }, scene); ground.material = M('g', def.ground);
     const plaza = MB.CreateDisc('plaza', { radius: 6, tessellation: 32 }, scene); plaza.rotation.x = Math.PI/2; plaza.position.y = 0.01; plaza.material = M('plaza', '#c9b48a');
@@ -51,6 +51,7 @@ window.Town = (function () {
     // player = the active party leader (consistent with overworld)
     const leaderModel = Progress.def(Game.state.active[0] || 'pirate').model;
     const hero = Models[leaderModel] ? Models[leaderModel]() : Models.hero(); player = hero.node;
+    if (hero.arm) hero.arm.rotation.x = 1.0;
     player.position.set(def.exit.x, 0, def.exit.z + 3);
     cam = new BABYLON.UniversalCamera('tcam', new V3(0, 15, -14), scene); cam.fov = 0.85;
 

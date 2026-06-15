@@ -20,8 +20,8 @@ window.World = (function () {
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.6, 0.8, 0.95); scene.fogDensity = 0.006;
     Models.use(scene);
 
-    const hemi = new BABYLON.HemisphericLight('h', new V3(0.2, 1, 0.1), scene); hemi.intensity = 0.95; hemi.groundColor = new Color3(0.4, 0.45, 0.35);
-    const sun = new BABYLON.DirectionalLight('s', new V3(-0.5, -1, 0.4), scene); sun.intensity = 1.0;
+    const hemi = new BABYLON.HemisphericLight('h', new V3(0.2, 1, 0.1), scene); hemi.intensity = 0.5; hemi.groundColor = new Color3(0.3, 0.34, 0.4);
+    const sun = new BABYLON.DirectionalLight("s", new V3(-0.55, -1, 0.35), scene); sun.intensity = 1.4; sun.specular = new Color3(1, 0.95, 0.85);
 
     water = MB.CreateGround('water', { width: 280, height: 280, subdivisions: 40 }, scene); const wm = M('water', def.water, { spec: 0.8 }); wm.specularPower = 64; wm.emissiveColor = Color3.FromHexString(def.water).scale(0.18); water.material = wm; water.position.y = -0.35; waterBase = water.getVerticesData(BABYLON.VertexBuffer.PositionKind).slice();
     const sand = MB.CreateDisc('sand', { radius: def.size * 0.6, tessellation: 48 }, scene); sand.rotation.x = Math.PI/2; sand.position.y = -0.04; sand.material = M('sand', def.sand);
@@ -102,10 +102,11 @@ window.World = (function () {
     // player avatar = the active party leader
     const leaderKey = Game.state.active[0] || 'pirate'; const leaderModel = Progress.def(leaderKey).model;
     const hero = Models[leaderModel] ? Models[leaderModel]() : Models.hero(); player = hero.node; playerArm = hero.arm || hero.staffPiv || null;
+    if (playerArm) playerArm.rotation.x = 1.0; // rest the weapon down instead of holding it straight out
     player.position.set(Game.state.location.x, 0, Game.state.location.z);
     cam = new BABYLON.UniversalCamera('wcam', new V3(0, 18, -16), scene); cam.fov = 0.8;
 
-    if (window.Render) Render.setup(scene, cam, { skyTop: '#234a86', skyHorizon: '#cfe9f5', sun });
+    if (window.Render) Render.setup(scene, cam, { skyTop: (def.sky && def.sky.top) || '#234a86', skyHorizon: (def.sky && def.sky.horizon) || '#cfe9f5', sun });
     scene.onBeforeRenderObservable.add(update);
     return scene;
   }
@@ -115,7 +116,7 @@ window.World = (function () {
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
     if (Input.down('KeyQ')) camYaw -= 1.7 * dt;
     if (Input.down('KeyE')) camYaw += 1.7 * dt;
-    if (swingT > 0 && playerArm) { swingT -= dt; playerArm.rotation.x = -Math.sin(Math.max(0, swingT) / 0.25 * Math.PI) * 1.4; if (swingT <= 0) playerArm.rotation.x = 0; }
+    if (swingT > 0 && playerArm) { swingT -= dt; playerArm.rotation.x = -Math.sin(Math.max(0, swingT) / 0.25 * Math.PI) * 1.4; if (swingT <= 0) playerArm.rotation.x = 1.0; }
     let mx = 0, mz = 0;
     if (Input.down('KeyW') || Input.down('ArrowUp')) mz += 1;
     if (Input.down('KeyS') || Input.down('ArrowDown')) mz -= 1;
