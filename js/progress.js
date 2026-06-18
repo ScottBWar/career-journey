@@ -27,7 +27,7 @@ window.Progress = (function () {
       ship: { hull: Data.SHIP.defaults.hull, sail: Data.SHIP.defaults.sail, flag: Data.SHIP.defaults.flag, upg: {} },
       mermaids: {}, enchants: {},
       location: { place: 'island', island: 'tidehaven', x: start.spawn.x, z: start.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z },
-      islands: { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} }, mall: { cleared: {} }, duskmoor: { cleared: {} } },
+      islands: { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} }, mall: { cleared: {} }, duskmoor: { cleared: {} }, mirage: { cleared: {} }, aerie: { cleared: {} } },
       dungeons: {}, shipsSunk: {},
       prog: { krakenDown: false, finalWin: false, ruffyGone: false },
       flags: {},
@@ -203,7 +203,7 @@ window.Progress = (function () {
     state.party.forEach(p => { if (p.recruited === undefined) { const d = Data.PARTY.find(x => x.key === p.key); p.recruited = d ? !d.temporary : true; } });
     if (!state.active || state.active.length !== 3) state.active = ['pirate', 'swordsman', 'healer'];
     if (!state.islands) state.islands = { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} } };
-    ['tidehaven', 'dunes', 'spire', 'mall', 'duskmoor'].forEach(k => { if (!state.islands[k]) state.islands[k] = { cleared: {} }; });
+    ['tidehaven', 'dunes', 'spire', 'mall', 'duskmoor', 'mirage', 'aerie'].forEach(k => { if (!state.islands[k]) state.islands[k] = { cleared: {} }; });
     if (!state.dungeons) state.dungeons = {};
     if (state.pearls == null) state.pearls = 0;
     if (!state.shipsSunk) state.shipsSunk = {};

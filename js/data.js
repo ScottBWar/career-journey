@@ -120,6 +120,38 @@ window.Data = (function () {
         { id: 'si_cross', name: 'Grand Cross', desc: 'A radiant cross shatters all foes', cost: 3, req: 'si_crit', kind: 'ability', ability: ab('Grand Cross', { mp: 26, min: 48, max: 66, target: 'all', fx: 'beam', el: 'holy' }) },
       ],
     },
+    {
+      key: 'aladdin', name: 'Aladdin', role: 'Street Rat', model: 'aladdin', temporary: true,
+      base: { hp: 150, mp: 24, atkMin: 22, atkMax: 32, crit: 0.20 },
+      growth: { hp: 15, mp: 3, atk: 4 },
+      baseAbilities: [
+        ab('Scimitar Flurry', { mp: 8, min: 30, max: 44, target: 'enemy', fx: 'beam', el: 'physical' }),
+        ab('Dagger Toss', { mp: 10, min: 22, max: 30, target: 'all', fx: 'beam', el: 'physical' }),
+      ],
+      tree: [
+        { id: 'al_spd', name: 'Quick Hands', desc: '+18% Crit', cost: 1, kind: 'stat', stat: { crit: 0.18 } },
+        { id: 'al_hp', name: 'Street Smarts', desc: '+28 Max HP', cost: 1, kind: 'stat', stat: { hp: 28 } },
+        { id: 'al_carpet', name: 'Magic Carpet Ride', desc: 'A swooping aerial strike on all foes', cost: 1, req: 'al_hp', kind: 'ability', ability: ab('Magic Carpet Ride', { mp: 16, min: 30, max: 42, target: 'all', fx: 'beam', el: 'thunder' }) },
+        { id: 'al_atk', name: 'Diamond in the Rough', desc: '+6 Attack', cost: 2, req: 'al_carpet', kind: 'stat', stat: { atk: 6 } },
+        { id: 'al_wish', name: 'Three Wishes', desc: 'A dazzling triple-hit finisher on one foe', cost: 3, req: 'al_atk', kind: 'ability', ability: ab('Three Wishes', { mp: 24, min: 54, max: 74, target: 'enemy', fx: 'beam', el: 'holy' }) },
+      ],
+    },
+    {
+      key: 'violca', name: 'Violca', role: 'Dragon Rider', model: 'violca', temporary: true,
+      base: { hp: 138, mp: 30, atkMin: 24, atkMax: 34, crit: 0.22 },
+      growth: { hp: 14, mp: 4, atk: 4 },
+      baseAbilities: [
+        ab('Piercing Shot', { mp: 8, min: 36, max: 50, target: 'enemy', fx: 'beam', el: 'physical' }),
+        ab('Storm Arrow', { mp: 12, min: 30, max: 42, target: 'enemy', fx: 'beam', el: 'thunder', proj: true }),
+      ],
+      tree: [
+        { id: 'vi_crit', name: 'Deadeye', desc: '+18% Crit', cost: 1, kind: 'stat', stat: { crit: 0.18 } },
+        { id: 'vi_mp', name: 'Signet Spark', desc: '+15 Max MP', cost: 1, kind: 'stat', stat: { mp: 15 } },
+        { id: 'vi_volley', name: 'Arrow Volley', desc: 'A storm of arrows on all foes', cost: 1, req: 'vi_mp', kind: 'ability', ability: ab('Arrow Volley', { mp: 16, min: 28, max: 40, target: 'all', fx: 'beam', el: 'thunder' }) },
+        { id: 'vi_atk', name: 'Rider\'s Resolve', desc: '+6 Attack', cost: 2, req: 'vi_volley', kind: 'stat', stat: { atk: 6 } },
+        { id: 'vi_bond', name: 'Bonded Lightning', desc: 'Calls her dragon\'s lightning down on all foes', cost: 3, req: 'vi_atk', kind: 'ability', ability: ab('Bonded Lightning', { mp: 26, min: 48, max: 66, target: 'all', fx: 'beam', el: 'thunder' }) },
+      ],
+    },
   ];
 
   const ENEMIES = {
@@ -130,6 +162,19 @@ window.Data = (function () {
     gull:   { name: 'Dive-Bomb Gull',    model: 'gull',  hp: 54,  xp: 18, gold: 12, baseY: 1.4, moves: [ { name: 'pecks rapidly', min: 8, max: 13 }, { name: 'dive-bombs', min: 17, max: 25 } ], drops: [ { mat: 'feather', chance: 0.85 } ] },
     golem:  { name: 'Sandcastle Golem',  model: 'golem', hp: 136, xp: 36, gold: 30, baseY: 0,   moves: [ { name: 'slams a sandy fist', min: 15, max: 23 }, { name: 'crumbles down', min: 11, max: 18, all: true } ], drops: [ { mat: 'sand', chance: 0.85 }, { mat: 'brine', chance: 0.25 } ] },
     eel:    { name: 'Voltaic Eel',       model: 'eel',   hp: 96,  xp: 32, gold: 24, baseY: 1.0, moves: [ { name: 'lashes its tail', min: 13, max: 19 }, { name: 'looses a current', min: 12, max: 18, all: true } ], drops: [ { mat: 'goo', chance: 0.6 }, { mat: 'brine', chance: 0.35 } ] },
+    cobra:  { name: 'Sand Cobra',        model: 'cobra', hp: 92,  xp: 30, gold: 22, baseY: 0,   moves: [ { name: 'strikes with dripping fangs', min: 13, max: 20 }, { name: 'spits venom across', min: 11, max: 16, all: true } ], drops: [ { mat: 'fang', chance: 0.65 }, { mat: 'sand', chance: 0.4 } ] },
+    scarab: { name: 'Gilded Scarab',     model: 'scarab', hp: 120, xp: 34, gold: 34, baseY: 0.2, moves: [ { name: 'slashes with golden pincers', min: 14, max: 21 }, { name: 'scatters a blinding glare', min: 10, max: 15, all: true } ], drops: [ { mat: 'shellfrag', chance: 0.6 }, { mat: 'brine', chance: 0.4 } ] },
+    genie:  { name: 'Jafira, the Bound Genie', model: 'genie', hp: 640, xp: 520, gold: 820, baseY: 0.4, boss: true, moves: [
+      { name: 'hurls a fistful of cursed sand', min: 30, max: 44 },
+      { name: 'conjures a roaring sandstorm', min: 22, max: 30, all: true },
+      { name: 'twists reality and strikes', min: 34, max: 48 },
+      { name: 'unleashes PHENOMENAL COSMIC POWER', min: 30, max: 42, all: true } ], drops: [ { mat: 'abyssscale', chance: 1 }, { mat: 'brine', chance: 1 } ] },
+    wyvern: { name: 'Vale Wyvern',      model: 'wyvern', hp: 128, xp: 38, gold: 30, baseY: 1.2, moves: [ { name: 'rakes with talons', min: 15, max: 22 }, { name: 'breathes a gout of flame', min: 13, max: 19, all: true } ], drops: [ { mat: 'abyssscale', chance: 0.4 }, { mat: 'fang', chance: 0.5 } ] },
+    skydragon: { name: 'Vyrmithrax, the Sky-Tyrant', model: 'skydragon', hp: 760, xp: 640, gold: 980, baseY: 0.6, boss: true, moves: [
+      { name: 'lashes out with raking claws', min: 34, max: 48 },
+      { name: 'beats its wings into a gale', min: 22, max: 30, all: true },
+      { name: 'snaps with bone-crushing jaws', min: 38, max: 52 },
+      { name: 'exhales a torrent of dragonfire', min: 30, max: 42, all: true } ], drops: [ { mat: 'abyssscale', chance: 1 }, { mat: 'fang', chance: 1 } ] },
     urchin: { name: 'Spine Urchin',      model: 'urchin', hp: 150, xp: 34, gold: 26, baseY: 0,  moves: [ { name: 'fires a spine volley', min: 14, max: 20 }, { name: 'rolls over the party', min: 12, max: 18, all: true } ], drops: [ { mat: 'shellfrag', chance: 0.6 }, { mat: 'sand', chance: 0.4 } ] },
     bat:    { name: 'Nightwing Bat',     model: 'bat',   hp: 78,  xp: 30, gold: 20, baseY: 1.6, moves: [ { name: 'bites with a screech', min: 12, max: 18 }, { name: 'drains warm blood', min: 14, max: 20 } ], drops: [ { mat: 'ectoplasm', chance: 0.4 }, { mat: 'feather', chance: 0.3 } ] },
     ghoul:  { name: 'Drowned Ghoul',     model: 'ghoul', hp: 132, xp: 38, gold: 28, baseY: 0,   moves: [ { name: 'rakes with rotted claws', min: 15, max: 22 }, { name: 'exhales grave-rot', min: 12, max: 18, all: true } ], drops: [ { mat: 'ectoplasm', chance: 0.7 }, { mat: 'brine', chance: 0.3 } ] },
@@ -262,6 +307,16 @@ window.Data = (function () {
       { key: 'chain_whip',   name: 'Chain Whip',    atk: 20, slots: 2, price: 0, desc: '+20 ATK · 2 shell slots' },
       { key: 'vampire_killer', name: 'Vampire Killer', atk: 34, slots: 3, price: 0, desc: 'The legendary whip — bane of the night.' },
     ],
+    aladdin: [
+      { key: 'street_scimitar', name: 'Street Scimitar', atk: 12, slots: 2, price: 0, desc: 'A pilfered, well-balanced blade.' },
+      { key: 'agrabah_saber',   name: 'Agrabah Saber',   atk: 22, slots: 2, price: 0, desc: '+22 ATK · 2 shell slots' },
+      { key: 'sultans_scimitar', name: "Sultan's Scimitar", atk: 34, slots: 3, price: 0, desc: 'A jewelled blade fit for a prince.' },
+    ],
+    violca: [
+      { key: 'cadet_bow',   name: 'Cadet Longbow', atk: 14, slots: 2, price: 0, desc: 'Standard-issue war-college bow.' },
+      { key: 'recurve_bow', name: 'Recurve Warbow', atk: 24, slots: 2, price: 0, desc: '+24 ATK · 2 shell slots' },
+      { key: 'stormbow',    name: 'Stormcaller Bow', atk: 36, slots: 3, price: 0, desc: 'A bow that hums with bonded lightning.' },
+    ],
   };
   // ultimate weapons (sold at the Mall Isle bazaar)
   const ULT = {
@@ -327,6 +382,11 @@ window.Data = (function () {
     gull:   { weak: ['thunder'], resist: ['earth'] },
     golem:  { weak: ['water'], resist: ['fire'] },
     eel:    { weak: ['earth'], absorb: ['thunder'], resist: ['water'] },
+    cobra:  { weak: ['fire'], resist: ['earth'] },
+    scarab: { weak: ['water'], resist: ['earth', 'physical'] },
+    genie:  { weak: ['water'], absorb: ['fire'], resist: ['physical', 'earth'] },
+    wyvern: { weak: ['water', 'thunder'], resist: ['fire'] },
+    skydragon: { weak: ['water', 'thunder'], absorb: ['fire'], resist: ['physical'] },
     urchin: { weak: ['water'], resist: ['earth', 'physical'] },
     bat:    { weak: ['holy'], resist: ['dark'] },
     ghoul:  { weak: ['holy', 'fire'], absorb: ['dark'], resist: ['water'] },
@@ -358,10 +418,12 @@ window.Data = (function () {
     dragoon:   { name: "Leviathan's End", target: 'enemy',    fx: 'beam',  el: 'water',   min: 120, max: 168, flavor: 'hurls the great harpoon with a vengeance!' },
     ruffy:     { name: 'Gum-Gum King Cobra', target: 'enemy', fx: 'beam',  el: 'physical', min: 130, max: 175, flavor: 'winds up a fist the size of an island!' },
     simon:     { name: 'Grand Cross',     target: 'all',      fx: 'beam',  el: 'holy',    min: 96, max: 132, flavor: 'calls down a cross of holy light!' },
+    aladdin:   { name: 'A Whole New World', target: 'all',    fx: 'beam',  el: 'thunder', min: 90, max: 124, flavor: 'soars in on the carpet, blades flashing!' },
+    violca:    { name: 'Bonded Storm',    target: 'all',      fx: 'beam',  el: 'thunder', min: 96, max: 132, flavor: 'and her dragon answer as one — the sky splits with lightning!' },
   };
 
   // ---------------- ICONS ----------------
-  const WEAPON_ICON = { pirate: '⚔️', swordsman: '🗡️', healer: '🪄', mage: '✨', blader: '🌀', dragoon: '🔱', ruffy: '🥊', simon: '🔗' };
+  const WEAPON_ICON = { pirate: '⚔️', swordsman: '🗡️', healer: '🪄', mage: '✨', blader: '🌀', dragoon: '🔱', ruffy: '🥊', simon: '🔗', aladdin: '🗡️', violca: '🏹' };
   const weaponIcon = (charKey) => WEAPON_ICON[charKey] || '⚔️';
   const shellIcon = (sh) => (sh.kind === 'magic' ? '🔮' : '🛡️');
 
@@ -541,6 +603,58 @@ window.Data = (function () {
       ],
       exit: { x: 0, z: -12 },
     },
+    bazaar: {
+      name: "Sultan's Bazaar", ground: '#e8cf8a', accent: '#ffcf6a',
+      buildings: [
+        { kind: 'shop', x: -9, z: -3, label: 'Spice Stall' },
+        { kind: 'shop', x: 9, z: -3, label: 'Arms Bazaar' },
+        { kind: 'inn',  x: 0, z: 9, label: 'Caravanserai' },
+        { kind: 'house', x: -9, z: 8, wall: '#e6cf94', roof: '#b07a2a' },
+        { kind: 'house', x: 9, z: 8, wall: '#dcc488', roof: '#8a5a2a' },
+        { kind: 'house', x: -4, z: 11, wall: '#e8d6a0', roof: '#3a6a8a' },
+      ],
+      npcs: [
+        { name: 'Spice Merchant Rashid', color: '#a85a2a', hair: '#1a1208', x: -9, z: -0.5, service: 'shop',
+          lines: ['Welcome, welcome, friend of the dunes!', 'Potions, ethers, the finest powders in all Agrabah-by-the-Sea. Browse!'] },
+        { name: 'Arms-Dealer Zara', color: '#8a3a5a', hair: '#1a1208', x: 9, z: -0.5, service: 'shop',
+          lines: ['Steel and seashells, sharp and shining!', 'A blade for every hand and a shell for every wish. Take a look.'] },
+        { name: 'Innkeep Yasmin', color: '#3a7a6a', hair: '#1a1208', x: 0, z: 6.5, service: 'inn',
+          lines: ['Rest in the caravanserai, weary traveler.', 'Cool water and soft cushions cure any road.'] },
+        { name: 'Old Storyteller', color: '#6a5a8a', hair: '#cccccc', x: -4, z: 4,
+          lines: ['Aaah, sit, sit. Let me tell you of the CAVE OF WONDERS.', 'Beyond the dunes it waits — a tiger\'s mouth of stone, and within, a lamp.', 'A genie was bound inside by a sorcerer long drowned. Now it rages, alone in the dark.', 'Only one may enter and leave with their soul: a "diamond in the rough." A street boy named Aladdin, they say.'] },
+        { name: 'Urchin Boy', color: '#c0863a', hair: '#1a1208', x: 4, z: 4,
+          lines: ['Psst — you lookin\' for Aladdin? He hangs by the Cave of Wonders.', 'Quick hands, quicker grin. He\'ll get you past the door — for a cut.'] },
+        { name: 'Veiled Dancer', color: '#b03a7a', hair: '#1a1208', x: 4, z: 8,
+          lines: ['The desert keeps its secrets and its songs.', 'Mind the sand cobras out past the walls — their bite is swift.'] },
+      ],
+      exit: { x: 0, z: -12 },
+    },
+    aerie: {
+      name: 'Riorson Outpost', ground: '#9aa6b4', accent: '#7fd0ff',
+      buildings: [
+        { kind: 'shop', x: -9, z: -3, label: 'Quartermaster' },
+        { kind: 'shop', x: 9, z: -3, label: 'Armory' },
+        { kind: 'inn',  x: 0, z: 9, label: 'Barracks' },
+        { kind: 'house', x: -9, z: 8, wall: '#b8c0cc', roof: '#3a4a6a' },
+        { kind: 'house', x: 9, z: 8, wall: '#aab4c2', roof: '#5a3a6a' },
+        { kind: 'house', x: -4, z: 11, wall: '#c2ccd8', roof: '#6a2a3a' },
+      ],
+      npcs: [
+        { name: 'Quartermaster Devi', color: '#3a6a8a', hair: '#1a1208', x: -9, z: -0.5, service: 'shop',
+          lines: ['Rider supplies — flight leathers and field potions.', 'You\'ll want all of it before you meet a dragon. Browse.'] },
+        { name: 'Armorer Bodhi', color: '#6a5a8a', hair: '#cabfae', x: 9, z: -0.5, service: 'shop',
+          lines: ['Daggers, blades, and signet shells for the riders.', 'Sharp steel keeps you in the saddle. Have a look.'] },
+        { name: 'Barracks-Keep Imogen', color: '#8a3a5a', hair: '#2a1808', x: 0, z: 6.5, service: 'inn',
+          lines: ['Bunk down, cadet. The Vale tests everyone soon enough.', 'Rest — you\'ll need every breath for the sky.'] },
+        { name: 'Wingleader Garrick', color: '#3a4a6a', hair: '#1a1208', x: -4, z: 4,
+          lines: ['So you climbed to the Aerie. Brave. Or stupid.', 'A great dragon coils at the peak — VYRMITHRAX, the Sky-Tyrant.', 'It bonds with no rider and burns all who try. The war college lost a whole wing to it.', 'There\'s one cadet mad enough to challenge it. Edgy thing. Carries a bow taller than she is.'] },
+        { name: 'Cadet Rhiannon', color: '#5a7a3a', hair: '#2a1808', x: 4, z: 4,
+          lines: ['You\'re here for Violca, aren\'t you? She broods up by the dragon\'s peak.', 'Don\'t mind the dramatic monologues. She\'s actually the best shot in the Vale.'] },
+        { name: 'Scribe Jesinia', color: '#6a6a8a', hair: '#cabfae', x: 4, z: 8,
+          lines: ['The archives say a bonded dragon multiplies a rider\'s power tenfold.', 'Defeat the Sky-Tyrant and perhaps it will judge YOU worthy. Perhaps.'] },
+      ],
+      exit: { x: 0, z: -12 },
+    },
   };
 
   // ---------------- ISLANDS (each is its own walkable overworld) ----------------
@@ -605,6 +719,28 @@ window.Data = (function () {
       encounters: [],
       decor: { trees: 3, palms: 14, rocks: 5 },
     },
+    mirage: {
+      name: 'Mirage Isle', size: 52, ground: '#e0c074', sand: '#f0dca0', water: '#2090b0', sky: { top: '#e88a3a', horizon: '#ffe1a0' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      town: { key: 'bazaar', x: 13, z: 3, color: '#ffcf6a' },
+      dungeon: { key: 'genie_cave', x: -11, z: 8, color: '#ffd24a' },
+      encounters: [
+        { x: 4, z: 9, pool: ['cobra', 'scarab'], min: 2, max: 3 },
+        { x: -6, z: 11, pool: ['golem', 'cobra'], min: 2, max: 2 },
+      ],
+      decor: { trees: 2, palms: 13, rocks: 11 },
+    },
+    aerie: {
+      name: 'Sky Dragon Isle', size: 54, ground: '#7a8494', sand: '#9aa0ac', water: '#2a4a6a', sky: { top: '#3a4f7a', horizon: '#d8c4e0' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      town: { key: 'aerie', x: 13, z: 4, color: '#7fd0ff' },
+      dungeon: { key: 'dragon_vale', x: -11, z: 8, color: '#ff6a4a' },
+      encounters: [
+        { x: 5, z: 9, pool: ['gull', 'wyvern'], min: 2, max: 3 },
+        { x: -6, z: 11, pool: ['wyvern', 'golem'], min: 2, max: 2 },
+      ],
+      decor: { trees: 4, palms: 0, rocks: 14 },
+    },
   };
 
   // ---------------- SEA (sail between islands) ----------------
@@ -616,6 +752,8 @@ window.Data = (function () {
       { key: 'spire', x: 4, z: -42 },
       { key: 'mall', x: -10, z: 34 },
       { key: 'duskmoor', x: 44, z: 30 },
+      { key: 'mirage', x: -44, z: -22 },
+      { key: 'aerie', x: 22, z: -28 },
     ],
     ships: [
       { id: 's0', type: 'sloop', x: -10, z: 20 },
@@ -662,10 +800,30 @@ window.Data = (function () {
       spawn: { x: 0, z: -8 }, exit: { x: 0, z: -10 }, gate: { x: 0, z: 8 }, chest: { x: 0, z: 11 },
       hint: 'Castle Crimsontide — the air is thick with the iron-smell of old blood. Cut a path to the throne at the far end and end the Count.',
       crystals: [],
-      vampire: true,
+      ally: { key: 'simon', metFlag: 'simonMet', join: 'simonJoin', pre: 'vampirePre', fall: 'vampireFall', leave: 'simonLeave', holdMsg: 'Simon holds the castle gate. "Come back when you\'re ready to finish this."' },
       mobs: [ { x: -8, z: -2, pool: ['bat', 'bat', 'ghoul'], min: 2, max: 3 }, { x: 8, z: -1, pool: ['wraith', 'bat'], min: 2, max: 2 }, { x: -7, z: 6, pool: ['ghoul', 'wraith'], min: 2, max: 2 } ],
       bossMob: { x: 0, z: 12, key: 'vampire' },
       reward: { gold: 900, shell: 'triton_blast' },
+    },
+    genie_cave: {
+      name: 'The Cave of Wonders', island: 'mirage', ground: '#3a2e16', wall: '#241a0c', sky: { top: '#1a0e04', horizon: '#3a2208' },
+      spawn: { x: 0, z: -8 }, exit: { x: 0, z: -10 }, gate: { x: 0, z: 8 }, chest: { x: 0, z: 11 },
+      hint: 'The Cave of Wonders — "Touch NOTHING but the lamp," the legend warns. Sand hisses underfoot. Press on to the chamber where the bound genie rages.',
+      crystals: [],
+      ally: { key: 'aladdin', metFlag: 'aladdinMet', join: 'aladdinJoin', pre: 'geniePre', fall: 'genieFall', leave: 'aladdinLeave', holdMsg: 'Aladdin waits by the cave mouth. "Come find me when you\'re ready to grab that lamp."' },
+      mobs: [ { x: -8, z: -2, pool: ['cobra', 'scarab'], min: 2, max: 3 }, { x: 8, z: -1, pool: ['scarab', 'golem'], min: 2, max: 2 }, { x: -7, z: 6, pool: ['cobra', 'cobra', 'scarab'], min: 2, max: 3 } ],
+      bossMob: { x: 0, z: 12, key: 'genie' },
+      reward: { gold: 950, shell: 'conch_ember' },
+    },
+    dragon_vale: {
+      name: 'The Dragon Vale', island: 'aerie', ground: '#2a3242', wall: '#1a212e', sky: { top: '#10182a', horizon: '#3a2a4a' },
+      spawn: { x: 0, z: -8 }, exit: { x: 0, z: -10 }, gate: { x: 0, z: 8 }, chest: { x: 0, z: 11 },
+      hint: 'The Dragon Vale — wind screams off the peak and bones of failed riders litter the stone. Climb to the summit where the Sky-Tyrant coils.',
+      crystals: [],
+      ally: { key: 'violca', metFlag: 'violcaMet', join: 'violcaJoin', pre: 'dragonPre', fall: 'dragonFall', leave: 'violcaLeave', holdMsg: 'Violca smirks from the cliff edge. "Run back to safety, then. I\'ll be brooding dramatically until you return."' },
+      mobs: [ { x: -8, z: -2, pool: ['wyvern', 'gull'], min: 2, max: 3 }, { x: 8, z: -1, pool: ['wyvern', 'wyvern'], min: 2, max: 2 }, { x: -7, z: 6, pool: ['wyvern', 'golem'], min: 2, max: 2 } ],
+      bossMob: { x: 0, z: 12, key: 'skydragon' },
+      reward: { gold: 1000, shell: 'nautilus_surge' },
     },
   };
 
@@ -802,6 +960,59 @@ window.Data = (function () {
       { name: 'Simon', text: 'Tempting. But there\'s always another castle, another night, another thing in the dark. That\'s a Belmont\'s road, and I walk it alone. ...Mostly.' },
       { name: 'Simon', text: '(He coils the whip and tips his head.) "You fight well, for sailors. If the tide ever brings you back to Duskmoor — the gate\'s open." ' },
       { name: 'Narrator', text: 'Simon leaves the party and vanishes into the moonlight. (He is no longer available — but Castle Crimsontide remembers.)' },
+    ],
+    aladdinJoin: [
+      { name: 'Narrator', text: 'Mirage Isle. Golden dunes, a heat-shimmer on the air, and a stone arch shaped like a tiger\'s snarling mouth — the Cave of Wonders.' },
+      { name: '???', text: '(A grinning boy drops from the arch, a stolen melon under one arm.) "Whoa, whoa — you can\'t just WALK in there! The cave\'s picky. Eats people who aren\'t... worthy."' },
+      { name: 'Aladdin', text: 'Name\'s Aladdin. Street rat, professionally. The cave only opens for a "diamond in the rough" — and lucky you, that\'s me. There\'s a lamp inside. A genie\'s trapped in it, and he\'s NOT happy.' },
+      { name: 'Capt. Redbeard', text: 'And what do YOU get out of this, boy?' },
+      { name: 'Aladdin', text: 'The lamp. One wish to stop being a nobody. You get whatever else is in there. Deal? Great. Stick close and DON\'T touch the gold.' },
+      { name: 'Narrator', text: 'Aladdin joins your party as a fourth member — for as long as you stay in the Cave of Wonders. Quick, nimble, and a deadly shot with a thrown blade. (Leave the cave and he waits at the mouth; free the genie and he goes his own way.)' },
+    ],
+    geniePre: [
+      { name: 'Jafira', text: '(A mountain of blue smoke and muscle erupts from a tarnished lamp.) "TEN THOUSAND YEARS chained in a lamp in a cave! Do you have ANY idea what that does to a person\'s temper?!"' },
+      { name: 'Aladdin', text: 'Easy, big guy! We\'re here to BREAK the binding, not—' },
+      { name: 'Jafira', text: 'The sorcerer said that too, right before he made me his slave. No more masters. No more wishes. I\'ll bury this whole cave and everyone in it! PHENOMENAL COSMIC POWER, remember?!' },
+      { name: 'Capt. Redbeard', text: 'Then we knock the rage out of ye first. Hold fast, crew!' },
+    ],
+    genieFall: [
+      { name: 'Jafira', text: '(The smoke settles; the chains of binding shatter and fall away.) "...The shackles. They\'re... gone. You didn\'t want a wish. You just wanted me FREE."' },
+      { name: 'Aladdin', text: 'Yeah, well. I know what a cage feels like. Figured nobody should live in one. ...Even a cosmic one.' },
+      { name: 'Jafira', text: 'Then take the lamp, street rat — it\'s just brass now, but it\'s YOURS. And take this, sailors: a Cinder Conch, a spark of my freed fire. May it never bind another soul.' },
+      { name: 'Narrator', text: 'You received an EMBER CONCH and the genie\'s gratitude! Jafira streaks off into an open sky, laughing like thunder.' },
+    ],
+    aladdinLeave: [
+      { name: 'Aladdin', text: 'So. I\'ve got a brass lamp, no genie, and absolutely no idea what I\'m doing. ...Honestly? Best I\'ve felt in years.' },
+      { name: 'Capt. Redbeard', text: 'There\'s always a berth on my ship for light fingers and a lighter heart, lad.' },
+      { name: 'Aladdin', text: 'Tempting! But there\'s a whole bazaar of people just like me, and somebody oughta look out for \'em. That somebody might as well be a diamond in the rough.' },
+      { name: 'Narrator', text: 'Aladdin leaves the party with a salute and a swiped coin-purse you definitely didn\'t notice. (He is no longer available — but Mirage Isle remembers.)' },
+    ],
+    violcaJoin: [
+      { name: 'Narrator', text: 'Sky Dragon Isle. Wind howls off a stone peak where a great dragon coils against the clouds. A figure stands at the cliff\'s edge, cloak snapping, a bow taller than she is in one hand.' },
+      { name: '???', text: '(She does not turn around.) "...Another batch of fools come to die on the mountain. Let me guess. You think you\'re special. They ALL think they\'re special."' },
+      { name: 'Violca', text: 'I\'m Violca. Bottom of my class, top of the Sky-Tyrant\'s kill list, and the only cadet edgy enough — I mean BRAVE enough — to climb up here twice. That beast took everyone I... ugh, you don\'t care.' },
+      { name: 'Marina', text: 'We care. And we could use a shot like yours.' },
+      { name: 'Violca', text: '(A pause. A small, dangerous smile.) "...Loyalty? Genuine concern? On a FIRST meeting? Be careful, sailor — a girl could get IDEAS. Fine. We climb together. Try to keep up, and try not to fall in love. Everyone does."' },
+      { name: 'Narrator', text: 'Violca joins your party as a fourth member — for as long as you stay in the Dragon Vale. A peerless archer crackling with bonded lightning. (Leave and she broods at the cliff; best the Sky-Tyrant and she flies her own path.)' },
+    ],
+    dragonPre: [
+      { name: 'Vyrmithrax', text: '(A voice like a rockslide fills the vale.) "ANOTHER rider. Another insect that mistakes a death-wish for courage."' },
+      { name: 'Violca', text: 'I\'m not here to BOND you, you overgrown lizard. I\'m here to humble you. There\'s a difference, and you\'re about to feel it.' },
+      { name: 'Vyrmithrax', text: 'Bold words from prey. Show me, little archer. Show me the spark that makes you worth the burning.' },
+      { name: 'Capt. Redbeard', text: 'Less monologuing, more nocking arrows, lass! TOGETHER!' },
+    ],
+    dragonFall: [
+      { name: 'Vyrmithrax', text: '(The great dragon lowers its head, wings folding in something like respect.) "...You did not flee. You did not beg. You burned BRIGHTER. Perhaps I was wrong about your kind, little archer."' },
+      { name: 'Violca', text: 'Yeah, well. Hold the awe. I\'m not bonding a dragon that ate my whole wing. ...But you can stop terrorizing the Vale. Deal?' },
+      { name: 'Vyrmithrax', text: 'Agreed. And to the ones who stood beside her — take a scale of mine for your blades. A Nautilus Spiral, storm-touched. You have earned the sky\'s regard.' },
+      { name: 'Narrator', text: 'You received a NAUTILUS SPIRAL seashell! Vyrmithrax takes wing and circles the peak as its guardian, no longer its tyrant.' },
+    ],
+    violcaLeave: [
+      { name: 'Violca', text: 'So that\'s that. The Vale\'s safe, the dragon\'s practically a house cat, and I\'m... still standing. Disappointingly alive.' },
+      { name: 'Capt. Redbeard', text: 'Sail with us, lass. The horizon\'s got room for one more dramatic silhouette.' },
+      { name: 'Violca', text: '(She almost smiles.) "Don\'t tempt me, sailor. I\'ve got a war college to finish humiliating and a brooding arc to complete. But that offer? ...I\'ll keep it. Like a secret. Like a FAVOR."' },
+      { name: 'Violca', text: '"If the wind ever brings you back to the Aerie — I\'ll be the one looking devastating against the sunset. Now GO, before I say something with FEELINGS in it."' },
+      { name: 'Narrator', text: 'Violca leaves the party with a swirl of cloak and one last lingering look. (She is no longer available — but Sky Dragon Isle remembers.)' },
     ],
   };
 

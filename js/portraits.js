@@ -13,9 +13,13 @@ window.Portraits = (function () {
     dragoon:   { type: 'harpooner', skin: '#c89a72', hair: '#8a7a66', bg: '#2d4742' },
     ruffy:     { type: 'rival',     skin: '#e8b48a', hair: '#161616', eye: '#1a1a1a', bg: '#b8342a' },
     simon:     { type: 'hunter',    skin: '#cf9a78', hair: '#5a3a18', eye: '#3a6a9a', bg: '#5a3a14' },
+    aladdin:   { type: 'streetrat', skin: '#c08a5a', hair: '#1a1208', eye: '#2a1a10', bg: '#7a1f6a' },
+    violca:    { type: 'archer',    skin: '#dcb89a', hair: '#3a2418', eye: '#8a4a6a', bg: '#2a3242' },
     selachoth: { type: 'villain',   skin: '#aebfc8', hair: '#e8eef2', eye: '#ffe08a', bg: '#16181f' },
     vampire:   { type: 'vampire',   skin: '#dfe0e8', hair: '#0a0a12', eye: '#ff2a3a', bg: '#2a0a14' },
     drifter:   { type: 'drifter',   skin: '#c89a72', hair: '#b8b0a0', eye: '#ff5e5e', bg: '#2c3a52' },
+    genie:     { type: 'genie',     skin: '#2f8de0', hair: '#0a1a2a', eye: '#fff6c2', bg: '#0a2a4a' },
+    skydragon: { type: 'dragon',    skin: '#5a3a6a', eye: '#ff5e3a', bg: '#160a1e' },
     kraken:    { type: 'kraken',    skin: '#2f6b54', eye: '#ffe08a', bg: '#0a2018' },
     leviathan: { type: 'kraken',    skin: '#2a4a5a', eye: '#7fffd0', bg: '#08161e' },
     angler:    { type: 'kraken',    skin: '#1a2230', eye: '#aef0ff', bg: '#050d16' },
@@ -42,7 +46,7 @@ window.Portraits = (function () {
 
     const skin = p.skin, sk2 = skin ? shade(skin, 0.82) : null;
     // head base (cols 4..11, rows 4..13) with trimmed corners
-    if (p.type !== 'kraken') {
+    if (p.type !== 'kraken' && p.type !== 'dragon') {
       px(4, 4, 8, 10, skin); px(4, 4, 1, 1, p.bg); px(11, 4, 1, 1, p.bg); px(4, 13, 1, 1, p.bg); px(11, 13, 1, 1, p.bg);
       px(4, 8, 1, 4, sk2); px(11, 8, 1, 4, sk2); // cheek shade
     }
@@ -119,6 +123,36 @@ window.Portraits = (function () {
         px(7, 11, 3, 1, sk2); px(7, 12, 2, 1, '#8a5a3a');
         px(2, 12, 1, 3, '#cfd8e4'); px(13, 12, 1, 3, '#cfd8e4'); // crossed blades at shoulders
         px(1, 13, 1, 2, '#caa030'); px(14, 13, 1, 2, '#caa030'); break;
+      case 'streetrat':
+        // black hair, red fez with gold band + tassel, easy grin
+        px(4, 3, 8, 2, p.hair); px(3, 4, 1, 1, p.hair); px(12, 4, 1, 1, p.hair);
+        px(4, 1, 8, 2, '#b03030'); px(4, 2, 8, 1, '#caa030'); px(11, 1, 1, 2, '#caa030'); // fez + band + tassel
+        px(6, 8, 1, 1, eye); px(9, 8, 1, 1, eye);
+        px(6, 11, 5, 1, '#7a4a2a'); px(6, 11, 5, 1, '#fff'); px(6, 12, 5, 1, '#7a4a2a'); break; // toothy grin
+      case 'archer':
+        // long braided hair swept to one side, edgy half-lidded eyes, smirk
+        px(2, 2, 2, 11, p.hair); px(12, 2, 2, 9, p.hair); px(4, 1, 8, 3, p.hair);
+        px(2, 11, 1, 4, p.hair); px(1, 12, 1, 3, p.hair); // braid down one side
+        px(5, 4, 2, 1, p.hair); px(9, 4, 2, 1, p.hair); // bangs
+        px(5, 8, 1, 1, '#3a2a2a'); px(9, 8, 1, 1, '#3a2a2a'); // shadowed lids
+        px(6, 8, 1, 1, eye); px(9, 8, 1, 1, eye);
+        px(7, 11, 3, 1, '#b06a7a'); px(9, 11, 1, 1, '#9a4a5a'); break; // asymmetric smirk
+      case 'genie':
+        // blue face (skin already blue), gold brows, white glowing eyes, topknot, goatee
+        px(5, 3, 6, 2, p.hair); px(7, 1, 2, 2, p.hair); // hair + topknot
+        px(5, 6, 2, 1, '#caa030'); px(9, 6, 2, 1, '#caa030'); // gold brows
+        px(5, 8, 2, 1, eye); px(9, 8, 2, 1, eye); px(5, 8, 1, 1, '#fff'); px(10, 8, 1, 1, '#fff'); // glowing eyes
+        px(6, 11, 4, 1, '#0a2a4a'); px(6, 12, 4, 1, p.hair); px(7, 13, 2, 1, p.hair); // grin + goatee
+        px(2, 8, 2, 1, '#caa030'); px(12, 8, 2, 1, '#caa030'); break; // gold ear-cuffs
+      case 'dragon':
+        // reptilian: scaled head, snout, horns, glowing eyes, fangs
+        px(4, 4, 8, 8, p.skin); px(4, 4, 1, 1, p.bg); px(11, 4, 1, 1, p.bg);
+        px(5, 11, 6, 3, p.skin); px(6, 13, 4, 1, p.bg); // long snout
+        px(3, 2, 2, 3, '#caa030'); px(11, 2, 2, 3, '#caa030'); // horns
+        px(2, 3, 1, 2, '#caa030'); px(13, 3, 1, 2, '#caa030');
+        px(5, 7, 2, 2, eye); px(9, 7, 2, 2, eye); px(5, 7, 1, 1, '#fff'); px(9, 7, 1, 1, '#fff'); // slit glowing eyes
+        px(5, 6, 2, 1, shade(p.skin, 0.6)); px(9, 6, 2, 1, shade(p.skin, 0.6)); // brow ridges
+        px(5, 12, 1, 1, '#fff'); px(7, 13, 1, 1, '#fff'); px(9, 13, 1, 1, '#fff'); px(10, 12, 1, 1, '#fff'); break; // fangs
       case 'harpooner':
         px(2, 3, 2, 11, p.hair); px(12, 3, 2, 11, p.hair); px(4, 2, 8, 2, p.hair); // long weathered hair
         px(4, 11, 8, 3, p.hair); px(4, 10, 8, 1, shade(p.hair, 1.1)); // big beard

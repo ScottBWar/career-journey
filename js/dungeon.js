@@ -20,7 +20,7 @@ window.Dungeon = (function () {
     const cleared = !!Game.state.dungeons[key];
     bossDefeated = !!Game.state.dungeons[key + '_boss'];
     mobDefeated = Game.state.dungeons[key + '_mobs'] || (Game.state.dungeons[key + '_mobs'] = {});
-    solvedPuzzle = def.vampire ? bossDefeated : cleared; chestLooted = cleared;
+    solvedPuzzle = def.bossMob ? bossDefeated : cleared; chestLooted = cleared;
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color4(0.02, 0.02, 0.05, 1);
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = Color3.FromHexString(def.wall); scene.fogDensity = 0.02;
@@ -100,7 +100,9 @@ window.Dungeon = (function () {
   }
   function startBoss(m) {
     busy = true; paused = true;
-    Game.cutscene(Data.STORY.vampirePre, () => {
+    const ally = def.ally || {};
+    const pre = (ally.pre && Data.STORY[ally.pre]) ? ally.pre : null;
+    const runFight = () => {
       Music.play('boss');
       Game.startBattle([m.key], { boss: true, fullLimit: true }, (res) => {
         if (res.won) {
@@ -109,12 +111,16 @@ window.Dungeon = (function () {
           const obs = scene.onBeforeRenderObservable.add(() => { acc += engine.getDeltaTime(); const k = Math.min(1, acc / 700); gate.position.y = y0 + k * 6; if (k >= 1) scene.onBeforeRenderObservable.remove(obs); });
           Progress.save(Game.state);
           busy = false; paused = false; Game.resumeDungeon();
-          Game.cutscene(Data.STORY.vampireFall, () => Game.cutscene(Data.STORY.simonLeave, () => {
-            Progress.dismiss(Game.state, 'simon'); Progress.save(Game.state); Game.toast('The throne room opens. Claim what the Count hoarded.');
-          }));
+          const fall = () => {
+            if (ally.key) { Progress.dismiss(Game.state, ally.key); Progress.save(Game.state); }
+            Game.toast('The way is open. Claim what lies beyond!');
+          };
+          if (ally.fall && Data.STORY[ally.fall]) Game.cutscene(Data.STORY[ally.fall], () => { if (ally.leave && Data.STORY[ally.leave]) Game.cutscene(Data.STORY[ally.leave], fall); else fall(); });
+          else fall();
         } else { player.position.z -= 3; busy = false; paused = false; Game.resumeDungeon(); }
       });
-    });
+    };
+    if (pre) Game.cutscene(Data.STORY[pre], runFight); else runFight();
   }
 
   function update() {
@@ -183,7 +189,8 @@ window.Dungeon = (function () {
     if (nearTarget.kind === 'crystal') activate(nearTarget.idx);
     else if (nearTarget.kind === 'chest') loot();
     else if (nearTarget.kind === 'exit') {
-      if (def.vampire && !bossDefeated) { Progress.dismiss(Game.state, 'simon'); Progress.save(Game.state); Game.toast('Simon holds the castle gate. "Come back when you\'re ready to finish this."'); }
+      const ally = def.ally;
+      if (ally && ally.key && !bossDefeated) { Progress.dismiss(Game.state, ally.key); Progress.save(Game.state); if (ally.holdMsg) Game.toast(ally.holdMsg); }
       Game.toIsland(def.island, false, true);
     }
   }
@@ -191,9 +198,11 @@ window.Dungeon = (function () {
 
   function enter(dungeonKey) {
     build(dungeonKey); Game.active = { interact }; Music.play('dungeon');
-    if (def.vampire && !bossDefeated) {
-      Progress.recruit(Game.state, 'simon', 4); Progress.save(Game.state);
-      if (!Game.state.flags.simonMet) { Game.state.flags.simonMet = true; Progress.save(Game.state); setTimeout(() => Game.startCutscene('simonJoin'), 400); }
+    const ally = def.ally;
+    if (ally && ally.key && !bossDefeated) {
+      Progress.recruit(Game.state, ally.key, 4); Progress.save(Game.state);
+      const flag = ally.metFlag || (ally.key + 'Met');
+      if (ally.join && !Game.state.flags[flag]) { Game.state.flags[flag] = true; Progress.save(Game.state); setTimeout(() => Game.startCutscene(ally.join), 400); }
       else setTimeout(showRiddle, 400);
     } else setTimeout(showRiddle, 400);
     return scene;
