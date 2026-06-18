@@ -15,8 +15,8 @@ window.Battle = (function () {
   let party = [], enemies = [], actors = [], over, onEndCb, activeMember, t, shakeAmt = 0, cineActive = false;
 
   const FX = { fire:['#ffb347','#ff5e3a'], water:['#5eead4','#3b82f6'], beam:['#a5b4fc','#e0e7ff'], heal:['#6ee7b7','#bbf7d0'], mana:['#60a5fa','#bfdbfe'], hit:['#ff6b6b','#ffd1d1'] };
-  const PSPD = { pirate: 11, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12 };
-  const ESPD = { shark: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8 };
+  const PSPD = { pirate: 11, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12, simon: 11 };
+  const ESPD = { shark: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8, eel: 13, urchin: 6, bat: 15, ghoul: 7, wraith: 11, vampire: 12 };
   const ELEMCOL = { fire: '#ff7b3a', water: '#5eead4', thunder: '#fde047', earth: '#c2a062', dark: '#b06aff', holy: '#fff0a0', physical: '#dfe7ef' };
   const fxKey = el => ({ fire: 'fire', water: 'water' })[el] || 'beam';
 
@@ -333,6 +333,7 @@ window.Battle = (function () {
       case 'pirate': rotTo(arm, 'z', az, -0.9, 80); await rotTo(arm, 'x', ax, -1.7, 80); await rotTo(arm, 'x', -1.7, ax, 100); arm.rotation.z = az; break; // diagonal slash
       case 'dragoon': await rotTo(arm, 'x', ax, -0.5, 55); await rotTo(arm, 'x', -0.5, -1.15, 45); await rotTo(arm, 'x', -1.15, ax, 80); break; // harpoon thrust jabs
       case 'ruffy': await rotTo(arm, 'x', ax, -2.4, 65); await rotTo(arm, 'x', -2.4, -0.2, 55); await rotTo(arm, 'x', -0.2, ax, 85); break; // big rubber punch
+      case 'simon': await rotTo(arm, 'x', ax, -2.0, 60); await rotTo(arm, 'x', -2.0, -0.4, 40); await rotTo(arm, 'x', -0.4, ax, 70); break; // whip crack
       default: await rotTo(arm, 'x', ax, -1.3, 90); await rotTo(arm, 'x', -1.3, ax, 110); // light swing
     }
   }
@@ -466,6 +467,7 @@ window.Battle = (function () {
         case 'pirate': await rotTo(arm, 'x', arm.rotation.x, -2.2, 240); break; // raise cutlass high
         case 'dragoon': await rotTo(arm, 'x', arm.rotation.x, -0.2, 220); break; // plant the harpoon
         case 'ruffy': await rotTo(arm, 'x', arm.rotation.x, -2.6, 200); break; // both fists up cheer
+        case 'simon': await rotTo(arm, 'x', arm.rotation.x, -2.4, 120); await rotTo(arm, 'x', -2.4, -0.3, 90); await rotTo(arm, 'x', -0.3, -1.6, 110); break; // overhead whip flourish
         default: await tween(k => { arm.rotation.y = k * Math.PI * 2; }, 520); arm.rotation.y = 0; // staff twirl (mage/healer)
       }
     }

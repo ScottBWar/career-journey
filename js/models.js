@@ -453,7 +453,104 @@ window.Models = (function () {
     const bulb = at(MB.CreateSphere('lure', { diameter: 0.55 }, scene), r, lure, 1.9, 3.7, 0);
     return { node: r, idle(t) { bulb.scaling.setAll(1 + Math.sin(t * 3) * 0.22); } };
   }
-  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler };
+  // ---- new enemy variety ----
+  function eel() { // voltaic eel — long electric ribbon
+    const r = new BABYLON.TransformNode('eEel', scene);
+    const body = M('eelBody', '#2f6f5a', { spec: 0.5, emissive: '#0a2a22' }), fin = M('eelFin', '#7df0c0', { emissive: '#2fd0a0' }), eye = M('eelEye', '#fde047', { emissive: '#fde047' });
+    for (let i = 0; i < 7; i++) { const seg = at(MB.CreateSphere('s'+i, { diameterX: 1.0 - i*0.07, diameterY: 0.8 - i*0.05, diameterZ: 0.8 - i*0.05, segments: 8 }, scene), r, i%2?body:fin, -i*0.7, 1.4 + Math.sin(i*0.8)*0.4, 0); seg._ph = i; }
+    at(MB.CreateSphere('head', { diameterX: 1.2, diameterY: 1.0, diameterZ: 1.0, segments: 10 }, scene), r, body, 0.6, 1.4, 0);
+    [-0.32, 0.32].forEach(z => at(MB.CreateSphere('e', { diameter: 0.22 }, scene), r, eye, 0.9, 1.6, z));
+    at(MB.CreateCylinder('fin', { height: 1.6, diameterTop: 0, diameterBottom: 0.5 }, scene), r, fin, 0.2, 2.1, 0).rotation.x = 0;
+    return { node: r, idle(t) { r.rotation.z = Math.sin(t*2.5)*0.12; r.position.y = (r._baseY||0) + Math.sin(t*1.6)*0.15; } };
+  }
+  function urchin() { // spine urchin — earth, spiky ball
+    const r = new BABYLON.TransformNode('eUrchin', scene);
+    const body = M('urB', '#3a2a4a', { spec: 0.3 }), spike = M('urS', '#c2a062', { emissive: '#3a2e12' }), eye = M('urE', '#ff5e5e', { emissive: '#ff5e5e' });
+    at(MB.CreateSphere('core', { diameter: 1.5, segments: 10 }, scene), r, body, 0, 1.0, 0);
+    for (let i = 0; i < 26; i++) { const a = i*2.4, b = i*1.3; const x = Math.cos(a)*Math.sin(b), y = Math.cos(b), z = Math.sin(a)*Math.sin(b); const sp = at(MB.CreateCylinder('sp'+i, { height: 0.9, diameterTop: 0, diameterBottom: 0.16 }, scene), r, spike, x*0.7, 1.0 + y*0.7, z*0.7); sp.lookAt(new V3(x*2, 1.0+y*2, z*2)); sp.rotation.x += Math.PI/2; }
+    [-0.3, 0.3].forEach(z => at(MB.CreateSphere('e', { diameter: 0.2 }, scene), r, eye, 0.5, 1.2, z));
+    return { node: r, idle(t) { r.rotation.y = t*0.6; r.position.y = (r._baseY||0) + Math.abs(Math.sin(t*1.5))*0.15; } };
+  }
+  // ---- vampire-keep roster ----
+  function bat() { // giant cave bat
+    const r = new BABYLON.TransformNode('eBat', scene);
+    const fur = M('batFur', '#3a2a3a', { spec: 0.2 }), wing = M('batWing', '#1a1020'), eye = M('batEye', '#ff3a3a', { emissive: '#ff3a3a' }), fang = M('batFang', '#f0ead8');
+    at(MB.CreateSphere('body', { diameterX: 0.9, diameterY: 1.0, diameterZ: 0.9, segments: 10 }, scene), r, fur, 0, 1.6, 0);
+    at(MB.CreateSphere('head', { diameter: 0.7 }, scene), r, fur, 0, 2.2, 0.1);
+    [-1, 1].forEach(s => { at(MB.CreateCylinder('ear', { height: 0.5, diameterTop: 0, diameterBottom: 0.22 }, scene), r, fur, s*0.2, 2.6, 0.05); });
+    [-0.18, 0.18].forEach(z => at(MB.CreateSphere('e', { diameter: 0.16 }, scene), r, eye, 0.28, 2.25, z));
+    [-0.1, 0.1].forEach(z => at(MB.CreateCylinder('fang', { height: 0.18, diameterTop: 0, diameterBottom: 0.07 }, scene), r, fang, 0.3, 1.95, z).rotation.x = Math.PI);
+    const wings = [];
+    [-1, 1].forEach(s => { const w = at(MB.CreateBox('w', { width: 1.6, height: 0.06, depth: 1.0 }, scene), r, wing, s*1.1, 1.7, 0); w.rotation.y = s*0.3; wings.push({ w, s }); });
+    return { node: r, idle(t) { wings.forEach(o => o.w.rotation.z = Math.sin(t*8)*0.5*o.s); r.position.y = (r._baseY||0) + Math.sin(t*4)*0.25; } };
+  }
+  function ghoul() { // drowned ghoul — rotted undead sailor
+    const r = new BABYLON.TransformNode('eGhoul', scene);
+    const flesh = M('ghF', '#5a6a52', { spec: 0.1 }), rag = M('ghR', '#2a3028'), bone = M('ghB', '#d8d0b0'), eye = M('ghE', '#9bff6a', { emissive: '#5aff2a' });
+    at(MB.CreateCylinder('lL', { height: 1.0, diameter: 0.3 }, scene), r, rag, -0.22, 0.5, 0);
+    at(MB.CreateCylinder('lR', { height: 1.0, diameter: 0.3 }, scene), r, rag, 0.22, 0.5, 0);
+    at(MB.CreateBox('torso', { width: 0.8, height: 1.1, depth: 0.5 }, scene), r, rag, 0, 1.5, 0);
+    at(MB.CreateBox('ribs', { width: 0.6, height: 0.5, depth: 0.42 }, scene), r, bone, 0, 1.7, 0.06);
+    const aL = at(MB.CreateCylinder('aL', { height: 1.0, diameter: 0.22 }, scene), r, flesh, -0.55, 1.5, 0.2); aL.rotation.x = -0.8;
+    const aR = at(MB.CreateCylinder('aR', { height: 1.0, diameter: 0.22 }, scene), r, flesh, 0.55, 1.5, 0.2); aR.rotation.x = -0.8;
+    at(MB.CreateSphere('head', { diameter: 0.56 }, scene), r, flesh, 0, 2.35, 0);
+    [-0.15, 0.15].forEach(z => at(MB.CreateSphere('e', { diameter: 0.15 }, scene), r, eye, 0.16, 2.4, z));
+    return { node: r, idle(t) { r.rotation.z = Math.sin(t*1.4)*0.06; r.position.y = (r._baseY||0) + Math.abs(Math.sin(t*1.2))*0.08; } };
+  }
+  function wraith() { // drowned wraith — floating dark spirit
+    const r = new BABYLON.TransformNode('eWraith', scene);
+    const robe = M('wrR', '#241a36', { spec: 0.1, emissive: '#0a0618' }), robe2 = M('wrR2', '#3a2a52'), eye = M('wrE', '#b06aff', { emissive: '#b06aff' });
+    at(MB.CreateCylinder('robe', { height: 2.4, diameterTop: 0.4, diameterBottom: 1.8, tessellation: 10 }, scene), r, robe, 0, 1.3, 0);
+    at(MB.CreateSphere('hood', { diameter: 0.9, slice: 0.7 }, scene), r, robe2, 0, 2.4, 0.05);
+    at(MB.CreateSphere('void', { diameter: 0.6 }, scene), r, M('wrV', '#0a0612', { emissive: '#1a0a2a' }), 0, 2.3, 0.18);
+    [-0.16, 0.16].forEach(z => at(MB.CreateSphere('e', { diameter: 0.18 }, scene), r, eye, 0.18, 2.35, z));
+    [-1, 1].forEach(s => { const a = at(MB.CreateCylinder('a', { height: 1.1, diameterTop: 0.05, diameterBottom: 0.22 }, scene), r, robe2, s*0.7, 1.7, 0.2); a.rotation.z = s*0.7; });
+    return { node: r, idle(t) { r.position.y = (r._baseY||0) + Math.sin(t*1.8)*0.3; r.rotation.y = Math.sin(t*0.8)*0.15; } };
+  }
+  function vampire() { // boss — Count Saltorre, the Tideborn Vampire (Dracula parody)
+    const r = new BABYLON.TransformNode('eVampire', scene);
+    const cape = M('vpCape', '#3a0a18', { spec: 0.3 }), capeIn = M('vpCapeIn', '#7a1f2f'), suit = M('vpSuit', '#14121c'),
+          skin = M('vpSkin', '#dfe0e8'), hair = M('vpHair', '#0a0a12'), eye = M('vpEye', '#ff2a3a', { emissive: '#ff2a3a' }), gold = M('vpGold', '#d9a521', { emissive: '#4a3606' });
+    at(MB.CreateCylinder('lL', { height: 1.3, diameter: 0.34 }, scene), r, suit, -0.24, 0.65, 0);
+    at(MB.CreateCylinder('lR', { height: 1.3, diameter: 0.34 }, scene), r, suit, 0.24, 0.65, 0);
+    at(MB.CreateBox('torso', { width: 1.0, height: 1.4, depth: 0.6 }, scene), r, suit, 0, 1.9, 0);
+    at(MB.CreateBox('collar', { width: 1.3, height: 0.8, depth: 0.2 }, scene), r, capeIn, 0, 2.7, -0.25).rotation.x = -0.3;
+    // sweeping cape
+    const capeMesh = at(MB.CreateCylinder('cape', { height: 2.6, diameterTop: 1.0, diameterBottom: 2.6, tessellation: 12, arc: 0.55 }, scene), r, cape, 0, 1.7, -0.3); capeMesh.rotation.y = Math.PI;
+    at(MB.CreateSphere('head', { diameter: 0.66 }, scene), r, skin, 0, 3.0, 0);
+    at(MB.CreateSphere('hair', { diameter: 0.72, slice: 0.6 }, scene), r, hair, 0, 3.12, -0.02);
+    at(MB.CreateBox('widow', { width: 0.12, height: 0.14, depth: 0.05 }, scene), r, hair, 0, 2.82, 0.31);
+    [-0.16, 0.16].forEach(z => at(MB.CreateSphere('e', { diameter: 0.13 }, scene), r, eye, 0.2, 3.02, z));
+    [-0.08, 0.08].forEach(z => at(MB.CreateCylinder('fang', { height: 0.14, diameterTop: 0, diameterBottom: 0.06 }, scene), r, M('vpFang', '#fff'), 0.28, 2.78, z).rotation.x = Math.PI);
+    at(MB.CreateBox('medal', { width: 0.2, height: 0.2, depth: 0.06 }, scene), r, gold, 0, 2.3, 0.31).rotation.z = 0.78;
+    const aL = at(MB.CreateCylinder('aL', { height: 1.1, diameter: 0.26 }, scene), r, suit, -0.66, 1.95, 0.1); aL.rotation.z = 0.3; aL.rotation.x = -0.4;
+    const aR = at(MB.CreateCylinder('aR', { height: 1.1, diameter: 0.26 }, scene), r, suit, 0.66, 1.95, 0.1); aR.rotation.z = -0.3; aR.rotation.x = -0.4;
+    return { node: r, idle(t) { r.position.y = (r._baseY||0) + Math.sin(t*1.1)*0.12; capeMesh.rotation.z = Math.sin(t*1.3)*0.06; } };
+  }
+  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire };
+
+  // ---------------- SIMON (temporary vampire-hunter ally) ----------------
+  function simon() {
+    const r = new BABYLON.TransformNode('simon', scene);
+    const tunic = M('smTunic', '#7a4a1f'), tunic2 = M('smTunic2', '#94632c'), armor = M('smArmor', '#b8bcc8', { spec: 0.7 }),
+          skin = M('smSkin', '#cf9a78'), hair = M('smHair', '#5a3a18'), band = M('smBand', '#b03030'), leather = M('smLeather', '#3a2616');
+    at(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.32 }, scene), r, leather, -0.22, 0.57, 0);
+    at(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.32 }, scene), r, leather, 0.22, 0.57, 0);
+    at(MB.CreateBox('torso', { width: 0.92, height: 1.2, depth: 0.55 }, scene), r, tunic, 0, 1.62, 0);
+    at(MB.CreateBox('belt', { width: 0.96, height: 0.18, depth: 0.57 }, scene), r, M('smBelt', '#caa030', { emissive: '#3a2e08' }), 0, 1.25, 0);
+    at(MB.CreateBox('pauldron', { width: 0.5, height: 0.3, depth: 0.6 }, scene), r, armor, -0.55, 2.08, 0);
+    const aL = at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.28 }, scene), r, tunic2, -0.6, 1.6, 0); aL.rotation.z = 0.22;
+    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.62, 2.02, 0);
+    at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.28 }, scene), arm, tunic2, 0, -0.45, 0);
+    at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.5, 0);
+    at(MB.CreateSphere('hair', { diameter: 0.66, slice: 0.55 }, scene), r, hair, 0, 2.62, -0.04);
+    at(MB.CreateBox('band', { width: 0.66, height: 0.14, depth: 0.62 }, scene), r, band, 0, 2.66, 0);
+    // the legendary whip — a chain of short links hanging from the right hand
+    const whip = new BABYLON.TransformNode('whip', scene); whip.parent = arm; whip.position.set(0, -0.7, 0.25); whip.rotation.x = 1.2;
+    at(MB.CreateBox('handle', { width: 0.1, height: 0.4, depth: 0.1 }, scene), whip, leather, 0, 0.2, 0);
+    for (let i = 0; i < 6; i++) at(MB.CreateSphere('lk'+i, { diameter: 0.16 - i*0.012 }, scene), whip, M('smLink'+i, '#9a9aa8', { spec: 0.6 }), 0, 0.45 + i*0.18, 0);
+    return { node: r, arm };
+  }
 
   // dungeon props
   function crystal(hex) {
@@ -471,6 +568,6 @@ window.Models = (function () {
   }
   function pillar() { const r = new BABYLON.TransformNode('pillar', scene); at(MB.CreateCylinder('p', { height: 4, diameter: 1.0, tessellation: 8 }, scene), r, M('pil', '#5a5266'), 0, 2, 0); return { node: r }; }
 
-  return { use, M, at, pirate, swordsman, healer, mage, blader, dragoon, rival, mermaid, hero, npc, tree, palm, rock, house, sign, portal, roamer,
+  return { use, M, at, pirate, swordsman, healer, mage, blader, dragoon, rival, simon, mermaid, hero, npc, tree, palm, rock, house, sign, portal, roamer,
            crystal, chest, pillar, enemy: (key) => ENEMY_BUILDERS[key](), ENEMY_BUILDERS };
 })();

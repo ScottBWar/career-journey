@@ -87,7 +87,8 @@ window.Game = (function () {
   function resumeSea() { const sc = Sea.getScene(); if (!sc) return; Game.dialogueOpen = false; Game.scene = sc; setMode('sea'); Sea.resume(); Sea.focus(); Music.play('sea'); }
   function enterTown(key) { World.pause(); const sc = Town.enter(key); Game.scene = sc; setMode('town'); Progress.save(Game.state); }
   function toDungeon(key) { World.pause(); const sc = Dungeon.enter(key); Game.scene = sc; setMode('dungeon'); Progress.save(Game.state); }
-  Game.toIsland = toIsland; Game.resumeIsland = resumeIsland; Game.toSea = toSea; Game.resumeSea = resumeSea; Game.enterTown = enterTown; Game.toDungeon = toDungeon;
+  function resumeDungeon() { const sc = Dungeon.getScene(); if (!sc) return; Game.dialogueOpen = false; Game.scene = sc; setMode('dungeon'); Dungeon.resume(); Music.play('dungeon'); }
+  Game.toIsland = toIsland; Game.resumeIsland = resumeIsland; Game.toSea = toSea; Game.resumeSea = resumeSea; Game.enterTown = enterTown; Game.toDungeon = toDungeon; Game.resumeDungeon = resumeDungeon;
 
   // ---------- battle transition ----------
   function transition(cb) {
@@ -126,7 +127,7 @@ window.Game = (function () {
   };
 
   // ---------- dialogue ----------
-  const NAME2PORT = { 'Capt. Redbeard': 'pirate', 'Lance Strider': 'swordsman', 'Marina': 'healer', 'Pip': 'mage', 'Ridge': 'blader', 'Quint': 'dragoon', 'Selachoth': 'selachoth', 'Ruffy': 'ruffy' };
+  const NAME2PORT = { 'Capt. Redbeard': 'pirate', 'Lance Strider': 'swordsman', 'Marina': 'healer', 'Pip': 'mage', 'Ridge': 'blader', 'Quint': 'dragoon', 'Selachoth': 'selachoth', 'Ruffy': 'ruffy', 'Simon': 'simon', 'Count Saltorre': 'vampire' };
   function dlgPortrait(name) { const k = NAME2PORT[name]; el('dlgPortrait').innerHTML = (k && Portraits.has(k)) ? Portraits.img(k) : ''; }
   Game.talk = function (npc) {
     const lines = npc.lines.slice(); let i = 0;

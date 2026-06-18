@@ -104,6 +104,22 @@ window.Data = (function () {
         { id: 'r_gear', name: 'Gear: Boundman', desc: '+12% Crit', cost: 3, req: 'r_bazooka', kind: 'stat', stat: { crit: 0.12 } },
       ],
     },
+    {
+      key: 'simon', name: 'Simon', role: 'Vampire Hunter', model: 'simon', temporary: true,
+      base: { hp: 168, mp: 26, atkMin: 26, atkMax: 38, crit: 0.16, big: true },
+      growth: { hp: 17, mp: 3, atk: 4 },
+      baseAbilities: [
+        ab('Holy Whip', { mp: 8, min: 40, max: 56, target: 'enemy', fx: 'beam', el: 'holy' }),
+        ab('Cross Boomerang', { mp: 14, min: 28, max: 40, target: 'all', fx: 'beam', el: 'holy' }),
+      ],
+      tree: [
+        { id: 'si_hp', name: 'Hunter\'s Vigor', desc: '+30 Max HP', cost: 1, kind: 'stat', stat: { hp: 30 } },
+        { id: 'si_atk', name: 'Whip Mastery', desc: '+6 Attack', cost: 1, kind: 'stat', stat: { atk: 6 } },
+        { id: 'si_holy', name: 'Holy Water', desc: 'Burning holy flask on all foes', cost: 1, req: 'si_atk', kind: 'ability', ability: ab('Holy Water', { mp: 16, min: 32, max: 46, target: 'all', fx: 'fire', el: 'holy' }) },
+        { id: 'si_crit', name: 'Vampire Killer', desc: '+14% Crit', cost: 2, req: 'si_holy', kind: 'stat', stat: { crit: 0.14 } },
+        { id: 'si_cross', name: 'Grand Cross', desc: 'A radiant cross shatters all foes', cost: 3, req: 'si_crit', kind: 'ability', ability: ab('Grand Cross', { mp: 26, min: 48, max: 66, target: 'all', fx: 'beam', el: 'holy' }) },
+      ],
+    },
   ];
 
   const ENEMIES = {
@@ -113,6 +129,16 @@ window.Data = (function () {
     octo:   { name: 'Reef Octopus',      model: 'octo',  hp: 102, xp: 30, gold: 24, baseY: 0.1, moves: [ { name: 'slams a tentacle', min: 15, max: 21 }, { name: 'sprays stinging ink', min: 8, max: 12, all: true } ], drops: [ { mat: 'ink', chance: 0.7 }, { mat: 'goo', chance: 0.3 } ] },
     gull:   { name: 'Dive-Bomb Gull',    model: 'gull',  hp: 54,  xp: 18, gold: 12, baseY: 1.4, moves: [ { name: 'pecks rapidly', min: 8, max: 13 }, { name: 'dive-bombs', min: 17, max: 25 } ], drops: [ { mat: 'feather', chance: 0.85 } ] },
     golem:  { name: 'Sandcastle Golem',  model: 'golem', hp: 136, xp: 36, gold: 30, baseY: 0,   moves: [ { name: 'slams a sandy fist', min: 15, max: 23 }, { name: 'crumbles down', min: 11, max: 18, all: true } ], drops: [ { mat: 'sand', chance: 0.85 }, { mat: 'brine', chance: 0.25 } ] },
+    eel:    { name: 'Voltaic Eel',       model: 'eel',   hp: 96,  xp: 32, gold: 24, baseY: 1.0, moves: [ { name: 'lashes its tail', min: 13, max: 19 }, { name: 'looses a current', min: 12, max: 18, all: true } ], drops: [ { mat: 'goo', chance: 0.6 }, { mat: 'brine', chance: 0.35 } ] },
+    urchin: { name: 'Spine Urchin',      model: 'urchin', hp: 150, xp: 34, gold: 26, baseY: 0,  moves: [ { name: 'fires a spine volley', min: 14, max: 20 }, { name: 'rolls over the party', min: 12, max: 18, all: true } ], drops: [ { mat: 'shellfrag', chance: 0.6 }, { mat: 'sand', chance: 0.4 } ] },
+    bat:    { name: 'Nightwing Bat',     model: 'bat',   hp: 78,  xp: 30, gold: 20, baseY: 1.6, moves: [ { name: 'bites with a screech', min: 12, max: 18 }, { name: 'drains warm blood', min: 14, max: 20 } ], drops: [ { mat: 'ectoplasm', chance: 0.4 }, { mat: 'feather', chance: 0.3 } ] },
+    ghoul:  { name: 'Drowned Ghoul',     model: 'ghoul', hp: 132, xp: 38, gold: 28, baseY: 0,   moves: [ { name: 'rakes with rotted claws', min: 15, max: 22 }, { name: 'exhales grave-rot', min: 12, max: 18, all: true } ], drops: [ { mat: 'ectoplasm', chance: 0.7 }, { mat: 'brine', chance: 0.3 } ] },
+    wraith: { name: 'Tide Wraith',       model: 'wraith', hp: 110, xp: 40, gold: 30, baseY: 0.6, moves: [ { name: 'phases through a soul', min: 16, max: 23 }, { name: 'wails a dirge', min: 13, max: 19, all: true } ], drops: [ { mat: 'ectoplasm', chance: 0.8 } ] },
+    vampire:{ name: 'Count Saltorre',    model: 'vampire', hp: 600, xp: 460, gold: 700, baseY: 0, boss: true, moves: [
+      { name: 'rends with crimson claws', min: 30, max: 44 },
+      { name: 'summons a swarm of bats', min: 20, max: 28, all: true },
+      { name: 'drains the lifeblood of', min: 34, max: 48 },
+      { name: 'unleashes Crimson Deluge', min: 28, max: 40, all: true } ], drops: [ { mat: 'abyssscale', chance: 1 }, { mat: 'ectoplasm', chance: 1 } ] },
     kraken: { name: 'The Kraken',        model: 'kraken', hp: 360, xp: 160, gold: 220, baseY: 0, boss: true, moves: [ { name: 'crushes with a tentacle', min: 24, max: 34 }, { name: 'unleashes a maelstrom', min: 18, max: 26, all: true }, { name: 'snaps its colossal beak', min: 30, max: 42 } ], drops: [ { mat: 'ink', chance: 1 }, { mat: 'abyssscale', chance: 0.5 } ] },
     leviathan: { name: 'Reaper Leviathan', model: 'leviathan', hp: 520, xp: 380, gold: 600, baseY: 0.5, boss: true, moves: [
       { name: 'lunges with gaping jaws', min: 34, max: 48 },
@@ -226,6 +252,11 @@ window.Data = (function () {
       { key: 'haki_gauntlets',  name: 'Haki Gauntlets',   atk: 14, slots: 2, price: 360, desc: '+14 ATK · 2 shell slots' },
       { key: 'conquerors_fists', name: "Conqueror's Fists", atk: 26, slots: 3, price: 880, desc: '+26 ATK · 3 shell slots' },
     ],
+    simon: [
+      { key: 'leather_whip', name: 'Leather Whip',  atk: 10, slots: 2, price: 0, desc: 'A hunter\'s trusted whip.' },
+      { key: 'chain_whip',   name: 'Chain Whip',    atk: 20, slots: 2, price: 0, desc: '+20 ATK · 2 shell slots' },
+      { key: 'vampire_killer', name: 'Vampire Killer', atk: 34, slots: 3, price: 0, desc: 'The legendary whip — bane of the night.' },
+    ],
   };
   // ultimate weapons (sold at the Mall Isle bazaar)
   const ULT = {
@@ -288,6 +319,12 @@ window.Data = (function () {
     octo:   { weak: ['thunder'], resist: ['water'] },
     gull:   { weak: ['thunder'], resist: ['earth'] },
     golem:  { weak: ['water'], resist: ['fire'] },
+    eel:    { weak: ['earth'], absorb: ['thunder'], resist: ['water'] },
+    urchin: { weak: ['water'], resist: ['earth', 'physical'] },
+    bat:    { weak: ['holy'], resist: ['dark'] },
+    ghoul:  { weak: ['holy', 'fire'], absorb: ['dark'], resist: ['water'] },
+    wraith: { weak: ['holy'], absorb: ['dark'], nullify: ['physical'] },
+    vampire:{ weak: ['holy'], absorb: ['dark'], resist: ['fire', 'water'] },
     kraken: { weak: ['thunder'], resist: ['water'] },
     selachoth: { weak: ['thunder', 'holy'], absorb: ['water'] },
     leviathan: { weak: ['thunder'], resist: ['water'] },
@@ -312,10 +349,11 @@ window.Data = (function () {
     blader:    { name: 'Finishing Touch', target: 'all',      fx: 'beam',  el: 'thunder', min: 72, max: 98, flavor: 'cuts the very air!' },
     dragoon:   { name: "Leviathan's End", target: 'enemy',    fx: 'beam',  el: 'water',   min: 120, max: 168, flavor: 'hurls the great harpoon with a vengeance!' },
     ruffy:     { name: 'Gum-Gum King Cobra', target: 'enemy', fx: 'beam',  el: 'physical', min: 130, max: 175, flavor: 'winds up a fist the size of an island!' },
+    simon:     { name: 'Grand Cross',     target: 'all',      fx: 'beam',  el: 'holy',    min: 96, max: 132, flavor: 'calls down a cross of holy light!' },
   };
 
   // ---------------- ICONS ----------------
-  const WEAPON_ICON = { pirate: '⚔️', swordsman: '🗡️', healer: '🪄', mage: '✨', blader: '🌀', dragoon: '🔱', ruffy: '🥊' };
+  const WEAPON_ICON = { pirate: '⚔️', swordsman: '🗡️', healer: '🪄', mage: '✨', blader: '🌀', dragoon: '🔱', ruffy: '🥊', simon: '🔗' };
   const weaponIcon = (charKey) => WEAPON_ICON[charKey] || '⚔️';
   const shellIcon = (sh) => (sh.kind === 'magic' ? '🔮' : '🛡️');
 
@@ -539,6 +577,16 @@ window.Data = (function () {
       encounters: [],
       decor: { trees: 4, palms: 6, rocks: 4 },
     },
+    duskmoor: {
+      name: 'Duskmoor Isle', size: 50, ground: '#2a2230', sand: '#3a2e3a', water: '#101018', sky: { top: '#070410', horizon: '#2a0e22' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      dungeon: { key: 'vampire_keep', x: 0, z: 9, color: '#b03050' },
+      encounters: [
+        { x: -6, z: 9, pool: ['bat', 'ghoul'], min: 2, max: 3 },
+        { x: 7, z: 11, pool: ['wraith', 'bat'], min: 2, max: 2 },
+      ],
+      decor: { trees: 6, palms: 0, rocks: 10 },
+    },
   };
 
   // ---------------- SEA (sail between islands) ----------------
@@ -549,6 +597,7 @@ window.Data = (function () {
       { key: 'dunes', x: 30, z: -2 },
       { key: 'spire', x: 4, z: -42 },
       { key: 'mall', x: -10, z: 34 },
+      { key: 'duskmoor', x: 44, z: 30 },
     ],
     ships: [
       { id: 's0', type: 'sloop', x: -10, z: 20 },
@@ -567,6 +616,7 @@ window.Data = (function () {
       hint: 'Riddle: "Sunset bleeds, then deepest sea, then the meadow welcomes thee."',
       crystals: [ { color: '#ff5e5e', name: 'red', x: -6, z: 2 }, { color: '#5e8bff', name: 'blue', x: 0, z: 4 }, { color: '#5eff8b', name: 'green', x: 6, z: 2 } ],
       sequence: [0, 1, 2],
+      mobs: [ { x: -8, z: -2, pool: ['crab', 'jelly'], min: 1, max: 2 }, { x: 8, z: -1, pool: ['shark', 'eel'], min: 2, max: 2 } ],
       reward: { gold: 120, shell: 'triton_blast' },
     },
     dune_tomb: {
@@ -575,6 +625,7 @@ window.Data = (function () {
       hint: 'Riddle: "Gold of the dune, green of the oasis, blue of the well — in that order, seek your grace."',
       crystals: [ { color: '#ffcf4a', name: 'gold', x: -6, z: 2 }, { color: '#5eff8b', name: 'green', x: 6, z: 2 }, { color: '#5e8bff', name: 'blue', x: 0, z: 4 } ],
       sequence: [0, 1, 2],
+      mobs: [ { x: -8, z: -2, pool: ['urchin', 'golem'], min: 1, max: 2 }, { x: 8, z: 0, pool: ['ghoul', 'urchin'], min: 2, max: 2 }, { x: 0, z: 14, pool: ['golem', 'ghoul', 'urchin'], min: 2, max: 3 } ],
       reward: { gold: 200, shell: 'nautilus_surge' },
     },
     abyss_vault: {
@@ -583,7 +634,18 @@ window.Data = (function () {
       hint: 'Riddle: "Violet abyss, pale moon, then the dying ember last of all."',
       crystals: [ { color: '#b06aff', name: 'violet', x: -6, z: 2 }, { color: '#dfe7ef', name: 'white', x: 0, z: 4 }, { color: '#ff7e3a', name: 'ember', x: 6, z: 2 } ],
       sequence: [0, 1, 2],
+      mobs: [ { x: -8, z: -2, pool: ['wraith', 'ghoul'], min: 2, max: 2 }, { x: 8, z: -1, pool: ['octo', 'wraith'], min: 2, max: 3 }, { x: 0, z: 14, pool: ['wraith', 'ghoul', 'octo'], min: 3, max: 3 } ],
       reward: { gold: 400, shell: 'tiger_crit' },
+    },
+    vampire_keep: {
+      name: 'Castle Crimsontide', island: 'duskmoor', ground: '#241620', wall: '#16101a', sky: { top: '#0a0410', horizon: '#2a0e1e' },
+      spawn: { x: 0, z: -8 }, exit: { x: 0, z: -10 }, gate: { x: 0, z: 8 }, chest: { x: 0, z: 11 },
+      hint: 'Castle Crimsontide — the air is thick with the iron-smell of old blood. Cut a path to the throne at the far end and end the Count.',
+      crystals: [],
+      vampire: true,
+      mobs: [ { x: -8, z: -2, pool: ['bat', 'bat', 'ghoul'], min: 2, max: 3 }, { x: 8, z: -1, pool: ['wraith', 'bat'], min: 2, max: 2 }, { x: -7, z: 6, pool: ['ghoul', 'wraith'], min: 2, max: 2 } ],
+      bossMob: { x: 0, z: 12, key: 'vampire' },
+      reward: { gold: 900, shell: 'triton_blast' },
     },
   };
 
@@ -642,6 +704,31 @@ window.Data = (function () {
       { name: 'Selachoth', text: '...Perhaps. Perhaps I should have... let the morning... in.' },
       { name: 'Marina', text: 'Rest now, old hero. The tide will carry you somewhere gentler than what you became.' },
       { name: 'Narrator', text: 'The One-Finned Angel dissolves into seafoam. The horizon warms. And somewhere, the people of a hundred saved islands raise a cheer for a rubber-limbed king who never wore a crown.' },
+    ],
+    simonJoin: [
+      { name: 'Narrator', text: 'Duskmoor Isle. No gulls, no surf — only a black castle against a bleeding moon, and the smell of old iron on the wind.' },
+      { name: '???', text: '(A whip cracks across the gate, severing a lunging shadow in two.) "Stand back. This is hunter\'s work."' },
+      { name: 'Simon', text: 'Name\'s Simon. My bloodline has hunted the thing that sleeps in this castle for nine generations. The tide woke it early. It calls itself COUNT SALTORRE now.' },
+      { name: 'Lance Strider', text: 'A vampire. Of course there\'s a vampire.' },
+      { name: 'Simon', text: 'I can\'t breach the throne room alone — and you can\'t survive it without me. So we go together. Just for tonight. When the Count is ash, I walk my own road again.' },
+      { name: 'Narrator', text: 'Simon the Vampire Hunter joins your party as a fourth member — for as long as you stay in Castle Crimsontide. He fights, levels and breaks limits just like the rest. (Leave the castle and he holds the gate; clear it and he moves on.)' },
+    ],
+    vampirePre: [
+      { name: 'Count Saltorre', text: 'Guests. How rare. The sea brought me a fresh tide of warmth, and a Belmont to season it.' },
+      { name: 'Simon', text: 'Nine generations, Count. Tonight the debt comes due.' },
+      { name: 'Count Saltorre', text: 'Your forefathers said the same, hunter — and I drank every one. WHAT IS A MAN? A miserable little pile of low tide! ...Have at you.' },
+    ],
+    vampireFall: [
+      { name: 'Count Saltorre', text: 'Impossible... dragged back into the dark... by the warm and the living together...' },
+      { name: 'Simon', text: 'That\'s the difference between us, Count. I never hunted alone. I just forgot it for a while.' },
+      { name: 'Narrator', text: 'Count Saltorre crumbles to red dust and is scattered by the sea wind. The moon over Duskmoor pales to a clean white.' },
+    ],
+    simonLeave: [
+      { name: 'Simon', text: 'It\'s done. The castle\'s quiet for the first time in nine generations.' },
+      { name: 'Capt. Redbeard', text: 'Stay on, lad. A crew could use a man who hunts monsters for sport.' },
+      { name: 'Simon', text: 'Tempting. But there\'s always another castle, another night, another thing in the dark. That\'s a Belmont\'s road, and I walk it alone. ...Mostly.' },
+      { name: 'Simon', text: '(He coils the whip and tips his head.) "You fight well, for sailors. If the tide ever brings you back to Duskmoor — the gate\'s open." ' },
+      { name: 'Narrator', text: 'Simon leaves the party and vanishes into the moonlight. (He is no longer available — but Castle Crimsontide remembers.)' },
     ],
   };
 

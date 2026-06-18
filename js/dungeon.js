@@ -8,6 +8,7 @@ window.Dungeon = (function () {
   let scene, cam, player, engine, def, key;
   let crystals = [], gate, chest, idlers = [], targets = [], paused = false, t = 0, camYaw = 0;
   let step = 0, solvedPuzzle = false, chestLooted = false, nearTarget = null;
+  let mobs = [], mobDefeated = {}, bossDefeated = false, busy = false;
   const SPEED = 8;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
@@ -15,8 +16,11 @@ window.Dungeon = (function () {
   function build(dungeonKey) {
     key = dungeonKey; def = Data.DUNGEONS[dungeonKey]; engine = Game.engine;
     if (scene) scene.dispose();
-    crystals = []; idlers = []; targets = []; nearTarget = null; t = 0; step = 0; paused = false;
-    solvedPuzzle = !!Game.state.dungeons[key]; chestLooted = !!Game.state.dungeons[key];
+    crystals = []; idlers = []; targets = []; mobs = []; nearTarget = null; t = 0; step = 0; paused = false; busy = false;
+    const cleared = !!Game.state.dungeons[key];
+    bossDefeated = !!Game.state.dungeons[key + '_boss'];
+    mobDefeated = Game.state.dungeons[key + '_mobs'] || (Game.state.dungeons[key + '_mobs'] = {});
+    solvedPuzzle = def.vampire ? bossDefeated : cleared; chestLooted = cleared;
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color4(0.02, 0.02, 0.05, 1);
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = Color3.FromHexString(def.wall); scene.fogDensity = 0.02;
@@ -50,6 +54,8 @@ window.Dungeon = (function () {
     const exSign = Models.sign('Exit'); exSign.node.position.set(def.exit.x - 2.2, 0, def.exit.z);
     targets.push({ kind: 'exit', pos: new V3(def.exit.x, 0, def.exit.z), r: 2.2 });
 
+    spawnMobs();
+
     if (solvedPuzzle) { gate.position.y = 8; crystals.forEach(c => setLit(c, true)); }
 
     const leaderModel = Progress.def(Game.state.active[0] || 'pirate').model;
@@ -65,6 +71,52 @@ window.Dungeon = (function () {
 
   function setLit(c, on) { c.gem.material.emissiveColor = on ? Color3.FromHexString('#ffffff') : c.baseEmis; c.node.scaling.setAll(on ? 1.25 : 1); }
 
+  // ---- monster tokens that trigger battles ----
+  function spawnMobs() {
+    (def.mobs || []).forEach((m, i) => {
+      if (mobDefeated['m' + i]) return;
+      const lead = m.pool[0];
+      const built = Models.ENEMY_BUILDERS[lead] ? Models.enemy(lead) : Models.roamer('#b03050');
+      built.node.position.set(m.x, 0, m.z); built.node.scaling.setAll(0.7); built.node._baseY = 0; built.node._ph = i * 1.3;
+      idlers.push(built);
+      mobs.push({ kind: 'mob', idx: i, node: built.node, pos: new V3(m.x, 0, m.z), r: 2.2, pool: m.pool, min: m.min, max: m.max });
+    });
+    if (def.bossMob && !bossDefeated) {
+      const b = def.bossMob;
+      const built = Models.ENEMY_BUILDERS[b.key] ? Models.enemy(b.key) : Models.roamer('#ff2a3a');
+      built.node.position.set(b.x, 0, b.z); built.node._baseY = 0; idlers.push(built);
+      mobs.push({ kind: 'boss', node: built.node, pos: new V3(b.x, 0, b.z), r: 3.0, key: b.key });
+    }
+  }
+  function startMob(m) {
+    busy = true; paused = true; Music.play('battle');
+    const keys = []; const n = Math.floor(Math.random() * (m.max - m.min + 1)) + m.min;
+    for (let i = 0; i < n; i++) keys.push(m.pool[Math.floor(Math.random() * m.pool.length)]);
+    Game.startBattle(keys, {}, (res) => {
+      if (res.won) { mobDefeated['m' + m.idx] = true; Game.state.dungeons[key + '_mobs'] = mobDefeated; m.node.setEnabled(false); m.dead = true; Progress.save(Game.state); }
+      else { player.position.z -= 3; }
+      busy = false; paused = false; Game.resumeDungeon();
+    });
+  }
+  function startBoss(m) {
+    busy = true; paused = true;
+    Game.cutscene(Data.STORY.vampirePre, () => {
+      Music.play('boss');
+      Game.startBattle([m.key], { boss: true, fullLimit: true }, (res) => {
+        if (res.won) {
+          bossDefeated = true; Game.state.dungeons[key + '_boss'] = true; m.node.setEnabled(false); m.dead = true; solvedPuzzle = true;
+          let y0 = gate.position.y; let acc = 0;
+          const obs = scene.onBeforeRenderObservable.add(() => { acc += engine.getDeltaTime(); const k = Math.min(1, acc / 700); gate.position.y = y0 + k * 6; if (k >= 1) scene.onBeforeRenderObservable.remove(obs); });
+          Progress.save(Game.state);
+          busy = false; paused = false; Game.resumeDungeon();
+          Game.cutscene(Data.STORY.vampireFall, () => Game.cutscene(Data.STORY.simonLeave, () => {
+            Progress.dismiss(Game.state, 'simon'); Progress.save(Game.state); Game.toast('The throne room opens. Claim what the Count hoarded.');
+          }));
+        } else { player.position.z -= 3; busy = false; paused = false; Game.resumeDungeon(); }
+      });
+    });
+  }
+
   function update() {
     if (paused || (window.Game && Game.blocking && Game.blocking())) return;
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
@@ -78,6 +130,14 @@ window.Dungeon = (function () {
     if (mx || mz) { const len = Math.hypot(mx, mz); mx /= len; mz /= len; const fX=-Math.sin(camYaw), fZ=Math.cos(camYaw), rX=Math.cos(camYaw), rZ=Math.sin(camYaw); const wx=mx*rX+mz*fX, wz=mx*rZ+mz*fZ; player.position.x = clamp(player.position.x + wx*SPEED*dt, -12, 12); player.position.z = clamp(player.position.z + wz*SPEED*dt, -15, 17); player.rotation.y = Math.atan2(wx, wz); player.position.y = Math.abs(Math.sin(t*10))*0.12; } else player.position.y = 0;
 
     idlers.forEach(o => o.idle && o.idle(t));
+
+    // monster contact → battle
+    if (!busy) {
+      for (const m of mobs) {
+        if (m.dead || !m.node.isEnabled()) continue;
+        if (V3.Distance(player.position, m.pos) < m.r) { if (m.kind === 'boss') startBoss(m); else startMob(m); return; }
+      }
+    }
 
     nearTarget = null;
     for (const tg of targets) { if (tg.kind === 'chest' && (chestLooted || !solvedPuzzle)) continue; if (V3.Distance(player.position, tg.pos) < tg.r) { nearTarget = tg; break; } }
@@ -122,11 +182,22 @@ window.Dungeon = (function () {
     if (paused || !nearTarget) return;
     if (nearTarget.kind === 'crystal') activate(nearTarget.idx);
     else if (nearTarget.kind === 'chest') loot();
-    else if (nearTarget.kind === 'exit') Game.toIsland(def.island, false, true);
+    else if (nearTarget.kind === 'exit') {
+      if (def.vampire && !bossDefeated) { Progress.dismiss(Game.state, 'simon'); Progress.save(Game.state); Game.toast('Simon holds the castle gate. "Come back when you\'re ready to finish this."'); }
+      Game.toIsland(def.island, false, true);
+    }
   }
   function showRiddle() { Game.cutscene([{ name: def.name, text: def.hint }], () => resume()); }
 
-  function enter(dungeonKey) { build(dungeonKey); Game.active = { interact }; Music.play('dungeon'); setTimeout(showRiddle, 400); return scene; }
+  function enter(dungeonKey) {
+    build(dungeonKey); Game.active = { interact }; Music.play('dungeon');
+    if (def.vampire && !bossDefeated) {
+      Progress.recruit(Game.state, 'simon', 4); Progress.save(Game.state);
+      if (!Game.state.flags.simonMet) { Game.state.flags.simonMet = true; Progress.save(Game.state); setTimeout(() => Game.startCutscene('simonJoin'), 400); }
+      else setTimeout(showRiddle, 400);
+    } else setTimeout(showRiddle, 400);
+    return scene;
+  }
   function pause() { paused = true; }
   function resume() { paused = false; }
 
