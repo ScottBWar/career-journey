@@ -14,9 +14,9 @@
     comp.threshold.value = -18; comp.knee.value = 24; comp.ratio.value = 3; comp.attack.value = 0.004; comp.release.value = 0.25;
     master = ctx.createGain(); master.gain.value = muted ? 0 : 0.85;
     // reverb (convolution with a procedurally-generated impulse)
-    conv = ctx.createConvolver(); conv.buffer = makeImpulse(2.4, 2.2);
-    dry = ctx.createGain(); dry.gain.value = 0.82;
-    wet = ctx.createGain(); wet.gain.value = 0.28;
+    conv = ctx.createConvolver(); conv.buffer = makeImpulse(3.2, 2.5);
+    dry = ctx.createGain(); dry.gain.value = 0.8;
+    wet = ctx.createGain(); wet.gain.value = 0.36;
     master.connect(comp);
     comp.connect(dry).connect(ctx.destination);
     comp.connect(conv).connect(wet).connect(ctx.destination);
@@ -54,80 +54,181 @@
     const g = ctx.createGain(); g.gain.setValueAtTime(peak, time); g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
     src.connect(f).connect(g).connect(dest); src.start(time); src.stop(time + dur + 0.02);
   }
-  function kick(time, dest = musicBus) { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(140, time); o.frequency.exponentialRampToValueAtTime(45, time + 0.12); g.gain.setValueAtTime(0.5, time); g.gain.exponentialRampToValueAtTime(0.0001, time + 0.18); o.connect(g).connect(dest); o.start(time); o.stop(time + 0.2); }
-  function snare(time, dest = musicBus) { noise(time, 0.16, { cutoff: 3000, hp: true, peak: 0.18, dest }); const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.value = 180; g.gain.setValueAtTime(0.12, time); g.gain.exponentialRampToValueAtTime(0.0001, time + 0.12); o.connect(g).connect(dest); o.start(time); o.stop(time + 0.13); }
-  function hat(time, dest = musicBus) { noise(time, 0.04, { cutoff: 9000, hp: true, peak: 0.07, dest }); }
+  // ---- trip-hop instrument voices ----
+  // warm electric piano (Rhodes-ish): sine body + octave shimmer + a bell "tine"
+  function epiano(freq, time, dur, o = {}) {
+    const { peak = 0.08, cutoff = 2200, dest = musicBus } = o;
+    const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.4;
+    const body = ctx.createOscillator(); body.type = 'sine'; body.frequency.value = freq;
+    const oct = ctx.createOscillator(); oct.type = 'sine'; oct.frequency.value = freq * 2; const og = ctx.createGain();
+    const tine = ctx.createOscillator(); tine.type = 'sine'; tine.frequency.value = freq * 6.5; const tg = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.linearRampToValueAtTime(peak, time + 0.008);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak * 0.3), time + 0.16);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + dur + 0.2);
+    og.gain.setValueAtTime(peak * 0.45, time); og.gain.exponentialRampToValueAtTime(0.0001, time + 0.22);
+    tg.gain.setValueAtTime(peak * 0.5, time); tg.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
+    body.connect(f); oct.connect(og).connect(f); tine.connect(tg).connect(f); f.connect(g).connect(dest);
+    [body, oct, tine].forEach(x => { x.start(time); x.stop(time + dur + 0.25); });
+  }
+  // deep round sub bass
+  function subBass(freq, time, dur, o = {}) {
+    const { peak = 0.3, dest = musicBus } = o;
+    const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 220; f.Q.value = 0.8;
+    const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = freq;
+    const o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = freq; const o2g = ctx.createGain(); o2g.gain.value = 0.16;
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.linearRampToValueAtTime(peak, time + 0.025);
+    g.gain.setValueAtTime(peak, time + dur * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + dur + 0.1);
+    o1.connect(f); o2.connect(o2g).connect(f); f.connect(g).connect(dest);
+    o1.start(time); o2.start(time); o1.stop(time + dur + 0.12); o2.stop(time + dur + 0.12);
+  }
+  // ---- drums: dusty, downtempo, head-nodding ----
+  function kick(time, dest = musicBus, o = {}) {
+    const { peak = 0.6 } = o; const oo = ctx.createOscillator(), g = ctx.createGain();
+    oo.frequency.setValueAtTime(118, time); oo.frequency.exponentialRampToValueAtTime(42, time + 0.13);
+    g.gain.setValueAtTime(peak, time); g.gain.exponentialRampToValueAtTime(0.0001, time + 0.28);
+    oo.connect(g).connect(dest); oo.start(time); oo.stop(time + 0.3);
+    noise(time, 0.012, { cutoff: 2600, hp: true, peak: 0.1, dest });
+  }
+  function snare(time, dest = musicBus, o = {}) {
+    const { peak = 0.2 } = o;
+    noise(time, 0.012, { cutoff: 1800, hp: false, peak: peak * 0.6, dest });  // attack crack
+    noise(time, 0.20, { cutoff: 2600, hp: true, peak: peak * 0.9, dest });    // reverberant body
+    const oo = ctx.createOscillator(), g = ctx.createGain(); oo.type = 'triangle';
+    oo.frequency.setValueAtTime(195, time); oo.frequency.exponentialRampToValueAtTime(135, time + 0.1);
+    g.gain.setValueAtTime(peak * 0.55, time); g.gain.exponentialRampToValueAtTime(0.0001, time + 0.16);
+    oo.connect(g).connect(dest); oo.start(time); oo.stop(time + 0.18);
+  }
+  function hat(time, dest = musicBus, o = {}) { const { peak = 0.05, open = false } = o; noise(time, open ? 0.16 : 0.03, { cutoff: 9500, hp: true, peak, dest }); }
+
+  // ---- vinyl crackle bed (loops continuously under the music) ----
+  let crackleNode = null;
+  function startTexture() {
+    if (crackleNode || !ctx) return;
+    const rate = ctx.sampleRate, buf = ctx.createBuffer(1, Math.floor(rate * 4), rate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) { let v = (Math.random() * 2 - 1) * 0.008; if (Math.random() < 0.0004) v += (Math.random() * 2 - 1) * 0.28; d[i] = v; }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = ctx.createGain(); g.gain.value = 0.55;
+    src.connect(f).connect(g).connect(musicBus); src.start(); crackleNode = src;
+  }
 
   // ---------------- MUSIC ----------------
-  // Each track has a hand-written melody + bassline over a chord progression.
-  // mel/bassP: one entry per 16th step (0 = rest). mel loops independently of bars.
-  const _ = 0;
+  // Trip-hop beds: dusty boom-bap drums, deep sub bass, Rhodes comping, vinyl
+  // crackle, lush reverb and sparse, melancholy leads — all in A-minor-ish keys.
+  // One entry per 16th step (0 = rest). keys[]=Rhodes hits, stabs[]=dark stabs,
+  // bassP[]=sub-bass pattern, mel[]=lead (loops on its own length). swing lays
+  // the off-beats back for that head-nod feel.
+  const _ = 0, K = 1;
   const TRACKS = {
-    island: { bpm: 106, drums: 'soft', padWave: 'sawtooth', leadWave: 'triangle', cut: 2000,
-      bars: [[60,64,67],[55,59,62],[57,60,64],[53,57,60]],
-      bassP: [0,_,7,_, 0,_,7,_, 0,_,7,_, 0,_,5,7],
-      mel: [64,_,_,67, 72,_,71,_, 69,_,67,_, 64,_,_,_,  62,_,64,_, 67,_,_,69, 71,_,72,_, 67,_,_,_] },
-    sea: { bpm: 90, drums: 'soft', padWave: 'sawtooth', leadWave: 'sine', cut: 1600,
-      bars: [[60,64,67],[52,55,59],[53,57,60],[55,59,62]],
-      bassP: [0,_,_,_, 0,_,_,7, 0,_,_,_, 7,_,_,_],
-      mel: [67,_,_,_, 72,_,_,71, 67,_,64,_, _,_,_,_,  64,_,67,_, 72,_,74,_, 71,_,67,_, 69,_,_,_] },
-    town: { bpm: 136, drums: 'full', padWave: 'square', leadWave: 'square', cut: 2600,
-      bars: [[60,64,67],[53,57,60],[55,59,62],[60,64,67]],
-      bassP: [0,_,0,7, 0,_,0,7, 0,_,0,7, 0,7,5,7],
-      mel: [72,_,72,74, 76,_,74,72, 77,_,76,74, 72,_,_,_,  74,_,76,_, 79,_,77,76, 74,_,72,74, 71,_,_,_] },
-    battle: { bpm: 158, drums: 'full', padWave: 'sawtooth', leadWave: 'square', cut: 2800, horns: true,
-      bars: [[57,60,64],[53,57,60],[60,64,67],[55,59,62]],
-      bassP: [0,0,12,0, 0,0,12,0, 0,0,12,0, 0,7,0,7],
-      mel: [69,_,72,_, 76,_,72,69, 65,_,69,_, 72,_,69,65,  67,_,71,_, 74,_,71,67, 76,_,79,76, 74,72,71,_] },
-    boss: { bpm: 132, drums: 'full', padWave: 'sawtooth', leadWave: 'square', cut: 2600, horns: true, choir: true,
-      bars: [[57,60,64],[56,59,63],[53,57,60],[52,56,59]],
-      bassP: [0,0,0,0, 0,0,0,12, 0,0,0,0, 0,0,7,0],
-      mel: [57,_,60,_, 64,_,63,_, 60,_,_,_, 59,_,57,_,  53,_,56,_, 60,_,59,_, 52,_,56,_, 59,60,63,_] },
-    date: { bpm: 76, drums: 'none', padWave: 'sine', leadWave: 'triangle', cut: 1500, choir: true,
-      bars: [[60,64,67],[57,60,64],[53,57,60],[55,59,62]],
-      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,7],
-      mel: [71,_,_,_, 72,_,_,69, 67,_,_,_, _,_,_,_,  69,_,_,_, 71,_,72,_, 67,_,69,_, _,_,_,_] },
-    dungeon: { bpm: 80, drums: 'none', padWave: 'sawtooth', leadWave: 'triangle', cut: 1100,
-      bars: [[57,60,64],[52,55,59],[50,53,57],[57,60,64]],
-      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_],
-      mel: [57,_,_,_, _,_,60,_, 59,_,_,_, _,_,_,_,  55,_,_,57, _,_,_,_, 59,_,60,_, 57,_,_,_] },
-    intro: { bpm: 98, drums: 'none', padWave: 'sawtooth', leadWave: 'triangle', cut: 1900, choir: true,
-      bars: [[57,60,64],[53,57,60],[60,64,67],[55,59,62]],
-      bassP: [0,_,_,_, 0,_,_,_, 0,_,_,_, 0,_,_,_],
-      mel: [64,67,72,76, 72,67,64,_, 60,64,67,72, 67,64,60,_,  62,65,69,74, 69,65,62,_, 67,71,74,79, 74,71,67,_] },
-    victory: { bpm: 146, drums: 'full', padWave: 'square', leadWave: 'square', cut: 2800, once: true, horns: true,
-      bars: [[60,64,67],[55,59,67],[60,64,72],[60,64,72]],
-      bassP: [0,_,7,_, 0,_,_,_, 0,_,0,_, 0,_,_,_],
-      mel: [72,76,79,84, _,79,84,_, 83,_,84,_, _,_,_,_,  72,76,79,84, _,84,_,_, 84,_,_,_, _,_,_,_] },
+    // mellow head-nod exploration
+    island: { bpm: 84, drums: 'triphop', swing: 0.18, padWave: 'triangle', leadWave: 'sine', cut: 1700,
+      bars: [[57,60,64,67],[53,57,60,64],[50,53,57,60],[52,55,59,62]],
+      keys: [_,_,K,_, _,K,_,_, _,_,K,_, _,K,_,K], keyLen: 2.4, keyPeak: 0.07,
+      bassP: [0,_,_,_, _,_,_,_, 0,_,_,7, _,_,_,_], bassPeak: 0.3,
+      mel: [_,_,_,_, 64,_,_,_, 67,_,_,_, _,_,62,_,  _,_,_,_, 60,_,_,_, 59,_,_,_, _,_,_,_], leadPeak: 0.08 },
+
+    // dreamy open water
+    sea: { bpm: 76, drums: 'sparse', swing: 0.2, padWave: 'sine', leadWave: 'sine', cut: 1400,
+      bars: [[57,60,64,67],[52,55,59,62],[50,53,57,60],[55,59,62,65]],
+      keys: [_,_,_,_, _,K,_,_, _,_,_,_, _,K,_,_], keyLen: 3.4, keyPeak: 0.06,
+      bassP: [0,_,_,_, _,_,_,_, _,_,_,_, 0,_,_,_], bassPeak: 0.28,
+      mel: [67,_,_,_, _,_,_,_, 64,_,_,_, _,_,_,_,  62,_,_,_, 64,_,_,_, 60,_,_,_, _,_,_,_], leadPeak: 0.07 },
+
+    // warmer jazzy groove
+    town: { bpm: 90, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 1900,
+      bars: [[57,60,64,67],[50,53,57,60],[55,59,62,65],[52,55,59,62]],
+      keys: [_,_,K,_, K,_,_,K, _,_,K,_, K,_,K,_], keyLen: 1.8, keyPeak: 0.075,
+      bassP: [0,_,_,_, 7,_,_,_, 0,_,_,5, 7,_,_,_], bassPeak: 0.3,
+      mel: [_,_,72,_, _,_,71,_, 67,_,_,_, _,_,_,_,  _,_,69,_, 67,_,_,_, 64,_,_,_, _,_,_,_], leadPeak: 0.07 },
+
+    // downtempo but driving — tense trip-hop
+    battle: { bpm: 92, drums: 'heavy', swing: 0.14, padWave: 'sawtooth', leadWave: 'triangle', cut: 1600,
+      bars: [[57,60,64,67],[53,57,60,64],[50,53,57,60],[52,56,59,62]],
+      keys: [K,_,_,K, _,_,K,_, K,_,_,K, _,K,_,_], keyLen: 1.4, keyPeak: 0.07,
+      stabs: [K,_,_,_, _,_,_,_, K,_,_,_, _,_,K,_],
+      bassP: [0,_,0,_, _,_,7,_, 0,_,0,_, _,7,_,_], bassPeak: 0.34, bassLen: 2.2,
+      mel: [69,_,_,_, 72,_,_,_, _,_,67,_, _,_,_,_,  65,_,_,_, 67,_,_,_, 64,_,_,_, _,_,_,_], leadPeak: 0.085 },
+
+    // cinematic dread
+    boss: { bpm: 86, drums: 'heavy', swing: 0.12, padWave: 'sawtooth', leadWave: 'triangle', cut: 1500, choir: true,
+      bars: [[57,60,64,67],[56,59,63,66],[53,56,60,63],[52,56,59,63]],
+      keys: [K,_,_,_, _,_,K,_, K,_,_,_, _,K,_,_], keyLen: 1.6, keyPeak: 0.07,
+      stabs: [K,_,_,_, _,_,_,_, K,_,_,_, _,_,_,_],
+      bassP: [0,_,_,_, 0,_,_,_, 0,_,_,_, 0,_,7,_], bassPeak: 0.36, bassLen: 2.6,
+      mel: [57,_,_,_, 60,_,_,_, 63,_,_,_, _,_,59,_,  56,_,_,_, 59,_,_,_, 52,_,_,_, _,_,_,_], leadPeak: 0.09 },
+
+    // intimate, sensual
+    date: { bpm: 70, drums: 'soft', swing: 0.22, padWave: 'sine', leadWave: 'sine', cut: 1500, choir: true,
+      bars: [[57,60,64,67],[53,57,60,64],[55,59,62,65],[52,55,59,62]],
+      keys: [_,_,K,_, _,_,_,_, _,_,K,_, _,_,K,_], keyLen: 3.4, keyPeak: 0.07,
+      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.26,
+      mel: [_,_,_,_, 71,_,_,_, 72,_,_,_, _,_,69,_,  _,_,_,_, 67,_,_,_, 69,_,_,_, _,_,_,_], leadPeak: 0.07 },
+
+    // sparse, dripping ambience
+    dungeon: { bpm: 68, drums: 'soft', swing: 0.2, padWave: 'sawtooth', leadWave: 'sine', cut: 1000,
+      bars: [[57,60,64],[52,55,59],[50,53,57],[51,55,58]],
+      keys: [_,_,_,_, _,_,K,_, _,_,_,_, _,_,_,_], keyLen: 3.0, keyPeak: 0.05,
+      bassP: [0,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_], bassPeak: 0.3, bassLen: 5,
+      mel: [57,_,_,_, _,_,_,_, _,_,60,_, _,_,_,_,  56,_,_,_, _,_,_,_, 59,_,_,_, _,_,_,_], leadPeak: 0.06 },
+
+    // atmospheric build
+    intro: { bpm: 80, drums: 'sparse', swing: 0.18, padWave: 'sawtooth', leadWave: 'sine', cut: 1500, choir: true,
+      bars: [[57,60,64,67],[53,57,60,64],[55,59,62,65],[52,55,59,62]],
+      keys: [_,_,K,_, _,K,_,_, _,_,K,_, _,K,_,_], keyLen: 2.4, keyPeak: 0.07,
+      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.28,
+      mel: [64,_,67,_, 72,_,_,_, 71,_,67,_, _,_,_,_,  62,_,65,_, 69,_,_,_, 67,_,64,_, _,_,_,_], leadPeak: 0.08 },
+
+    // a warm, satisfying lift — still dusty
+    victory: { bpm: 94, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 2100, once: true,
+      bars: [[60,64,67,71],[57,60,64,67],[62,65,69,72],[60,64,67,72]],
+      keys: [K,_,K,_, K,_,_,_, K,_,K,_, K,_,_,_], keyLen: 1.6, keyPeak: 0.085,
+      bassP: [0,_,_,_, 0,_,_,_, 0,_,_,_, 0,_,_,_], bassPeak: 0.32,
+      mel: [72,_,76,_, 79,_,_,_, 77,_,76,_, _,_,_,_,  72,_,76,_, 79,_,84,_, 83,_,_,_, _,_,_,_], leadPeak: 0.09 },
   };
 
   let current = null, sched = null, nextTime = 0, step = 0, bar = 0, gstep = 0, _after = 'island';
   const STEPS = 16;
 
+  function drumStep(tk, step, time, beat, sw) {
+    const d = tk.drums; if (!d || d === 'none') return;
+    // swung hats
+    if (d !== 'sparse') { if (step % 2 === 0) hat(time, musicBus, { peak: 0.05 }); else hat(time + sw, musicBus, { peak: 0.035 }); }
+    else if (step === 2 || step === 10) hat(time, musicBus, { peak: 0.04 });
+    // boom-bap kick + backbeat snare (beats 2 & 4 = steps 4 & 12)
+    if (d === 'triphop' || d === 'heavy') {
+      if (step === 0 || step === 10) kick(time);
+      if (d === 'heavy' && step === 7) kick(time, musicBus, { peak: 0.4 });
+      if (step === 4 || step === 12) snare(time);
+      if (step === 14) snare(time + sw, musicBus, { peak: 0.08 });          // ghost note
+      if (step === 14) hat(time + sw, musicBus, { open: true, peak: 0.05 }); // open-hat lift
+    } else if (d === 'soft') {
+      if (step === 0) kick(time, musicBus, { peak: 0.42 });
+      if (step === 8) snare(time, musicBus, { peak: 0.12 });
+    }
+  }
   function scheduleStep(tk, time) {
     const chord = tk.bars[bar % tk.bars.length];
-    const beat = 60 / tk.bpm / 4;
-    // pad chord at bar start
-    if (step === 0) chord.forEach(n => voice(midi(n - 12), time, beat * STEPS * 0.95, { type: tk.padWave, peak: 0.05, cutoff: tk.cut, a: 0.12, d: 0.4, s: 0.75, r: 0.7 }));
-    // brass horn stabs (FF battle flavor)
-    if (tk.horns && (step === 0 || step === 6 || step === 8 || step === 12)) chord.forEach(n => voice(midi(n), time, beat * 2.6, { type: 'sawtooth', detune: 11, peak: 0.08, cutoff: 1700, a: 0.03, d: 0.16, s: 0.66, r: 0.28 }));
-    // ominous choir pad (boss)
-    if (tk.choir && step === 0) chord.forEach(n => voice(midi(n + 12), time, beat * STEPS * 0.98, { type: 'sine', detune: 7, peak: 0.05, cutoff: 3200, a: 0.5, d: 0.7, s: 0.85, r: 1.1 }));
-    // bassline from pattern
-    const bp = tk.bassP[step]; if (bp !== _) voice(midi(chord[0] - 24 + bp), time, beat * 1.8, { type: 'triangle', peak: 0.18, cutoff: 760, a: 0.005, d: 0.12, s: 0.6, r: 0.18 });
-    // melody (loops on its own length for variety)
+    const beat = 60 / tk.bpm / 4;                                   // 16th-note duration
+    const sw = (step % 2 === 1) ? beat * (tk.swing != null ? tk.swing : 0.18) : 0; // lay back the off-beats
+    const t = time + sw;
+    // slow chord wash at bar start
+    if (step === 0) chord.forEach(n => voice(midi(n - 12), time, beat * STEPS, { type: tk.padWave, peak: 0.035, cutoff: tk.cut, a: 0.5, d: 0.8, s: 0.8, r: 1.2 }));
+    // breathy choir/atmos pad (boss/date/intro)
+    if (tk.choir && step === 0) chord.forEach(n => voice(midi(n + 12), time, beat * STEPS, { type: 'sine', detune: 7, peak: 0.04, cutoff: 3000, a: 0.8, d: 0.9, s: 0.85, r: 1.4 }));
+    // electric-piano comping — the trip-hop heart
+    if (tk.keys && tk.keys[step]) chord.forEach(n => epiano(midi(n + (tk.keysOct || 0)), t, beat * (tk.keyLen || 3), { peak: tk.keyPeak || 0.07, cutoff: tk.cut + 600 }));
+    // dark filtered stabs (battle/boss)
+    if (tk.stabs && tk.stabs[step]) chord.forEach(n => voice(midi(n), t, beat * 1.6, { type: 'sawtooth', detune: 10, peak: 0.06, cutoff: 1300, a: 0.02, d: 0.18, s: 0.4, r: 0.3 }));
+    // deep sub bass
+    const bp = tk.bassP[step]; if (bp !== _) subBass(midi(chord[0] - 24 + bp), t, beat * (tk.bassLen || 3.4), { peak: tk.bassPeak || 0.3 });
+    // sparse, reverbed lead (loops on its own length)
     const note = tk.mel[gstep % tk.mel.length];
-    if (note) {
-      voice(midi(note), time, beat * 1.7, { type: tk.leadWave, peak: 0.13, cutoff: tk.cut + 800, a: 0.006, d: 0.1, s: 0.42, r: 0.22 });
-      voice(midi(note + 12), time, beat * 0.8, { type: 'sine', peak: 0.028, cutoff: 4200, a: 0.005, d: 0.06, s: 0.2, r: 0.12 });
-    }
+    if (note) voice(midi(note), t, beat * 2.0, { type: tk.leadWave, peak: tk.leadPeak || 0.08, cutoff: tk.cut + 500, a: 0.02, d: 0.2, s: 0.4, r: 0.45 });
     // drums
-    if (tk.drums !== 'none') {
-      if (step === 0 || step === 8) kick(time);
-      if (step === 4 || step === 12) snare(time);
-      if (tk.drums === 'full' && step % 2 === 0) hat(time);
-      else if (tk.drums === 'soft' && step % 4 === 2) hat(time);
-    }
+    drumStep(tk, step, time, beat, sw);
     step++; gstep++; if (step >= STEPS) { step = 0; bar++; if (tk.once && bar >= tk.bars.length) { current = null; setTimeout(() => play(_after), 150); } }
   }
   function tick() {
@@ -135,7 +236,7 @@
     while (nextTime < ctx.currentTime + 0.15) { scheduleStep(tk, nextTime); nextTime += beat; }
   }
   function play(name, after) {
-    ensure(); if (after) _after = after; if (current === name) return;
+    ensure(); startTexture(); if (after) _after = after; if (current === name) return;
     current = name; step = 0; bar = 0; gstep = 0; nextTime = ctx.currentTime + 0.06;
     musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setValueAtTime(0.0001, ctx.currentTime); musicBus.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 0.25);
     if (!sched) sched = setInterval(tick, 25);
