@@ -77,9 +77,10 @@ window.Battle = (function () {
       built.node.position.copyFrom(home); built.node._baseY = def.baseY; built.node.rotation.y = -Math.PI/2.2;
       if (boss) built.node.scaling.setAll(1.3);
       seen[key] = (seen[key] || 0) + 1;
+      if (Progress.recordSeen) Progress.recordSeen(Game.state, key);
       const suffix = placed.filter(k => k === key).length > 1 ? ' ' + 'ABC'[seen[key]-1] : '';
       enemies.push({ side:'enemy', keyRaw: key, name: def.name + suffix, node: built.node, baseY: def.baseY, maxhp: def.hp, hp: def.hp,
-        home, phase: i*1.7 + 0.5, alive: true, _busy: false, idle: built.idle, moves: def.moves, xp: def.xp, gold: def.gold });
+        home, phase: i*1.7 + 0.5, alive: true, _busy: false, idle: built.idle, moves: def.moves, xp: def.xp, gold: def.gold, drops: def.drops });
     });
 
     actors = party.concat(enemies);
@@ -185,10 +186,17 @@ window.Battle = (function () {
     return `${s.min}-${s.max} ${ei ? ei.i + ei.name : e} · ${tgt}`;
   }
   function describeItem(it) {
+    if (it.desc) return it.desc;
     if (it.kind === 'heal') return `Restore ${it.amount} HP · 1 ally`;
+    if (it.kind === 'healall') return `Restore ${it.amount} HP · all allies`;
+    if (it.kind === 'full') return 'Fully restore HP & MP · 1 ally';
     if (it.kind === 'mana') return `Restore ${it.amount} MP · 1 ally`;
+    if (it.kind === 'manaall') return `Restore ${it.amount} MP · all allies`;
+    if (it.kind === 'limit') return 'Fill the Limit gauge · 1 ally';
     if (it.kind === 'revive') return 'Revive a fallen ally';
-    return `${it.min}-${it.max} 🔥Fire · 1 foe`;
+    if (it.kind === 'fullrevive') return 'Revive a fallen ally to full HP';
+    const ei = Data.ELEMENT_INFO[it.el] || Data.ELEMENT_INFO.fire;
+    return `${it.min}-${it.max} ${ei.i}${ei.name} · ${it.kind === 'damageall' ? 'all foes' : '1 foe'}`;
   }
 
   // ---- keyboard navigation ----
@@ -231,7 +239,7 @@ window.Battle = (function () {
     e._busy = true; const h = e.home.clone(); moveTo(e.node, h.add(new V3(1.1,0.25,0)), 70).then(() => moveTo(e.node, h, 220).then(() => { e.node.position.copyFrom(h); e._busy = false; }));
     if (e.hp <= 0) killEnemy(e); renderEnemies(false);
   }
-  async function killEnemy(e) { e.alive = false; e._busy = true; await tween(k => { e.node.position.y = e.baseY - k*3; e.node.rotation.z = k*1.5; e.node.scaling.setAll((e.node.scaling.x||1) * (1 - k*0.02) || 1); }, 800); e.node.setEnabled(false); }
+  async function killEnemy(e) { e.alive = false; e._busy = true; if (Progress.recordSlain) Progress.recordSlain(Game.state, e.keyRaw); await tween(k => { e.node.position.y = e.baseY - k*3; e.node.rotation.z = k*1.5; e.node.scaling.setAll((e.node.scaling.x||1) * (1 - k*0.02) || 1); }, 800); e.node.setEnabled(false); }
   function healMember(p, amt) { if (window.SFX) SFX.play('heal'); p.hp = Math.min(p.maxhp, p.hp + amt); burst(worldOf(p.node, 0.2), ...FX.heal, 45, 5, -2); floatDamage(p.node, '+' + amt, '#6ee7b7', 2.6); renderParty(false); }
 
   function takeTurn(member) { return new Promise(done => { activeMember = member; renderParty(false); renderEnemies(false); setBanner(member); msg(`${member.name}'s turn — choose an action.`); showMain(member, done); }); }
@@ -299,8 +307,11 @@ window.Battle = (function () {
   }
   function showItems(m, done) { clearMenu(m.name + ' · Items'); const inv = Game.state.inv;
     for (const key of Object.keys(Data.ITEM_DEFS)) { const it = Data.ITEM_DEFS[key]; const qty = inv[key] || 0; let disabled = qty <= 0; if (it.target === 'dead' && deadParty().length === 0) disabled = true;
+      if (it.target === 'dead' && deadParty().length === 0) disabled = true;
       cmd(it.name, '×' + qty, () => {
         if (it.target === 'enemy') chooseEnemy('Throw ' + it.name + ' at?', e => act(done, () => doItem(m, key, it, [e])), () => showItems(m, done));
+        else if (it.target === 'enemyall') act(done, () => doItem(m, key, it, aliveEnemies()));
+        else if (it.target === 'allyall') act(done, () => doItem(m, key, it, aliveParty()));
         else if (it.target === 'ally') chooseAlly('Use ' + it.name + ' on?', aliveParty(), p => act(done, () => doItem(m, key, it, [p])), () => showItems(m, done));
         else if (it.target === 'dead') chooseAlly('Revive whom?', deadParty(), p => act(done, () => doItem(m, key, it, [p])), () => showItems(m, done));
       }, disabled, 'qty', describeItem(it)); }
@@ -379,12 +390,21 @@ window.Battle = (function () {
     }
     gainLimit(m, 18); await wait(320);
   }
+  function reviveMember(p, full) { p.alive = true; p.node.setEnabled(true); p.node.position.copyFrom(p.home); p.node.rotation.x = 0; p.hp = full ? p.maxhp : Math.round(p.maxhp * 0.5); burst(worldOf(p.node, 0.5), '#fff6c2', '#fde68a', 80, 6, -1); floatDamage(p.node, '+' + p.hp, '#fde68a', 2.6); }
+  function restoreMana(p, amt) { const add = Math.min(amt, p.maxmp - p.mp); p.mp = Math.min(p.maxmp, p.mp + amt); burst(worldOf(p.node, 0.2), ...FX.mana, 45, 5, -2); floatDamage(p.node, '+' + add + ' MP', '#93c5fd', 2.6); }
   async function doItem(m, key, it, targets) {
     Game.state.inv[key] = Math.max(0, (Game.state.inv[key] || 0) - 1);
-    if (it.kind === 'heal') { msg(`${m.name} uses ${it.name}.`); healMember(targets[0], it.amount); await wait(550); }
-    else if (it.kind === 'mana') { const p = targets[0]; p.mp = Math.min(p.maxmp, p.mp + it.amount); msg(`${m.name} uses ${it.name}. +${it.amount} MP!`); burst(worldOf(p.node, 0.2), ...FX.mana, 45, 5, -2); floatDamage(p.node, '+' + it.amount + ' MP', '#93c5fd', 2.6); renderParty(false); await wait(550); }
-    else if (it.kind === 'revive') { const p = targets[0]; p.alive = true; p.node.setEnabled(true); p.node.position.copyFrom(p.home); p.node.rotation.x = 0; p.hp = Math.round(p.maxhp*0.5); msg(`${p.name} is revived!`); burst(worldOf(p.node, 0.5), '#fff6c2', '#fde68a', 80, 6, -1); floatDamage(p.node, '+' + p.hp, '#fde68a', 2.6); renderParty(false); await wait(650); }
-    else { msg(`${m.name} hurls a ${it.name}!`); const ball = MB.CreateSphere('b', { diameter: 0.4 }, scene); ball.material = M('bMat', '#222', { emissive: '#1a0a00' }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(targets[0].node, -0.2), 340); ball.dispose(); burst(worldOf(targets[0].node, 0.2), ...FX.fire, 100, 11); damageEnemy(targets[0], rnd(it.min, it.max), '#fca5a5', 'fire'); await wait(450); }
+    const col = ELEMCOL[it.el] || '#ff7b3a'; const fx = FX[it.fx] || FX.fire;
+    if (it.kind === 'heal') { msg(`${m.name} uses ${it.name}.`); if (window.SFX) SFX.play('heal'); healMember(targets[0], it.amount); await wait(550); }
+    else if (it.kind === 'healall') { msg(`${m.name} uses ${it.name}!`); if (window.SFX) SFX.play('heal'); aliveParty().forEach(p => healMember(p, it.amount)); await wait(650); }
+    else if (it.kind === 'full') { const p = targets[0]; msg(`${m.name} uses ${it.name}! Fully restored.`); if (window.SFX) SFX.play('heal'); healMember(p, p.maxhp); restoreMana(p, p.maxmp); await wait(650); }
+    else if (it.kind === 'mana') { msg(`${m.name} uses ${it.name}.`); restoreMana(targets[0], it.amount); renderParty(false); await wait(550); }
+    else if (it.kind === 'manaall') { msg(`${m.name} uses ${it.name}!`); aliveParty().forEach(p => restoreMana(p, it.amount)); renderParty(false); await wait(650); }
+    else if (it.kind === 'limit') { const p = targets[0]; p.limit = 100; msg(`${m.name} uses ${it.name}! ${p.name}'s spirit blazes!`); burst(worldOf(p.node, 0.4), '#fde047', '#fff7c2', 70, 7, -1); floatDamage(p.node, 'LIMIT!', '#fde047', 2.8); renderParty(false); await wait(650); }
+    else if (it.kind === 'revive') { const p = targets[0]; reviveMember(p, false); msg(`${p.name} is revived!`); renderParty(false); await wait(650); }
+    else if (it.kind === 'fullrevive') { const p = targets[0]; reviveMember(p, true); msg(`${p.name} surges back to life!`); renderParty(false); await wait(650); }
+    else if (it.kind === 'damageall') { msg(`${m.name} hurls a ${it.name}!`); flashScreen('rgba(255,160,80,0.35)'); shake(1.2); for (const e of aliveEnemies()) { burst(worldOf(e.node, 0.2), ...fx, 80, 9); damageEnemy(e, rnd(it.min, it.max), col, it.el); } await wait(550); }
+    else { msg(`${m.name} hurls a ${it.name}!`); const ball = MB.CreateSphere('b', { diameter: 0.4 }, scene); ball.material = M('bMat', '#222', { emissive: '#1a0a00' }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(targets[0].node, -0.2), 340); ball.dispose(); burst(worldOf(targets[0].node, 0.2), ...fx, 100, 11); damageEnemy(targets[0], rnd(it.min, it.max), col, it.el); await wait(450); }
   }
 
   // ----- enemy AI -----
@@ -467,12 +487,17 @@ window.Battle = (function () {
     const bar = el('turnbar'); if (bar) bar.innerHTML = '';
     // write HP/MP back to persistent state
     party.forEach(p => { p.ref.hpCur = Math.max(0, p.hp); p.ref.mpCur = Math.max(0, p.mp); });
-    let levelUps = [], xp = 0, gold = 0;
-    if (won) { enemies.forEach(e => { xp += e.xp; gold += e.gold; }); levelUps = Progress.reward(Game.state, xp, gold); Music.play('victory', Game.musicForReturn()); }
+    let levelUps = [], xp = 0, gold = 0, loot = {};
+    if (won) {
+      enemies.forEach(e => { xp += e.xp; gold += e.gold; if (e.drops) e.drops.forEach(d => { if (Math.random() < d.chance) loot[d.mat] = (loot[d.mat] || 0) + 1; }); });
+      if (Object.keys(loot).length && Progress.addMaterials) Progress.addMaterials(Game.state, loot);
+      levelUps = Progress.reward(Game.state, xp, gold); Music.play('victory', Game.musicForReturn());
+    }
     else { Music.play('island'); }
     if (won) await victorySequence(); else await wait(700);
     el('bResultTitle').textContent = won ? 'Victory!' : 'Defeated';
     let body = won ? `Gained <b>${xp} XP</b> and <b>${gold} gold</b>.` : 'Your party was overwhelmed by the tide.';
+    if (won && Object.keys(loot).length) { const M = Data.MATERIALS || {}; body += '<br>Found: ' + Object.keys(loot).map(k => `${(M[k] && M[k].icon) || '•'} ${(M[k] && M[k].name) || k}${loot[k] > 1 ? ' ×' + loot[k] : ''}`).join(', '); }
     if (won && levelUps.length) body += '<br>' + levelUps.map(u => `⭐ ${u.name} reached Lv ${u.level}!`).join('<br>');
     if (won && levelUps.shellUps && levelUps.shellUps.length) body += '<br>' + levelUps.shellUps.map(u => `🐚 ${u.name} shell → Lv ${u.level}!`).join('<br>');
     if (!won) body += '<br>You are carried back to safety, healed but humbled.';

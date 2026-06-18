@@ -177,16 +177,56 @@ window.Game = (function () {
     row.appendChild(buy); list.appendChild(row);
   }
   function shopHeading(list, text) { const h = document.createElement('div'); h.className = 'shop-head'; h.textContent = text; list.appendChild(h); }
+  function itemBlurb(it) {
+    if (it.desc) return it.desc;
+    if (it.kind === 'heal') return `Restore ${it.amount} HP`;
+    if (it.kind === 'healall') return `Restore ${it.amount} HP to all`;
+    if (it.kind === 'full') return 'Fully restore HP & MP';
+    if (it.kind === 'mana') return `Restore ${it.amount} MP`;
+    if (it.kind === 'manaall') return `Restore ${it.amount} MP to all`;
+    if (it.kind === 'limit') return 'Fill the Limit gauge';
+    if (it.kind === 'revive') return 'Revive a fallen ally';
+    if (it.kind === 'fullrevive') return 'Revive to full HP';
+    return `${it.min}-${it.max} damage`;
+  }
+  function craftRow(list, name, desc, costStr, disabled, onMake) {
+    const row = document.createElement('div'); row.className = 'shop-row';
+    row.innerHTML = `<div class="shop-info"><b>${name}</b><span>${desc} · <em class="craft-cost">${costStr}</em></span></div>`;
+    const b = document.createElement('button'); b.className = 'pill small'; b.textContent = 'Craft 🔨'; b.disabled = disabled;
+    b.onclick = onMake; row.appendChild(b); list.appendChild(row);
+  }
   function renderShop() {
     el('shopGold').textContent = '⛃ ' + Game.state.gold;
     const list = el('shopList'); list.innerHTML = '';
 
+    const townKey = (Town && Town.getKey && Town.getKey()) || 'tidehaven';
+    const stock = (Data.SHOP_STOCK_BY_TOWN && Data.SHOP_STOCK_BY_TOWN[townKey]) || Data.SHOP_STOCK;
     shopHeading(list, '🧪 Items');
-    Data.SHOP_STOCK.forEach(key => {
-      const it = Data.ITEM_DEFS[key]; const have = Game.state.inv[key] || 0;
-      const desc = (it.kind === 'heal' ? `Restore ${it.amount} HP` : it.kind === 'mana' ? `Restore ${it.amount} MP` : it.kind === 'revive' ? 'Revive a fallen ally' : `${it.min}-${it.max} damage`) + ` · owned ×${have}`;
+    stock.forEach(key => {
+      const it = Data.ITEM_DEFS[key]; if (!it) return; const have = Game.state.inv[key] || 0;
+      const desc = itemBlurb(it) + ` · owned ×${have}`;
       shopRow(list, it.name, desc, it.price, false, () => { Game.state.inv[key] = (Game.state.inv[key]||0)+1; });
     });
+
+    // ---- crafting: turn dropped junk into goods ----
+    if (Data.RECIPES && Data.RECIPES.length) {
+      shopHeading(list, '⚗️ Crafting — combine materials');
+      const mats = Game.state.mats || {};
+      const owned = Object.keys(mats).filter(k => mats[k] > 0);
+      if (owned.length) {
+        const inv = document.createElement('div'); inv.className = 'craft-mats';
+        inv.innerHTML = owned.map(k => { const M = Data.MATERIALS[k] || {}; return `<span class="craft-mat">${M.icon || '•'} ${M.name || k} ×${mats[k]}</span>`; }).join('');
+        list.appendChild(inv);
+      } else {
+        const none = document.createElement('div'); none.className = 'craft-none'; none.textContent = 'No materials yet — defeat monsters to collect crafting junk.'; list.appendChild(none);
+      }
+      Data.RECIPES.forEach(r => {
+        const it = Data.ITEM_DEFS[r.out]; if (!it) return;
+        const costStr = Object.keys(r.cost).map(k => { const M = Data.MATERIALS[k] || {}; return `${M.icon || ''}${(Game.state.mats[k]||0)}/${r.cost[k]}`; }).join(' ');
+        const ok = Progress.canCraft(Game.state, r);
+        craftRow(list, r.name, itemBlurb(it), costStr, !ok, () => { if (Progress.craft(Game.state, r)) { Game.toast('Crafted ' + r.name + '!'); renderShop(); } });
+      });
+    }
 
     shopHeading(list, '🐚 Seashells (materia)');
     Data.SHOP_SHELLS.forEach(key => {

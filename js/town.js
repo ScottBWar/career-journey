@@ -102,5 +102,5 @@ window.Town = (function () {
   function pause() { paused = true; }
   function resume() { paused = false; }
 
-  return { enter, pause, resume, getScene: () => scene };
+  return { enter, pause, resume, getScene: () => scene, getKey: () => key };
 })();

@@ -107,13 +107,13 @@ window.Data = (function () {
   ];
 
   const ENEMIES = {
-    shark:  { name: 'Maneater Shark',   model: 'shark',  hp: 90,  xp: 22, gold: 14, baseY: 0,   moves: [ { name: 'sinks its teeth in', min: 12, max: 18 }, { name: 'whips its tail', min: 15, max: 22 } ] },
-    crab:   { name: 'Giant Hermit Crab', model: 'crab',  hp: 120, xp: 26, gold: 18, baseY: 0,   moves: [ { name: 'snaps a giant claw', min: 14, max: 20 }, { name: 'bashes with its shell', min: 17, max: 24 } ] },
-    jelly:  { name: "Man-o'-War Jelly",  model: 'jelly', hp: 64,  xp: 18, gold: 10, baseY: 0.2, moves: [ { name: 'stings sharply', min: 10, max: 16 }, { name: 'discharges a shock', min: 10, max: 15, all: true } ] },
-    octo:   { name: 'Reef Octopus',      model: 'octo',  hp: 104, xp: 28, gold: 20, baseY: 0.1, moves: [ { name: 'slams a tentacle', min: 16, max: 22 }, { name: 'sprays stinging ink', min: 8, max: 13, all: true } ] },
-    gull:   { name: 'Dive-Bomb Gull',    model: 'gull',  hp: 56,  xp: 16, gold: 9,  baseY: 1.4, moves: [ { name: 'pecks rapidly', min: 9, max: 14 }, { name: 'dive-bombs', min: 18, max: 26 } ] },
-    golem:  { name: 'Sandcastle Golem',  model: 'golem', hp: 140, xp: 34, gold: 26, baseY: 0,   moves: [ { name: 'slams a sandy fist', min: 16, max: 24 }, { name: 'crumbles down', min: 12, max: 19, all: true } ] },
-    kraken: { name: 'The Kraken',        model: 'kraken', hp: 360, xp: 160, gold: 200, baseY: 0, boss: true, moves: [ { name: 'crushes with a tentacle', min: 24, max: 34 }, { name: 'unleashes a maelstrom', min: 18, max: 26, all: true }, { name: 'snaps its colossal beak', min: 30, max: 42 } ] },
+    shark:  { name: 'Maneater Shark',   model: 'shark',  hp: 88,  xp: 24, gold: 18, baseY: 0,   moves: [ { name: 'sinks its teeth in', min: 11, max: 17 }, { name: 'whips its tail', min: 14, max: 21 } ], drops: [ { mat: 'fang', chance: 0.7 }, { mat: 'fin', chance: 0.4 } ] },
+    crab:   { name: 'Giant Hermit Crab', model: 'crab',  hp: 118, xp: 28, gold: 22, baseY: 0,   moves: [ { name: 'snaps a giant claw', min: 13, max: 19 }, { name: 'bashes with its shell', min: 16, max: 23 } ], drops: [ { mat: 'shellfrag', chance: 0.75 }, { mat: 'brine', chance: 0.2 } ] },
+    jelly:  { name: "Man-o'-War Jelly",  model: 'jelly', hp: 60,  xp: 20, gold: 13, baseY: 0.2, moves: [ { name: 'stings sharply', min: 9, max: 15 }, { name: 'discharges a shock', min: 9, max: 14, all: true } ], drops: [ { mat: 'goo', chance: 0.85 } ] },
+    octo:   { name: 'Reef Octopus',      model: 'octo',  hp: 102, xp: 30, gold: 24, baseY: 0.1, moves: [ { name: 'slams a tentacle', min: 15, max: 21 }, { name: 'sprays stinging ink', min: 8, max: 12, all: true } ], drops: [ { mat: 'ink', chance: 0.7 }, { mat: 'goo', chance: 0.3 } ] },
+    gull:   { name: 'Dive-Bomb Gull',    model: 'gull',  hp: 54,  xp: 18, gold: 12, baseY: 1.4, moves: [ { name: 'pecks rapidly', min: 8, max: 13 }, { name: 'dive-bombs', min: 17, max: 25 } ], drops: [ { mat: 'feather', chance: 0.85 } ] },
+    golem:  { name: 'Sandcastle Golem',  model: 'golem', hp: 136, xp: 36, gold: 30, baseY: 0,   moves: [ { name: 'slams a sandy fist', min: 15, max: 23 }, { name: 'crumbles down', min: 11, max: 18, all: true } ], drops: [ { mat: 'sand', chance: 0.85 }, { mat: 'brine', chance: 0.25 } ] },
+    kraken: { name: 'The Kraken',        model: 'kraken', hp: 360, xp: 160, gold: 220, baseY: 0, boss: true, moves: [ { name: 'crushes with a tentacle', min: 24, max: 34 }, { name: 'unleashes a maelstrom', min: 18, max: 26, all: true }, { name: 'snaps its colossal beak', min: 30, max: 42 } ], drops: [ { mat: 'ink', chance: 1 }, { mat: 'abyssscale', chance: 0.5 } ] },
     leviathan: { name: 'Reaper Leviathan', model: 'leviathan', hp: 520, xp: 380, gold: 600, baseY: 0.5, boss: true, moves: [
       { name: 'lunges with gaping jaws', min: 34, max: 48 },
       { name: 'looses a deafening roar', min: 22, max: 30, all: true },
@@ -130,14 +130,63 @@ window.Data = (function () {
   };
 
   // shared inventory items (consumables)
+  // kinds: heal | healall | full | mana | manaall | revive | reviverall | limit | damage | guard
   const ITEM_DEFS = {
-    potion:  { name: 'Potion',       kind: 'heal',   amount: 55,  target: 'ally',  fx: 'heal', price: 30 },
-    hipotion:{ name: 'Hi-Potion',    kind: 'heal',   amount: 120, target: 'ally',  fx: 'heal', price: 90 },
-    ether:   { name: 'Ether',        kind: 'mana',   amount: 30,  target: 'ally',  fx: 'mana', price: 80 },
-    phoenix: { name: 'Phoenix Down', kind: 'revive',              target: 'dead',  fx: 'heal', price: 120 },
-    bomb:    { name: 'Powder Bomb',  kind: 'damage', min: 45, max: 60, target: 'enemy', fx: 'fire', price: 60 },
+    potion:   { name: 'Potion',       kind: 'heal',    amount: 60,  target: 'ally',     fx: 'heal', price: 30,  desc: 'Restore 60 HP to one ally.' },
+    hipotion: { name: 'Hi-Potion',    kind: 'heal',    amount: 130, target: 'ally',     fx: 'heal', price: 90,  desc: 'Restore 130 HP to one ally.' },
+    xpotion:  { name: 'X-Potion',     kind: 'heal',    amount: 320, target: 'ally',     fx: 'heal', price: 260, desc: 'Restore 320 HP to one ally.' },
+    megapotion:{ name: 'Mega-Potion', kind: 'healall', amount: 110, target: 'allyall',  fx: 'heal', price: 320, desc: 'Restore 110 HP to ALL allies.' },
+    elixir:   { name: 'Elixir',       kind: 'full',    target: 'ally',     fx: 'heal', price: 600, desc: 'Fully restore one ally\'s HP and MP.' },
+    ether:    { name: 'Ether',        kind: 'mana',    amount: 35,  target: 'ally',     fx: 'mana', price: 80,  desc: 'Restore 35 MP to one ally.' },
+    hiether:  { name: 'Hi-Ether',     kind: 'mana',    amount: 90,  target: 'ally',     fx: 'mana', price: 220, desc: 'Restore 90 MP to one ally.' },
+    turboether:{ name: 'Turbo Ether', kind: 'manaall', amount: 45,  target: 'allyall',  fx: 'mana', price: 360, desc: 'Restore 45 MP to ALL allies.' },
+    phoenix:  { name: 'Phoenix Down', kind: 'revive',  target: 'dead',     fx: 'heal', price: 120, desc: 'Revive a fallen ally (half HP).' },
+    megaphoenix:{ name: 'Mega Phoenix',kind: 'fullrevive', target: 'dead', fx: 'heal', price: 480, desc: 'Revive a fallen ally to FULL HP.' },
+    adrenaline:{ name: 'Adrenaline',  kind: 'limit',   target: 'ally',     fx: 'beam', price: 240, desc: 'Instantly fill one ally\'s Limit gauge.' },
+    bomb:     { name: 'Powder Bomb',  kind: 'damage', min: 45,  max: 60,  target: 'enemy', fx: 'fire',  el: 'fire',    price: 60,  desc: '45-60 Fire damage to one foe.' },
+    frostbomb:{ name: 'Frost Flask',  kind: 'damage', min: 55,  max: 75,  target: 'enemy', fx: 'water', el: 'water',   price: 110, desc: '55-75 Water damage to one foe.' },
+    boltbomb: { name: 'Storm Jar',    kind: 'damage', min: 60,  max: 85,  target: 'enemy', fx: 'beam',  el: 'thunder', price: 130, desc: '60-85 Thunder damage to one foe.' },
+    holybomb: { name: 'Sunshard',     kind: 'damage', min: 70,  max: 100, target: 'enemy', fx: 'heal',  el: 'holy',    price: 200, desc: '70-100 Holy damage to one foe — searing to the undead.' },
+    grenade:  { name: 'Sea-Mine',     kind: 'damageall', min: 40, max: 60, target: 'enemyall', fx: 'fire', el: 'fire',  price: 240, desc: '40-60 Fire damage to ALL foes.' },
   };
   const SHOP_STOCK = ['potion', 'hipotion', 'ether', 'phoenix', 'bomb'];
+  // some goods are exclusive to certain town markets, unlocked as you sail east
+  const SHOP_STOCK_BY_TOWN = {
+    tidehaven: ['potion', 'hipotion', 'ether', 'phoenix', 'bomb', 'frostbomb'],
+    dunesport: ['potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'phoenix', 'bomb', 'boltbomb', 'megapotion'],
+    mall:      ['potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'turboether', 'phoenix', 'megaphoenix', 'elixir', 'adrenaline', 'megapotion', 'grenade', 'holybomb', 'boltbomb', 'frostbomb'],
+  };
+
+  // ---------------- CRAFTING ----------------
+  // Enemies drop "junk" MATERIALS; combine them at any shop's Crafting tab into items.
+  const MATERIALS = {
+    fang:      { name: 'Jagged Fang',    icon: '🦷', desc: 'A serrated tooth, still sharp.' },
+    fin:       { name: 'Torn Fin',       icon: '🦈', desc: 'Cartilage from a sea-beast.' },
+    shellfrag: { name: 'Shell Shard',    icon: '🐚', desc: 'A chip of armoured carapace.' },
+    goo:       { name: 'Stinging Goo',   icon: '🫧', desc: 'Translucent, faintly electric jelly.' },
+    ink:       { name: 'Ink Sac',        icon: '🖤', desc: 'A bladder of inky black fluid.' },
+    feather:   { name: 'Greasy Feather', icon: '🪶', desc: 'A windworn gull feather.' },
+    sand:      { name: 'Binding Sand',   icon: '⏳', desc: 'Strangely cohesive grit.' },
+    ember:     { name: 'Cinder Lump',    icon: '🔥', desc: 'A coal that never quite cools.' },
+    brine:     { name: 'Brine Crystal',  icon: '💎', desc: 'Salt crystallized under deep pressure.' },
+    ectoplasm: { name: 'Ectoplasm',      icon: '👻', desc: 'Cold residue of something undead.' },
+    abyssscale:{ name: 'Abyss Scale',    icon: '🐉', desc: 'A scale from the deepest dark — rare.' },
+  };
+  // recipes: { out: itemKey, qty, cost:{matKey:n,...}, name }
+  const RECIPES = [
+    { out: 'potion',     qty: 2, cost: { goo: 2 },                 name: 'Potion ×2' },
+    { out: 'hipotion',   qty: 1, cost: { goo: 3, brine: 1 },       name: 'Hi-Potion' },
+    { out: 'ether',      qty: 1, cost: { goo: 2, feather: 1 },     name: 'Ether' },
+    { out: 'bomb',       qty: 2, cost: { ember: 1, shellfrag: 1 }, name: 'Powder Bomb ×2' },
+    { out: 'frostbomb',  qty: 1, cost: { brine: 2, fin: 1 },       name: 'Frost Flask' },
+    { out: 'boltbomb',   qty: 1, cost: { goo: 3, ink: 1 },         name: 'Storm Jar' },
+    { out: 'phoenix',    qty: 1, cost: { feather: 2, ember: 1 },   name: 'Phoenix Down' },
+    { out: 'xpotion',    qty: 1, cost: { goo: 4, brine: 2 },       name: 'X-Potion' },
+    { out: 'holybomb',   qty: 1, cost: { brine: 1, ectoplasm: 2 }, name: 'Sunshard' },
+    { out: 'megapotion', qty: 1, cost: { goo: 5, brine: 2, sand: 2 }, name: 'Mega-Potion' },
+    { out: 'elixir',     qty: 1, cost: { abyssscale: 1, brine: 3, ectoplasm: 2 }, name: 'Elixir' },
+    { out: 'grenade',    qty: 1, cost: { ember: 2, ink: 1, sand: 2 }, name: 'Sea-Mine' },
+  ];
 
   // ---------------- WEAPONS (character-specific, each has shell slots) ----------------
   // first entry per character is the starting weapon (price 0).
@@ -607,7 +656,7 @@ window.Data = (function () {
     return keys;
   }
 
-  return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY,
+  return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, SHOP_STOCK_BY_TOWN, MATERIALS, RECIPES, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY,
            ELEMENT_INFO, elementOf, affMult, AFFINITIES, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT, MERMAIDS, AMBUSH,
            xpForLevel, MAX_LEVEL, randomEncounter };
 })();

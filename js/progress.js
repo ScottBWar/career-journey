@@ -23,7 +23,7 @@ window.Progress = (function () {
 
     const start = Data.ISLANDS.tidehaven;
     const state = {
-      gold: 80, pearls: 0, party, active: ['pirate', 'swordsman', 'healer'], inv, equip, ownedWeapons, shells, shellSeq,
+      gold: 80, pearls: 0, party, active: ['pirate', 'swordsman', 'healer'], inv, mats: {}, bestiary: {}, equip, ownedWeapons, shells, shellSeq,
       ship: { hull: Data.SHIP.defaults.hull, sail: Data.SHIP.defaults.sail, flag: Data.SHIP.defaults.flag, upg: {} },
       mermaids: {}, enchants: {},
       location: { place: 'island', island: 'tidehaven', x: start.spawn.x, z: start.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z },
@@ -109,6 +109,19 @@ window.Progress = (function () {
   }
 
   // award XP/gold/AP after a battle; returns { levelUps, shellUps }
+  // ---- crafting materials ----
+  function addMaterials(state, loot) { if (!state.mats) state.mats = {}; Object.keys(loot).forEach(k => { state.mats[k] = (state.mats[k] || 0) + loot[k]; }); save(state); }
+  function canCraft(state, recipe) { const m = state.mats || {}; return Object.keys(recipe.cost).every(k => (m[k] || 0) >= recipe.cost[k]); }
+  function craft(state, recipe) {
+    if (!canCraft(state, recipe)) return false;
+    Object.keys(recipe.cost).forEach(k => { state.mats[k] -= recipe.cost[k]; });
+    state.inv[recipe.out] = (state.inv[recipe.out] || 0) + recipe.qty;
+    save(state); return true;
+  }
+  // ---- bestiary ----
+  function recordSeen(state, key) { if (!state.bestiary) state.bestiary = {}; if (!state.bestiary[key]) state.bestiary[key] = { seen: 0, slain: 0 }; state.bestiary[key].seen++; }
+  function recordSlain(state, key) { if (!state.bestiary) state.bestiary = {}; if (!state.bestiary[key]) state.bestiary[key] = { seen: 0, slain: 0 }; state.bestiary[key].slain++; }
+
   function reward(state, xp, gold) {
     state.gold += gold;
     const ups = [], shellUps = [];
@@ -198,6 +211,8 @@ window.Progress = (function () {
     if (!state.ship.upg) state.ship.upg = {};
     if (!state.mermaids) state.mermaids = {};
     if (!state.enchants) state.enchants = {};
+    if (!state.mats) state.mats = {};
+    if (!state.bestiary) state.bestiary = {};
     if (!state.location) { const s = Data.ISLANDS.tidehaven; state.location = { place: 'island', island: 'tidehaven', x: s.spawn.x, z: s.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z }; }
     if (!state.equip || !state.ownedWeapons || !state.shells) {
       const equip = {}, ownedWeapons = {}, shells = []; let seq = 1;
@@ -403,5 +418,6 @@ window.Progress = (function () {
   }
 
   return { freshState, derived, reward, fullHeal, canLearn, learn, save, load, clear, renderSkillTree, renderGear, renderRoster, renderShipyard,
-           toggleActive, activeMembers, recruit, dismiss, shipStats, equipWeapon, equipShell, unequipSlot, addShell, buyWeapon, pouchShells, def };
+           toggleActive, activeMembers, recruit, dismiss, shipStats, equipWeapon, equipShell, unequipSlot, addShell, buyWeapon, pouchShells, def,
+           addMaterials, canCraft, craft, recordSeen, recordSlain };
 })();
