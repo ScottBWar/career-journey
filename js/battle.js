@@ -16,7 +16,7 @@ window.Battle = (function () {
 
   const FX = { fire:['#ffb347','#ff5e3a'], water:['#5eead4','#3b82f6'], beam:['#a5b4fc','#e0e7ff'], heal:['#6ee7b7','#bbf7d0'], mana:['#60a5fa','#bfdbfe'], hit:['#ff6b6b','#ffd1d1'] };
   const PSPD = { pirate: 11, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12, simon: 11 };
-  const ESPD = { shark: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8, eel: 13, urchin: 6, bat: 15, ghoul: 7, wraith: 11, vampire: 12 };
+  const ESPD = { shark: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8, eel: 13, urchin: 6, bat: 15, ghoul: 7, wraith: 11, vampire: 12, drifter: 14 };
   const ELEMCOL = { fire: '#ff7b3a', water: '#5eead4', thunder: '#fde047', earth: '#c2a062', dark: '#b06aff', holy: '#fff0a0', physical: '#dfe7ef' };
   const fxKey = el => ({ fire: 'fire', water: 'water' })[el] || 'beam';
 

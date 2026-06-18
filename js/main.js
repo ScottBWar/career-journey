@@ -127,7 +127,7 @@ window.Game = (function () {
   };
 
   // ---------- dialogue ----------
-  const NAME2PORT = { 'Capt. Redbeard': 'pirate', 'Lance Strider': 'swordsman', 'Marina': 'healer', 'Pip': 'mage', 'Ridge': 'blader', 'Quint': 'dragoon', 'Selachoth': 'selachoth', 'Ruffy': 'ruffy', 'Simon': 'simon', 'Count Saltorre': 'vampire' };
+  const NAME2PORT = { 'Capt. Redbeard': 'pirate', 'Lance Strider': 'swordsman', 'Marina': 'healer', 'Pip': 'mage', 'Ridge': 'blader', 'Quint': 'dragoon', 'Selachoth': 'selachoth', 'Ruffy': 'ruffy', 'Simon': 'simon', 'Count Saltorre': 'vampire', 'Gilgamuck': 'drifter' };
   function dlgPortrait(name) { const k = NAME2PORT[name]; el('dlgPortrait').innerHTML = (k && Portraits.has(k)) ? Portraits.img(k) : ''; }
   Game.talk = function (npc) {
     const lines = npc.lines.slice(); let i = 0;

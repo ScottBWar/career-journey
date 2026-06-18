@@ -527,7 +527,34 @@ window.Models = (function () {
     const aR = at(MB.CreateCylinder('aR', { height: 1.1, diameter: 0.26 }, scene), r, suit, 0.66, 1.95, 0.1); aR.rotation.z = -0.3; aR.rotation.x = -0.4;
     return { node: r, idle(t) { r.position.y = (r._baseY||0) + Math.sin(t*1.1)*0.12; capeMesh.rotation.z = Math.sin(t*1.3)*0.06; } };
   }
-  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire };
+  function drifter() { // Gilgamuck — many-bladed wandering swordsman (superboss)
+    const r = new BABYLON.TransformNode('eDrifter', scene);
+    const cloth = M('drCloth', '#3a4d6b', { spec: 0.2 }), cloth2 = M('drCloth2', '#2c3a52'), skin = M('drSkin', '#c89a72'),
+          steel = M('drSteel', '#cfd8e4', { spec: 0.8 }), gold = M('drGold', '#caa030', { emissive: '#3a2e08' }), hair = M('drHair', '#b8b0a0');
+    at(MB.CreateCylinder('lL', { height: 1.5, diameter: 0.4 }, scene), r, cloth2, -0.28, 0.75, 0);
+    at(MB.CreateCylinder('lR', { height: 1.5, diameter: 0.4 }, scene), r, cloth2, 0.28, 0.75, 0);
+    at(MB.CreateBox('torso', { width: 1.2, height: 1.6, depth: 0.7 }, scene), r, cloth, 0, 2.1, 0);
+    at(MB.CreateBox('sash', { width: 1.26, height: 0.24, depth: 0.74 }, scene), r, gold, 0, 1.6, 0);
+    at(MB.CreateSphere('head', { diameter: 0.7 }, scene), r, skin, 0, 3.15, 0);
+    at(MB.CreateSphere('hair', { diameter: 0.78, slice: 0.55 }, scene), r, hair, 0, 3.28, -0.05);
+    at(MB.CreateBox('mask', { width: 0.74, height: 0.22, depth: 0.66 }, scene), r, gold, 0, 3.18, 0); // golden visor
+    [-0.12, 0.12].forEach(z => at(MB.CreateSphere('e', { diameter: 0.1 }, scene), r, M('drEye', '#ff5e5e', { emissive: '#ff5e5e' }), 0.3, 3.18, z));
+    // six arms, each clutching a different blade, fanned out
+    const blades = [];
+    for (let i = 0; i < 6; i++) {
+      const side = i < 3 ? -1 : 1; const k = i % 3;
+      const piv = new BABYLON.TransformNode('arm' + i, scene); piv.parent = r; piv.position.set(side * 0.7, 2.4 - k * 0.0, 0);
+      piv.rotation.z = side * (0.5 + k * 0.55); piv.rotation.x = -0.2 - k * 0.25;
+      at(MB.CreateCylinder('a', { height: 1.1, diameter: 0.22 }, scene), piv, cloth, 0, -0.5, 0);
+      const sw = new BABYLON.TransformNode('sw' + i, scene); sw.parent = piv; sw.position.set(0, -1.0, 0.1);
+      const w = 0.1 + k * 0.04, len = 1.6 + k * 0.4;
+      at(MB.CreateBox('blade', { width: w, height: len, depth: 0.18 }, scene), sw, steel, 0, len / 2, 0);
+      at(MB.CreateBox('guard', { width: 0.4, height: 0.1, depth: 0.24 }, scene), sw, gold, 0, 0, 0);
+      blades.push({ piv, side });
+    }
+    return { node: r, idle(t) { blades.forEach((b, i) => b.piv.rotation.z = b.side * (0.5 + (i % 3) * 0.55) + Math.sin(t * 1.5 + i) * 0.08); r.position.y = (r._baseY || 0) + Math.sin(t * 1.0) * 0.1; } };
+  }
+  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter };
 
   // ---------------- SIMON (temporary vampire-hunter ally) ----------------
   function simon() {

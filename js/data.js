@@ -147,6 +147,11 @@ window.Data = (function () {
     angler: { name: 'Abyss Angler', model: 'angler', hp: 380, xp: 280, gold: 420, baseY: 0.4, boss: true, moves: [
       { name: 'snaps its enormous jaws', min: 30, max: 44 },
       { name: 'mesmerizes with its lure', min: 18, max: 26, all: true } ] },
+    drifter: { name: 'Gilgamuck, the Drifter', model: 'drifter', hp: 880, xp: 900, gold: 1500, baseY: 0, boss: true, moves: [
+      { name: 'draws a different blade and slashes', min: 36, max: 50 },
+      { name: 'spins into a six-sword cyclone', min: 26, max: 36, all: true },
+      { name: 'hurls a borrowed harpoon at', min: 40, max: 56 },
+      { name: 'flourishes — "Have at you!"', min: 44, max: 60 } ], drops: [ { mat: 'abyssscale', chance: 1 } ] },
     selachoth: { name: 'Selachoth', model: 'selachoth', hp: 560, xp: 500, gold: 800, baseY: 0.2, boss: true, moves: [
       { name: 'cleaves with Tidemourn', min: 34, max: 46 },
       { name: 'sweeps the blade in an arc', min: 22, max: 30, all: true },
@@ -287,6 +292,8 @@ window.Data = (function () {
     cowrie_focus:  { key: 'cowrie_focus', name: 'Focus Cowrie', kind: 'support', stat: 'mp', perLevel: 10, maxLevel: 3, ap: [0, 70, 190], price: 150, desc: '+Max MP (scales with level).' },
     auger_edge:    { key: 'auger_edge', name: 'Auger Spike', kind: 'support', stat: 'atk', perLevel: 5, maxLevel: 3, ap: [0, 90, 240], price: 200, desc: '+Attack (scales with level).' },
     tiger_crit:    { key: 'tiger_crit', name: 'Tiger Cowrie', kind: 'support', stat: 'crit', perLevel: 0.06, maxLevel: 3, ap: [0, 110, 280], price: 240, desc: '+Crit chance (scales with level).' },
+    star_conch:    { key: 'star_conch', name: 'Star Conch', kind: 'magic', maxLevel: 3, ap: [0, 200, 500], price: 0,
+      ability: ab2('Starfall', { mp: 28, min: 64, max: 88, target: 'all', fx: 'beam', el: 'holy' }), desc: 'Calls a rain of stars on all foes (holy). The Drifter\'s parting gift.' },
   };
   const SHOP_SHELLS = ['conch_ember', 'spiral_mend', 'nautilus_surge', 'triton_blast', 'sand_dollar', 'cowrie_focus', 'auger_edge', 'tiger_crit'];
 
@@ -325,6 +332,7 @@ window.Data = (function () {
     ghoul:  { weak: ['holy', 'fire'], absorb: ['dark'], resist: ['water'] },
     wraith: { weak: ['holy'], absorb: ['dark'], nullify: ['physical'] },
     vampire:{ weak: ['holy'], absorb: ['dark'], resist: ['fire', 'water'] },
+    drifter:{ weak: ['holy'], resist: ['physical', 'fire', 'water'] },
     kraken: { weak: ['thunder'], resist: ['water'] },
     selachoth: { weak: ['thunder', 'holy'], absorb: ['water'] },
     leviathan: { weak: ['thunder'], resist: ['water'] },
@@ -589,6 +597,14 @@ window.Data = (function () {
       ],
       decor: { trees: 6, palms: 0, rocks: 10 },
     },
+    cove: {
+      name: 'Castaway Cove', size: 40, ground: '#4fae6a', sand: '#ffe7b0', water: '#1fa0c0', sky: { top: '#ff9e6a', horizon: '#ffe7c0' },
+      spawn: { x: 0, z: -9 }, dock: { x: 0, z: -12 },
+      bonfire: { x: 0, z: 4 },
+      superboss: { x: 0, z: 12, key: 'drifter', color: '#caa030' },
+      encounters: [],
+      decor: { trees: 3, palms: 14, rocks: 5 },
+    },
   };
 
   // ---------------- SEA (sail between islands) ----------------
@@ -606,6 +622,8 @@ window.Data = (function () {
       { id: 's1', type: 'frigate', x: 22, z: 24 },
       { id: 's2', type: 'ghost', x: -16, z: -28 },
     ],
+    // a hidden bottle bobs out here; sail into it to chart the secret cove
+    cove: { x: -52, z: -46 },
   };
 
   // ---------------- DUNGEONS (one per island, with a crystal-order puzzle) ----------------
@@ -742,6 +760,31 @@ window.Data = (function () {
       { name: 'Count Saltorre', text: 'Impossible... dragged back into the dark... by the warm and the living together...' },
       { name: 'Simon', text: 'That\'s the difference between us, Count. I never hunted alone. I just forgot it for a while.' },
       { name: 'Narrator', text: 'Count Saltorre crumbles to red dust and is scattered by the sea wind. The moon over Duskmoor pales to a clean white.' },
+    ],
+    coveDiscover: [
+      { name: 'Narrator', text: 'A bottle knocks against the hull. Inside: a scrap of sailcloth, a crude map, and three words in a shaky hand — "COME REST AWHILE."' },
+      { name: 'Capt. Redbeard', text: 'Charts a hidden cove south of the deep. No monsters marked. No treasure marked. Just... a little drawing of a campfire.' },
+      { name: 'Marina', text: 'After everything we\'ve fought through? A place with no monsters sounds like the rarest treasure of all. Let\'s go.' },
+      { name: 'Narrator', text: 'CASTAWAY COVE has been added to your charts. Sail to it when you wish — it lies far to the southwest.' },
+    ],
+    coveBonfire: [
+      { name: 'Narrator', text: 'A driftwood fire snaps on a perfect crescent of sand. For once, nothing in the dark is trying to eat you. The whole crew exhales at the same time.' },
+      { name: 'Capt. Redbeard', text: 'Ha! Look at us. A drowned-world\'s worth of legends, and not one of us knows how to just... sit.' },
+      { name: 'Marina', text: 'The tide\'s gentle here. Like it remembers how it used to be. Like the world we\'re fighting for actually still exists.' },
+      { name: 'Lance Strider', text: '(quiet, for once) "...My mentor used to say the point of the fight was to earn nights like this. I think I finally get it."' },
+      { name: 'Narrator', text: 'You roast something over the fire, swap bad stories, and watch the Wandering Tear streak across a warm horizon. Your whole party is fully restored — body and spirit. (HP, MP and Limit gauges renewed.)' },
+    ],
+    drifterPre: [
+      { name: '???', text: '(A lone figure rises from the surf at the cove\'s edge, draped in a dozen mismatched scabbards.) "...A buster sword. A leviathan harpoon. A whip out of legend. You carry a FORTUNE of blades, strangers."' },
+      { name: 'Gilgamuck', text: 'I am Gilgamuck, the Drifter! I have crossed a hundred drowned worlds collecting the finest weapons in each. And yours — oh, yours will round out the set NICELY!' },
+      { name: 'Capt. Redbeard', text: 'A pirate, robbing US? That\'s MY job, you great salty magpie!' },
+      { name: 'Gilgamuck', text: 'Then we are alike, you and I — and only one of us sails off with the spoils. En garde! Have at you!' },
+    ],
+    drifterFall: [
+      { name: 'Gilgamuck', text: 'Hah... HAHA! Bested! Truly bested, and on a beach this pretty. I haven\'t felt so ALIVE in a hundred crossings!' },
+      { name: 'Gilgamuck', text: 'Keep your blades, champions — you\'ve earned the right to them. But take THIS from my collection: a Star Conch, pulled from a sky that isn\'t yours. May it light your darkest fights.' },
+      { name: 'Narrator', text: 'You received the STAR CONCH — a peerless seashell that calls Starfall upon all foes! (Equip it from the Gear menu.)' },
+      { name: 'Gilgamuck', text: '(He salutes with six swords at once and steps backward into the surf, grinning.) "Until the next world, then. Drift well!"' },
     ],
     simonLeave: [
       { name: 'Simon', text: 'It\'s done. The castle\'s quiet for the first time in nine generations.' },

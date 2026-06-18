@@ -5,7 +5,7 @@
 window.Sea = (function () {
   const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
   let scene, cam, ship, engine, ocean, oceanBase;
-  let isles = [], idlers = [], foes = [], paused = false, locked = false, nearTarget = null, t = 0, buoy = null, camYaw = 0;
+  let isles = [], idlers = [], foes = [], paused = false, locked = false, nearTarget = null, t = 0, buoy = null, coveBuoy = null, camYaw = 0;
   const SPEED = 11;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
@@ -30,7 +30,7 @@ window.Sea = (function () {
   function build() {
     engine = Game.engine;
     if (scene) scene.dispose();
-    isles = []; idlers = []; foes = []; nearTarget = null; t = 0; paused = false; locked = false;
+    isles = []; idlers = []; foes = []; nearTarget = null; t = 0; paused = false; locked = false; coveBuoy = null;
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.55, 0.78, 0.95); scene.fogDensity = 0.004;
@@ -53,6 +53,23 @@ window.Sea = (function () {
       const sg = Models.sign(idef.name); sg.node.position.set(isle.x, 0.05, isle.z + 5);
       isles.push({ key: isle.key, name: idef.name, pos: new V3(isle.x, 0, isle.z), dock: new V3(isle.x, 0, isle.z + 7), r: 12 });
     });
+
+    // secret cove — a hidden bottle until charted, then a landable isle
+    const cv = Data.SEA.cove;
+    if (cv) {
+      if (Game.state.flags && Game.state.flags.coveFound) {
+        const cdef = Data.ISLANDS.cove;
+        const land = MB.CreateDisc('cisle', { radius: 9, tessellation: 32 }, scene); land.rotation.x = Math.PI/2; land.position.set(cv.x, 0.05, cv.z); land.material = M('cisle', cdef.ground);
+        const beach = MB.CreateDisc('cbeach', { radius: 11, tessellation: 32 }, scene); beach.rotation.x = Math.PI/2; beach.position.set(cv.x, 0.0, cv.z); beach.material = M('cbeach', cdef.sand);
+        for (let i = 0; i < 4; i++) { const p = Models.palm(); p.node.position.set(cv.x + (Math.random()*8-4), 0.05, cv.z + (Math.random()*8-4)); }
+        const mk = Models.portal('#ff9ec0'); mk.node.position.set(cv.x, 0.1, cv.z + 7); mk.node._baseY = 0.1; idlers.push(mk);
+        const sg = Models.sign(cdef.name); sg.node.position.set(cv.x, 0.05, cv.z + 5);
+        isles.push({ key: 'cove', name: cdef.name, pos: new V3(cv.x, 0, cv.z), dock: new V3(cv.x, 0, cv.z + 7), r: 12 });
+      } else {
+        const bot = Models.portal('#9be7ff'); bot.node.position.set(cv.x, 0.1, cv.z); bot.node._baseY = 0.1; idlers.push(bot);
+        coveBuoy = new V3(cv.x, 0, cv.z);
+      }
+    }
 
     // roaming enemy ships
     foes = [];
@@ -101,6 +118,15 @@ window.Sea = (function () {
       if (V3.Distance(f.node.position, f.home) > 14) f.ang = Math.atan2(f.home.x - f.node.position.x, f.home.z - f.node.position.z);
       if (Math.random() < 0.008) f.ang += (Math.random() - 0.5);
       if (!locked && V3.Distance(f.node.position, ship.position) < 5) { startShipFight(f); return; }
+    }
+    // discover the secret cove (the floating bottle)
+    if (!locked && coveBuoy && V3.Distance(ship.position, coveBuoy) < 4) {
+      locked = true; paused = true; coveBuoy = null;
+      Game.startCutscene('coveDiscover', () => {
+        Game.state.flags.coveFound = true; Progress.save(Game.state);
+        const sc = build(); Game.scene = sc; Game.active = { interact }; paused = false; locked = false;
+      });
+      return;
     }
     // rare deep-sea leviathan ambush
     if (!locked && Math.random() < 0.0004) { ambush(); return; }

@@ -84,6 +84,21 @@ window.World = (function () {
       gates.push({ kind: 'boss', name: stage, pos: new V3(def.boss.x, 0, def.boss.z), r: 3 });
     }
 
+    // secret-cove bonfire (a rest spot + story beat)
+    if (def.bonfire) {
+      const fire = Models.crystal('#ff7b3a'); fire.node.position.set(def.bonfire.x, 0.2, def.bonfire.z); fire.node.scaling.setAll(0.8); idlers.push(fire);
+      for (let i = 0; i < 5; i++) { const log = MB.CreateCylinder('log', { height: 1.2, diameter: 0.22 }, scene); log.material = M('log', '#5a3a1e'); log.position.set(def.bonfire.x + Math.cos(i*1.26)*0.6, 0.2, def.bonfire.z + Math.sin(i*1.26)*0.6); log.rotation.z = 1.2; log.rotation.y = i*1.26; }
+      const bs = Models.sign('Bonfire'); bs.node.position.set(def.bonfire.x - 2.2, 0, def.bonfire.z);
+      gates.push({ kind: 'bonfire', name: 'the bonfire', pos: new V3(def.bonfire.x, 0, def.bonfire.z), r: 3 });
+    }
+
+    // optional superboss (the Drifter, on the secret cove)
+    if (def.superboss && !Game.state.prog.coveBossDown) {
+      const sb = def.superboss; const foe = Models.enemy(sb.key); foe.node.position.set(sb.x, 0, sb.z); foe.node.scaling.setAll(0.55); foe.node._baseY = 0; foe.node.rotation.y = Math.PI; idlers.push(foe);
+      const ss = Models.sign('???'); ss.node.position.set(sb.x, 0, sb.z - 2.4);
+      gates.push({ kind: 'superboss', key: sb.key, name: 'the Drifter', pos: new V3(sb.x, 0, sb.z), r: 3 });
+    }
+
     // roamers
     if (!Game.state.islands[key]) Game.state.islands[key] = { cleared: {} };
     const cleared = Game.state.islands[key].cleared;
@@ -159,6 +174,8 @@ window.World = (function () {
       else if (nearGate.kind === 'shells') label = '[F / Tap] Hunt for shells';
       else if (nearGate.kind === 'mermaid') label = `[F / Tap] Talk to ${nearGate.name} 💗`;
       else if (nearGate.kind === 'boss') label = Game.state.prog.finalWin ? '[F / Tap] The spire is silent' : Game.state.prog.krakenDown ? '[F / Tap] Confront Selachoth' : '[F / Tap] Challenge the Kraken';
+      else if (nearGate.kind === 'bonfire') label = '[F / Tap] Rest at the bonfire 🔥';
+      else if (nearGate.kind === 'superboss') label = '[F / Tap] Approach the strange figure…';
       prompt.textContent = label; prompt.classList.add('show');
     } else prompt.classList.remove('show');
 
@@ -220,6 +237,15 @@ window.World = (function () {
     if (g.kind === 'dock') return Game.toSea();
     if (g.kind === 'shells') return Game.openShellHunt();
     if (g.kind === 'mermaid') return Game.openDating(g.key);
+    if (g.kind === 'bonfire') return Game.startCutscene('coveBonfire', () => { Progress.fullHeal(Game.state); Progress.save(Game.state); Game.toast('Fully rested. The crew is renewed.'); });
+    if (g.kind === 'superboss') {
+      return Game.confirm('Challenge GILGAMUCK, the Drifter? He is a brutal optional superboss — come prepared.', () => {
+        Game.startCutscene('drifterPre', () => fightBoss([g.key], { fullLimit: true }, () => {
+          Game.state.prog.coveBossDown = true; Progress.addShell(Game.state, 'star_conch'); Progress.save(Game.state);
+          Game.startCutscene('drifterFall', () => Game.toast('The Star Conch is yours. Equip it from the Gear menu!'));
+        }));
+      });
+    }
     if (g.kind === 'boss') {
       if (Game.state.prog.finalWin) return Game.toast('Selachoth is no more. The tide is yours.');
       if (!Game.state.prog.krakenDown) {
