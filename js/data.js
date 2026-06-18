@@ -706,6 +706,15 @@ window.Data = (function () {
       { name: 'Ruffy', text: 'Good, \'cause I\'m not funny, I\'m STRONG! Gum-Gum—! ...okay watch THIS later. I\'m coming with you. RIVALS gotta keep an eye on each other, yeah?' },
       { name: 'Narrator', text: 'Ruffy the Rubber Rival joins your party! (Manage your active crew with the PARTY menu — press T.) He fights, levels, and grows just like the rest — for as long as he stays.' },
     ],
+    mermaidCouncil: [
+      { name: 'Narrator', text: 'As the Kraken\'s body sinks, the sea around your hull begins to GLOW — six lights, six colors, rising from the deep. The elemental mermaids surface together, for the first time in a thousand years.' },
+      { name: 'Nerida', text: 'You felled the Kraken. So the Wardens of the Tide have come to speak plainly. We are the sea\'s six moods — and Selachoth has made the sea grieve.' },
+      { name: 'Lumina', text: 'He was not always the One-Finned Angel. He was a man who loved this world so fiercely that its cruelty broke him. Now he would still the tide forever — and a still sea is a DEAD sea.' },
+      { name: 'Ember', text: 'We cannot strike him ourselves; we ARE the tide he commands. But YOU walk where we cannot. So we offer what we can — our elements, in your hands.' },
+      { name: 'Nyx', text: 'Fire, water, storm, stone, shadow, and light. Win our hearts and we will pour ourselves into your blades. Selachoth fears nothing in the deep... but he never reckoned on the SURFACE loving us back.' },
+      { name: 'Marina', text: 'Sisters of the tide... I\'m one of you, in my way. We won\'t let the sea become a grave. We swear it.' },
+      { name: 'Narrator', text: 'The Mermaids pledge their aid. (Court them on the islands to enchant your weapons with their elements — their power may turn the final tide. ❤ The OBSERVATORY in Dunes Port reveals which star each Warden answers to.)' },
+    ],
     krakenFall: [
       { name: 'Narrator', text: 'The Kraken sinks beneath a ring of foam. Far to the east, the black spire stops glowing red — and turns cold, and silver, and patient.' },
       { name: 'Lance Strider', text: 'The guardian\'s down. The road to Selachoth is open.' },
@@ -725,6 +734,7 @@ window.Data = (function () {
       { name: 'Selachoth', text: 'Because they AREN\'T, boy. I gave them everything and they drowned me in their wars regardless. The ocean is honest. The ocean is CLEAN. I will give the whole world that peace.' },
       { name: 'Marina', text: 'That isn\'t peace. That\'s a grave with no one left to grieve it.' },
       { name: 'Selachoth', text: 'Then grieve now. The tide above this spire is a thousand fathoms high, and I have only to let it FALL.' },
+      { name: 'Marina', text: '(She lifts a hand — and the six Wardens\' light answers from every weapon you carry.) "You forgot something, old hero. The tide doesn\'t only obey you anymore. The mermaids gave it back to the LIVING."' },
     ],
     ruffySacrifice: [
       { name: 'Ruffy', text: 'OI! SHARK-FOR-BRAINS!' },

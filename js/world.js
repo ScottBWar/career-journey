@@ -251,10 +251,11 @@ window.World = (function () {
       if (!Game.state.prog.krakenDown) {
         Game.confirm('Enter the Maw and challenge the KRAKEN, guardian of the spire?', () => fightBoss(['kraken'], {}, () => {
           Game.state.prog.krakenDown = true; Progress.save(Game.state);
-          Game.startCutscene('krakenFall', () => {
+          const afterCouncil = () => {
             if (ruffyHere()) Game.startCutscene('ruffyLeave', () => { Progress.dismiss(Game.state, 'ruffy'); Progress.save(Game.state); Game.toast('The spire glows cold. Return to confront Selachoth.'); });
             else Game.toast('The spire glows cold. Return to confront Selachoth.');
-          });
+          };
+          Game.startCutscene('krakenFall', () => Game.startCutscene('mermaidCouncil', afterCouncil));
         }));
       } else {
         Game.startCutscene('selachothPre', () => {
