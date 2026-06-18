@@ -145,6 +145,27 @@
     .craft-mat { font-size: 0.72rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); border-radius: 0.5rem; padding: 0.12rem 0.45rem; color: #e8eefc; }
     .craft-none { font-size: 0.74rem; color: rgba(255,255,255,0.5); font-style: italic; padding: 0.2rem; }
     .craft-cost { color: #a7f3d0; font-style: normal; letter-spacing: 0.04em; }
+    /* pause / bestiary / legend */
+    .pausebox { text-align: center; max-width: 420px; }
+    .pause-title { color: #fcd34d; letter-spacing: 0.1em; margin: 0.2rem 0 1rem; }
+    .pause-menu { display: flex; flex-direction: column; gap: 0.6rem; }
+    .pause-menu .pill { width: 100%; }
+    .pause-hint { font-size: 0.74rem; color: rgba(255,255,255,0.55); margin-top: 1rem; }
+    .bestiary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.7rem; margin-top: 0.8rem; }
+    .best-card { display: flex; gap: 0.6rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 0.7rem; padding: 0.6rem; }
+    .best-card.unknown { opacity: 0.55; }
+    .best-card .portrait { width: 56px; height: 56px; image-rendering: pixelated; border-radius: 0.4rem; flex-shrink: 0; }
+    .best-card .best-port-q { width: 56px; height: 56px; display: grid; place-items: center; font-size: 2rem; background: rgba(0,0,0,0.3); border-radius: 0.4rem; flex-shrink: 0; }
+    .best-info { font-size: 0.76rem; line-height: 1.35; }
+    .best-info b { font-size: 0.86rem; color: #ffe9a8; }
+    .best-aff { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.2rem; }
+    .best-aff span { font-size: 0.68rem; padding: 0.05rem 0.35rem; border-radius: 0.4rem; background: rgba(255,255,255,0.1); }
+    .legend-list { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.8rem; }
+    .legend-row { display: flex; align-items: center; gap: 0.7rem; font-size: 0.86rem; }
+    .legend-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 6px currentColor; }
+    .scr-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .scr-head h2 { margin: 0; color: #fcd34d; letter-spacing: 0.06em; }
+    .scr-sub { font-size: 0.78rem; color: rgba(255,255,255,0.6); margin: 0.2rem 0 0; }
 
     /* gear / seashells */
     #gear .sk-wrap { width: min(760px, 96vw); max-height: 90vh; overflow: auto; }
@@ -430,6 +451,7 @@
         <button class="hud-btn" id="btnGear">Gear (G)</button>
         <button class="hud-btn" id="btnFx" title="Graphics quality">✨</button>
         <button class="hud-btn" id="btnMusic">🔊</button>
+        <button class="hud-btn" id="btnPause" title="Pause / Menu (Esc)">☰</button>
       </div>
     </div>
   </div>
@@ -503,6 +525,25 @@
 
   <!-- PARTY -->
   <div class="overlay" id="partyScr"><div class="panel" id="partyBody" style="padding:1.2rem;"></div></div>
+
+  <!-- PAUSE -->
+  <div class="overlay" id="pause"><div class="box panel pausebox">
+    <h2 class="pause-title">⚓ Paused</h2>
+    <div class="pause-menu">
+      <button class="pill" id="pResume">▶ Resume</button>
+      <button class="pill ghost" id="pBestiary">📖 Bestiary</button>
+      <button class="pill ghost" id="pLegend">🗺️ Map Legend</button>
+      <button class="pill ghost" id="pParty">👥 Party</button>
+      <button class="pill ghost" id="pQuit">🏳️ Save &amp; Quit to Title</button>
+    </div>
+    <p class="pause-hint">Your adventure saves automatically. Press <b>Esc</b> to resume.</p>
+  </div></div>
+
+  <!-- BESTIARY -->
+  <div class="overlay" id="bestiary"><div class="panel" id="bestiaryBody" style="padding:1.2rem;"></div></div>
+
+  <!-- MAP LEGEND -->
+  <div class="overlay" id="legend"><div class="panel" id="legendBody" style="padding:1.2rem;"></div></div>
 
   <!-- TOAST + ENDING -->
   <div id="toast"></div>

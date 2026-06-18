@@ -299,6 +299,69 @@ window.Game = (function () {
   function openDating(key) { Game.datingOpen = true; pauseExplore(); Dating.start(key, () => { Game.datingOpen = false; Music.play(Game.mode === 'town' ? 'town' : 'island'); resumeExplore(); }); }
   Game.openDating = openDating;
 
+  // ---------- pause menu ----------
+  function openPause() {
+    if (!HUD_MODES.includes(Game.mode)) return;
+    if (Game.pauseOpen) return closePause();
+    Game.pauseOpen = true; pauseExplore(); Progress.save(Game.state); el('pause').classList.add('show');
+  }
+  function closePause() { Game.pauseOpen = false; el('pause').classList.remove('show'); resumeExplore(); }
+  Game.openPause = openPause;
+
+  // ---------- bestiary ----------
+  function openBestiary() {
+    Game.bestiaryOpen = true; el('pause').classList.remove('show'); el('bestiary').classList.add('show');
+    renderBestiary();
+  }
+  function closeBestiary() { Game.bestiaryOpen = false; el('bestiary').classList.remove('show'); el('pause').classList.add('show'); }
+  function renderBestiary() {
+    const best = Game.state.bestiary || {};
+    const keys = Object.keys(Data.ENEMIES);
+    const seenCount = keys.filter(k => best[k] && best[k].seen).length;
+    const EI = Data.ELEMENT_INFO;
+    const affTags = (k) => {
+      const a = Data.AFFINITIES[k] || {}; const out = [];
+      (a.weak || []).forEach(e => out.push(`<span style="color:#fca5a5">▲ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
+      (a.resist || []).forEach(e => out.push(`<span style="color:#9be7ff">▼ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
+      (a.absorb || []).forEach(e => out.push(`<span style="color:#6ee7b7">✚ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
+      (a.nullify || []).forEach(e => out.push(`<span style="color:#cbd5e1">○ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
+      return out.length ? `<div class="best-aff">${out.join('')}</div>` : '<div class="best-aff"><span>no known affinities</span></div>';
+    };
+    let cards = '';
+    keys.forEach(k => {
+      const def = Data.ENEMIES[k]; const rec = best[k];
+      if (!rec || !rec.seen) { cards += `<div class="best-card unknown"><div class="best-port-q">❓</div><div class="best-info"><b>? ? ?</b><br>Undiscovered</div></div>`; return; }
+      const port = Portraits.has(k) ? Portraits.img(k, 'portrait') : `<div class="best-port-q">${def.boss ? '👑' : '👾'}</div>`;
+      cards += `<div class="best-card">${port}<div class="best-info"><b>${def.name}</b>${def.boss ? ' <span style="color:#fca5a5">BOSS</span>' : ''}<br>HP ${def.hp} · slain ×${rec.slain || 0}${affTags(k)}</div></div>`;
+    });
+    el('bestiaryBody').innerHTML = `<div class="scr-head"><h2>📖 Bestiary</h2><button class="pill ghost small" id="bestClose">Back</button></div>
+      <p class="scr-sub">Discovered ${seenCount} / ${keys.length} creatures. ▲ weak · ▼ resists · ✚ absorbs · ○ immune</p>
+      <div class="bestiary-grid">${cards}</div>`;
+    el('bestClose').onclick = closeBestiary;
+  }
+
+  // ---------- map legend ----------
+  function openLegend() {
+    Game.legendOpen = true; el('pause').classList.remove('show'); el('legend').classList.add('show');
+    const rows = [
+      ['#8fd3f4', '🏘️ Town', 'Inns, item vendors, weapon &amp; seashell shops.'],
+      ['#9be7ff', '🌀 Dungeon', 'Puzzles, treasure and monster-infested depths.'],
+      ['#ffffff', '⚓ Dock', 'Return to your ship and set sail.'],
+      ['#ffd166', '🐚 Shell Beach', 'Play the shell-hunting minigame for new materia.'],
+      ['#ff9ec0', '🧜 Mermaid', 'Court an elemental mermaid to enchant your weapons.'],
+      ['#ff5e5e', '⚔️ Boss', 'A major story battle awaits here.'],
+      ['#b03050', '🦇 Roaming foe', 'Touch one to start a battle. Clear them for loot &amp; XP.'],
+    ];
+    el('legendBody').innerHTML = `<div class="scr-head"><h2>🗺️ Map Legend</h2><button class="pill ghost small" id="legClose">Back</button></div>
+      <p class="scr-sub">What the markers on your minimap and in the world mean.</p>
+      <div class="legend-list">${rows.map(r => `<div class="legend-row"><span class="legend-dot" style="background:${r[0]};color:${r[0]}"></span><span><b>${r[1]}</b> — ${r[2]}</span></div>`).join('')}</div>`;
+    el('legClose').onclick = closeLegend;
+  }
+  function closeLegend() { Game.legendOpen = false; el('legend').classList.remove('show'); el('pause').classList.add('show'); }
+
+  // ---------- quit to title ----------
+  function quitToTitle() { Progress.save(Game.state); location.reload(); }
+
   // ---------- confirm ----------
   Game.confirm = function (text, onYes) {
     pauseExplore(); Game.confirmOpen = true; el('confirmText').textContent = text; el('confirm').classList.add('show');
@@ -347,9 +410,15 @@ window.Game = (function () {
     if (window.Render) el('btnFx').textContent = Render.isHigh() ? '✨' : '▫️';
     el('btnFx').onclick = () => { const q = Render.toggle(); el('btnFx').textContent = q === 'high' ? '✨' : '▫️'; Game.toast('Graphics: ' + (q === 'high' ? 'High' : 'Low') + ' — applies when you next enter an area or battle.'); };
     el('btnMusic').onclick = () => { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; };
+    el('btnPause') && (el('btnPause').onclick = openPause);
+    el('pResume').onclick = closePause;
+    el('pBestiary').onclick = openBestiary;
+    el('pLegend').onclick = openLegend;
+    el('pParty').onclick = () => { closePause(); openParty(); };
+    el('pQuit').onclick = () => Game.confirm('Save and quit to the title screen?', quitToTitle);
     el('worldPrompt').onclick = () => { if (Game.active) Game.active.interact && Game.active.interact(); };
   }
-  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.datingOpen || Game.shopOpen || Game.confirmOpen || el('shellHunt').classList.contains('show') || el('end').classList.contains('show'); }
+  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.datingOpen || Game.shopOpen || Game.confirmOpen || Game.pauseOpen || Game.bestiaryOpen || Game.legendOpen || el('shellHunt').classList.contains('show') || el('end').classList.contains('show'); }
   Game.blocking = function () { return Game.dialogueOpen || anyModal(); };
   function route(code) {
     if (el('introSeq').classList.contains('show')) { if (Game._introFinish) Game._introFinish(); return; }
@@ -363,7 +432,12 @@ window.Game = (function () {
     if (Game.shipyardOpen) { if (code === 'Escape' || code === 'KeyC') closeShipyard(); return; }
     if (Game.confirmOpen) { if (code === 'Enter' || code === 'KeyF') el('confirmYes').click(); else if (code === 'Escape') el('confirmNo').click(); return; }
     if (Game.shopOpen) { if (code === 'Escape') closeShop(); return; }
+    if (Game.bestiaryOpen) { if (code === 'Escape') closeBestiary(); return; }
+    if (Game.legendOpen) { if (code === 'Escape') closeLegend(); return; }
+    if (Game.pauseOpen) { if (code === 'Escape') closePause(); else if (code === 'KeyB') openBestiary(); return; }
     if (Game.dialogueOpen) { if (ACTION.has(code) || code === 'Space') Game._advanceDlg && Game._advanceDlg(); return; }
+    if (code === 'Escape') return openPause();
+    if (code === 'KeyB') { openPause(); return openBestiary(); }
     if (code === 'KeyM') return openSkills();
     if (code === 'KeyG') return openGear();
     if (code === 'KeyT') return openParty();
