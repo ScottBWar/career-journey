@@ -502,6 +502,8 @@ window.Data = (function () {
           lines: ['So you mean to face Selachoth himself?', 'I knew him once — when he was still a man. A SOLDIER. A hero, even.', 'The abyss took him. He fused with the apex of the deep and came back... wrong. Beautiful and terrible.', 'Your swordsman, Lance — he trained under that same banner. This is personal for him.'] },
         { name: 'Bard Echo', color: '#5a5ac0', hair: '#caa030', x: 4, z: 7,
           lines: ['♪ Oh the One-Finned Angel, silver and cold... ♪', '♪ He drowns the warm world to remake it his own... ♪', 'They say his blade Tidemourn is longer than a mast. Mind your distance!'] },
+        { name: 'Stargazer Orin', color: '#3a3a6a', hair: '#cfd8ff', x: -8, z: 6, service: 'observatory',
+          lines: ['I keep the old dome behind the port — the OBSERVATORY.', 'The tides, the storms, even the sea-maidens answer to the lights overhead.', 'Come, look through the great lens. Let me show you the planets of Saltmere.'] },
       ],
       exit: { x: 0, z: -11 },
     },
@@ -524,10 +526,10 @@ window.Data = (function () {
           lines: ['It\'s dangerous to shop alone — luckily I run a stall!', 'I\'m after a princess and a triangle. Long story. Browse my wares.'] },
         { name: 'An Electric Mouse', color: '#f6d23a', hair: '#d83a3a', x: 4, z: 6, service: 'shop',
           lines: ['Pika! (Translation: welcome to my shop!)', 'Pi-ka-CHU! (Buy the ultimate weapons, they\'re worth it.)'] },
-        { name: 'A Lombax Mechanic', color: '#d8923a', x: 0, z: 8, service: 'shop',
-          lines: ['Ratchet up your firepower!', 'These ultimate weapons are out of this world. Literally. Take a look.'] },
-        { name: 'A Brooding Spiky Teen', color: '#3a3f6b', hair: '#caa030', x: 5, z: 9,
-          lines: ['...', '...Not interested. (He clearly wandered in from another RPG.)'] },
+        { name: 'A Lombax Mechanic', color: '#d8923a', x: 0, z: 8, service: 'arcade1',
+          lines: ['Step right up to the POWDER-KEG TIMING cabinet!', 'Stop the spark on the bullseye and the prizes are out of this world. Literally.', 'Best score wins something bubbly. Wanna play?'] },
+        { name: 'A Brooding Spiky Teen', color: '#3a3f6b', hair: '#caa030', x: 5, z: 9, service: 'arcade2',
+          lines: ['...', '...Fine. I run the REEF LIGHTS machine. Watch the buoys, repeat the pattern.', 'Don\'t embarrass yourself. (He clearly wandered in from another RPG.) Wanna play?'] },
       ],
       exit: { x: 0, z: -12 },
     },
@@ -649,6 +651,24 @@ window.Data = (function () {
     },
   };
 
+  // ---------------- COSMOLOGY (the Observatory) ----------------
+  // The lore of Saltmere's sky. Each body ties into the world's tides and the
+  // six elemental mermaids. r = orbit radius (px), size, speed, color.
+  const COSMOS = {
+    intro: 'The folk of Saltmere read the sky the way sailors read a chart. They say the world floats in the Great Brine — an ocean with no shore — and the lights above are isles in it. The tides, the storms, and even the mermaids answer to what wheels overhead.',
+    star: { name: 'The Drowned Star', color: '#ffd166', size: 26, lore: 'Saltmere\'s sun. Legend says it once sank beneath the Great Brine and the world went dark and cold — until the first tide carried it back to the sky. Every dawn is that rescue, remembered.' },
+    bodies: [
+      { name: 'Maru, the Pale Pull', color: '#dfe7ef', r: 70,  size: 9,  speed: 1.6, element: null, lore: 'The moon that drags the tides. When Maru swells, the sea climbs the beaches; when she thins, the reefs lay bare. Selachoth believed that if he could only stop Maru, the tide would rise forever and drown the warm world for good.' },
+      { name: 'Ignus, the Ember Wanderer', color: '#ff7b3a', r: 104, size: 11, speed: 1.05, element: 'fire', lore: 'A red planet of slow fire. The mermaid EMBER takes her warmth from it; when Ignus burns close, volcanic isles wake and the southern seas steam.' },
+      { name: 'Nerith, the Deep Sapphire', color: '#3b82f6', r: 134, size: 13, speed: 0.82, element: 'water', lore: 'A world that is all ocean, a mirror of Saltmere. NERIDA the water-maiden was born of its reflection in a tide-pool, or so the songs claim.' },
+      { name: 'Voltisar, the Storm Crown', color: '#fde047', r: 166, size: 10, speed: 0.66, element: 'thunder', lore: 'A planet ringed in perpetual lightning. VOLTA dances to its thunder; sailors who see it flare batten the hatches before the squall arrives.' },
+      { name: 'Terramoor, the Green Anchor', color: '#6ec06a', r: 196, size: 14, speed: 0.5, element: 'earth', lore: 'A heavy, mossed world that barely moves. GAIA draws her steadiness from it. The old druids cut their calendars to its long, patient year.' },
+      { name: 'Nocturne, the Veiled Eye', color: '#b06aff', r: 228, size: 11, speed: 0.38, element: 'dark', lore: 'A planet that shows only its dark face. NYX keeps its secrets. It is said the abyssal trenches connect, somehow, to its shadowed seas.' },
+      { name: 'Aurelia, the Far Lantern', color: '#fff3c0', r: 262, size: 12, speed: 0.27, element: 'holy', lore: 'The brightest fixed light, never wandering. LUMINA is its envoy. Pilgrims steer by Aurelia, trusting that a constant light means the world is not yet lost.' },
+      { name: 'The Wandering Tear', color: '#9be7ff', r: 300, size: 6, speed: 0.19, element: null, lore: 'A comet on a thousand-year orbit. It last crossed the sky the night Selachoth fell into the deep. Some fear what its return will wake; some hope it carries the drowned home.' },
+    ],
+  };
+
   // ---------------- STORY (cutscene beats) ----------------
   // each beat: { name, text }
   const STORY = {
@@ -743,7 +763,7 @@ window.Data = (function () {
     return keys;
   }
 
-  return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, SHOP_STOCK_BY_TOWN, MATERIALS, RECIPES, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY,
+  return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, SHOP_STOCK_BY_TOWN, MATERIALS, RECIPES, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY, COSMOS,
            ELEMENT_INFO, elementOf, affMult, AFFINITIES, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT, MERMAIDS, AMBUSH,
            xpForLevel, MAX_LEVEL, randomEncounter };
 })();

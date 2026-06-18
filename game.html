@@ -166,6 +166,23 @@
     .scr-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
     .scr-head h2 { margin: 0; color: #fcd34d; letter-spacing: 0.06em; }
     .scr-sub { font-size: 0.78rem; color: rgba(255,255,255,0.6); margin: 0.2rem 0 0; }
+    /* observatory */
+    .obs-panel { max-width: 880px; }
+    .obs-body { display: flex; gap: 1rem; margin-top: 0.7rem; flex-wrap: wrap; align-items: flex-start; }
+    #obsCanvas { background: #05060f; border-radius: 0.8rem; border: 1px solid rgba(255,255,255,0.12); max-width: 100%; height: auto; flex: 0 0 auto; }
+    .obs-lore { flex: 1 1 220px; min-width: 200px; }
+    .obs-lore h3 { margin: 0 0 0.3rem; }
+    .obs-lore p { font-size: 0.86rem; line-height: 1.45; color: rgba(255,255,255,0.82); }
+    .obs-elem { font-size: 0.78rem; color: #ffe9a8; margin-bottom: 0.4rem; }
+    /* arcade */
+    .arc-panel { max-width: 600px; text-align: center; }
+    #arcCanvas { background: #1a1426; border-radius: 0.7rem; margin: 0.4rem auto; max-width: 100%; height: auto; display: block; }
+    .arc-hud { font-size: 0.86rem; color: #ffe9a8; margin-top: 0.4rem; }
+    .arc-hud span { font-weight: bold; color: #fff; }
+    .arc-result { font-size: 1rem; line-height: 1.5; margin: 1rem 0; }
+    .arc-buoys { display: flex; gap: 1rem; justify-content: center; margin: 1.4rem 0; }
+    .arc-buoy { width: 84px; height: 84px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.2); background: var(--bc); filter: brightness(0.42); cursor: pointer; transition: filter 0.1s, transform 0.1s; }
+    .arc-buoy.lit { filter: brightness(1.4); transform: scale(1.08); box-shadow: 0 0 24px var(--bc); }
 
     /* gear / seashells */
     #gear .sk-wrap { width: min(760px, 96vw); max-height: 90vh; overflow: auto; }
@@ -545,6 +562,12 @@
   <!-- MAP LEGEND -->
   <div class="overlay" id="legend"><div class="panel" id="legendBody" style="padding:1.2rem;"></div></div>
 
+  <!-- OBSERVATORY -->
+  <div class="overlay" id="observatory"></div>
+
+  <!-- ARCADE -->
+  <div class="overlay" id="arcade"></div>
+
   <!-- TOAST + ENDING -->
   <div id="toast"></div>
   <div class="overlay" id="end"><div class="box"><h1 id="endTitle"></h1><p id="endText"></p><div class="actions"><button class="pill" id="endContinue">Keep Playing</button><a class="pill ghost" href="coming-soon.html">Back to Site</a></div></div></div>
@@ -563,6 +586,8 @@
   <script src="js/sea.js"></script>
   <script src="js/dungeon.js"></script>
   <script src="js/minigame.js"></script>
+  <script src="js/observatory.js"></script>
+  <script src="js/arcade.js"></script>
   <script src="js/dating.js"></script>
   <script src="js/main.js"></script>
 </body>

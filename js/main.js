@@ -134,11 +134,16 @@ window.Game = (function () {
     Game.dialogueOpen = true; el('dialogue').classList.add('show'); dlgPortrait(npc.name);
     function show() {
       el('dlgName').textContent = npc.name; el('dlgText').textContent = lines[i];
-      el('dlgNext').textContent = i < lines.length - 1 ? 'Next ▶' : (npc.service === 'inn' ? 'Rest ✓' : npc.service === 'shop' ? 'Open Shop 🛒' : 'Close');
+      const svcLabel = { inn: 'Rest ✓', shop: 'Open Shop 🛒', observatory: 'Stargaze 🔭', arcade1: 'Play 🎯', arcade2: 'Play 🪼' };
+      el('dlgNext').textContent = i < lines.length - 1 ? 'Next ▶' : (svcLabel[npc.service] || 'Close');
     }
     Game._advanceDlg = () => {
       if (i < lines.length - 1) { i++; show(); }
-      else { closeDialogue(); if (npc.service === 'inn') openInn(); else if (npc.service === 'shop') openShop(); }
+      else { closeDialogue(); const s = npc.service;
+        if (s === 'inn') openInn(); else if (s === 'shop') openShop();
+        else if (s === 'observatory') openObservatory();
+        else if (s === 'arcade1') openArcade('timing');
+        else if (s === 'arcade2') openArcade('memory'); }
     };
     el('dlgNext').onclick = Game._advanceDlg;
     show();
@@ -295,6 +300,14 @@ window.Game = (function () {
   function openShellHunt() { pauseExplore(); ShellHunt.start(() => resumeExplore()); }
   Game.openShellHunt = openShellHunt;
 
+  // ---------- observatory ----------
+  function openObservatory() { pauseExplore(); Observatory.start(() => resumeExplore()); }
+  Game.openObservatory = openObservatory;
+
+  // ---------- arcade ----------
+  function openArcade(game) { pauseExplore(); Arcade.start(game, () => { Music.play(Game.mode === 'town' ? 'town' : 'island'); resumeExplore(); }); }
+  Game.openArcade = openArcade;
+
   // ---------- dating (mermaids) ----------
   function openDating(key) { Game.datingOpen = true; pauseExplore(); Dating.start(key, () => { Game.datingOpen = false; Music.play(Game.mode === 'town' ? 'town' : 'island'); resumeExplore(); }); }
   Game.openDating = openDating;
@@ -418,11 +431,13 @@ window.Game = (function () {
     el('pQuit').onclick = () => Game.confirm('Save and quit to the title screen?', quitToTitle);
     el('worldPrompt').onclick = () => { if (Game.active) Game.active.interact && Game.active.interact(); };
   }
-  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.datingOpen || Game.shopOpen || Game.confirmOpen || Game.pauseOpen || Game.bestiaryOpen || Game.legendOpen || el('shellHunt').classList.contains('show') || el('end').classList.contains('show'); }
+  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.datingOpen || Game.shopOpen || Game.confirmOpen || Game.pauseOpen || Game.bestiaryOpen || Game.legendOpen || el('shellHunt').classList.contains('show') || el('observatory').classList.contains('show') || el('arcade').classList.contains('show') || el('end').classList.contains('show'); }
   Game.blocking = function () { return Game.dialogueOpen || anyModal(); };
   function route(code) {
     if (el('introSeq').classList.contains('show')) { if (Game._introFinish) Game._introFinish(); return; }
     if (el('shellHunt').classList.contains('show')) return; // minigame handles its own input
+    if (el('observatory').classList.contains('show')) { if (code === 'Escape') el('obsClose') && el('obsClose').click(); return; }
+    if (el('arcade').classList.contains('show')) { if (code === 'Escape') { el('arcQuit') && el('arcQuit').click(); el('arcDone') && el('arcDone').click(); } else if (Arcade._key) Arcade._key(code); return; }
     if (Game.datingOpen) return; // dating handles its own buttons
     if (Game.mode === 'battle') { if (code === 'KeyP') { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; } else Battle.onKey(code); return; }
     if (Game.mode === 'shipbattle') { if (window.ShipBattle && ShipBattle.onKey) ShipBattle.onKey(code); return; }
