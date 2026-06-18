@@ -17,13 +17,13 @@ window.Progress = (function () {
     Data.PARTY.forEach(def => {
       const startW = Data.WEAPONS[def.key][0];
       ownedWeapons[def.key] = [startW.key];
-      equip[def.key] = { weapon: startW.key, slots: new Array(startW.slots).fill(null) };
+      equip[def.key] = { weapon: startW.key, wslots: new Array(startW.slots).fill(null), accessory: null, aslots: [] };
     });
     ['conch_ember', 'spiral_mend'].forEach(key => shells.push({ id: shellSeq++, key, level: 1, ap: 0 }));
 
     const start = Data.ISLANDS.tidehaven;
     const state = {
-      gold: 80, pearls: 0, party, active: ['pirate', 'swordsman', 'healer'], inv, mats: {}, bestiary: {}, equip, ownedWeapons, shells, shellSeq,
+      gold: 80, pearls: 0, party, active: ['pirate', 'swordsman', 'healer'], inv, mats: {}, bestiary: {}, equip, ownedWeapons, ownedAccessories: ['coral_bangle'], shells, shellSeq,
       ship: { hull: Data.SHIP.defaults.hull, sail: Data.SHIP.defaults.sail, flag: Data.SHIP.defaults.flag, upg: {} },
       mermaids: {}, enchants: {},
       location: { place: 'island', island: 'tidehaven', x: start.spawn.x, z: start.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z },
@@ -77,31 +77,36 @@ window.Progress = (function () {
       }
     });
 
-    // equipment: weapon + slotted seashells
-    let weaponName = null;
+    // equipment: weapon + accessory, each carrying shell slots (FF7-style)
+    let weaponName = null, accName = null, dr = 0; const immune = [];
     if (state && state.equip && state.equip[memberState.key]) {
       const eq = state.equip[memberState.key];
       const w = (Data.WEAPONS[memberState.key] || []).find(x => x.key === eq.weapon);
       if (w) { atkBonus += w.atk; weaponName = w.name; }
-      (eq.slots || []).forEach(id => {
+      const acc = eq.accessory && Data.ACCESSORIES[eq.accessory];
+      if (acc) {
+        accName = acc.name;
+        if (acc.stat) { if (acc.stat.hp) maxhp += acc.stat.hp; if (acc.stat.mp) maxmp += acc.stat.mp; if (acc.stat.atk) atkBonus += acc.stat.atk; if (acc.stat.crit) crit += acc.stat.crit; }
+        if (acc.dr) dr += acc.dr;
+        if (acc.immune) acc.immune.forEach(s => { if (!immune.includes(s)) immune.push(s); });
+      }
+      const applyShell = (id) => {
         if (id == null) return;
         const inst = shellById(state, id); if (!inst) return;
         const sh = Data.SHELLS[inst.key]; if (!sh) return;
         if (sh.kind === 'support') {
           const amt = sh.perLevel * inst.level;
-          if (sh.stat === 'hp') maxhp += amt;
-          else if (sh.stat === 'mp') maxmp += amt;
-          else if (sh.stat === 'atk') atkBonus += amt;
-          else if (sh.stat === 'crit') crit += amt;
-        } else if (sh.kind === 'magic') {
-          const a = Data.shellAbility(inst.key, inst.level); if (a) abilities.push(a);
-        }
-      });
+          if (sh.stat === 'hp') maxhp += amt; else if (sh.stat === 'mp') maxmp += amt;
+          else if (sh.stat === 'atk') atkBonus += amt; else if (sh.stat === 'crit') crit += amt;
+        } else if (sh.kind === 'magic') { const a = Data.shellAbility(inst.key, inst.level); if (a) abilities.push(a); }
+      };
+      (eq.wslots || eq.slots || []).forEach(applyShell);   // eq.slots = legacy fallback
+      (eq.aslots || []).forEach(applyShell);
     }
 
     const enchant = (state && state.enchants && state.enchants[memberState.key]) || null;
     return {
-      name: d.name, role: d.role, model: d.model, weaponName, enchant,
+      name: d.name, role: d.role, model: d.model, weaponName, accName, enchant, dr, immune,
       maxhp, maxmp,
       fight: { min: d.base.atkMin + atkBonus, max: d.base.atkMax + atkBonus, crit, big: !!d.base.big, el: enchant || 'physical' },
       abilities,
@@ -135,9 +140,9 @@ window.Progress = (function () {
         p.level++; p.sp += 1; leveled = true;
       }
       if (leveled) { const d = derived(p, state); p.hpCur = d.maxhp; p.mpCur = d.maxmp; ups.push({ name: d.name, level: p.level }); }
-      // AP to this member's slotted seashells
+      // AP to this member's slotted seashells (weapon + accessory)
       const eq = state.equip && state.equip[p.key];
-      if (eq) eq.slots.forEach(id => {
+      if (eq) slotsOf(eq).forEach(id => {
         if (id == null) return; const inst = shellById(state, id); if (!inst) return; const sh = Data.SHELLS[inst.key]; if (!sh) return;
         if (inst.level >= sh.maxLevel) return;
         inst.ap += ap;
@@ -151,24 +156,33 @@ window.Progress = (function () {
   }
 
   // ---------------- equipment helpers ----------------
+  function resize(arr, n) { const out = (arr || []).slice(); out.length = n; for (let i = 0; i < n; i++) if (out[i] === undefined) out[i] = null; return out.slice(0, n); }
+  const slotKey = (where) => (where === 'accessory' ? 'aslots' : 'wslots');
   function equipWeapon(state, charKey, weaponKey) {
     const eq = state.equip[charKey]; const w = Data.WEAPONS[charKey].find(x => x.key === weaponKey);
     if (!w || !state.ownedWeapons[charKey].includes(weaponKey)) return;
-    eq.weapon = weaponKey;
-    const slots = eq.slots.slice(); slots.length = w.slots; // grow/shrink
-    for (let i = 0; i < w.slots; i++) if (slots[i] === undefined) slots[i] = null;
-    eq.slots = slots.slice(0, w.slots);
+    eq.weapon = weaponKey; eq.wslots = resize(eq.wslots, w.slots);
     save(state);
   }
-  function equippedShellIds(state) { const set = new Set(); Object.values(state.equip).forEach(eq => eq.slots.forEach(id => { if (id != null) set.add(id); })); return set; }
-  function pouchShells(state) { const used = equippedShellIds(state); return state.shells.filter(s => !used.has(s.id)); }
-  function equipShell(state, charKey, shellId) {
-    const eq = state.equip[charKey]; const idx = eq.slots.indexOf(null); if (idx < 0) return false;
-    eq.slots[idx] = shellId; save(state); return true;
+  function equipAccessory(state, charKey, accKey) {
+    const eq = state.equip[charKey];
+    if (!accKey) { eq.accessory = null; eq.aslots = []; save(state); return; }
+    const acc = Data.ACCESSORIES[accKey]; if (!acc || !(state.ownedAccessories || []).includes(accKey)) return;
+    eq.accessory = accKey; eq.aslots = resize(eq.aslots, acc.slots || 0);
+    save(state);
   }
-  function unequipSlot(state, charKey, slotIndex) { state.equip[charKey].slots[slotIndex] = null; save(state); }
+  function slotsOf(eq) { return (eq.wslots || eq.slots || []).concat(eq.aslots || []); }
+  function equippedShellIds(state) { const set = new Set(); Object.values(state.equip).forEach(eq => slotsOf(eq).forEach(id => { if (id != null) set.add(id); })); return set; }
+  function pouchShells(state) { const used = equippedShellIds(state); return state.shells.filter(s => !used.has(s.id)); }
+  function equipShell(state, charKey, shellId, where) {
+    const eq = state.equip[charKey]; const k = slotKey(where); const arr = eq[k]; if (!arr) return false;
+    const idx = arr.indexOf(null); if (idx < 0) return false;
+    arr[idx] = shellId; save(state); return true;
+  }
+  function unequipSlot(state, charKey, where, slotIndex) { const arr = state.equip[charKey][slotKey(where)]; if (arr) arr[slotIndex] = null; save(state); }
   function addShell(state, key) { const inst = { id: state.shellSeq++, key, level: 1, ap: 0 }; state.shells.push(inst); save(state); return inst; }
   function buyWeapon(state, charKey, weaponKey) { if (!state.ownedWeapons[charKey].includes(weaponKey)) state.ownedWeapons[charKey].push(weaponKey); save(state); }
+  function buyAccessory(state, accKey) { if (!state.ownedAccessories) state.ownedAccessories = []; if (!state.ownedAccessories.includes(accKey)) state.ownedAccessories.push(accKey); save(state); }
 
   function fullHeal(state) {
     state.party.forEach(p => { const d = derived(p); p.hpCur = d.maxhp; p.mpCur = d.maxmp; });
@@ -216,12 +230,15 @@ window.Progress = (function () {
     if (!state.location) { const s = Data.ISLANDS.tidehaven; state.location = { place: 'island', island: 'tidehaven', x: s.spawn.x, z: s.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z }; }
     if (!state.equip || !state.ownedWeapons || !state.shells) {
       const equip = {}, ownedWeapons = {}, shells = []; let seq = 1;
-      Data.PARTY.forEach(def => { const w = Data.WEAPONS[def.key][0]; ownedWeapons[def.key] = [w.key]; equip[def.key] = { weapon: w.key, slots: new Array(w.slots).fill(null) }; });
+      Data.PARTY.forEach(def => { const w = Data.WEAPONS[def.key][0]; ownedWeapons[def.key] = [w.key]; equip[def.key] = { weapon: w.key, wslots: new Array(w.slots).fill(null), accessory: null, aslots: [] }; });
       ['conch_ember', 'spiral_mend'].forEach(key => shells.push({ id: seq++, key, level: 1, ap: 0 }));
       state.equip = equip; state.ownedWeapons = ownedWeapons; state.shells = shells; state.shellSeq = seq;
     }
+    if (!state.ownedAccessories) state.ownedAccessories = ['coral_bangle'];
     // backfill equipment for any newly-added characters
-    Data.PARTY.forEach(def => { if (!state.equip[def.key]) { const w = Data.WEAPONS[def.key][0]; state.ownedWeapons[def.key] = [w.key]; state.equip[def.key] = { weapon: w.key, slots: new Array(w.slots).fill(null) }; } });
+    Data.PARTY.forEach(def => { if (!state.equip[def.key]) { const w = Data.WEAPONS[def.key][0]; state.ownedWeapons[def.key] = [w.key]; state.equip[def.key] = { weapon: w.key, wslots: new Array(w.slots).fill(null), accessory: null, aslots: [] }; } });
+    // migrate legacy weapon-only slots → weapon + accessory FF7 layout
+    Object.values(state.equip).forEach(eq => { if (eq.slots && !eq.wslots) { eq.wslots = eq.slots; delete eq.slots; } if (!eq.wslots) eq.wslots = []; if (eq.accessory === undefined) eq.accessory = null; if (!eq.aslots) eq.aslots = []; });
     // initialise HP/MP for any uninitialised members
     state.party.forEach(p => { if (p.hpCur == null) { const d = derived(p, state); p.hpCur = d.maxhp; p.mpCur = d.maxmp; } });
     return state;
@@ -303,7 +320,8 @@ window.Progress = (function () {
     // stats
     const stats = document.createElement('div'); stats.className = 'gear-stats';
     const abilNames = d.abilities.map(a => a.name).join(', ');
-    stats.innerHTML = `<div class="sk-stats">HP ${d.maxhp} · MP ${d.maxmp} · ATK ${d.fight.min}-${d.fight.max} · Crit ${Math.round(d.fight.crit*100)}%</div>
+    const extra = (d.dr ? ` · DR ${Math.round(d.dr*100)}%` : '') + (d.immune && d.immune.length ? ` · immune ${d.immune.map(s => (Data.STATUS[s]||{}).name || s).join(', ')}` : '');
+    stats.innerHTML = `<div class="sk-stats">HP ${d.maxhp} · MP ${d.maxmp} · ATK ${d.fight.min}-${d.fight.max} · Crit ${Math.round(d.fight.crit*100)}%${extra}</div>
       <div class="gear-abil"><b>Abilities:</b> ${abilNames || '—'}</div>`;
     body.appendChild(stats);
 
@@ -318,31 +336,49 @@ window.Progress = (function () {
     });
     body.appendChild(wSec);
 
-    // shell slots
-    const sSec = document.createElement('div'); sSec.className = 'gear-sec'; sSec.innerHTML = '<h3>Shell Slots</h3>';
-    const slotRow = document.createElement('div'); slotRow.className = 'slot-row';
-    eq.slots.forEach((id, i) => {
-      const slot = document.createElement('button'); slot.className = 'slot' + (id != null ? ' filled' : '');
-      if (id != null) { const inst = shellById(state, id); const sh = Data.SHELLS[inst.key]; slot.innerHTML = `<span class="shell-dot ${sh.kind}"></span>${sh.name}<span class="slot-lv">Lv${inst.level}</span>`; slot.title = 'Click to remove'; slot.onclick = () => { unequipSlot(state, gearSel, i); renderGear(state, container, onClose); }; }
-      else { slot.textContent = '◌ empty'; slot.disabled = true; }
-      slotRow.appendChild(slot);
-    });
-    sSec.appendChild(slotRow);
-    body.appendChild(sSec);
+    // a row of shell slots for one piece of equipment (weapon or accessory)
+    function slotRowFor(where, arr, title) {
+      const sec = document.createElement('div'); sec.className = 'gear-sec'; sec.innerHTML = `<h3>${title}</h3>`;
+      const row = document.createElement('div'); row.className = 'slot-row';
+      if (!arr || !arr.length) { const e = document.createElement('div'); e.className = 'gi-desc'; e.textContent = where === 'accessory' ? 'Equip an accessory to add slots.' : 'No slots on this weapon.'; row.appendChild(e); }
+      (arr || []).forEach((id, i) => {
+        const slot = document.createElement('button'); slot.className = 'slot' + (id != null ? ' filled' : '');
+        if (id != null) { const inst = shellById(state, id); const sh = Data.SHELLS[inst.key]; slot.innerHTML = `<span class="shell-dot ${sh.kind}"></span>${sh.name}<span class="slot-lv">Lv${inst.level}</span>`; slot.title = 'Click to remove'; slot.onclick = () => { unequipSlot(state, gearSel, where, i); renderGear(state, container, onClose); }; }
+        else { slot.textContent = '◌ empty'; slot.disabled = true; }
+        row.appendChild(slot);
+      });
+      sec.appendChild(row); return sec;
+    }
+    body.appendChild(slotRowFor('weapon', eq.wslots, 'Weapon Shell Slots'));
 
-    // pouch (unequipped shells)
+    // accessory picker (armor slot) — also carries shell slots
+    const aSec = document.createElement('div'); aSec.className = 'gear-sec'; aSec.innerHTML = '<h3>Accessory</h3>';
+    const accList = [{ key: null, name: '— None —', desc: 'No accessory', slots: 0 }].concat((state.ownedAccessories || []).map(k => Data.ACCESSORIES[k]).filter(Boolean));
+    accList.forEach(acc => {
+      const on = (eq.accessory || null) === (acc.key || null);
+      const b = document.createElement('button'); b.className = 'gear-item' + (on ? ' on' : '');
+      b.innerHTML = `<div class="gi-top"><span>💍 ${acc.name}</span><span class="gi-tag">${on ? 'Equipped' : 'Equip'}</span></div><div class="gi-desc">${acc.desc || ''}${acc.slots ? ` · ${acc.slots} slot${acc.slots>1?'s':''}` : ''}</div>`;
+      b.disabled = on; b.onclick = () => { equipAccessory(state, gearSel, acc.key); renderGear(state, container, onClose); };
+      aSec.appendChild(b);
+    });
+    body.appendChild(aSec);
+    body.appendChild(slotRowFor('accessory', eq.aslots, 'Accessory Shell Slots'));
+
+    // pouch (unequipped shells) — choose which piece to slot into
     const pSec = document.createElement('div'); pSec.className = 'gear-sec'; pSec.innerHTML = '<h3>Seashell Pouch</h3>';
     const pouch = pouchShells(state);
     if (!pouch.length) { const e = document.createElement('div'); e.className = 'gi-desc'; e.textContent = 'No spare seashells. Buy more at a Shop.'; pSec.appendChild(e); }
-    const hasSlot = eq.slots.includes(null);
+    const wFree = (eq.wslots || []).includes(null), aFree = (eq.aslots || []).includes(null);
     pouch.forEach(inst => {
       const sh = Data.SHELLS[inst.key]; const need = inst.level < sh.maxLevel ? sh.ap[inst.level] : null;
-      const b = document.createElement('button'); b.className = 'gear-item';
       const effect = sh.kind === 'magic' ? Data.shellAbility(inst.key, inst.level).name : `+${sh.stat==='crit'? Math.round(sh.perLevel*inst.level*100)+'%':sh.perLevel*inst.level} ${sh.stat.toUpperCase()}`;
-      b.innerHTML = `<div class="gi-top"><span>${Data.shellIcon(sh)} ${sh.name} <span class="slot-lv">Lv${inst.level}</span></span><span class="gi-tag">Equip</span></div>
+      const row = document.createElement('div'); row.className = 'gear-item pouch-item';
+      row.innerHTML = `<div class="gi-top"><span>${Data.shellIcon(sh)} ${sh.name} <span class="slot-lv">Lv${inst.level}</span></span></div>
         <div class="gi-desc">${sh.desc} · grants ${effect}${need!=null?` · AP ${inst.ap}/${need}`:' · MAX'}</div>`;
-      b.disabled = !hasSlot; b.onclick = () => { if (equipShell(state, gearSel, inst.id)) renderGear(state, container, onClose); };
-      pSec.appendChild(b);
+      const acts = document.createElement('div'); acts.className = 'pouch-acts';
+      const mk = (label, where, free) => { const x = document.createElement('button'); x.className = 'pill small'; x.textContent = label; x.disabled = !free; x.onclick = () => { if (equipShell(state, gearSel, inst.id, where)) renderGear(state, container, onClose); }; acts.appendChild(x); };
+      mk('→ Weapon', 'weapon', wFree); mk('→ Accessory', 'accessory', aFree);
+      row.appendChild(acts); pSec.appendChild(row);
     });
     body.appendChild(pSec);
 
@@ -418,6 +454,6 @@ window.Progress = (function () {
   }
 
   return { freshState, derived, reward, fullHeal, canLearn, learn, save, load, clear, renderSkillTree, renderGear, renderRoster, renderShipyard,
-           toggleActive, activeMembers, recruit, dismiss, shipStats, equipWeapon, equipShell, unequipSlot, addShell, buyWeapon, pouchShells, def,
+           toggleActive, activeMembers, recruit, dismiss, shipStats, equipWeapon, equipAccessory, equipShell, unequipSlot, addShell, buyWeapon, buyAccessory, pouchShells, def,
            addMaterials, canCraft, craft, recordSeen, recordSlain };
 })();

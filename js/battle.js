@@ -62,7 +62,7 @@ window.Battle = (function () {
       const mp = clamp(ms.mpCur == null ? d.maxmp : ms.mpCur, 0, d.maxmp);
       party.push({ side:'party', ref: ms, key: ms.key, name: d.name, role: d.role, node: built.node, arm: built.arm, staffPiv: built.staffPiv,
         maxhp: d.maxhp, hp, maxmp: d.maxmp, mp, home, baseY: 0, phase: i*1.3, alive: hp > 0, _busy: false, limit: (opts && opts.fullLimit) ? 100 : 25,
-        idle: built.idle, fight: d.fight, abilities: d.abilities });
+        idle: built.idle, fight: d.fight, abilities: d.abilities, dr: d.dr || 0, immune: d.immune || [], st: {} });
     });
 
     // enemies
@@ -80,7 +80,7 @@ window.Battle = (function () {
       if (Progress.recordSeen) Progress.recordSeen(Game.state, key);
       const suffix = placed.filter(k => k === key).length > 1 ? ' ' + 'ABC'[seen[key]-1] : '';
       const e = { side:'enemy', keyRaw: key, name: def.name + suffix, node: built.node, baseY: def.baseY, maxhp: def.hp, hp: def.hp,
-        home, phase: i*1.7 + 0.5, alive: true, _busy: false, idle: built.idle, moves: def.moves, xp: def.xp, gold: def.gold, drops: def.drops };
+        home, phase: i*1.7 + 0.5, alive: true, _busy: false, idle: built.idle, moves: def.moves, xp: def.xp, gold: def.gold, drops: def.drops, st: {} };
       // rotating-weakness bosses get a current weakness + a subtle elemental aura
       if (def.rotate && def.rotate.length) {
         e.rotate = def.rotate; e.rotIdx = 0; e.dynWeak = def.rotate[0];
@@ -160,20 +160,24 @@ window.Battle = (function () {
   function msg(text) { el('bMessage').textContent = text; }
   function setBanner(m) { const b = el('bActive'); if (!b) return; b.innerHTML = `${Portraits.img(m.key, 'ba-port')}<span class="ba-meta"><span class="ba-name">${m.name}</span><span class="ba-turn">your move</span></span>`; b.classList.add('show'); }
   function clearBanner() { const b = el('bActive'); if (b) b.classList.remove('show'); }
+  function stIcons(a) {
+    if (!a.st) return ''; const out = Object.keys(a.st).filter(k => a.st[k] > 0).map(k => { const s = Data.STATUS[k]; return s ? `<span class="st-ic" title="${s.name} · ${a.st[k]} turn${a.st[k]>1?'s':''}" style="color:${s.color};text-shadow:0 0 5px ${s.color}">${s.icon}</span>` : ''; }).join('');
+    return out ? `<span class="st-strip">${out}</span>` : '';
+  }
   function renderEnemies(targetMode, onPick) {
     const wrap = el('bEnemies'); wrap.innerHTML = '';
     enemies.forEach(e => { const d = document.createElement('div'); d.className = 'eplate' + (e.alive ? '' : ' dead');
       const port = Portraits.has(e.keyRaw) ? `<div class="eportrait">${Portraits.img(e.keyRaw)}</div>` : '';
       let wk = '';
       if (e.rotate && e.dynWeak) { const ei = Data.ELEMENT_INFO[e.dynWeak]; const col = ELEMCOL[e.dynWeak] || '#fff'; wk = `<span class="eweak" title="Current weakness" style="color:${col};text-shadow:0 0 6px ${col}">${ei ? ei.i : ''}⌁</span>`; }
-      d.innerHTML = `${port}<div class="einfo"><div class="row"><span class="name">${e.name}${wk}</span><span class="hpnum">${Math.max(0,e.hp)}/${e.maxhp}</span></div><div class="bar hp"><i style="width:${clamp(e.hp/e.maxhp*100,0,100)}%"></i></div></div>`;
+      d.innerHTML = `${port}<div class="einfo"><div class="row"><span class="name">${e.name}${wk}${stIcons(e)}</span><span class="hpnum">${Math.max(0,e.hp)}/${e.maxhp}</span></div><div class="bar hp"><i style="width:${clamp(e.hp/e.maxhp*100,0,100)}%"></i></div></div>`;
       if (Portraits.has(e.keyRaw)) d.classList.add('boss');
       if (targetMode && e.alive) { d.classList.add('targetable'); d.onclick = () => onPick(e); } wrap.appendChild(d); });
   }
   function renderParty(targetMode, candidates, onPick) {
     const wrap = el('bParty'); wrap.innerHTML = '';
     party.forEach(p => { const d = document.createElement('div'); d.className = 'pmember' + (p === activeMember ? ' active' : '') + (p.alive ? '' : ' dead') + (p.limit >= 100 ? ' limitready' : '');
-      d.innerHTML = `<div class="pm-head">${Portraits.img(p.key, 'pm-port')}<div class="pm-meta"><div class="row"><span class="name">${p.name}</span><span class="role">${p.role}</span></div>
+      d.innerHTML = `<div class="pm-head">${Portraits.img(p.key, 'pm-port')}<div class="pm-meta"><div class="row"><span class="name">${p.name}${stIcons(p)}</span><span class="role">${p.role}</span></div>
         <div class="twobar"><div class="bar php"><i style="width:${clamp(p.hp/p.maxhp*100,0,100)}%"></i></div><span class="nums">${Math.max(0,p.hp)}/${p.maxhp}</span></div>
         <div class="twobar"><div class="bar mp"><i style="width:${clamp(p.mp/p.maxmp*100,0,100)}%"></i></div><span class="nums">${p.mp}/${p.maxmp}</span></div>
         <div class="bar lim"><i style="width:${clamp(p.limit,0,100)}%"></i></div></div></div>`;
@@ -192,11 +196,14 @@ window.Battle = (function () {
   function lockMenu() { [...menuEl().querySelectorAll('button')].forEach(b => b.disabled = true); navItems = []; }
   // describe an ability/skill so the menu says what it does
   const TGT = { enemy: '1 foe', all: 'all foes', ally: '1 ally', allparty: 'party' };
+  function stNames(status) { return (Array.isArray(status) ? status : [status]).map(k => { const s = Data.STATUS[k]; return s ? s.icon + s.name : k; }).join('+'); }
   function describe(s) {
     const tgt = TGT[s.target] || '';
-    if (s.heal) return `Heal ${s.min}-${s.max} · ${tgt}`;
+    const hasDmg = (s.min || 0) > 0 || (s.max || 0) > 0;
+    if (s.heal) return `Heal ${s.min}-${s.max}${s.status ? ' + ' + stNames(s.status) : ''} · ${tgt}`;
+    if (s.status && !hasDmg) return `Inflict ${stNames(s.status)} · ${tgt}`;
     const e = Data.elementOf(s); const ei = Data.ELEMENT_INFO[e];
-    return `${s.min}-${s.max} ${ei ? ei.i + ei.name : e} · ${tgt}`;
+    return `${s.min}-${s.max} ${ei ? ei.i + ei.name : e}${s.status ? ' + ' + stNames(s.status) : ''} · ${tgt}`;
   }
   function describeItem(it) {
     if (it.desc) return it.desc;
@@ -237,6 +244,36 @@ window.Battle = (function () {
   async function dashAttack(attacker, target, onHit) { attacker._busy = true; const home = attacker.home.clone(); const dest = home.add(target.home.subtract(home).scale(0.66)); dest.y = attacker.baseY; await moveTo(attacker.node, dest, 170); await onHit(); await wait(90); /* hitstop */ await moveTo(attacker.node, home, 260); attacker.node.position.copyFrom(home); attacker._busy = false; }
   async function swing(arm) { await rotTo(arm, 'x', 0, -2.3, 110); await rotTo(arm, 'x', -2.3, 0.6, 100); await rotTo(arm, 'x', 0.6, 0, 130); }
 
+  // ---- status ailments / buffs ----
+  function inflict(target, key, turns) {
+    if (!target.alive) return; const sdef = Data.STATUS[key]; if (!sdef) return;
+    if (sdef.bad && target.immune && target.immune.includes(key)) { floatDamage(target.node, 'Immune', '#cbd5e1', 2.4); return; }
+    target.st = target.st || {}; target.st[key] = Math.max(target.st[key] || 0, turns || 3);
+    floatDamage(target.node, sdef.icon + ' ' + sdef.name, sdef.color, 2.7);
+    burst(worldOf(target.node, 0.4), sdef.color, '#ffffff', 30, 4, -1);
+  }
+  function applyStatusList(target, status, turns) { (Array.isArray(status) ? status : [status]).forEach(s => inflict(target, s, turns)); }
+  function cureStatus(target, which) {
+    target.st = target.st || {}; let any = false;
+    Object.keys(target.st).forEach(k => {
+      const sdef = Data.STATUS[k] || {};
+      const hit = which === 'all' || (which === 'bad' && sdef.bad) || (Array.isArray(which) && which.includes(k));
+      if (hit && target.st[k] > 0) { target.st[k] = 0; any = true; }
+    });
+    if (any) { floatDamage(target.node, '✦ cured', '#bbf7d0', 2.6); burst(worldOf(target.node, 0.4), '#bbf7d0', '#ffffff', 30, 4, -2); }
+  }
+  const hasSt = (a, k) => a.st && a.st[k] > 0;
+  // poison/regen tick + duration countdown at the start of an actor's turn; returns true if it died
+  async function tickStatus(a) {
+    if (!a.st) return false; let died = false;
+    if (hasSt(a, 'poison')) { const dmg = Math.max(1, Math.round(a.maxhp * Data.STATUS.poison.dot)); a.hp = Math.max(0, a.hp - dmg); floatDamage(a.node, '☠ ' + dmg, '#9bff6a', 2.5); hitFlash(a.node, '#9bff6a', 160); if (a.hp <= 0) { died = true; if (a.side === 'party') { if (a.alive) koMember(a); } else killEnemy(a); } }
+    if (!died && hasSt(a, 'regen') && a.hp > 0) { const heal = Math.round(a.maxhp * -Data.STATUS.regen.dot); if (a.side === 'party') { a.hp = Math.min(a.maxhp, a.hp + heal); } else a.hp = Math.min(a.maxhp, a.hp + heal); floatDamage(a.node, '✚ ' + heal, '#6ee7b7', 2.5); burst(worldOf(a.node, 0.3), '#6ee7b7', '#bbf7d0', 30, 4, -2); }
+    Object.keys(a.st).forEach(k => { if (a.st[k] > 0) a.st[k]--; });
+    if (a.side === 'party') renderParty(false); else renderEnemies(false);
+    if (died || hasSt(a, 'poison') || hasSt(a, 'regen')) await wait(380);
+    return died;
+  }
+
   // affinity multiplier — honours a rotating boss's *current* weakness over its static table
   function enemyAffMult(e, element) {
     const a = Data.AFFINITIES[e.keyRaw];
@@ -259,6 +296,7 @@ window.Battle = (function () {
     }
     if (mult === 0) { floatDamage(e.node, 'Null', '#9aa6b4', 2.6); return; }
     dmg = Math.round(dmg * mult);
+    if (hasSt(e, 'weaken')) dmg = Math.round(dmg * Data.STATUS.weaken.dmg);
     if (window.SFX) SFX.play(mult > 1 ? 'crit' : 'hit');
     e.hp = Math.max(0, e.hp - dmg); hitFlash(e.node, mult > 1 ? '#fff0a0' : '#ff6060'); burst(worldOf(e.node, 0.6), ...FX.hit, mult > 1 ? 120 : 80, mult > 1 ? 12 : 9);
     floatDamage(e.node, dmg + (mult > 1 ? ' Weak!' : mult < 1 ? ' Resist' : ''), mult > 1 ? '#fde047' : color, 2.6, mult > 1 ? 'big' : '');
@@ -393,6 +431,7 @@ window.Battle = (function () {
     await dashAttack(m, target, async () => {
       await meleeAnim(m, target);
       let dmg = rnd(m.fight.min, m.fight.max); const crit = Math.random() < m.fight.crit; if (crit) dmg = Math.round(dmg * 1.8);
+      if (hasSt(m, 'atkup')) dmg = Math.round(dmg * Data.STATUS.atkup.atk);
       burst(worldOf(target.node, 0.4), ...FX[fxKey(elem)], crit ? 70 : 45, crit ? 8 : 6);
       if (crit && window.SFX) SFX.play('crit');
       damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff', elem);
@@ -409,13 +448,17 @@ window.Battle = (function () {
     if (m.staffPiv) rotTo(m.staffPiv, 'z', 0, -0.6, 150).then(() => rotTo(m.staffPiv, 'z', -0.6, 0, 260));
     else if (m.arm) rotTo(m.arm, 'x', m.arm.rotation.x, -1.0, 150).then(() => rotTo(m.arm, 'x', -1.0, m.arm.rotation.x, 260));
     burst(worldOf(m.node, 0.7), col, '#ffffff', 45, 5, -2); await wait(180);
-    if (s.heal) { msg(`${m.name} casts ${s.name}!`); for (const p of targets) { healMember(p, rnd(s.min, s.max)); burst(worldOf(p.node, 1.4), '#6ee7b7', '#ffffff', 50, 4, -3); } await wait(560); return; }
+    const hasDmg = (s.min || 0) > 0 || (s.max || 0) > 0;
+    if (s.heal) { msg(`${m.name} casts ${s.name}!`); for (const p of targets) { healMember(p, rnd(s.min, s.max)); if (s.status) applyStatusList(p, s.status, s.turns); burst(worldOf(p.node, 1.4), '#6ee7b7', '#ffffff', 50, 4, -3); } await wait(560); gainLimit(m, 14); return; }
+    // ally buff / support (no damage)
+    if ((s.target === 'ally' || s.target === 'allparty') && s.status && !hasDmg) { msg(`${m.name} casts ${s.name}!`); for (const p of targets) { applyStatusList(p, s.status, s.turns); } await wait(560); gainLimit(m, 14); return; }
     msg(`${m.name} unleashes ${s.name}!`);
     const single = s.target === 'enemy';
     for (const e of targets) {
-      if (single && (s.proj || elem === 'fire' || elem === 'water')) await projectile(worldOf(m.node, -0.1), worldOf(e.node, -0.1), col);
+      if (single && hasDmg && (s.proj || elem === 'fire' || elem === 'water')) await projectile(worldOf(m.node, -0.1), worldOf(e.node, -0.1), col);
       spellHit(e, elem, col);
-      damageEnemy(e, rnd(s.min, s.max), col, elem);
+      if (hasDmg) { let dmg = rnd(s.min, s.max); if (hasSt(m, 'atkup')) dmg = Math.round(dmg * Data.STATUS.atkup.atk); damageEnemy(e, dmg, col, elem); }
+      if (s.status) applyStatusList(e, s.status, s.turns);
       await wait(single ? 160 : 110);
     }
     gainLimit(m, 18); await wait(320);
@@ -433,6 +476,8 @@ window.Battle = (function () {
     else if (it.kind === 'limit') { const p = targets[0]; p.limit = 100; msg(`${m.name} uses ${it.name}! ${p.name}'s spirit blazes!`); burst(worldOf(p.node, 0.4), '#fde047', '#fff7c2', 70, 7, -1); floatDamage(p.node, 'LIMIT!', '#fde047', 2.8); renderParty(false); await wait(650); }
     else if (it.kind === 'revive') { const p = targets[0]; reviveMember(p, false); msg(`${p.name} is revived!`); renderParty(false); await wait(650); }
     else if (it.kind === 'fullrevive') { const p = targets[0]; reviveMember(p, true); msg(`${p.name} surges back to life!`); renderParty(false); await wait(650); }
+    else if (it.kind === 'cure') { const p = targets[0]; msg(`${m.name} uses ${it.name}.`); if (window.SFX) SFX.play('heal'); cureStatus(p, it.cures); renderParty(false); await wait(500); }
+    else if (it.kind === 'buff') { const p = targets[0]; msg(`${m.name} uses ${it.name}!`); applyStatusList(p, it.status, it.turns); renderParty(false); await wait(550); }
     else if (it.kind === 'damageall') { msg(`${m.name} hurls a ${it.name}!`); flashScreen('rgba(255,160,80,0.35)'); shake(1.2); for (const e of aliveEnemies()) { burst(worldOf(e.node, 0.2), ...fx, 80, 9); damageEnemy(e, rnd(it.min, it.max), col, it.el); } await wait(550); }
     else { msg(`${m.name} hurls a ${it.name}!`); const ball = MB.CreateSphere('b', { diameter: 0.4 }, scene); ball.material = M('bMat', '#222', { emissive: '#1a0a00' }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(targets[0].node, -0.2), 340); ball.dispose(); burst(worldOf(targets[0].node, 0.2), ...fx, 100, 11); damageEnemy(targets[0], rnd(it.min, it.max), col, it.el); await wait(450); }
   }
@@ -452,15 +497,16 @@ window.Battle = (function () {
     if (!e.alive || over) return; const targetsAlive = aliveParty(); if (!targetsAlive.length) return;
     if (e.rotate) { rotateWeakness(e); await wait(360); renderEnemies(false); }
     const move = e.moves[rnd(0, e.moves.length - 1)]; const home = e.home.clone(); e._busy = true;
-    if (move.all) { msg(`${e.name} ${move.name}!`); await moveTo(e.node, home.add(new V3(-1.2,0.4,0)), 220); for (const p of targetsAlive) { let dmg = rnd(move.min, move.max); if (p._defend) dmg = Math.round(dmg*0.5); applyToMember(p, dmg); } await wait(200); await moveTo(e.node, home, 320); }
-    else { const target = targetsAlive[rnd(0, targetsAlive.length - 1)]; msg(`${e.name} ${move.name} at ${target.name}!`); const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY; await moveTo(e.node, dest, 240); let dmg = rnd(move.min, move.max); if (target._defend) dmg = Math.round(dmg*0.5); applyToMember(target, dmg); await wait(160); await moveTo(e.node, home, 340); }
+    const boost = hasSt(e, 'atkup') ? Data.STATUS.atkup.atk : 1;
+    if (move.all) { msg(`${e.name} ${move.name}!`); await moveTo(e.node, home.add(new V3(-1.2,0.4,0)), 220); for (const p of targetsAlive) { let dmg = Math.round(rnd(move.min, move.max) * boost); if (p._defend) dmg = Math.round(dmg*0.5); applyToMember(p, dmg); if (move.status) inflict(p, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); } await wait(200); await moveTo(e.node, home, 320); }
+    else { const target = targetsAlive[rnd(0, targetsAlive.length - 1)]; msg(`${e.name} ${move.name} at ${target.name}!`); const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY; await moveTo(e.node, dest, 240); let dmg = Math.round(rnd(move.min, move.max) * boost); if (target._defend) dmg = Math.round(dmg*0.5); applyToMember(target, dmg); if (move.status) inflict(target, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); await wait(160); await moveTo(e.node, home, 340); }
     e.node.position.copyFrom(home); e._busy = false; await wait(200);
   }
-  function applyToMember(p, dmg) { p.hp = Math.max(0, p.hp - dmg); p.limit = clamp(p.limit + Math.round(dmg / p.maxhp * 90) + 14, 0, 100); hitFlash(p.node, '#ff5050'); burst(worldOf(p.node, 0.0), ...FX.hit, 70, 8); floatDamage(p.node, String(dmg), '#ff8a8a', 2.4); shake(0.7); scalePunch(p.node, 1.14); if (p.hp <= 0 && p.alive) koMember(p); renderParty(false); }
+  function applyToMember(p, dmg) { if (hasSt(p, 'weaken')) dmg = Math.round(dmg * Data.STATUS.weaken.dmg); if (p.dr) dmg = Math.round(dmg * (1 - p.dr)); p.hp = Math.max(0, p.hp - dmg); p.limit = clamp(p.limit + Math.round(dmg / p.maxhp * 90) + 14, 0, 100); hitFlash(p.node, '#ff5050'); burst(worldOf(p.node, 0.0), ...FX.hit, 70, 8); floatDamage(p.node, String(dmg), '#ff8a8a', 2.4); shake(0.7); scalePunch(p.node, 1.14); if (p.hp <= 0 && p.alive) koMember(p); renderParty(false); }
   async function koMember(p) { if (window.SFX) SFX.play('ko'); p.alive = false; tween(k => { p.node.rotation.x = k*1.4; p.node.position.y = p.baseY - k*0.4; }, 500); }
 
   // ----- CTB turn order -----
-  const speedOf = (a) => a.spd || 10;
+  const speedOf = (a) => { let s = a.spd || 10; if (a.st) { if (a.st.haste > 0) s *= Data.STATUS.haste.spd; if (a.st.slow > 0) s *= Data.STATUS.slow.spd; } return s; };
   const aliveActors = () => actors.filter(a => a.alive);
   function nextActor() { const al = aliveActors(); if (!al.length) return null; al.sort((x, y) => (x.ct - y.ct) || (x.side === 'party' ? -1 : 1)); return al[0]; }
   function previewOrder(n) {
@@ -489,6 +535,7 @@ window.Battle = (function () {
       const a = nextActor(); if (!a) break;
       const minCt = a.ct; actors.forEach(x => { if (x.alive) x.ct -= minCt; }); // normalize so current = 0
       renderTurnBar();
+      if (a.alive) { const died = await tickStatus(a); if (checkEnd()) return; if (died || !a.alive) { a.ct += 100 / speedOf(a); await wait(120); continue; } }
       if (a.side === 'party') { a._defend = false; await takeTurn(a); } else { await enemyAct(a); }
       a.ct += 100 / speedOf(a);
       if (checkEnd()) return;

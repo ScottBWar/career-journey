@@ -243,6 +243,13 @@ window.Game = (function () {
       shopRow(list, `${Data.shellIcon(sh)} ${sh.name}`, `${grants}`, sh.price, false, () => Progress.addShell(Game.state, key));
     });
 
+    shopHeading(list, '💍 Accessories');
+    (Data.SHOP_ACCESSORIES || []).forEach(key => {
+      const acc = Data.ACCESSORIES[key]; if (!acc) return;
+      const owned = (Game.state.ownedAccessories || []).includes(key);
+      shopRow(list, `💍 ${acc.name}`, acc.desc + (owned ? ' · owned' : ''), acc.price, owned, () => Progress.buyAccessory(Game.state, key));
+    });
+
     shopHeading(list, '⚔️ Weapons');
     Game.state.party.forEach(p => {
       const d = Progress.derived(p);

@@ -161,9 +161,9 @@ window.Data = (function () {
     octo:   { name: 'Reef Octopus',      model: 'octo',  hp: 102, xp: 30, gold: 24, baseY: 0.1, moves: [ { name: 'slams a tentacle', min: 15, max: 21 }, { name: 'sprays stinging ink', min: 8, max: 12, all: true } ], drops: [ { mat: 'ink', chance: 0.7 }, { mat: 'goo', chance: 0.3 } ] },
     gull:   { name: 'Dive-Bomb Gull',    model: 'gull',  hp: 54,  xp: 18, gold: 12, baseY: 1.4, moves: [ { name: 'pecks rapidly', min: 8, max: 13 }, { name: 'dive-bombs', min: 17, max: 25 } ], drops: [ { mat: 'feather', chance: 0.85 } ] },
     golem:  { name: 'Sandcastle Golem',  model: 'golem', hp: 136, xp: 36, gold: 30, baseY: 0,   moves: [ { name: 'slams a sandy fist', min: 15, max: 23 }, { name: 'crumbles down', min: 11, max: 18, all: true } ], drops: [ { mat: 'sand', chance: 0.85 }, { mat: 'brine', chance: 0.25 } ] },
-    eel:    { name: 'Voltaic Eel',       model: 'eel',   hp: 96,  xp: 32, gold: 24, baseY: 1.0, moves: [ { name: 'lashes its tail', min: 13, max: 19 }, { name: 'looses a current', min: 12, max: 18, all: true } ], drops: [ { mat: 'goo', chance: 0.6 }, { mat: 'brine', chance: 0.35 } ] },
-    cobra:  { name: 'Sand Cobra',        model: 'cobra', hp: 92,  xp: 30, gold: 22, baseY: 0,   moves: [ { name: 'strikes with dripping fangs', min: 13, max: 20 }, { name: 'spits venom across', min: 11, max: 16, all: true } ], drops: [ { mat: 'fang', chance: 0.65 }, { mat: 'sand', chance: 0.4 } ] },
-    scarab: { name: 'Gilded Scarab',     model: 'scarab', hp: 120, xp: 34, gold: 34, baseY: 0.2, moves: [ { name: 'slashes with golden pincers', min: 14, max: 21 }, { name: 'scatters a blinding glare', min: 10, max: 15, all: true } ], drops: [ { mat: 'shellfrag', chance: 0.6 }, { mat: 'brine', chance: 0.4 } ] },
+    eel:    { name: 'Voltaic Eel',       model: 'eel',   hp: 96,  xp: 32, gold: 24, baseY: 1.0, moves: [ { name: 'lashes its tail', min: 13, max: 19 }, { name: 'looses a numbing current', min: 12, max: 18, all: true, status: 'slow', turns: 3 } ], drops: [ { mat: 'goo', chance: 0.6 }, { mat: 'brine', chance: 0.35 } ] },
+    cobra:  { name: 'Sand Cobra',        model: 'cobra', hp: 92,  xp: 30, gold: 22, baseY: 0,   moves: [ { name: 'strikes with dripping fangs', min: 13, max: 20, status: 'poison', turns: 3 }, { name: 'spits venom across', min: 11, max: 16, all: true, status: 'poison', turns: 3 } ], drops: [ { mat: 'fang', chance: 0.65 }, { mat: 'sand', chance: 0.4 } ] },
+    scarab: { name: 'Gilded Scarab',     model: 'scarab', hp: 120, xp: 34, gold: 34, baseY: 0.2, moves: [ { name: 'slashes with golden pincers', min: 14, max: 21 }, { name: 'scatters a blinding glare', min: 10, max: 15, all: true, status: 'weaken', turns: 3 } ], drops: [ { mat: 'shellfrag', chance: 0.6 }, { mat: 'brine', chance: 0.4 } ] },
     genie:  { name: 'Jafira, the Bound Genie', model: 'genie', hp: 640, xp: 520, gold: 820, baseY: 0.4, boss: true, rotate: ['water', 'thunder', 'dark'], moves: [
       { name: 'hurls a fistful of cursed sand', min: 30, max: 44 },
       { name: 'conjures a roaring sandstorm', min: 22, max: 30, all: true },
@@ -219,6 +219,10 @@ window.Data = (function () {
     phoenix:  { name: 'Phoenix Down', kind: 'revive',  target: 'dead',     fx: 'heal', price: 120, desc: 'Revive a fallen ally (half HP).' },
     megaphoenix:{ name: 'Mega Phoenix',kind: 'fullrevive', target: 'dead', fx: 'heal', price: 480, desc: 'Revive a fallen ally to FULL HP.' },
     adrenaline:{ name: 'Adrenaline',  kind: 'limit',   target: 'ally',     fx: 'beam', price: 240, desc: 'Instantly fill one ally\'s Limit gauge.' },
+    antidote: { name: 'Antidote',     kind: 'cure',    cures: ['poison'], target: 'ally', fx: 'heal', price: 40,  desc: 'Cures Poison on one ally.' },
+    remedy:   { name: 'Remedy',       kind: 'cure',    cures: 'bad',      target: 'ally', fx: 'heal', price: 140, desc: 'Cures all ailments on one ally.' },
+    herodrink:{ name: 'Hero Drink',   kind: 'buff',    status: 'atkup', turns: 4, target: 'ally', fx: 'beam', price: 180, desc: 'Raises one ally\'s Attack for a few turns.' },
+    hourglass:{ name: 'Golden Hourglass', kind: 'buff', status: 'haste', turns: 4, target: 'ally', fx: 'beam', price: 220, desc: 'Hastes one ally for a few turns.' },
     bomb:     { name: 'Powder Bomb',  kind: 'damage', min: 45,  max: 60,  target: 'enemy', fx: 'fire',  el: 'fire',    price: 60,  desc: '45-60 Fire damage to one foe.' },
     frostbomb:{ name: 'Frost Flask',  kind: 'damage', min: 55,  max: 75,  target: 'enemy', fx: 'water', el: 'water',   price: 110, desc: '55-75 Water damage to one foe.' },
     boltbomb: { name: 'Storm Jar',    kind: 'damage', min: 60,  max: 85,  target: 'enemy', fx: 'beam',  el: 'thunder', price: 130, desc: '60-85 Thunder damage to one foe.' },
@@ -228,9 +232,11 @@ window.Data = (function () {
   const SHOP_STOCK = ['potion', 'hipotion', 'ether', 'phoenix', 'bomb'];
   // some goods are exclusive to certain town markets, unlocked as you sail east
   const SHOP_STOCK_BY_TOWN = {
-    tidehaven: ['potion', 'hipotion', 'ether', 'phoenix', 'bomb', 'frostbomb'],
-    dunesport: ['potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'phoenix', 'bomb', 'boltbomb', 'megapotion'],
-    mall:      ['potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'turboether', 'phoenix', 'megaphoenix', 'elixir', 'adrenaline', 'megapotion', 'grenade', 'holybomb', 'boltbomb', 'frostbomb'],
+    tidehaven: ['potion', 'hipotion', 'ether', 'phoenix', 'bomb', 'frostbomb', 'antidote'],
+    dunesport: ['potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'phoenix', 'bomb', 'boltbomb', 'megapotion', 'antidote', 'remedy', 'herodrink'],
+    mall:      ['potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'turboether', 'phoenix', 'megaphoenix', 'elixir', 'adrenaline', 'megapotion', 'grenade', 'holybomb', 'boltbomb', 'frostbomb', 'antidote', 'remedy', 'herodrink', 'hourglass'],
+    bazaar:    ['potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'phoenix', 'bomb', 'frostbomb', 'boltbomb', 'antidote', 'remedy', 'herodrink', 'hourglass'],
+    aerie:     ['potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'phoenix', 'megapotion', 'boltbomb', 'antidote', 'remedy', 'herodrink', 'hourglass'],
   };
 
   // ---------------- CRAFTING ----------------
@@ -347,10 +353,16 @@ window.Data = (function () {
     cowrie_focus:  { key: 'cowrie_focus', name: 'Focus Cowrie', kind: 'support', stat: 'mp', perLevel: 10, maxLevel: 3, ap: [0, 70, 190], price: 150, desc: '+Max MP (scales with level).' },
     auger_edge:    { key: 'auger_edge', name: 'Auger Spike', kind: 'support', stat: 'atk', perLevel: 5, maxLevel: 3, ap: [0, 90, 240], price: 200, desc: '+Attack (scales with level).' },
     tiger_crit:    { key: 'tiger_crit', name: 'Tiger Cowrie', kind: 'support', stat: 'crit', perLevel: 0.06, maxLevel: 3, ap: [0, 110, 280], price: 240, desc: '+Crit chance (scales with level).' },
+    venom_spiral:  { key: 'venom_spiral', name: 'Venom Spiral', kind: 'magic', maxLevel: 3, ap: [0, 90, 240], price: 220,
+      ability: ab2('Venom', { mp: 10, min: 0, max: 0, target: 'enemy', fx: 'water', el: 'water', status: 'poison', turns: 4 }), desc: 'Grants a spell that Poisons a foe.' },
+    hex_conch:     { key: 'hex_conch', name: 'Hex Conch', kind: 'magic', maxLevel: 3, ap: [0, 110, 300], price: 300,
+      ability: ab2('Hex', { mp: 14, min: 0, max: 0, target: 'enemy', fx: 'beam', el: 'dark', status: ['slow', 'weaken'], turns: 3 }), desc: 'Grants a spell that Slows and Weakens a foe.' },
+    vigor_bloom:   { key: 'vigor_bloom', name: 'Vigor Bloom', kind: 'magic', maxLevel: 3, ap: [0, 90, 240], price: 260,
+      ability: ab2('Regen', { mp: 12, min: 0, max: 0, target: 'ally', fx: 'heal', status: 'regen', turns: 4 }), desc: 'Grants Regen — heals an ally over time.' },
     star_conch:    { key: 'star_conch', name: 'Star Conch', kind: 'magic', maxLevel: 3, ap: [0, 200, 500], price: 0,
       ability: ab2('Starfall', { mp: 28, min: 64, max: 88, target: 'all', fx: 'beam', el: 'holy' }), desc: 'Calls a rain of stars on all foes (holy). The Drifter\'s parting gift.' },
   };
-  const SHOP_SHELLS = ['conch_ember', 'spiral_mend', 'nautilus_surge', 'triton_blast', 'sand_dollar', 'cowrie_focus', 'auger_edge', 'tiger_crit'];
+  const SHOP_SHELLS = ['conch_ember', 'spiral_mend', 'nautilus_surge', 'triton_blast', 'venom_spiral', 'vigor_bloom', 'hex_conch', 'sand_dollar', 'cowrie_focus', 'auger_edge', 'tiger_crit'];
 
   // effective ability for a magic shell at a given level (scales potency)
   function shellAbility(shellKey, level) {
@@ -373,6 +385,32 @@ window.Data = (function () {
     physical: { c: '#ffffff', i: '', name: 'Physical' },
   };
   function elementOf(a) { if (a.el) return a.el; return ({ fire: 'fire', water: 'water', beam: 'thunder' })[a.fx] || 'physical'; }
+
+  // ---------------- STATUS AILMENTS / BUFFS (basic set) ----------------
+  // dot = fraction of maxHP applied each of the target's turns (negative = heal).
+  // spd = multiplier to turn speed. atk/dmg = outgoing/incoming damage multipliers.
+  // bad: a debuff (cured by Remedy / blocked by immunity accessories).
+  const STATUS = {
+    poison: { name: 'Poison',     icon: '☠', color: '#9bff6a', bad: true, dot: 0.08 },
+    regen:  { name: 'Regen',      icon: '✚', color: '#6ee7b7', dot: -0.10 },
+    haste:  { name: 'Haste',      icon: '»',  color: '#fde047', spd: 1.7 },
+    slow:   { name: 'Slow',       icon: '«',  color: '#9aa6b4', bad: true, spd: 0.55 },
+    atkup:  { name: 'Attack Up',  icon: '↑',  color: '#ff9e6a', atk: 1.3 },
+    weaken: { name: 'Weaken',     icon: '▽',  color: '#b06aff', bad: true, dmg: 1.3 },
+  };
+
+  // ---------------- ACCESSORIES (armor slot — also carries shell slots, FF7-style) ----------------
+  // stat: flat bonuses · dr: % damage reduction · immune: status keys blocked · slots: materia slots
+  const ACCESSORIES = {
+    coral_bangle:  { key: 'coral_bangle',  name: 'Coral Bangle',  slots: 1, stat: { hp: 35 }, price: 200, desc: '+35 HP · 1 shell slot' },
+    seaglass_ring: { key: 'seaglass_ring', name: 'Sea-Glass Ring', slots: 2, stat: { mp: 18 }, price: 280, desc: '+18 MP · 2 shell slots' },
+    tortoise_charm:{ key: 'tortoise_charm', name: 'Tortoise Charm', slots: 1, dr: 0.12, price: 360, desc: '12% damage taken reduction · 1 slot' },
+    tiger_fang:    { key: 'tiger_fang',    name: 'Tiger Fang',     slots: 2, stat: { atk: 6, crit: 0.08 }, price: 420, desc: '+6 ATK, +8% Crit · 2 slots' },
+    venom_ward:    { key: 'venom_ward',    name: 'Venom Ward',     slots: 2, immune: ['poison'], stat: { hp: 20 }, price: 340, desc: 'Immune to Poison · +20 HP · 2 slots' },
+    aegis_pearl:   { key: 'aegis_pearl',   name: 'Aegis Pearl',    slots: 2, dr: 0.18, immune: ['weaken'], price: 680, desc: '18% damage reduction · immune Weaken · 2 slots' },
+    guardian_pearl:{ key: 'guardian_pearl', name: 'Guardian Pearl', slots: 3, stat: { hp: 60, mp: 15 }, dr: 0.10, price: 900, desc: '+60 HP, +15 MP, 10% reduction · 3 slots · ultimate' },
+  };
+  const SHOP_ACCESSORIES = ['coral_bangle', 'seaglass_ring', 'tortoise_charm', 'tiger_fang', 'venom_ward', 'aegis_pearl'];
   // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
   const AFFINITIES = {
     shark:  { weak: ['thunder'], resist: ['water'] },
@@ -1028,6 +1066,6 @@ window.Data = (function () {
   }
 
   return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, SHOP_STOCK_BY_TOWN, MATERIALS, RECIPES, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY, COSMOS,
-           ELEMENT_INFO, elementOf, affMult, AFFINITIES, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT, MERMAIDS, AMBUSH,
+           ELEMENT_INFO, elementOf, affMult, AFFINITIES, STATUS, ACCESSORIES, SHOP_ACCESSORIES, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT, MERMAIDS, AMBUSH,
            xpForLevel, MAX_LEVEL, randomEncounter };
 })();
