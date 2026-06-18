@@ -806,7 +806,7 @@ window.Data = (function () {
   };
 
   // ---------------- PROGRESSION ----------------
-  const xpForLevel = (lvl) => Math.round(28 * Math.pow(lvl, 1.55)); // xp needed to go from lvl -> lvl+1
+  const xpForLevel = (lvl) => Math.round(25 * Math.pow(lvl, 1.5)); // xp to go lvl -> lvl+1 (smoother early climb)
   const MAX_LEVEL = 30;
 
   function randomEncounter(enc) {
