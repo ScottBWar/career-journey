@@ -164,7 +164,7 @@ window.Data = (function () {
     eel:    { name: 'Voltaic Eel',       model: 'eel',   hp: 96,  xp: 32, gold: 24, baseY: 1.0, moves: [ { name: 'lashes its tail', min: 13, max: 19 }, { name: 'looses a current', min: 12, max: 18, all: true } ], drops: [ { mat: 'goo', chance: 0.6 }, { mat: 'brine', chance: 0.35 } ] },
     cobra:  { name: 'Sand Cobra',        model: 'cobra', hp: 92,  xp: 30, gold: 22, baseY: 0,   moves: [ { name: 'strikes with dripping fangs', min: 13, max: 20 }, { name: 'spits venom across', min: 11, max: 16, all: true } ], drops: [ { mat: 'fang', chance: 0.65 }, { mat: 'sand', chance: 0.4 } ] },
     scarab: { name: 'Gilded Scarab',     model: 'scarab', hp: 120, xp: 34, gold: 34, baseY: 0.2, moves: [ { name: 'slashes with golden pincers', min: 14, max: 21 }, { name: 'scatters a blinding glare', min: 10, max: 15, all: true } ], drops: [ { mat: 'shellfrag', chance: 0.6 }, { mat: 'brine', chance: 0.4 } ] },
-    genie:  { name: 'Jafira, the Bound Genie', model: 'genie', hp: 640, xp: 520, gold: 820, baseY: 0.4, boss: true, moves: [
+    genie:  { name: 'Jafira, the Bound Genie', model: 'genie', hp: 640, xp: 520, gold: 820, baseY: 0.4, boss: true, rotate: ['water', 'thunder', 'dark'], moves: [
       { name: 'hurls a fistful of cursed sand', min: 30, max: 44 },
       { name: 'conjures a roaring sandstorm', min: 22, max: 30, all: true },
       { name: 'twists reality and strikes', min: 34, max: 48 },
@@ -192,12 +192,12 @@ window.Data = (function () {
     angler: { name: 'Abyss Angler', model: 'angler', hp: 380, xp: 280, gold: 420, baseY: 0.4, boss: true, moves: [
       { name: 'snaps its enormous jaws', min: 30, max: 44 },
       { name: 'mesmerizes with its lure', min: 18, max: 26, all: true } ] },
-    drifter: { name: 'Gilgamuck, the Drifter', model: 'drifter', hp: 880, xp: 900, gold: 1500, baseY: 0, boss: true, moves: [
+    drifter: { name: 'Gilgamuck, the Drifter', model: 'drifter', hp: 880, xp: 900, gold: 1500, baseY: 0, boss: true, rotate: ['fire', 'water', 'thunder', 'earth'], moves: [
       { name: 'draws a different blade and slashes', min: 36, max: 50 },
       { name: 'spins into a six-sword cyclone', min: 26, max: 36, all: true },
       { name: 'hurls a borrowed harpoon at', min: 40, max: 56 },
       { name: 'flourishes — "Have at you!"', min: 44, max: 60 } ], drops: [ { mat: 'abyssscale', chance: 1 } ] },
-    selachoth: { name: 'Selachoth', model: 'selachoth', hp: 560, xp: 500, gold: 800, baseY: 0.2, boss: true, moves: [
+    selachoth: { name: 'Selachoth', model: 'selachoth', hp: 560, xp: 500, gold: 800, baseY: 0.2, boss: true, rotate: ['holy', 'dark'], moves: [
       { name: 'cleaves with Tidemourn', min: 34, max: 46 },
       { name: 'sweeps the blade in an arc', min: 22, max: 30, all: true },
       { name: 'calls down a crushing Deluge', min: 30, max: 42 },

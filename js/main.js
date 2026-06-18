@@ -336,7 +336,9 @@ window.Game = (function () {
     const EI = Data.ELEMENT_INFO;
     const affTags = (k) => {
       const a = Data.AFFINITIES[k] || {}; const out = [];
-      (a.weak || []).forEach(e => out.push(`<span style="color:#fca5a5">▲ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
+      const rot = Data.ENEMIES[k] && Data.ENEMIES[k].rotate;
+      if (rot && rot.length) out.push(`<span style="color:#fde047">⟳ shifting weakness: ${rot.map(e => EI[e] ? EI[e].i + EI[e].name : e).join(' → ')}</span>`);
+      else (a.weak || []).forEach(e => out.push(`<span style="color:#fca5a5">▲ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
       (a.resist || []).forEach(e => out.push(`<span style="color:#9be7ff">▼ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
       (a.absorb || []).forEach(e => out.push(`<span style="color:#6ee7b7">✚ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
       (a.nullify || []).forEach(e => out.push(`<span style="color:#cbd5e1">○ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));

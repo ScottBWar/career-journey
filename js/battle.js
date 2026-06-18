@@ -79,8 +79,17 @@ window.Battle = (function () {
       seen[key] = (seen[key] || 0) + 1;
       if (Progress.recordSeen) Progress.recordSeen(Game.state, key);
       const suffix = placed.filter(k => k === key).length > 1 ? ' ' + 'ABC'[seen[key]-1] : '';
-      enemies.push({ side:'enemy', keyRaw: key, name: def.name + suffix, node: built.node, baseY: def.baseY, maxhp: def.hp, hp: def.hp,
-        home, phase: i*1.7 + 0.5, alive: true, _busy: false, idle: built.idle, moves: def.moves, xp: def.xp, gold: def.gold, drops: def.drops });
+      const e = { side:'enemy', keyRaw: key, name: def.name + suffix, node: built.node, baseY: def.baseY, maxhp: def.hp, hp: def.hp,
+        home, phase: i*1.7 + 0.5, alive: true, _busy: false, idle: built.idle, moves: def.moves, xp: def.xp, gold: def.gold, drops: def.drops };
+      // rotating-weakness bosses get a current weakness + a subtle elemental aura
+      if (def.rotate && def.rotate.length) {
+        e.rotate = def.rotate; e.rotIdx = 0; e.dynWeak = def.rotate[0];
+        const aura = MB.CreateSphere('aura', { diameter: 1, segments: 12 }, scene);
+        const am = new BABYLON.StandardMaterial('auraM', scene); am.disableLighting = true; am.emissiveColor = Color3.FromHexString(ELEMCOL[e.dynWeak] || '#ffffff'); am.alpha = 0.16; am.alphaMode = BABYLON.Engine.ALPHA_ADD; am.backFaceCulling = false;
+        aura.material = am; aura.parent = built.node; aura.scaling.setAll(2.5); aura.position.y = 1.5; aura.isPickable = false;
+        e.aura = aura; e.auraMat = am;
+      }
+      enemies.push(e);
     });
 
     actors = party.concat(enemies);
@@ -108,6 +117,8 @@ window.Battle = (function () {
           a.node.position.y = a.baseY + Math.sin(t*1.5 + a.phase)*0.05;
           if (a.idle) a.idle(t);
         }
+        // rotating-weakness aura: gentle breathing pulse, easing down from any shift-flare
+        if (a.aura) { const base = 2.5 + Math.sin(t*2.2 + a.phase)*0.2; const cur = a.aura.scaling.x; a.aura.scaling.setAll(cur + (base - cur)*0.08); if (a.auraMat) a.auraMat.alpha = 0.13 + Math.sin(t*2.2 + a.phase)*0.05; }
       }
       const pos = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind);
       for (let i = 0; i < pos.length; i += 3) { const x = oceanBase[i], z = oceanBase[i+2]; pos[i+1] = Math.sin(x*0.22 + t*1.4)*0.5 + Math.cos(z*0.28 + t*1.1)*0.45; }
@@ -153,7 +164,9 @@ window.Battle = (function () {
     const wrap = el('bEnemies'); wrap.innerHTML = '';
     enemies.forEach(e => { const d = document.createElement('div'); d.className = 'eplate' + (e.alive ? '' : ' dead');
       const port = Portraits.has(e.keyRaw) ? `<div class="eportrait">${Portraits.img(e.keyRaw)}</div>` : '';
-      d.innerHTML = `${port}<div class="einfo"><div class="row"><span class="name">${e.name}</span><span class="hpnum">${Math.max(0,e.hp)}/${e.maxhp}</span></div><div class="bar hp"><i style="width:${clamp(e.hp/e.maxhp*100,0,100)}%"></i></div></div>`;
+      let wk = '';
+      if (e.rotate && e.dynWeak) { const ei = Data.ELEMENT_INFO[e.dynWeak]; const col = ELEMCOL[e.dynWeak] || '#fff'; wk = `<span class="eweak" title="Current weakness" style="color:${col};text-shadow:0 0 6px ${col}">${ei ? ei.i : ''}⌁</span>`; }
+      d.innerHTML = `${port}<div class="einfo"><div class="row"><span class="name">${e.name}${wk}</span><span class="hpnum">${Math.max(0,e.hp)}/${e.maxhp}</span></div><div class="bar hp"><i style="width:${clamp(e.hp/e.maxhp*100,0,100)}%"></i></div></div>`;
       if (Portraits.has(e.keyRaw)) d.classList.add('boss');
       if (targetMode && e.alive) { d.classList.add('targetable'); d.onclick = () => onPick(e); } wrap.appendChild(d); });
   }
@@ -224,8 +237,22 @@ window.Battle = (function () {
   async function dashAttack(attacker, target, onHit) { attacker._busy = true; const home = attacker.home.clone(); const dest = home.add(target.home.subtract(home).scale(0.66)); dest.y = attacker.baseY; await moveTo(attacker.node, dest, 170); await onHit(); await wait(90); /* hitstop */ await moveTo(attacker.node, home, 260); attacker.node.position.copyFrom(home); attacker._busy = false; }
   async function swing(arm) { await rotTo(arm, 'x', 0, -2.3, 110); await rotTo(arm, 'x', -2.3, 0.6, 100); await rotTo(arm, 'x', 0.6, 0, 130); }
 
+  // affinity multiplier — honours a rotating boss's *current* weakness over its static table
+  function enemyAffMult(e, element) {
+    const a = Data.AFFINITIES[e.keyRaw];
+    if (a) {
+      if (a.absorb && a.absorb.includes(element)) return -1;
+      if (a.nullify && a.nullify.includes(element)) return 0;
+    }
+    if (e.rotate) {
+      if (element && element === e.dynWeak) return 1.7;            // the live weakness — big payoff
+      if (a && a.resist && a.resist.includes(element)) return 0.5;
+      return 1;                                                    // every other element is neutral while it shifts
+    }
+    return Data.affMult(e.keyRaw, element);
+  }
   function damageEnemy(e, dmg, color = '#ffffff', element = 'physical') {
-    const mult = Data.affMult(e.keyRaw, element);
+    const mult = enemyAffMult(e, element);
     if (mult < 0) { // absorb → enemy heals
       const heal = Math.round(dmg * 0.6); e.hp = Math.min(e.maxhp, e.hp + heal);
       burst(worldOf(e.node, 0.6), ...FX.heal, 40, 5, -2); floatDamage(e.node, '+' + heal + ' absorb', '#6ee7b7', 2.6); renderEnemies(false); return;
@@ -410,9 +437,20 @@ window.Battle = (function () {
     else { msg(`${m.name} hurls a ${it.name}!`); const ball = MB.CreateSphere('b', { diameter: 0.4 }, scene); ball.material = M('bMat', '#222', { emissive: '#1a0a00' }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(targets[0].node, -0.2), 340); ball.dispose(); burst(worldOf(targets[0].node, 0.2), ...fx, 100, 11); damageEnemy(targets[0], rnd(it.min, it.max), col, it.el); await wait(450); }
   }
 
+  // shift a rotating boss to its next elemental weakness (subtle aura + telegraph)
+  function rotateWeakness(e) {
+    if (!e.rotate || !e.rotate.length) return;
+    e.rotIdx = (e.rotIdx + 1) % e.rotate.length; e.dynWeak = e.rotate[e.rotIdx];
+    const hex = ELEMCOL[e.dynWeak] || '#ffffff'; const ei = Data.ELEMENT_INFO[e.dynWeak];
+    if (e.auraMat) { e.auraMat.emissiveColor = Color3.FromHexString(hex); }
+    if (e.aura) { e.aura.scaling.setAll(3.0); }                    // brief flare on the shift
+    burst(worldOf(e.node, 0.8), hex, '#ffffff', 36, 5, -1);
+    if (ei) floatDamage(e.node, ei.i + ' shift', hex, 3.0);
+  }
   // ----- enemy AI -----
   async function enemyAct(e) {
     if (!e.alive || over) return; const targetsAlive = aliveParty(); if (!targetsAlive.length) return;
+    if (e.rotate) { rotateWeakness(e); await wait(360); renderEnemies(false); }
     const move = e.moves[rnd(0, e.moves.length - 1)]; const home = e.home.clone(); e._busy = true;
     if (move.all) { msg(`${e.name} ${move.name}!`); await moveTo(e.node, home.add(new V3(-1.2,0.4,0)), 220); for (const p of targetsAlive) { let dmg = rnd(move.min, move.max); if (p._defend) dmg = Math.round(dmg*0.5); applyToMember(p, dmg); } await wait(200); await moveTo(e.node, home, 320); }
     else { const target = targetsAlive[rnd(0, targetsAlive.length - 1)]; msg(`${e.name} ${move.name} at ${target.name}!`); const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY; await moveTo(e.node, dest, 240); let dmg = rnd(move.min, move.max); if (target._defend) dmg = Math.round(dmg*0.5); applyToMember(target, dmg); await wait(160); await moveTo(e.node, home, 340); }
