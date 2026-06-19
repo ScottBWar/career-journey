@@ -217,7 +217,7 @@ window.World = (function () {
     for (let i = debris.length - 1; i >= 0; i--) {
       const d = debris[i]; d.life -= dt;
       if (d.life <= 0) { d.node.dispose(); debris.splice(i, 1); continue; }
-      if (d.arc) { const k = d.life / d.max; d.mat.alpha = 0.85 * k; d.node.scaling.setAll(1 + (1 - k) * 0.6); }
+      if (d.arc) { const k = d.life / d.max; d.mat.alpha = 0.85 * k; d.node.scaling.setAll(1 + (1 - k) * 0.6); if (d.sweep != null) d.node.rotation.y = d.sweep + 0.7 - (1 - k) * 1.4; }
       else { d.node.position.x += d.vx * dt; d.node.position.z += d.vz * dt; d.vy -= 14 * dt; d.node.position.y = Math.max(0.05, d.node.position.y + d.vy * dt); d.node.rotation.y += d.spin * dt; d.node.rotation.x += d.spin * dt; }
     }
     let mx = 0, mz = 0;
@@ -289,11 +289,17 @@ window.World = (function () {
   function animateSwing(p) {
     if (!playerArm) return; const a = playerArm; a.position.z = armBaseZ;
     switch (swingCat) {
-      case 'slash':  a.rotation.x = 0.15 + Math.sin(p * Math.PI) * 0.35; a.rotation.z = Math.cos(p * Math.PI) * 1.7; a.rotation.y = (p - 0.5) * 0.8; break; // horizontal sweep L→R
+      case 'slash':
+        // hold the blade out horizontally in front, then YAW the arm across the body:
+        // a flat left-to-right cut at chest height (Zelda-style), not a vertical pendulum
+        a.rotation.x = 0.1 + Math.sin(p * Math.PI) * 0.2;   // arm forward ~horizontal, slight dip mid-swing
+        a.rotation.z = 0;
+        a.rotation.y = (0.5 - p) * 2.8;                     // sweep from the right side across to the left
+        break;
       case 'bonk':   a.rotation.z = 0; a.rotation.y = 0; a.rotation.x = -1.0 + (p * p) * 2.7; break;                                                  // overhead chop down
       case 'crack':  a.rotation.z = 0; a.rotation.y = 0; a.rotation.x = -0.8 + Math.sqrt(p) * 2.5; break;                                            // whip snap
-      case 'punch':  a.rotation.x = 1.4; a.rotation.z = 0; a.position.z = armBaseZ + Math.sin(p * Math.PI * 2) * 0.45; break;                         // double jab
-      case 'stab':   a.rotation.x = 1.45; a.rotation.z = 0; a.position.z = armBaseZ + Math.sin(p * Math.PI) * 0.7; break;                             // forward thrust
+      case 'punch':  a.rotation.x = 1.4; a.rotation.z = 0; a.rotation.y = 0; a.position.z = armBaseZ + Math.sin(p * Math.PI * 2) * 0.45; break;        // double jab
+      case 'stab':   a.rotation.x = 1.45; a.rotation.z = 0; a.rotation.y = 0; a.position.z = armBaseZ + Math.sin(p * Math.PI) * 0.7; break;            // forward thrust
       default:       a.rotation.x = 0.2 + Math.sin(p * Math.PI) * 1.3;
     }
   }
@@ -303,18 +309,18 @@ window.World = (function () {
   // a vertical arc for bonks, a forward streak for stabs.
   function swingFX() {
     const fX = Math.sin(player.rotation.y), fZ = Math.cos(player.rotation.y);
-    let node, m = new BABYLON.StandardMaterial('fxM', scene); m.emissiveColor = new Color3(1, 1, 0.92); m.diffuseColor = new Color3(0, 0, 0); m.alpha = 0.9;
+    let node, sweep = null, m = new BABYLON.StandardMaterial('fxM', scene); m.emissiveColor = new Color3(1, 1, 0.92); m.diffuseColor = new Color3(0, 0, 0); m.alpha = 0.9;
     if (swingCat === 'stab' || swingCat === 'punch') {
       node = MB.CreateCylinder('fx', { height: 1.9, diameterTop: 0.05, diameterBottom: 0.5, tessellation: 8 }, scene);
       node.rotation.x = Math.PI / 2; node.rotation.y = -player.rotation.y; node.position.set(player.position.x + fX * 1.7, 1.0, player.position.z + fZ * 1.7);
     } else {
-      node = MB.CreateTorus('fx', { diameter: 2.7, thickness: 0.2, tessellation: 18, arc: 0.55 }, scene);
-      node.position.set(player.position.x + fX * 1.2, 1.0, player.position.z + fZ * 1.2);
+      node = MB.CreateTorus('fx', { diameter: 2.9, thickness: 0.22, tessellation: 20, arc: 0.5 }, scene);
+      node.position.set(player.position.x + fX * 1.2, 1.05, player.position.z + fZ * 1.2);
       if (swingCat === 'bonk' || swingCat === 'crack') { node.rotation.y = player.rotation.y + Math.PI / 2; node.rotation.z = Math.PI * 0.25; } // vertical arc facing forward
-      else { node.rotation.x = Math.PI / 2; node.rotation.y = player.rotation.y - Math.PI * 0.27; }                                                // flat crescent across the front
+      else { node.rotation.x = Math.PI / 2; node.rotation.y = player.rotation.y + 0.7; sweep = player.rotation.y; }                                  // flat crescent that sweeps across the front
     }
     node.material = m; node.isPickable = false;
-    debris.push({ node, mat: m, arc: true, life: 0.2, max: 0.2 });
+    debris.push({ node, mat: m, arc: true, life: 0.22, max: 0.22, sweep: sweep });
   }
 
   // burst of little fragments that fly out + fall — sells the "it broke" feeling
