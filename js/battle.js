@@ -12,7 +12,7 @@ window.Battle = (function () {
   const el = id => document.getElementById(id);
 
   let scene, camera, engine, canvas, flare, oceanBase, ocean;
-  let party = [], enemies = [], actors = [], over, onEndCb, activeMember, t, shakeAmt = 0, cineActive = false;
+  let party = [], enemies = [], actors = [], over, onEndCb, activeMember, t, shakeAmt = 0, cineActive = false, hitStopT = 0, zoomPunch = 0;
 
   const FX = { fire:['#ffb347','#ff5e3a'], water:['#5eead4','#3b82f6'], beam:['#a5b4fc','#e0e7ff'], heal:['#6ee7b7','#bbf7d0'], mana:['#60a5fa','#bfdbfe'], hit:['#ff6b6b','#ffd1d1'] };
   const PSPD = { pirate: 11, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12, simon: 11, aladdin: 14, violca: 13, mac: 9, sane: 14, marvyn: 8, quijano: 9 };
@@ -101,8 +101,12 @@ window.Battle = (function () {
 
     shakeAmt = 0;
     scene.onBeforeRenderObservable.add(() => {
-      const dt = engine.getDeltaTime() / 1000; t += dt;
-      if (!cineActive) { camera.alpha = -Math.PI/2 - 0.62 + Math.sin(t*0.2)*0.05; camera.radius = 21 + Math.sin(t*0.16)*0.6; } // slow dynamic drift
+      const rdt = engine.getDeltaTime() / 1000;
+      // HIT-STOP: at the instant of impact, freeze world-time for a few frames so the
+      // blow reads as a real connecting hit (shake + zoom still play through the freeze).
+      const dt = hitStopT > 0 ? 0 : rdt; if (hitStopT > 0) hitStopT -= rdt; t += dt;
+      if (!cineActive) { camera.alpha = -Math.PI/2 - 0.62 + Math.sin(t*0.2)*0.05; camera.radius = 21 + Math.sin(t*0.16)*0.6 - zoomPunch; } // slow dynamic drift + impact punch-in
+      if (zoomPunch > 0.001) zoomPunch *= 0.82; else zoomPunch = 0;
       if (shakeAmt > 0.001) { camera.targetScreenOffset.x = (Math.random()-0.5)*shakeAmt; camera.targetScreenOffset.y = (Math.random()-0.5)*shakeAmt; shakeAmt *= 0.84; } else if (camera.targetScreenOffset.x) { camera.targetScreenOffset.set(0, 0); shakeAmt = 0; }
       for (const a of actors) {
         if (!a.alive || a._busy) continue;
@@ -150,6 +154,7 @@ window.Battle = (function () {
     ps.minAngularSpeed = 0; ps.maxAngularSpeed = Math.PI; ps.targetStopDuration = 0.18; ps.disposeOnStop = true; ps.start();
   }
   function shake(a) { shakeAmt = Math.max(shakeAmt, a); }
+  function hitStop(sec, zoom) { hitStopT = Math.max(hitStopT, sec); if (zoom) zoomPunch = Math.max(zoomPunch, zoom); }
   function scalePunch(node, s) { const o = node.scaling.clone(); node.scaling.set(o.x * s, o.y * (2 - s), o.z * s); setTimeout(() => node.scaling.copyFrom(o), 100); }
   const worldOf = (node, dy = 2.4) => node.getAbsolutePosition().add(new V3(0, dy, 0));
   function floatDamage(node, text, color, dy = 2.4, cls = '') {
@@ -318,7 +323,7 @@ window.Battle = (function () {
     if (window.SFX) SFX.play(mult > 1 ? 'crit' : 'hit');
     e.hp = Math.max(0, e.hp - dmg); hitFlash(e.node, mult > 1 ? '#fff0a0' : '#ff6060'); burst(worldOf(e.node, 0.6), ...FX.hit, mult > 1 ? 120 : 80, mult > 1 ? 12 : 9);
     floatDamage(e.node, dmg + (mult > 1 ? ' Weak!' : mult < 1 ? ' Resist' : ''), mult > 1 ? '#fde047' : color, 2.6, mult > 1 ? 'big' : '');
-    shake(mult > 1 ? 1.0 : 0.55); scalePunch(e.node, 1.18);
+    shake(mult > 1 ? 1.0 : 0.55); scalePunch(e.node, 1.18); hitStop(mult > 1 ? 0.11 : 0.05, mult > 1 ? 1.4 : 0.6);
     e._busy = true; const h = e.home.clone(); moveTo(e.node, h.add(new V3(1.1,0.25,0)), 70).then(() => moveTo(e.node, h, 220).then(() => { e.node.position.copyFrom(h); e._busy = false; }));
     if (e.hp <= 0) killEnemy(e); renderEnemies(false);
   }
@@ -370,7 +375,7 @@ window.Battle = (function () {
         if (window.SFX) SFX.play('hit'); await wait(120);
       }
       // FINISHER
-      flashScreen('rgba(253,224,71,0.6)'); shake(1.9);
+      flashScreen('rgba(253,224,71,0.6)'); shake(1.9); hitStop(0.16, 2.2);
       targets.forEach(e => { if (e.alive) { burst(worldOf(e.node, 0.6), ...FX[L.fx], 180, 15); hitFlash(e.node, '#ffffff', 300); if (e.hp <= 0) killEnemy(e); } });
       await wait(430);
     }
@@ -541,7 +546,7 @@ window.Battle = (function () {
     else { const target = targetsAlive[rnd(0, targetsAlive.length - 1)]; msg(`${e.name} ${move.name} at ${target.name}!`); const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY; await moveTo(e.node, dest, 240); let dmg = Math.round(rnd(move.min, move.max) * boost); if (target._defend) dmg = Math.round(dmg*0.5); applyToMember(target, dmg); if (move.status) inflict(target, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); await wait(160); await moveTo(e.node, home, 340); }
     e.node.position.copyFrom(home); e._busy = false; await wait(200);
   }
-  function applyToMember(p, dmg) { if (hasSt(p, 'weaken')) dmg = Math.round(dmg * Data.STATUS.weaken.dmg); if (p.dr) dmg = Math.round(dmg * (1 - p.dr)); p.hp = Math.max(0, p.hp - dmg); p.limit = clamp(p.limit + Math.round(dmg / p.maxhp * 90) + 14, 0, 100); hitFlash(p.node, '#ff5050'); burst(worldOf(p.node, 0.0), ...FX.hit, 70, 8); floatDamage(p.node, String(dmg), '#ff8a8a', 2.4); shake(0.7); scalePunch(p.node, 1.14); if (p.hp <= 0 && p.alive) koMember(p); renderParty(false); }
+  function applyToMember(p, dmg) { if (hasSt(p, 'weaken')) dmg = Math.round(dmg * Data.STATUS.weaken.dmg); if (p.dr) dmg = Math.round(dmg * (1 - p.dr)); p.hp = Math.max(0, p.hp - dmg); p.limit = clamp(p.limit + Math.round(dmg / p.maxhp * 90) + 14, 0, 100); hitFlash(p.node, '#ff5050'); burst(worldOf(p.node, 0.0), ...FX.hit, 70, 8); floatDamage(p.node, String(dmg), '#ff8a8a', 2.4); shake(0.7); scalePunch(p.node, 1.14); hitStop(0.05, 0.5); if (p.hp <= 0 && p.alive) koMember(p); renderParty(false); }
   async function koMember(p) { if (window.SFX) SFX.play('ko'); p.alive = false; tween(k => { p.node.rotation.x = k*1.4; p.node.position.y = p.baseY - k*0.4; }, 500); }
 
   // ----- CTB turn order -----

@@ -463,7 +463,8 @@
     .tb-item.enemy { border-color: rgba(255,120,120,0.45); }
     .tb-port { width: 100%; height: 100%; border-radius: 0; border: none; display: block; }
     .tb-chip { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-weight: 700; color: #0a0a18; }
-    .float.big { font-size: 2.4rem; }
+    .float.big { font-size: 2.7rem; font-weight: 800; text-shadow: 0 0 12px currentColor, 0 2px 8px rgba(0,0,0,0.8); animation: floatBig 1.05s cubic-bezier(.2,1.4,.4,1) forwards; }
+    @keyframes floatBig { 0%{opacity:0;transform:translate(-50%,-20%) scale(0.3) rotate(-8deg);} 16%{opacity:1;transform:translate(-50%,-95%) scale(1.5) rotate(3deg);} 30%{transform:translate(-50%,-100%) scale(1.15) rotate(0);} 100%{opacity:0;transform:translate(-50%,-210%) scale(1.1);} }
 
     /* start-screen party portraits */
     #startPortraits { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.4rem; flex-wrap: wrap; }
