@@ -407,7 +407,7 @@ window.Battle = (function () {
   // ---- attack/spell VFX ----
   function bladeFlash(m, el) { const col = ELEMCOL[el] || '#dfe7ef'; if (m.arm) hitFlash(m.arm, col, 280); burst(worldOf(m.node, 1.1), col, '#ffffff', 28, 5, -1); }
   async function meleeAnim(m, target) {
-    const arm = m.arm || m.staffPiv; bladeFlash(m, m.fight.el || 'physical');
+    const arm = m.arm || m.staffPiv; bladeFlash(m, m.fight.el || 'physical'); if (window.SFX) SFX.play('slash');
     if (!arm) { await wait(120); return; }
     const ax = arm.rotation.x, az = arm.rotation.z;
     switch (m.key) {
@@ -442,6 +442,7 @@ window.Battle = (function () {
   }
   // element-specific impact — a gout of flame looks like a gout of flame, etc.
   function elemImpact(node, elem, col) {
+    if (window.SFX) SFX.play({ fire: 'fire', water: 'water', earth: 'earth', holy: 'holy', dark: 'dark' }[elem] || 'hit');
     if (elem === 'fire') { particles(worldOf(node, -0.3), { count: 220, c1: '#ffe066', c2: '#ff3a1a', minSize: 0.4, maxSize: 1.2, life0: 0.25, life1: 0.7, rate: 700, dir1: new V3(-0.7, 5, -0.7), dir2: new V3(0.7, 9, 0.7), pow0: 2, pow1: 5, gravity: new V3(0, -2.5, 0), spread: 0.6, dur: 300 }); flashScreen('rgba(255,120,40,0.18)'); shake(0.8); }
     else if (elem === 'water') { particles(worldOf(node, 2.0), { count: 200, c1: '#bff0ff', c2: '#2f7fff', minSize: 0.25, maxSize: 0.8, life0: 0.2, life1: 0.6, rate: 600, dir1: new V3(-2, -7, -2), dir2: new V3(2, -2, 2), pow0: 3, pow1: 7, gravity: new V3(0, -10, 0), spread: 0.8, dur: 280 }); shake(0.6); }
     else if (elem === 'earth') { particles(worldOf(node, -0.3), { count: 110, c1: '#d8b878', c2: '#5a3a1e', minSize: 0.35, maxSize: 0.9, life0: 0.3, life1: 0.7, rate: 500, dir1: new V3(-3, 4, -3), dir2: new V3(3, 9, 3), pow0: 2, pow1: 5, gravity: new V3(0, -14, 0), spread: 0.5, dur: 220 }); shake(1.0); }
@@ -451,7 +452,7 @@ window.Battle = (function () {
     hitFlash(node, col, 220);
   }
   function spellHit(e, elem, col) {
-    if (elem === 'thunder') lightningStrike(e.node, col);
+    if (elem === 'thunder') { if (window.SFX) SFX.play('thunder'); lightningStrike(e.node, col); }
     else elemImpact(e.node, elem, col);
   }
   async function projectile(from, to, col) {

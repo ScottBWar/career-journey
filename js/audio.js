@@ -350,6 +350,13 @@
         case 'magic': blip(300, t, 0.3, 'triangle', 0.16, 1400); break;
         case 'fire': blip(200, t, 0.3, 'sawtooth', 0.16, 900); noise(t, 0.25, { cutoff: 1800, peak: 0.12, dest: sfxBus() }); break;
         case 'water': blip(900, t, 0.3, 'sine', 0.14, 300); break;
+        case 'slash': noise(t, 0.14, { cutoff: 6000, hp: true, peak: 0.2, dest: sfxBus() }); blip(520, t, 0.1, 'square', 0.1, 180); break;        // whoosh of a blade
+        case 'thunder': blip(120, t, 0.3, 'sawtooth', 0.24, 60); noise(t, 0.22, { cutoff: 5000, hp: true, peak: 0.22, dest: sfxBus() }); blip(1400, t, 0.06, 'square', 0.14); break; // crack + boom
+        case 'earth': blip(90, t, 0.35, 'sine', 0.28, 40); noise(t, 0.3, { cutoff: 600, peak: 0.18, dest: sfxBus() }); break;                    // low rumble/thud
+        case 'holy': [784, 988, 1319, 1568].forEach((f, i) => blip(f, t + i * 0.05, 0.3, 'sine', 0.1)); break;                                   // radiant chime
+        case 'dark': blip(300, t, 0.5, 'sawtooth', 0.18, 60); blip(150, t + 0.05, 0.45, 'triangle', 0.14, 50); break;                            // descending void
+        case 'smash': noise(t, 0.18, { cutoff: 3200, peak: 0.26, dest: sfxBus() }); blip(240, t, 0.12, 'square', 0.16, 90); blip(520, t, 0.06, 'triangle', 0.1); break; // pot shatter
+        case 'cut': noise(t, 0.1, { cutoff: 7000, hp: true, peak: 0.14, dest: sfxBus() }); break;                                                // grass snip
         case 'heal': [659, 784, 988].forEach((f, i) => blip(f, t + i * 0.07, 0.18, 'sine', 0.12)); break;
         case 'ko': blip(300, t, 0.4, 'sawtooth', 0.16, 90); break;
         case 'levelup': [523, 659, 784, 1047].forEach((f, i) => blip(f, t + i * 0.09, 0.16, 'square', 0.14)); break;
