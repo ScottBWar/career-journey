@@ -120,8 +120,8 @@ window.Cutscene = (function () {
       if (active) { spot.position.set(a.x, 9, -7); spot.setDirectionToTarget(new V3(a.x, 2, 0));
         a.node.position.y = a.baseY + Math.abs(Math.sin(t * 9)) * 0.05;          // talking bob
         a.node.rotation.z = Math.sin(t * 4) * 0.03;
-        if (a.arm) a.arm.rotation.x = -0.3 + Math.sin(t * 5) * 0.22;             // gesturing
-      } else { a.node.position.y = a.baseY + Math.sin(t * 1.4) * 0.03; a.node.rotation.z = 0; if (a.arm) a.arm.rotation.x = 0.9; }
+        if (a.arm) a.arm.rotation.x = 0.7 + Math.sin(t * 4) * 0.14;              // a gentle gesture, weapon stays lowered
+      } else { a.node.position.y = a.baseY + Math.sin(t * 1.4) * 0.03; a.node.rotation.z = 0; if (a.arm) a.arm.rotation.x = 0.95; }
       if (a.idle) a.idle(t * (active ? 1.4 : 0.8));
     });
   }

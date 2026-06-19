@@ -43,7 +43,12 @@ window.Models = (function () {
     return at(m, parent, mat, x, y, z);
   }
   // a soft rounded torso (egg/pill) — replaces the old box torsos
-  function torso(parent, mat, w, h, z, y) { const t = at(MB.CreateSphere('torso', { diameterX: w, diameterY: h, diameterZ: w * 0.62, segments: 14 }, scene), parent, mat, 0, y, z || 0); return t; }
+  function torso(parent, mat, w, h, z, y) {
+    const t = at(MB.CreateSphere('torso', { diameterX: w, diameterY: h, diameterZ: w * 0.62, segments: 14 }, scene), parent, mat, 0, y, z || 0);
+    // a broad shoulder mass at the top so the arms read as connected, not floating beside the body
+    at(MB.CreateSphere('shoulders', { diameterX: w * 1.18, diameterY: h * 0.42, diameterZ: w * 0.66, segments: 14 }, scene), parent, mat, 0, y + h * 0.3, z || 0);
+    return t;
+  }
   // two rounded legs + soft boots under the body
   function legs(parent, legMat, bootMat, o) {
     o = o || {}; const h = o.h || 1.0, dia = o.dia || 0.32, sx = o.sx || 0.2;
