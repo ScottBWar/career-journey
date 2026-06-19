@@ -55,6 +55,7 @@ const STATES = [
   { name: '26_gallery_bosses',  drive: `__gallery({enemy:['kraken','selachoth','medusa','minotaur']})`,         wait: 600 },
   { name: '27_gallery_bosses2', drive: `__gallery({enemy:['thething','forestgod','vogon','windmill']})`,        wait: 600 },
   { name: '28_gallery_dunmobs', drive: `__gallery({enemy:['thingspawn','kodama','boarspirit','vogonclerk','sentry','mutton','windvane']})`, wait: 600 },
+  { name: '29_battle_ruffy',    drive: `Game.toSea(); Game.startBattle(['ruffy_duel'], { boss: true })`, wait: 1900 },
 ];
 
 function serve() {

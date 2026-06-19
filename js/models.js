@@ -968,7 +968,7 @@ window.Models = (function () {
     return { node: r, idle(t) { hub.rotation.z = t * 2; stoneEye.scaling.y = 1 + Math.sin(t * 5) * 0.2; } };
   }
 
-  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane };
+  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane, ruffy_duel: () => rival() };
 
   // ---------------- ALADDIN (street-rat ally) ----------------
   function aladdin(weaponKey) {

@@ -60,7 +60,8 @@ window.Game = (function () {
         // the crawl sets the scene; now the heroes are introduced in a staged cinematic before we hand over control
         Game.cutscene(Data.STORY.opening, () => {
           intoWorld();
-          Game.cutscene(Data.STORY.ruffyJoin, () => { Progress.recruit(Game.state, 'ruffy'); Progress.save(Game.state); Game.toast('WASD move · Q/E rotate camera · F interact · Space swing for a first strike!'); });
+          // Ruffy is NOT in the crew yet — he chases you down at sea later and duels his way in.
+          Game.toast('WASD move · Q/E rotate camera · F interact · Space swing for a first strike!');
         });
       });
     } else {

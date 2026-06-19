@@ -7,6 +7,7 @@ window.Sea = (function () {
   let scene, cam, ship, engine, ocean, oceanBase;
   let isles = [], idlers = [], foes = [], paused = false, locked = false, nearTarget = null, t = 0, buoy = null, coveBuoy = null, camYaw = 0;
   let horror = null, horrorT = 0; // a rare, huge roaming deep-sea terror
+  let ruffyShip = null;           // Ruffy's straw-hat ship — chases you down for a duel, then joins
   const SPEED = 11;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
@@ -31,7 +32,7 @@ window.Sea = (function () {
   function build() {
     engine = Game.engine;
     if (scene) scene.dispose();
-    isles = []; idlers = []; foes = []; nearTarget = null; t = 0; paused = false; locked = false; coveBuoy = null; horror = null; horrorT = 0;
+    isles = []; idlers = []; foes = []; nearTarget = null; t = 0; paused = false; locked = false; coveBuoy = null; horror = null; horrorT = 0; ruffyShip = null;
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.55, 0.78, 0.95); scene.fogDensity = 0.004;
@@ -80,6 +81,17 @@ window.Sea = (function () {
       const node = buildShip(e.hull, e.sail, e.flag, e.ghost); node.position.set(sp.x, 0, sp.z);
       foes.push({ id: sp.id, type: sp.type, node, home: new V3(sp.x, 0, sp.z), ang: Math.random() * Math.PI * 2, spd: e.ghost ? 3.4 : 2.6, ghost: e.ghost });
     });
+
+    // Ruffy's ship — a one-time rival who hunts you across the open sea, then duels his way into the crew
+    if (!Game.state.flags.ruffyMet && !Game.state.prog.ruffyGone) {
+      const node = buildShip('#d43a2a', '#f2e8c8', '👒', false);
+      const hat = MB.CreateCylinder('strawhat', { height: 0.3, diameterTop: 1.1, diameterBottom: 1.1, tessellation: 16 }, scene); hat.material = M('straw', '#e8c66a', { spec: 0.1 }); hat.parent = node; hat.position.set(0, 1.05, -1.3);
+      const crown = MB.CreateCylinder('crown', { height: 0.5, diameter: 0.6, tessellation: 14 }, scene); crown.material = hat.material; crown.parent = node; crown.position.set(0, 1.25, -1.3);
+      const band = MB.CreateTorus('hatband', { diameter: 0.62, thickness: 0.08, tessellation: 14 }, scene); band.material = M('hatband', '#c0392b'); band.parent = node; band.position.set(0, 1.2, -1.3); band.rotation.x = Math.PI / 2;
+      const a = Math.random() * Math.PI * 2;
+      node.position.set(Game.state.location.shipX + Math.cos(a) * 46, 0, Game.state.location.shipZ + Math.sin(a) * 46);
+      ruffyShip = { node, spd: 10.5, hailed: false };
+    }
 
     // shipwright buoy (open the shipyard)
     const b = Models.portal('#ffd166'); b.node.position.set(Data.SEA.spawn.x + 6, 0.1, Data.SEA.spawn.z); b.node._baseY = 0.1; idlers.push(b);
@@ -142,6 +154,15 @@ window.Sea = (function () {
       if (horrorT > 24) despawnHorror();                                  // it sinks back into the deep — a near miss
     }
 
+    // Ruffy's ship homes in relentlessly until he gets his duel
+    if (ruffyShip && !locked) {
+      const dir = ship.position.subtract(ruffyShip.node.position); const d = dir.length(); if (d > 0.1) { dir.x /= d; dir.z /= d; }
+      ruffyShip.node.position.x += dir.x * ruffyShip.spd * dt; ruffyShip.node.position.z += dir.z * ruffyShip.spd * dt;
+      ruffyShip.node.position.y = Math.sin(t * 1.4) * 0.18; ruffyShip.node.rotation.y = Math.atan2(dir.x, dir.z); ruffyShip.node.rotation.z = Math.sin(t * 1.0) * 0.05;
+      if (!ruffyShip.hailed && d < 24) { ruffyShip.hailed = true; Game.toast('A ship flying a straw-hat flag is closing fast!'); }
+      if (d < 7) { startRuffyEncounter(); return; }
+    }
+
     // animate ocean
     const pos = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind);
     for (let i = 0; i < pos.length; i += 3) { const x = oceanBase[i], z = oceanBase[i+2]; pos[i+1] = Math.sin(x*0.1 + t*1.2)*0.65 + Math.cos(z*0.13 + t*0.95)*0.6 + Math.sin((x+z)*0.05 + t*0.6)*0.35; }
@@ -166,6 +187,23 @@ window.Sea = (function () {
     });
   }
 
+  function startRuffyEncounter() {
+    locked = true; paused = true;
+    Game.startCutscene('ruffyChase', () => {
+      Music.play('battle');
+      Game.startBattle(['ruffy_duel'], { boss: true, music: null }, (res) => {
+        const join = () => {
+          Progress.recruit(Game.state, 'ruffy', 4); Game.state.flags.ruffyMet = true; Progress.save(Game.state);
+          if (ruffyShip && ruffyShip.node) { ruffyShip.node.dispose(); ruffyShip = null; }
+          paused = false; locked = false; Game.resumeSea();
+          Game.toast('Ruffy joins the crew!');
+        };
+        if (res.won) Game.startCutscene('ruffyJoin', join);
+        else { paused = false; locked = false; Game.resumeSea(); } // a loss just sends you back — he'll try again
+      });
+    });
+  }
+
   function drawMinimap() {
     const cv = document.getElementById('minimap'); if (!cv) return; const c = cv.getContext('2d'); const W = cv.width, H = cv.height;
     c.clearRect(0, 0, W, H); const R = Data.SEA.size * 0.5, sc = (W * 0.46) / R, cx = W / 2, cy = H / 2;
@@ -174,6 +212,7 @@ window.Sea = (function () {
     isles.forEach(i => { const [ix, iy] = px(i.pos.x, i.pos.z); c.fillStyle = i.key === 'spire' ? '#ff8a6a' : '#7fd06a'; c.beginPath(); c.arc(ix, iy, 4, 0, 7); c.fill(); });
     foes.forEach(f => { if (!f.node.isEnabled()) return; const [fx, fy] = px(f.node.position.x, f.node.position.z); c.fillStyle = f.ghost ? '#bfe6e0' : '#ff5e5e'; c.fillRect(fx - 1.5, fy - 1.5, 3, 3); });
     if (horror && horror.node) { const [hx, hy] = px(horror.node.position.x, horror.node.position.z); c.fillStyle = '#ff2a2a'; c.beginPath(); c.arc(hx, hy, 5 + Math.sin(t * 6) * 1.5, 0, 7); c.fill(); }
+    if (ruffyShip && ruffyShip.node) { const [rx, ry] = px(ruffyShip.node.position.x, ruffyShip.node.position.z); c.fillStyle = '#ff9a3a'; c.beginPath(); c.arc(rx, ry, 4, 0, 7); c.fill(); }
     const [Px, Py] = px(ship.position.x, ship.position.z); c.fillStyle = '#fde047'; c.beginPath(); c.arc(Px, Py, 4, 0, 7); c.fill(); c.strokeStyle = '#000'; c.lineWidth = 1; c.stroke();
   }
   function spawnHorror() {

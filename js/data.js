@@ -288,6 +288,11 @@ window.Data = (function () {
       { name: 'sweeps a colossal sail-arm', min: 30, max: 44, all: true },
       { name: 'grinds down upon a hero', min: 34, max: 48 },
       { name: 'hurls a millstone', min: 32, max: 46 } ], drops: [ { mat: 'sand', chance: 1 }, { mat: 'abyssscale', chance: 0.4 } ] },
+    // ---- Ruffy's friendly duel at sea (deliberately easy — a rival's hello) ----
+    ruffy_duel: { name: 'Ruffy', model: 'ruffy_duel', hp: 220, xp: 70, gold: 50, baseY: 0, boss: true, moves: [
+      { name: 'throws a goofy rubber jab', min: 10, max: 16 },
+      { name: 'winds up a Gum-Gum Pistol', min: 14, max: 20 },
+      { name: 'grins and stretches wide', min: 8, max: 12, all: true } ], drops: [] },
     // ---- themed dungeon mobs (creative, dungeon-specific rosters) ----
     thingspawn: { name: 'Thing-Spawn',   model: 'thingspawn', hp: 124, xp: 40, gold: 28, baseY: 0, moves: [ { name: 'lashes a fused limb', min: 15, max: 22 }, { name: 'tries to assimilate flesh', min: 12, max: 18, status: 'poison', turns: 3 } ], drops: [ { mat: 'goo', chance: 0.8 }, { mat: 'ectoplasm', chance: 0.4 } ] },
     kodama:  { name: 'Kodama',           model: 'kodama', hp: 64,  xp: 26, gold: 18, baseY: 0, moves: [ { name: 'rattles its hollow head', min: 9, max: 14, status: 'slow', turns: 2 }, { name: 'calls the wood to bind', min: 11, max: 16, all: true } ], drops: [ { mat: 'feather', chance: 0.5 }, { mat: 'goo', chance: 0.3 } ] },
@@ -557,6 +562,7 @@ window.Data = (function () {
   const SHOP_ACCESSORIES = ['coral_bangle', 'seaglass_ring', 'tortoise_charm', 'tiger_fang', 'venom_ward', 'aegis_pearl'];
   // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
   const AFFINITIES = {
+    ruffy_duel: { resist: ['physical'] }, // a rubber-man shrugs off blunt force
     // themed dungeon mobs
     thingspawn: { weak: ['fire', 'holy'], resist: ['water'] },
     kodama:  { weak: ['fire'], resist: ['earth', 'holy'] },
@@ -1185,7 +1191,22 @@ window.Data = (function () {
       { name: 'Capt. Redbeard', text: 'Bah — speeches. I just want my coast back, and my grog dry. Whatever crew we cobble together, we sail at dawn.' },
       { name: 'Narrator', text: 'But the road east is long, and you will not walk it alone. Some who join you chase glory, some chase ghosts — and one chases a dream so bright it will cost him everything.' },
     ],
+    ruffyChase: [
+      { name: 'Narrator', text: 'A small, ragged ship comes barreling across the waves behind you — flying a straw-hat flag and far too much sail. It does not slow down. It does not, in fact, appear to have brakes.' },
+      { name: '???', text: 'OOOOI! WAIT UP! You there — captain-looking guy! I been chasin\' you since the last island! You\'re strong, right? I can SMELL strong!' },
+      { name: 'Capt. Redbeard', text: 'Who in the nine tides are YOU?' },
+      { name: '???', text: 'I\'m the guy who\'s gonna be King of the Free Seas! But first — DUEL ME! Right now! If you\'re as tough as you look, I gotta see it with my own eyes! Don\'t hold back!' },
+      { name: 'Lance Strider', text: '...He\'s not going to let us leave until we humor him, is he.' },
+      { name: 'Narrator', text: 'A friendly duel on the open water! (He\'s pulling his punches — beat him to shut him up.)' },
+    ],
     ruffyJoin: [
+      { name: 'Ruffy', text: 'SHISHISHI! That was AWESOME! Yep. Yep yep yep. I\'m comin\' with you.' },
+      { name: 'Ruffy', text: 'Name\'s Ruffy! Rubber-man, future King of the Free Seas! That title\'s MINE — but a drowned ocean\'s got no king, so I guess I gotta help you save it first.' },
+      { name: 'Lance Strider', text: 'We\'re not running a circus, kid.' },
+      { name: 'Ruffy', text: 'Good, \'cause I\'m not funny, I\'m STRONG! I\'m comin\' with you. RIVALS gotta keep an eye on each other, yeah?' },
+      { name: 'Narrator', text: 'Ruffy the Rubber Rival joins your party! (Manage your active crew with the PARTY menu — press T.) He fights, levels, and grows just like the rest — for as long as he stays.' },
+    ],
+    ruffyJoinOld: [
       { name: '???', text: 'SHISHISHI! You lot look like you\'re off to do something STUPID and HEROIC. I LOVE stupid and heroic!' },
       { name: 'Ruffy', text: 'Name\'s Ruffy! Rubber-man, future King of the Free Seas! That title\'s MINE — but a drowned ocean\'s got no king, so I guess I gotta help you save it first.' },
       { name: 'Lance Strider', text: 'We\'re not running a circus, kid.' },

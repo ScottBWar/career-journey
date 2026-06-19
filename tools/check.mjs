@@ -22,7 +22,7 @@ const keysOf = (src, re) => { const m = src.match(re); if (!m) return []; return
 const models = read('js/models.js');
 const battle = read('js/battle.js');
 const portraits = read('js/portraits.js');
-const enemyBuilders = (models.match(/const ENEMY_BUILDERS\s*=\s*\{([^}]*)\}/) || [, ''])[1].split(',').map(s => s.trim()).filter(Boolean);
+const enemyBuilders = (models.match(/const ENEMY_BUILDERS\s*=\s*\{([^}]*)\}/) || [, ''])[1].split(',').map(s => s.trim().split(':')[0].trim()).filter(Boolean);
 const modelReturn = (models.match(/return\s*\{\s*use[^}]*\}/s) || [, ''])[0];
 const espd = keysOf(battle, /const ESPD\s*=\s*\{([^}]*)\}/);
 const pspd = keysOf(battle, /const PSPD\s*=\s*\{([^}]*)\}/);
