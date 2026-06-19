@@ -138,6 +138,8 @@ window.Progress = (function () {
   // ---- bestiary ----
   function recordSeen(state, key) { if (!state.bestiary) state.bestiary = {}; if (!state.bestiary[key]) state.bestiary[key] = { seen: 0, slain: 0 }; state.bestiary[key].seen++; }
   function recordSlain(state, key) { if (!state.bestiary) state.bestiary = {}; if (!state.bestiary[key]) state.bestiary[key] = { seen: 0, slain: 0 }; state.bestiary[key].slain++; }
+  // remember what an element did to a foe (weak/resist/null/absorb) so it shows on the plate next time
+  function recordAffinity(state, key, element, result) { if (!element || element === 'physical') return; if (!state.bestiary) state.bestiary = {}; if (!state.bestiary[key]) state.bestiary[key] = { seen: 0, slain: 0 }; const b = state.bestiary[key]; if (!b.aff) b.aff = {}; b.aff[element] = result; }
 
   function reward(state, xp, gold) {
     state.gold += gold;
@@ -496,5 +498,5 @@ window.Progress = (function () {
 
   return { freshState, derived, reward, fullHeal, canLearn, learn, save, load, clear, renderSkillTree, renderGear, renderRoster, renderShipyard,
            toggleActive, activeMembers, recruit, dismiss, shipStats, equipWeapon, equipAccessory, equipShell, unequipSlot, addShell, buyWeapon, buyAccessory, pouchShells, def,
-           addMaterials, canCraft, craft, recordSeen, recordSlain, respec, respecAll };
+           addMaterials, canCraft, craft, recordSeen, recordSlain, recordAffinity, respec, respecAll };
 })();

@@ -195,7 +195,18 @@ window.Battle = (function () {
       const port = Portraits.has(e.keyRaw) ? `<div class="eportrait">${Portraits.img(e.keyRaw)}</div>` : '';
       let wk = '';
       if (e.rotate && e.dynWeak) { const ei = Data.ELEMENT_INFO[e.dynWeak]; const col = ELEMCOL[e.dynWeak] || '#fff'; wk = `<span class="eweak" title="Current weakness" style="color:${col};text-shadow:0 0 6px ${col}">${ei ? ei.i : ''}⌁</span>`; }
-      d.innerHTML = `${port}<div class="einfo"><div class="row"><span class="name">${e.name}${wk}${stIcons(e)}</span><span class="hpnum">${Math.max(0,e.hp)}/${e.maxhp}</span></div><div class="bar hp"><i style="width:${clamp(e.hp/e.maxhp*100,0,100)}%"></i></div></div>`;
+      let aff = '';
+      const bst = Game.state.bestiary && Game.state.bestiary[e.keyRaw];
+      if (bst && bst.aff && !e.rotate) {
+        const parts = [];
+        for (const el2 in bst.aff) { const ei = Data.ELEMENT_INFO[el2]; if (!ei) continue; const res = bst.aff[el2]; const col = ELEMCOL[el2] || '#fff';
+          if (res === 'weak') parts.push(`<span class="aff w" title="Weak to ${ei.name}" style="color:${col};text-shadow:0 0 5px ${col}">${ei.i}▲</span>`);
+          else if (res === 'resist') parts.push(`<span class="aff r" title="Resists ${ei.name}">${ei.i}▽</span>`);
+          else if (res === 'null') parts.push(`<span class="aff r" title="Nullifies ${ei.name}">${ei.i}⊘</span>`);
+          else if (res === 'absorb') parts.push(`<span class="aff a" title="Absorbs ${ei.name}">${ei.i}+</span>`); }
+        if (parts.length) aff = `<div class="eaff">${parts.join('')}</div>`;
+      }
+      d.innerHTML = `${port}<div class="einfo"><div class="row"><span class="name">${e.name}${wk}${stIcons(e)}</span><span class="hpnum">${Math.max(0,e.hp)}/${e.maxhp}</span></div><div class="bar hp"><i style="width:${clamp(e.hp/e.maxhp*100,0,100)}%"></i></div>${aff}</div>`;
       if (Portraits.has(e.keyRaw)) d.classList.add('boss');
       if (targetMode && e.alive) { d.classList.add('targetable'); d.onclick = () => onPick(e); } wrap.appendChild(d); });
   }
@@ -327,13 +338,20 @@ window.Battle = (function () {
     }
     return Data.affMult(e.keyRaw, element);
   }
+  function recordAff(e, element, mult) {
+    if (!element || element === 'physical' || !Progress.recordAffinity) return;
+    const res = mult < 0 ? 'absorb' : mult === 0 ? 'null' : mult > 1 ? 'weak' : mult < 1 ? 'resist' : 'neutral';
+    Progress.recordAffinity(Game.state, e.keyRaw, element, res);
+  }
   function damageEnemy(e, dmg, color = '#ffffff', element = 'physical', kind = 'phys') {
     const mult = enemyAffMult(e, element);
+    recordAff(e, element, mult);
     if (mult < 0) { // absorb → enemy heals
       const heal = Math.round(dmg * 0.6); e.hp = Math.min(e.maxhp, e.hp + heal);
       burst(worldOf(e.node, 0.6), ...FX.heal, 40, 5, -2); floatDamage(e.node, '+' + heal + ' absorb', '#6ee7b7', 2.6); renderEnemies(false); return;
     }
     if (mult === 0) { floatDamage(e.node, 'Null', '#9aa6b4', 2.6); return; }
+    if (mult > 1) e.ct += 28 / (e.spd || 8);   // STAGGER: a weakness hit shoves the foe's next turn back
     dmg = Math.round(dmg * mult);
     // Gen-1 mitigation: physical reduced by DEF, magic reduced (lightly) by SPEC
     if (kind === 'mag') dmg = Math.max(1, Math.round(dmg * (110 / (110 + (e.spec || 0)))));

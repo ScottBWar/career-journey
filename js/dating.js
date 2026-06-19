@@ -18,18 +18,18 @@ window.Dating = (function () {
     new BABYLON.HemisphericLight('h', new V3(0.1, 1, 0.2), scene).intensity = 0.85;
     const key2 = new BABYLON.DirectionalLight('k', new V3(-0.4, -0.7, 0.5), scene); key2.intensity = 1.25; key2.diffuse = BABYLON.Color3.FromHexString('#fff0d8');
     const rim = new BABYLON.PointLight('rim', new V3(2.5, 4, -6), scene); rim.intensity = 0.8; rim.diffuse = BABYLON.Color3.FromHexString(elc);
-    const built = Models.mermaid(mer.color, mer.tail, mer.skin); const node = built.node; node.scaling.setAll(1.6); node.position.set(0.4, 0.2, 0); node.rotation.y = -0.32;
+    const built = Models.mermaid(mer.color, mer.tail, mer.skin); const node = built.node; node.scaling.setAll(2.3); node.position.set(0.3, 1.4, 0); node.rotation.y = -0.32;
     // a glowing element-tinted moon disc behind her
     const moon = BABYLON.MeshBuilder.CreateDisc('moon', { radius: 4.5, tessellation: 40 }, scene); const mm = new BABYLON.StandardMaterial('mm', scene); mm.emissiveColor = BABYLON.Color3.FromHexString(elc).scale(0.45); mm.diffuseColor = new BABYLON.Color3(0, 0, 0); mm.disableLighting = true; moon.material = mm; moon.position.set(2.5, 4.5, 13);
     // drifting bubbles
     const bub = []; for (let i = 0; i < 16; i++) { const b = BABYLON.MeshBuilder.CreateSphere('bub', { diameter: 0.08 + Math.random() * 0.26, segments: 8 }, scene); const bm = new BABYLON.StandardMaterial('bm', scene); bm.emissiveColor = new BABYLON.Color3(0.6, 0.82, 1); bm.diffuseColor = new BABYLON.Color3(0, 0, 0); bm.alpha = 0.28; bm.disableLighting = true; b.material = bm; b.position.set(Math.random() * 9 - 4.5, Math.random() * 7 - 1.5, Math.random() * 4 - 2); bub.push(b); }
-    const cam = new BABYLON.UniversalCamera('dc', new V3(0.3, 2.6, 11), scene); cam.setTarget(new V3(0.4, 2.4, 0)); cam.fov = 0.72;
+    const cam = new BABYLON.UniversalCamera('dc', new V3(0.2, 5.4, 10.5), scene); cam.setTarget(new V3(0.3, 5.6, 0)); cam.fov = 0.82;
     if (window.Render) Render.setup(scene, cam, { skyTop: '#0a1430', skyHorizon: elc });
     let t = 0;
     dObs = scene.onBeforeRenderObservable.add(() => {
       const dt = Math.min(0.05, eng.getDeltaTime() / 1000); t += dt;
       if (built.idle) built.idle(t);
-      node.rotation.y = -0.32 + Math.sin(t * 0.4) * 0.18; node.position.y = 0.2 + Math.sin(t * 0.7) * 0.2;
+      node.rotation.y = -0.32 + Math.sin(t * 0.4) * 0.18; node.position.y = 1.4 + Math.sin(t * 0.7) * 0.2;
       bub.forEach((b, i) => { b.position.y += (0.3 + i * 0.04) * dt; if (b.position.y > 5.5) b.position.y = -1.8; });
     });
     dScene = scene; Game.scene = scene;

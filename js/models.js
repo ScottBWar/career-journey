@@ -527,9 +527,10 @@ window.Models = (function () {
     const eyeW = M('mmEyeW', '#fdfeff'), iris = M('mmIris', shade(hHex, 0.85)), pupil = M('mmPupil', '#181820'), spark = M('mmSpark', '#ffffff'), lash = M('mmLash', '#1b0f15'), brow = M('mmBrow', shade(hHex, 0.8));
     [-1, 1].forEach(s => {
       at(MB.CreateSphere('eyeW', { diameterX: 0.2, diameterY: 0.25, diameterZ: 0.13, segments: 12 }, scene), r, eyeW, s * 0.13, 2.6, 0.23);   // large almond eye
-      at(MB.CreateSphere('iris', { diameter: 0.14, segments: 12 }, scene), r, iris, s * 0.13, 2.59, 0.29);
-      at(MB.CreateSphere('pupil', { diameter: 0.08, segments: 8 }, scene), r, pupil, s * 0.13, 2.59, 0.31);
-      at(MB.CreateSphere('spark', { diameter: 0.04, segments: 6 }, scene), r, spark, s * 0.13 + 0.035, 2.64, 0.32); // catchlight
+      at(MB.CreateSphere('iris', { diameter: 0.16, segments: 12 }, scene), r, iris, s * 0.13, 2.59, 0.29);
+      at(MB.CreateSphere('pupil', { diameter: 0.085, segments: 8 }, scene), r, pupil, s * 0.13, 2.59, 0.31);
+      at(MB.CreateSphere('spark', { diameter: 0.045, segments: 6 }, scene), r, spark, s * 0.13 + 0.04, 2.645, 0.325); // catchlight
+      at(MB.CreateSphere('spark2', { diameter: 0.025, segments: 6 }, scene), r, spark, s * 0.13 - 0.03, 2.555, 0.325); // lower sparkle
       const l = at(MB.CreateBox('lash', { width: 0.24, height: 0.04, depth: 0.07 }, scene), r, lash, s * 0.13, 2.71, 0.22); l.rotation.z = -s * 0.28;       // upper lash line
       const lo = at(MB.CreateBox('lashTip', { width: 0.1, height: 0.035, depth: 0.05 }, scene), r, lash, s * 0.24, 2.69, 0.21); lo.rotation.z = -s * 0.8;    // flicked outer corner
       const b = at(MB.CreateBox('brow', { width: 0.19, height: 0.035, depth: 0.05 }, scene), r, brow, s * 0.13, 2.78, 0.23); b.rotation.z = -s * 0.14;
@@ -538,11 +539,13 @@ window.Models = (function () {
     at(MB.CreateSphere('nose', { diameter: 0.05, segments: 6 }, scene), r, skin, 0, 2.53, 0.32);
     const lip = M('mmLip', '#dc6f81');
     at(MB.CreateBox('lipC', { width: 0.1, height: 0.032, depth: 0.05 }, scene), r, lip, 0, 2.45, 0.3);
+    at(MB.CreateSphere('lipLow', { diameterX: 0.13, diameterY: 0.06, diameterZ: 0.06, segments: 8 }, scene), r, M('mmLipLow', shade('#dc6f81', 1.12)), 0, 2.43, 0.305); // fuller lower lip
     [-1, 1].forEach(s => { const lc = at(MB.CreateBox('lipS', { width: 0.07, height: 0.03, depth: 0.05 }, scene), r, lip, s * 0.08, 2.465, 0.295); lc.rotation.z = s * 0.5; }); // corners turn up
     [-1, 1].forEach(s => at(MB.CreateSphere('blush', { diameter: 0.12, segments: 8 }, scene), r, M('mmBlush' + s, '#ff9eaa', { alpha: 0.4 }), s * 0.21, 2.5, 0.24));
     // FLOWING hair — a rounded crown hugging the head, then long locks that TAPER together
     // into a teardrop silhouette (not a slab), with a swept fringe and curled tips
     at(MB.CreateSphere('hairCrown', { diameterX: 0.68, diameterY: 0.66, diameterZ: 0.66, segments: 18 }, scene), r, hair, 0, 2.74, -0.04);
+    at(MB.CreateSphere('hairSheen', { diameterX: 0.42, diameterY: 0.22, diameterZ: 0.36, segments: 14 }, scene), r, M('mmHairLite', shade(hHex, 1.4)), -0.1, 2.94, 0.04); // glossy crown highlight
     at(MB.CreateSphere('hairNape', { diameterX: 0.5, diameterY: 0.5, diameterZ: 0.4, segments: 14 }, scene), r, hair, 0, 2.52, -0.22);
     [-0.22, -0.07, 0.08, 0.23].forEach((x, i) => { const bang = at(MB.CreateSphere('bang' + i, { diameterX: 0.2, diameterY: 0.26, diameterZ: 0.17, segments: 10 }, scene), r, hair, x, 2.68, 0.17); bang.rotation.z = x < 0 ? 0.3 : -0.3; }); // swept fringe
     // back locks: wide at the shoulders, converging toward a soft point at the waist
