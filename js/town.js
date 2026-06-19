@@ -9,7 +9,49 @@ window.Town = (function () {
   let doors = [], nearDoor = null, inHouse = false, exitPos = null, returnDoor = null;
   const SPEED = 8, SP = 1.7; // SP = layout spread factor (de-jam the towns)
 
-  function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
+  function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); if (opt.alpha != null) m.alpha = opt.alpha; return m; }
+
+  // each town has a distinct look: sky/light tint + a signature set of scenery
+  const TOWN_THEME = { tidehaven: 'coast', dunesport: 'desert', mall: 'mall', bazaar: 'bazaar', aerie: 'aerie', argo: 'greek' };
+  const TOWN_ENV = {
+    coast:  { sky: ['#3a5a9a', '#cfe6f0'], hemi: '#4a5a6a', plaza: '#c9b48a' },
+    desert: { sky: ['#c97a2a', '#f3e0b0'], hemi: '#6a5436', plaza: '#e0c890' },
+    mall:   { sky: ['#5a3a8a', '#f0c8e8'], hemi: '#5a4a6a', plaza: '#c0b4d0' },
+    bazaar: { sky: ['#d88a3a', '#ffe1a0'], hemi: '#6a5236', plaza: '#d8c090' },
+    aerie:  { sky: ['#3a4f7a', '#c8b4d8'], hemi: '#46506a', plaza: '#9aa0ac' },
+    greek:  { sky: ['#3a7ab0', '#f3ead0'], hemi: '#5a6068', plaza: '#e8e0cc' },
+  };
+  function townProp(theme) {
+    const ring = (n, rad, fn) => { for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + 0.4; fn(Math.cos(a) * rad, Math.sin(a) * rad, a, i); } };
+    const box = (w, h, d, x, y, z, col, opt) => { const b = MB.CreateBox('tp', { width: w, height: h, depth: d }, scene); b.material = M('tp', col, opt || {}); b.position.set(x, y, z); return b; };
+    const cyl = (h, dt, db, x, y, z, col, opt) => { const c = MB.CreateCylinder('tp', { height: h, diameterTop: dt, diameterBottom: db, tessellation: (opt && opt.tess) || 12 }, scene); c.material = M('tp', col, opt || {}); c.position.set(x, y, z); return c; };
+    const sph = (d, x, y, z, col, opt) => { const s = MB.CreateSphere('tp', { diameter: d }, scene); s.material = M('tp', col, opt || {}); s.position.set(x, y, z); return s; };
+    if (theme === 'coast') {
+      ring(10, 28, (x, z) => { const p = Models.palm(); p.node.position.set(x, 0, z); if (p.idle) idlers.push(p); });
+      ring(6, 17, (x, z) => box(1.0, 1.1, 1.0, x, 0.55, z, '#7a5230'));                       // barrels
+      ring(4, 21, (x, z, a) => box(2.6, 0.08, 1.6, x, 0.06, z, '#5a6a3a').rotation.y = a);     // fishing nets
+    } else if (theme === 'desert') {
+      ring(8, 26, (x, z) => { cyl(2.4, 0.5, 0.7, x, 1.2, z, '#4a7a3a'); [-1, 1].forEach(s => { const arm = cyl(1.1, 0.3, 0.4, x + s * 0.55, 1.5, z, '#4a7a3a'); arm.rotation.z = s * 0.8; }); }); // cacti
+      ring(6, 18, (x, z, a) => { const aw = box(3.0, 0.12, 2.2, x, 2.5, z, ['#c0392c', '#caa030', '#3a7a8a'][Math.floor(Math.random() * 3)]); aw.rotation.y = a; }); // market awnings
+      ring(11, 33, (x, z) => sph(3.4, x, -0.9, z, '#d8b878'));                                  // half-buried dunes
+    } else if (theme === 'mall') {
+      ring(10, 24, (x, z, a, i) => cyl(4.2, 0.3, 0.3, x, 2.1, z, ['#ff5e9a', '#5effd0', '#caa0ff'][i % 3], { emissive: ['#ff2a7a', '#2fffb0', '#9a5aff'][i % 3] })); // neon pylons
+      ring(6, 31, (x, z, a) => { const b = box(0.2, 3.0, 2.0, x, 1.8, z, '#3a3f6b'); b.rotation.y = a; }); // banners
+    } else if (theme === 'bazaar') {
+      ring(8, 24, (x, z, a, i) => { const t = cyl(2.8, 0, 3.4, x, 1.4, z, ['#c0392c', '#caa030', '#3a8a8a', '#a05aa0'][i % 4], { tess: 4 }); t.rotation.y = a; }); // striped tents
+      ring(12, 30, (x, z) => { const l = sph(0.42, x, 3.0, z, '#ffd24a', { emissive: '#ffb000' }); idlers.push({ idle(tt) { l.position.y = 3.0 + Math.sin(tt * 2 + x) * 0.15; } }); }); // lanterns
+      ring(5, 14, (x, z) => { const c = MB.CreateDisc('rug', { radius: 1.6, tessellation: 6 }, scene); c.rotation.x = Math.PI / 2; c.position.set(x, 0.02, z); c.material = M('rug', ['#7a2a3a', '#2a4a7a', '#7a5a1a'][Math.floor(Math.random() * 3)]); }); // carpets
+    } else if (theme === 'aerie') {
+      ring(8, 26, (x, z) => box(1.4, 5.2, 1.4, x, 2.6, z, '#8a92a0'));                          // stone obelisks
+      ring(4, 18, (x, z) => { cyl(4.6, 0.15, 0.15, x, 2.3, z, '#3a2a18'); box(0.1, 2.0, 1.2, x, 3.1, z, '#6a2a3a'); }); // war-banners
+      ring(3, 12, (x, z) => { sph(1.3, x, 0.8, z, '#5a3a6a'); cyl(1.1, 0, 0.5, x, 1.9, z, '#5a3a6a'); }); // dragon-skull cairns
+    } else if (theme === 'greek') {
+      ring(10, 26, (x, z) => { cyl(5.2, 0.7, 0.8, x, 2.6, z, '#efe7d2'); box(1.2, 0.3, 1.2, x, 5.3, z, '#e0d8c0'); box(1.2, 0.3, 1.2, x, 0.16, z, '#e0d8c0'); }); // marble columns
+      ring(5, 20, (x, z) => { const t = Models.tree(); t.node.position.set(x, 0, z); t.node.scaling.setAll(0.85); if (t.idle) idlers.push(t); }); // olive trees
+      ring(4, 15, (x, z) => cyl(1.5, 0.5, 0.95, x, 0.75, z, '#caa030'));                        // urns
+      ring(2, 11, (x, z) => { box(0.95, 2.4, 0.6, x, 1.2, z, '#e8e0d0'); sph(0.62, x, 2.6, z, '#e8e0d0'); }); // marble statues
+    }
+  }
 
   function build(townKey) {
     key = townKey; def = Data.TOWNS[townKey];
@@ -21,12 +63,13 @@ window.Town = (function () {
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.7, 0.7, 0.8); scene.fogDensity = 0.008;
     Models.use(scene);
 
-    const hemi = new BABYLON.HemisphericLight('h', new V3(0.2, 1, 0.1), scene); hemi.intensity = 0.55; hemi.groundColor = new Color3(0.3, 0.32, 0.38);
+    const theme = TOWN_THEME[key] || 'coast', env = TOWN_ENV[theme] || TOWN_ENV.coast;
+    const hemi = new BABYLON.HemisphericLight('h', new V3(0.2, 1, 0.1), scene); hemi.intensity = 0.55; hemi.groundColor = Color3.FromHexString(env.hemi);
     const sun = new BABYLON.DirectionalLight("s", new V3(-0.45, -1, 0.3), scene); sun.intensity = 1.3; sun.specular = new Color3(1, 0.95, 0.85);
 
     inHouse = false; doors = []; nearDoor = null;
     const ground = MB.CreateGround('g', { width: 90, height: 90 }, scene); ground.material = M('g', def.ground);
-    const plaza = MB.CreateDisc('plaza', { radius: 8, tessellation: 32 }, scene); plaza.rotation.x = Math.PI/2; plaza.position.y = 0.01; plaza.material = M('plaza', '#c9b48a');
+    const plaza = MB.CreateDisc('plaza', { radius: 8, tessellation: 32 }, scene); plaza.rotation.x = Math.PI/2; plaza.position.y = 0.01; plaza.material = M('plaza', env.plaza);
     // surrounding sea hint
     const sea = MB.CreateGround('sea', { width: 240, height: 240 }, scene); sea.material = M('sea', '#1e6f96'); sea.position.set(0, -0.4, -56);
 
@@ -62,7 +105,8 @@ window.Town = (function () {
     else player.position.set(exitPos.x, 0, exitPos.z + 3);
     cam = new BABYLON.UniversalCamera('tcam', new V3(0, 15, -14), scene); cam.fov = 0.85;
 
-    if (window.Render) Render.setup(scene, cam, { skyTop: '#3a5a9a', skyHorizon: '#cfe6f0', sun });
+    townProp(theme);
+    if (window.Render) Render.setup(scene, cam, { skyTop: env.sky[0], skyHorizon: env.sky[1], sun });
     scene.onBeforeRenderObservable.add(update);
     return scene;
 
