@@ -477,30 +477,45 @@ window.Models = (function () {
 
   function mermaid(hairHex, tailHex) {
     const r = new BABYLON.TransformNode('mermaid', scene);
-    const skin = M('mmSkin', '#eccaa8'), hair = M('mmHair', hairHex || '#3fd0e0', { emissive: '#141414' }),
-          tail = M('mmTail', tailHex || '#2fae9a', { spec: 0.6, specPower: 40, emissive: '#0c3a33' }),
-          tailLite = M('mmTail2', tailHex || '#2fae9a', { spec: 0.7 }), top = M('mmTop', '#ff7eb0', { emissive: '#5a1a30' });
-    // curvy tail: hips -> taper -> flukes
-    at(MB.CreateSphere('hips', { diameterX: 1.05, diameterY: 0.8, diameterZ: 0.95 }, scene), r, tail, 0, 0.95, -0.05);
-    const t1 = at(MB.CreateCylinder('tail', { height: 1.5, diameterTop: 0.78, diameterBottom: 0.28 }, scene), r, tail, 0, 0.5, 0.35); t1.rotation.x = 0.7;
-    [-1, 1].forEach(s => { const fl = at(MB.CreateCylinder('fluke', { height: 0.16, diameter: 1.1, tessellation: 3 }, scene), r, tailLite, s * 0.35, 0.12, 1.15); fl.rotation.x = Math.PI/2; fl.rotation.z = s * 0.5; fl.scaling.x = 0.6; });
-    // hourglass torso: bust -> narrow waist
-    at(MB.CreateCylinder('waist', { height: 0.7, diameterTop: 0.62, diameterBottom: 0.5 }, scene), r, skin, 0, 1.55, -0.02);
-    at(MB.CreateSphere('bustBase', { diameterX: 0.78, diameterY: 0.5, diameterZ: 0.5 }, scene), r, skin, 0, 1.92, 0.02);
-    [-0.19, 0.19].forEach(x => at(MB.CreateSphere('bust', { diameter: 0.34 }, scene), r, top, x, 1.92, 0.16));
-    at(MB.CreateBox('strap', { width: 0.8, height: 0.1, depth: 0.5 }, scene), r, top, 0, 2.0, 0.04);
-    // slender arms
-    at(MB.CreateCylinder('aL', { height: 0.85, diameter: 0.14 }, scene), r, skin, -0.42, 1.7, 0.05).rotation.z = 0.55;
-    at(MB.CreateCylinder('aR', { height: 0.85, diameter: 0.14 }, scene), r, skin, 0.42, 1.7, 0.05).rotation.z = -0.55;
+    // clean palette — soft warm skin, vivid tail, no muddy emissive fighting the light
+    const tHex = tailHex || '#2fae9a', hHex = hairHex || '#3fd0e0';
+    const skin = M('mmSkin', '#f2caa6'), hair = M('mmHair', hHex),
+          tail = M('mmTail', tHex, { spec: 0.45, specPower: 48 }),
+          tailLite = M('mmTail2', shade(tHex, 1.25), { spec: 0.5 }),
+          top = M('mmTop', '#ff9ec6');
+    // smooth tapered tail: hips → graceful taper → soft twin fins
+    at(MB.CreateSphere('hips', { diameterX: 1.0, diameterY: 0.82, diameterZ: 0.92, segments: 16 }, scene), r, tail, 0, 0.95, -0.05);
+    const t1 = at(MB.CreateCylinder('tail', { height: 1.5, diameterTop: 0.74, diameterBottom: 0.22, tessellation: 16 }, scene), r, tail, 0, 0.5, 0.35); t1.rotation.x = 0.7;
+    [-1, 1].forEach(s => { const fin = at(MB.CreateSphere('fin', { diameterX: 0.95, diameterY: 0.1, diameterZ: 0.78, segments: 12 }, scene), r, tailLite, s * 0.32, 0.12, 1.2); fin.rotation.y = s * 0.5; fin.rotation.x = -0.18; });
+    // shimmer rings down the tail catch the light
+    [0.7, 1.05].forEach((y, i) => at(MB.CreateTorus('scale' + i, { diameter: 0.66 - i * 0.18, thickness: 0.05, tessellation: 16 }, scene), r, tailLite, 0, y, 0.2 + i * 0.12).rotation.x = Math.PI / 2 - 0.5);
+    // hourglass torso → narrow waist, smooth
+    at(MB.CreateCylinder('waist', { height: 0.7, diameterTop: 0.6, diameterBottom: 0.5, tessellation: 16 }, scene), r, skin, 0, 1.55, -0.02);
+    at(MB.CreateSphere('bustBase', { diameterX: 0.78, diameterY: 0.5, diameterZ: 0.5, segments: 14 }, scene), r, skin, 0, 1.92, 0.02);
+    [-0.18, 0.18].forEach(x => at(MB.CreateSphere('bust', { diameter: 0.34, segments: 12 }, scene), r, top, x, 1.92, 0.16));
+    at(MB.CreateTorus('strap', { diameter: 0.72, thickness: 0.06, tessellation: 16 }, scene), r, top, 0, 1.98, 0.02).rotation.x = 1.3;
+    // slender arms with soft hands
+    [-1, 1].forEach(s => { at(MB.CreateCylinder('arm', { height: 0.85, diameter: 0.13, tessellation: 10 }, scene), r, skin, s * 0.42, 1.7, 0.05).rotation.z = -s * 0.55; at(MB.CreateSphere('hand', { diameter: 0.16, segments: 10 }, scene), r, skin, s * 0.66, 1.36, 0.05); });
     // graceful neck + head
-    at(MB.CreateCylinder('neck', { height: 0.25, diameter: 0.2 }, scene), r, skin, 0, 2.28, 0);
-    at(MB.CreateSphere('head', { diameterX: 0.5, diameterY: 0.56, diameterZ: 0.52 }, scene), r, skin, 0, 2.55, 0.02);
-    // long flowing hair framing the face + down the back
-    at(MB.CreateSphere('hairTop', { diameter: 0.62, slice: 0.62 }, scene), r, hair, 0, 2.66, -0.02);
-    at(MB.CreateBox('hairBack', { width: 0.66, height: 1.9, depth: 0.2 }, scene), r, hair, 0, 1.85, -0.26);
-    [-0.3, 0.3].forEach(x => at(MB.CreateBox('hairSide', { width: 0.18, height: 1.5, depth: 0.18 }, scene), r, hair, x, 2.0, 0.12));
-    // little shell tiara
-    at(MB.CreateCylinder('tiara', { height: 0.12, diameterTop: 0, diameterBottom: 0.22, tessellation: 6 }, scene), r, M('mmTiara', '#fff0c0', { emissive: '#caa84a' }), 0, 2.84, 0.18);
+    at(MB.CreateCylinder('neck', { height: 0.25, diameter: 0.18, tessellation: 12 }, scene), r, skin, 0, 2.28, 0);
+    at(MB.CreateSphere('head', { diameterX: 0.5, diameterY: 0.56, diameterZ: 0.52, segments: 16 }, scene), r, skin, 0, 2.55, 0.02);
+    // restrained pretty face: large soft eyes + lash line (no clutter)
+    const eyeW = M('mmEyeW', '#fcfdff'), eyeP = M('mmEyeP', '#2a4e5a'), lash = M('mmLash', '#241318');
+    [-1, 1].forEach(s => {
+      at(MB.CreateSphere('eyeW', { diameter: 0.16, segments: 10 }, scene), r, eyeW, s * 0.12, 2.57, 0.23);
+      at(MB.CreateSphere('eyeP', { diameter: 0.09, segments: 8 }, scene), r, eyeP, s * 0.12, 2.57, 0.28);
+      const l = at(MB.CreateBox('lash', { width: 0.18, height: 0.03, depth: 0.06 }, scene), r, lash, s * 0.12, 2.63, 0.22); l.rotation.z = -s * 0.18;
+    });
+    // flowing hair — smooth cap + soft cylinder locks (no boxes), curled tips
+    at(MB.CreateSphere('hairTop', { diameter: 0.64, slice: 0.62, segments: 16 }, scene), r, hair, 0, 2.66, -0.03);
+    [-0.16, 0, 0.16].forEach((x, i) => {
+      const lock = at(MB.CreateCylinder('hairBack' + i, { height: 1.85 + (i === 1 ? 0.25 : 0), diameterTop: 0.26, diameterBottom: 0.1, tessellation: 10 }, scene), r, hair, x, 1.9, -0.24); lock.rotation.x = -0.1;
+      at(MB.CreateSphere('curl' + i, { diameter: 0.2, segments: 10 }, scene), r, hair, x * 1.25, 1.0, -0.16);
+    });
+    [-1, 1].forEach(s => { const sl = at(MB.CreateCylinder('hairSide', { height: 1.35, diameterTop: 0.17, diameterBottom: 0.08, tessellation: 8 }, scene), r, hair, s * 0.28, 2.04, 0.1); sl.rotation.z = -s * 0.14; });
+    // delicate shell tiara + center pearl
+    at(MB.CreateCylinder('tiara', { height: 0.1, diameterTop: 0, diameterBottom: 0.2, tessellation: 8 }, scene), r, M('mmTiara', '#ffe9b0'), 0, 2.84, 0.16);
+    at(MB.CreateSphere('pearl', { diameter: 0.1, segments: 10 }, scene), r, M('mmPearl', '#fff6e8'), 0, 2.78, 0.26);
     return { node: r, idle(t) { r.rotation.y = Math.sin(t * 0.8) * 0.12; r.position.y = (r._baseY || 0) + Math.sin(t * 1.4) * 0.06; } };
   }
 
