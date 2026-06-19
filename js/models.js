@@ -32,7 +32,28 @@ window.Models = (function () {
     return parent;
   }
   // a small hand/glove sphere at the end of a limb
-  function hand(parent, x, y, z, hex) { return at(MB.CreateSphere('hand', { diameter: 0.2, segments: 6 }, scene), parent, M('handM', hex || '#d9a06b'), x, y, z); }
+  function hand(parent, x, y, z, hex) { return at(MB.CreateSphere('hand', { diameter: 0.2, segments: 8 }, scene), parent, M('handM', hex || '#d9a06b'), x, y, z); }
+
+  // ---- rounded "clay figurine" body helpers (no sharp box edges) ----
+  // a capsule limb/torso; falls back to a smooth cylinder if Capsule isn't supported
+  function cap(h, dia, mat, parent, x, y, z) {
+    let m; const r = dia / 2;
+    try { m = MB.CreateCapsule('cap', { height: h, radius: r, tessellation: 16, capSubdivisions: 6 }, scene); }
+    catch (e) { m = MB.CreateCylinder('cap', { height: h, diameterTop: dia * 0.92, diameterBottom: dia, tessellation: 16 }, scene); }
+    return at(m, parent, mat, x, y, z);
+  }
+  // a soft rounded torso (egg/pill) — replaces the old box torsos
+  function torso(parent, mat, w, h, z, y) { const t = at(MB.CreateSphere('torso', { diameterX: w, diameterY: h, diameterZ: w * 0.62, segments: 14 }, scene), parent, mat, 0, y, z || 0); return t; }
+  // two rounded legs + soft boots under the body
+  function legs(parent, legMat, bootMat, o) {
+    o = o || {}; const h = o.h || 1.0, dia = o.dia || 0.32, sx = o.sx || 0.2;
+    [-1, 1].forEach(s => {
+      cap(h, dia, legMat, parent, s * sx, h * 0.5, 0);
+      const b = at(MB.CreateSphere('boot', { diameterX: dia * 1.25, diameterY: dia * 0.75, diameterZ: dia * 1.7, segments: 10 }, scene), parent, bootMat || legMat, s * sx, dia * 0.32, 0.12);
+    });
+  }
+  // a rounded arm on a pivot (for the weapon hand) or static; returns the node
+  function arm(parent, x, y, z, dia, len, mat, tilt) { const a = cap(len, dia, mat, parent, 0, -len * 0.45, 0); return a; }
 
   // ---------------- WEAPONS (FF7-style: the equipped weapon changes the held mesh) ----------------
   // per-character archetype: a hold style + a tier palette. weaponSpec() reads the
@@ -126,14 +147,13 @@ window.Models = (function () {
     const coat = M('coat', '#7a1f1f'), coat2 = M('coat2', '#9c2a2a'), dark = M('dark', '#2a2018'),
           skin = M('skin', '#d9a06b'), gold = M('gold', '#d9a521', { emissive: '#4a3606' }),
           steel = M('steel', '#c9d2dc', { spec: 0.8 }), beard = M('beardP', '#7a3b12');
-    at(MB.CreateCylinder('lL', { height: 1.1, diameter: 0.34 }, scene), r, dark, -0.22, 0.55, 0);
-    at(MB.CreateCylinder('lR', { height: 1.1, diameter: 0.34 }, scene), r, dark, 0.22, 0.55, 0);
-    at(MB.CreateBox('torso', { width: 0.95, height: 1.15, depth: 0.6 }, scene), r, coat, 0, 1.6, 0);
-    at(MB.CreateBox('sash', { width: 1.0, height: 0.22, depth: 0.62 }, scene), r, gold, 0, 1.3, 0);
-    const aL = at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.3 }, scene), r, coat2, -0.62, 1.6, 0); aL.rotation.z = 0.25;
-    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.6, 2.0, 0);
-    at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.3 }, scene), arm, coat2, 0, -0.45, 0);
-    at(MB.CreateSphere('head', { diameter: 0.62 }, scene), r, skin, 0, 2.5, 0);
+    legs(r, dark, dark, { h: 1.1, dia: 0.32, sx: 0.22 });
+    torso(r, coat, 0.95, 1.3, 0, 1.6);
+    at(MB.CreateTorus('sash', { diameter: 0.86, thickness: 0.13, tessellation: 18 }, scene), r, gold, 0, 1.28, 0).rotation.x = Math.PI / 2;
+    const aL = cap(0.95, 0.28, coat2, r, -0.56, 1.6, 0); aL.rotation.z = 0.3;
+    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.56, 2.0, 0);
+    cap(0.95, 0.28, coat2, arm, 0, -0.45, 0);
+    at(MB.CreateSphere('head', { diameter: 0.62, segments: 16 }, scene), r, skin, 0, 2.5, 0);
     face(r, 2.56, 0.62, { one: 'left', brow: '#5a3b1c' }); // right eye covered by the patch
     hand(aL, 0, -0.5, 0, '#d9a06b'); hand(arm, 0, -0.92, 0.05, '#d9a06b');
     at(MB.CreateBox('beard', { width: 0.5, height: 0.4, depth: 0.32 }, scene), r, beard, 0, 2.25, 0.18);
@@ -149,15 +169,14 @@ window.Models = (function () {
     const r = new BABYLON.TransformNode('swordsman', scene);
     const navy = M('navy', '#2c3a52'), navy2 = M('navy2', '#3a4d6b'), hair = M('hair', '#e7d27a', { emissive: '#4a4010' }),
           skin = M('skin2', '#cf9a78'), steel = M('steel2', '#c9d2dc', { spec: 0.8 }), dark = M('dk', '#2a2018');
-    at(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.32 }, scene), r, M('pant', '#1f2733'), -0.22, 0.57, 0);
-    at(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.32 }, scene), r, M('pant2', '#1f2733'), 0.22, 0.57, 0);
-    at(MB.CreateBox('torso', { width: 0.92, height: 1.2, depth: 0.55 }, scene), r, navy, 0, 1.62, 0);
-    at(MB.CreateBox('belt', { width: 0.96, height: 0.18, depth: 0.57 }, scene), r, M('belt', '#7a5230'), 0, 1.25, 0);
-    at(MB.CreateSphere('pauldron', { diameter: 0.62, slice: 0.6 }, scene), r, steel, -0.55, 2.05, 0);
-    const aL = at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.28 }, scene), r, navy2, -0.6, 1.6, 0); aL.rotation.z = 0.22;
-    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.62, 2.02, 0);
-    at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.28 }, scene), arm, navy2, 0, -0.45, 0);
-    at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.5, 0);
+    legs(r, M('pant', '#1f2733'), M('boot', '#15191f'), { h: 1.15, dia: 0.3, sx: 0.22 });
+    torso(r, navy, 0.92, 1.34, 0, 1.62);
+    at(MB.CreateTorus('belt', { diameter: 0.82, thickness: 0.12, tessellation: 18 }, scene), r, M('belt', '#7a5230'), 0, 1.22, 0).rotation.x = Math.PI / 2;
+    at(MB.CreateSphere('pauldron', { diameter: 0.62, slice: 0.6 }, scene), r, steel, -0.5, 2.05, 0);
+    const aL = cap(0.95, 0.26, navy2, r, -0.56, 1.6, 0); aL.rotation.z = 0.26;
+    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.58, 2.02, 0);
+    cap(0.95, 0.26, navy2, arm, 0, -0.45, 0);
+    at(MB.CreateSphere('head', { diameter: 0.6, segments: 16 }, scene), r, skin, 0, 2.5, 0);
     face(r, 2.55, 0.6, { brow: '#9c8a3a' });
     hand(aL, 0, -0.5, 0, '#cf9a78'); hand(arm, 0, -0.92, 0.05, '#cf9a78');
     const sp = [[0,0.45,0,0,0,0],[-0.18,0.42,0.05,0,0,0.5],[0.18,0.42,0.05,0,0,-0.5],[0,0.4,0.22,0.6,0,0],[0,0.4,-0.2,-0.6,0,0],[-0.22,0.3,-0.05,0,0,0.9],[0.22,0.3,-0.05,0,0,-0.9]];
@@ -170,14 +189,15 @@ window.Models = (function () {
     const r = new BABYLON.TransformNode('healer', scene);
     const robe = M('robe', '#2fae9a', { emissive: '#0c3a33' }), robe2 = M('robe2', '#7fe3d4'),
           hairC = M('hairC', '#37c0e0', { emissive: '#0a3a48' }), skin = M('skinH', '#d9a06b');
-    at(MB.CreateCylinder('robe', { height: 1.9, diameterTop: 0.5, diameterBottom: 1.4 }, scene), r, robe, 0, 0.95, 0);
-    at(MB.CreateCylinder('trim', { height: 0.2, diameterTop: 1.32, diameterBottom: 1.42 }, scene), r, robe2, 0, 0.12, 0);
-    const aL = at(MB.CreateCylinder('aL', { height: 0.8, diameter: 0.22 }, scene), r, robe, -0.5, 1.5, 0); aL.rotation.z = 0.4;
-    const aR = at(MB.CreateCylinder('aR', { height: 0.8, diameter: 0.22 }, scene), r, robe, 0.5, 1.5, 0); aR.rotation.z = -0.4;
-    at(MB.CreateSphere('head', { diameter: 0.55 }, scene), r, skin, 0, 2.25, 0);
+    at(MB.CreateCylinder('robe', { height: 1.9, diameterTop: 0.5, diameterBottom: 1.4, tessellation: 18 }, scene), r, robe, 0, 0.95, 0);
+    at(MB.CreateSphere('hem', { diameterX: 1.42, diameterY: 0.4, diameterZ: 1.42, segments: 18 }, scene), r, robe2, 0, 0.12, 0); // rounded hem
+    at(MB.CreateSphere('shoulders', { diameterX: 0.7, diameterY: 0.5, diameterZ: 0.55, segments: 14 }, scene), r, robe, 0, 1.78, 0);
+    const aL = cap(0.8, 0.2, robe, r, -0.46, 1.55, 0); aL.rotation.z = 0.45;
+    const aR = cap(0.8, 0.2, robe, r, 0.46, 1.55, 0); aR.rotation.z = -0.45;
+    at(MB.CreateSphere('head', { diameter: 0.55, segments: 16 }, scene), r, skin, 0, 2.25, 0);
     face(r, 2.3, 0.55, { pupil: '#2a4a52' });
     hand(aL, 0, -0.42, 0, '#d9a06b'); hand(aR, 0, -0.42, 0, '#d9a06b');
-    at(MB.CreateBox('hairBack', { width: 0.6, height: 1.1, depth: 0.25 }, scene), r, hairC, 0, 1.9, -0.18);
+    at(MB.CreateSphere('hairBack', { diameterX: 0.6, diameterY: 1.3, diameterZ: 0.3, segments: 12 }, scene), r, hairC, 0, 1.95, -0.2);
     at(MB.CreateSphere('hairTop', { diameter: 0.6, slice: 0.6 }, scene), r, hairC, 0, 2.42, 0);
     const halo = at(MB.CreateTorus('halo', { diameter: 0.7, thickness: 0.05, tessellation: 24 }, scene), r, M('halo', '#fff6c2', { emissive: '#fff0a0' }), 0, 2.85, 0);
     halo.rotation.x = Math.PI / 2.3;
@@ -194,16 +214,17 @@ window.Models = (function () {
     const r = new BABYLON.TransformNode('mage', scene);
     const robe = M('mgRobe', '#3a3f6b'), robe2 = M('mgRobe2', '#2a2e52'), hat = M('mgHat', '#1c2040'),
           glow = M('mgEye', '#ffe066', { emissive: '#ffd000' }), gold = M('mgGold', '#e0b34a', { emissive: '#5a4208' });
-    at(MB.CreateCylinder('robe', { height: 1.5, diameterTop: 0.7, diameterBottom: 1.2 }, scene), r, robe, 0, 0.75, 0);
-    at(MB.CreateBox('feet', { width: 0.7, height: 0.2, depth: 0.5 }, scene), r, M('mgFeet', '#caa84a'), 0, 0.1, 0.15);
-    at(MB.CreateSphere('head', { diameter: 0.7 }, scene), r, robe2, 0, 1.7, 0);
+    at(MB.CreateCylinder('robe', { height: 1.5, diameterTop: 0.7, diameterBottom: 1.2, tessellation: 18 }, scene), r, robe, 0, 0.75, 0);
+    at(MB.CreateSphere('hem', { diameterX: 1.2, diameterY: 0.35, diameterZ: 1.2, segments: 16 }, scene), r, robe, 0, 0.1, 0);
+    [-0.22, 0.22].forEach(x => at(MB.CreateSphere('shoe', { diameterX: 0.26, diameterY: 0.2, diameterZ: 0.4, segments: 10 }, scene), r, M('mgFeet', '#caa84a'), x, 0.1, 0.18));
+    at(MB.CreateSphere('head', { diameter: 0.7, segments: 16 }, scene), r, robe2, 0, 1.7, 0);
     [-0.16, 0.16].forEach(x => at(MB.CreateSphere('eye', { diameter: 0.16 }, scene), r, glow, x, 1.72, 0.3));
     // giant floppy pointed hat
-    const hatBrim = at(MB.CreateCylinder('brim', { height: 0.1, diameter: 1.5 }, scene), r, hat, 0, 2.0, 0);
-    const cone = at(MB.CreateCylinder('cone', { height: 1.6, diameterTop: 0, diameterBottom: 1.0 }, scene), r, hat, 0, 2.7, -0.1); cone.rotation.x = -0.3;
-    at(MB.CreateBox('band', { width: 1.05, height: 0.16, depth: 1.05 }, scene), r, gold, 0, 2.12, 0);
+    const hatBrim = at(MB.CreateCylinder('brim', { height: 0.1, diameter: 1.5, tessellation: 20 }, scene), r, hat, 0, 2.0, 0);
+    const cone = at(MB.CreateCylinder('cone', { height: 1.6, diameterTop: 0, diameterBottom: 1.0, tessellation: 18 }, scene), r, hat, 0, 2.7, -0.1); cone.rotation.x = -0.3;
+    at(MB.CreateTorus('band', { diameter: 1.0, thickness: 0.14, tessellation: 18 }, scene), r, gold, 0, 2.1, 0).rotation.x = Math.PI / 2;
     // arms
-    at(MB.CreateCylinder('aL', { height: 0.7, diameter: 0.18 }, scene), r, robe, -0.5, 1.1, 0).rotation.z = 0.4;
+    cap(0.7, 0.17, robe, r, -0.48, 1.1, 0).rotation.z = 0.45;
     const sp = weaponSpec('mage', weaponKey);
     const staffPiv = new BABYLON.TransformNode('mgStaff', scene); staffPiv.parent = r; staffPiv.position.set(0.55, 1.0, 0.1);
     at(MB.CreateCylinder('staff', { height: 1.8 * sp.grow, diameter: 0.07 }, scene), staffPiv, M('mgStaffMat', sp.top ? sp.guard : '#7a5230'), 0, 0.2, 0);
@@ -236,15 +257,13 @@ window.Models = (function () {
     const coat = M('dgCoat', '#3a5a55', { spec: 0.2 }), coat2 = M('dgCoat2', '#2d4742'), pants = M('dgPants', '#3a3024'),
           steel = M('dgSteel', '#c9d2dc', { spec: 0.9 }), skin = M('dgSkin', '#c89a72'), hair = M('dgHair', '#8a7a66'),
           dark = M('dgDark', '#1a1410'), rope = M('dgRope', '#caa86a');
-    at(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.34 }, scene), r, pants, -0.22, 0.57, 0);
-    at(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.34 }, scene), r, pants, 0.22, 0.57, 0);
-    at(MB.CreateBox('boots', { width: 0.95, height: 0.3, depth: 0.7 }, scene), r, dark, 0, 0.15, 0.05);
-    at(MB.CreateBox('torso', { width: 0.95, height: 1.2, depth: 0.6 }, scene), r, coat, 0, 1.62, 0);
-    at(MB.CreateBox('vest', { width: 0.55, height: 1.1, depth: 0.62 }, scene), r, coat2, 0, 1.6, 0);
-    at(MB.CreateBox('belt', { width: 1.0, height: 0.16, depth: 0.62 }, scene), r, dark, 0, 1.12, 0);
-    at(MB.CreateCylinder('aL', { height: 0.98, diameter: 0.3 }, scene), r, coat, -0.62, 1.6, 0).rotation.z = 0.2;
-    const arm = new BABYLON.TransformNode('dgArm', scene); arm.parent = r; arm.position.set(0.62, 2.05, 0);
-    at(MB.CreateCylinder('aR', { height: 0.98, diameter: 0.3 }, scene), arm, coat, 0, -0.45, 0);
+    legs(r, pants, dark, { h: 1.15, dia: 0.32, sx: 0.24 });
+    torso(r, coat, 0.98, 1.36, 0, 1.62);
+    at(MB.CreateSphere('vest', { diameterX: 0.56, diameterY: 1.1, diameterZ: 0.66, segments: 12 }, scene), r, coat2, 0, 1.6, 0.02);
+    at(MB.CreateTorus('belt', { diameter: 0.86, thickness: 0.13, tessellation: 18 }, scene), r, dark, 0, 1.1, 0).rotation.x = Math.PI / 2;
+    cap(0.98, 0.28, coat, r, -0.58, 1.6, 0).rotation.z = 0.24;
+    const arm = new BABYLON.TransformNode('dgArm', scene); arm.parent = r; arm.position.set(0.6, 2.05, 0);
+    cap(0.98, 0.28, coat, arm, 0, -0.45, 0);
     at(MB.CreateSphere('head', { diameter: 0.58 }, scene), r, skin, 0, 2.52, 0);
     face(r, 2.58, 0.58, { one: 'left', brow: '#7a6a56', angry: true }); // right eye under the patch
     hand(r, -0.74, 1.1, 0.05, '#c89a72'); hand(arm, 0, -0.95, 0.08, '#c89a72');
@@ -409,9 +428,10 @@ window.Models = (function () {
   function npc(hex, hairHex, style) {
     const r = new BABYLON.TransformNode('npc', scene);
     const body = M('npcBody', hex), skin = M('npcSkin', '#d9a06b'), hair = M('npcHair', hairHex || '#3a2a18');
-    at(MB.CreateCylinder('legs', { height: 1.0, diameterTop: 0.55, diameterBottom: 0.7 }, scene), r, body, 0, 0.5, 0);
-    at(MB.CreateBox('torso', { width: 0.7, height: 0.9, depth: 0.45 }, scene), r, body, 0, 1.4, 0);
-    at(MB.CreateSphere('head', { diameter: 0.55 }, scene), r, skin, 0, 2.05, 0);
+    if (style !== 'desert' && style !== 'arabian' && style !== 'greek') legs(r, body, M('npcShoe', shade(hex, 0.7)), { h: 0.95, dia: 0.26, sx: 0.16 });
+    else at(MB.CreateCylinder('legs', { height: 1.0, diameterTop: 0.5, diameterBottom: 0.66, tessellation: 14 }, scene), r, body, 0, 0.5, 0); // robe cultures: a smooth column under the skirt
+    torso(r, body, 0.72, 1.0, 0, 1.42);
+    at(MB.CreateSphere('head', { diameter: 0.55, segments: 16 }, scene), r, skin, 0, 2.05, 0);
     face(r, 2.08, 0.55);
     const covered = style === 'desert' || style === 'arabian';   // headwear hides the hair
     if (!covered) at(MB.CreateSphere('hair', { diameter: 0.6, slice: 0.55 }, scene), r, hair, 0, 2.18, 0);
@@ -452,17 +472,16 @@ window.Models = (function () {
     const r = new BABYLON.TransformNode('rival', scene);
     const skin = M('rvSkin', '#e8b48a'), vest = M('rvVest', '#c2332a'), shorts = M('rvShorts', '#2f5aa0'),
           hair = M('rvHair', '#161616'), straw = M('rvStraw', '#e0b96a'), band = M('rvBand', '#b8342a');
-    at(MB.CreateCylinder('lL', { height: 1.0, diameter: 0.3 }, scene), r, shorts, -0.22, 0.5, 0);
-    at(MB.CreateCylinder('lR', { height: 1.0, diameter: 0.3 }, scene), r, shorts, 0.22, 0.5, 0);
-    at(MB.CreateBox('torso', { width: 0.82, height: 1.0, depth: 0.48 }, scene), r, skin, 0, 1.5, 0); // open vest = bare chest
-    at(MB.CreateBox('vestL', { width: 0.18, height: 1.0, depth: 0.5 }, scene), r, vest, -0.34, 1.5, 0);
-    at(MB.CreateBox('vestR', { width: 0.18, height: 1.0, depth: 0.5 }, scene), r, vest, 0.34, 1.5, 0);
-    at(MB.CreateBox('sash', { width: 0.86, height: 0.18, depth: 0.5 }, scene), r, band, 0, 1.05, 0);
-    at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.26 }, scene), r, skin, -0.56, 1.5, 0).rotation.z = 0.25;
-    const arm = new BABYLON.TransformNode('rvArm', scene); arm.parent = r; arm.position.set(0.56, 1.9, 0);
-    at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.26 }, scene), arm, skin, 0, -0.45, 0);
-    at(MB.CreateSphere('fist', { diameter: 0.42 }, scene), arm, skin, 0, -0.95, 0); // big fist
-    at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.35, 0);
+    legs(r, shorts, M('rvSand', '#6a4a2a'), { h: 1.0, dia: 0.28, sx: 0.22 });
+    torso(r, skin, 0.82, 1.15, 0, 1.5); // open vest = bare chest
+    at(MB.CreateSphere('vestL', { diameterX: 0.22, diameterY: 1.0, diameterZ: 0.55, segments: 10 }, scene), r, vest, -0.34, 1.5, 0);
+    at(MB.CreateSphere('vestR', { diameterX: 0.22, diameterY: 1.0, diameterZ: 0.55, segments: 10 }, scene), r, vest, 0.34, 1.5, 0);
+    at(MB.CreateTorus('sash', { diameter: 0.74, thickness: 0.11, tessellation: 16 }, scene), r, band, 0, 1.02, 0).rotation.x = Math.PI / 2;
+    cap(0.95, 0.24, skin, r, -0.54, 1.5, 0).rotation.z = 0.28;
+    const arm = new BABYLON.TransformNode('rvArm', scene); arm.parent = r; arm.position.set(0.54, 1.9, 0);
+    cap(0.95, 0.24, skin, arm, 0, -0.45, 0);
+    at(MB.CreateSphere('fist', { diameter: 0.42, segments: 12 }, scene), arm, skin, 0, -0.95, 0); // big fist
+    at(MB.CreateSphere('head', { diameter: 0.6, segments: 16 }, scene), r, skin, 0, 2.35, 0);
     face(r, 2.4, 0.6, { brow: '#161616' });
     at(MB.CreateBox('grin', { width: 0.34, height: 0.07, depth: 0.06 }, scene), r, M('grinM', '#3a1a14'), 0, 2.22, 0.28); // toothy grin
     hand(r, -0.66, 1.0, 0, '#e8b48a');
@@ -1094,14 +1113,13 @@ window.Models = (function () {
   function aladdin(weaponKey) {
     const r = new BABYLON.TransformNode('aladdin', scene);
     const vest = M('alVest', '#7a1f6a'), skin = M('alSkin', '#c08a5a'), pants = M('alPants', '#e8e0d0'), hair = M('alHair', '#1a1208'), fez = M('alFez', '#b03030');
-    at(MB.CreateCylinder('lL', { height: 1.2, diameter: 0.34 }, scene), r, pants, -0.22, 0.6, 0);
-    at(MB.CreateCylinder('lR', { height: 1.2, diameter: 0.34 }, scene), r, pants, 0.22, 0.6, 0);
-    at(MB.CreateBox('sash', { width: 0.96, height: 0.2, depth: 0.58 }, scene), r, fez, 0, 1.3, 0);
-    at(MB.CreateBox('torso', { width: 0.86, height: 1.1, depth: 0.5 }, scene), r, skin, 0, 1.7, 0);   // bare chest
-    at(MB.CreateBox('vest', { width: 0.94, height: 1.0, depth: 0.54 }, scene), r, vest, 0, 1.75, -0.02).scaling.x = 0.5; // open vest sides
-    const aL = at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.26 }, scene), r, skin, -0.58, 1.7, 0); aL.rotation.z = 0.22;
-    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.6, 2.05, 0);
-    at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.26 }, scene), arm, skin, 0, -0.45, 0);
+    legs(r, pants, M('alShoe', '#caa030'), { h: 1.2, dia: 0.3, sx: 0.22 });
+    at(MB.CreateTorus('sash', { diameter: 0.82, thickness: 0.14, tessellation: 16 }, scene), r, fez, 0, 1.28, 0).rotation.x = Math.PI / 2;
+    torso(r, skin, 0.86, 1.2, 0, 1.7);   // bare chest
+    [-1, 1].forEach(s => at(MB.CreateSphere('vest', { diameterX: 0.16, diameterY: 1.0, diameterZ: 0.56, segments: 10 }, scene), r, vest, s * 0.34, 1.74, -0.02)); // open vest sides
+    const aL = cap(0.95, 0.24, skin, r, -0.54, 1.7, 0); aL.rotation.z = 0.26;
+    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.56, 2.05, 0);
+    cap(0.95, 0.24, skin, arm, 0, -0.45, 0);
     at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.55, 0);
     face(r, 2.6, 0.6, { brow: '#1a1208' });
     hand(aL, 0, -0.5, 0, '#c08a5a'); hand(arm, 0, -0.92, 0.05, '#c08a5a');
@@ -1117,17 +1135,16 @@ window.Models = (function () {
     const r = new BABYLON.TransformNode('violca', scene);
     const leather = M('viL', '#2a3242'), leather2 = M('viL2', '#3a4658'), skin = M('viSkin', '#dcb89a'), hair = M('viHair', '#3a2418'),
           accent = M('viAcc', '#7a2a4a'), steel = M('viSteel', '#cfd8e4', { spec: 0.8 });
-    at(MB.CreateCylinder('lL', { height: 1.3, diameter: 0.3 }, scene), r, leather, -0.2, 0.65, 0);
-    at(MB.CreateCylinder('lR', { height: 1.3, diameter: 0.3 }, scene), r, leather, 0.2, 0.65, 0);
-    at(MB.CreateBox('torso', { width: 0.84, height: 1.2, depth: 0.5 }, scene), r, leather2, 0, 1.65, 0);
+    legs(r, leather, M('viBoot', '#1a2230'), { h: 1.3, dia: 0.28, sx: 0.2 });
+    torso(r, leather2, 0.84, 1.34, 0, 1.65);
     at(MB.CreateBox('strap', { width: 0.9, height: 0.9, depth: 0.52 }, scene), r, accent, 0, 1.7, 0).scaling.x = 0.28; // diagonal quiver strap
-    at(MB.CreateBox('belt', { width: 0.9, height: 0.16, depth: 0.54 }, scene), r, M('viBelt', '#caa030', { emissive: '#3a2e08' }), 0, 1.2, 0);
+    at(MB.CreateTorus('belt', { diameter: 0.78, thickness: 0.12, tessellation: 16 }, scene), r, M('viBelt', '#caa030', { emissive: '#3a2e08' }), 0, 1.18, 0).rotation.x = Math.PI / 2;
     // shoulder cloak
     at(MB.CreateBox('cloak', { width: 1.0, height: 1.4, depth: 0.2 }, scene), r, accent, 0, 1.6, -0.32).rotation.x = 0.1;
-    const aL = at(MB.CreateCylinder('aL', { height: 0.9, diameter: 0.22 }, scene), r, leather2, -0.55, 1.65, 0.05); aL.rotation.z = 0.3;
+    const aL = cap(0.9, 0.2, leather2, r, -0.52, 1.65, 0.05); aL.rotation.z = 0.34;
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.56, 2.0, 0);
-    at(MB.CreateCylinder('aR', { height: 0.9, diameter: 0.22 }, scene), arm, leather2, 0, -0.42, 0);
-    at(MB.CreateSphere('head', { diameter: 0.58 }, scene), r, skin, 0, 2.5, 0);
+    cap(0.9, 0.2, leather2, arm, 0, -0.42, 0);
+    at(MB.CreateSphere('head', { diameter: 0.58, segments: 16 }, scene), r, skin, 0, 2.5, 0);
     face(r, 2.55, 0.58, { brow: '#3a2418' });
     hand(aL, 0, -0.48, 0, '#dcb89a');
     // long braided hair
@@ -1145,15 +1162,14 @@ window.Models = (function () {
     const r = new BABYLON.TransformNode('simon', scene);
     const tunic = M('smTunic', '#7a4a1f'), tunic2 = M('smTunic2', '#94632c'), armor = M('smArmor', '#b8bcc8', { spec: 0.7 }),
           skin = M('smSkin', '#cf9a78'), hair = M('smHair', '#5a3a18'), band = M('smBand', '#b03030'), leather = M('smLeather', '#3a2616');
-    at(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.32 }, scene), r, leather, -0.22, 0.57, 0);
-    at(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.32 }, scene), r, leather, 0.22, 0.57, 0);
-    at(MB.CreateBox('torso', { width: 0.92, height: 1.2, depth: 0.55 }, scene), r, tunic, 0, 1.62, 0);
-    at(MB.CreateBox('belt', { width: 0.96, height: 0.18, depth: 0.57 }, scene), r, M('smBelt', '#caa030', { emissive: '#3a2e08' }), 0, 1.25, 0);
-    at(MB.CreateBox('pauldron', { width: 0.5, height: 0.3, depth: 0.6 }, scene), r, armor, -0.55, 2.08, 0);
-    const aL = at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.28 }, scene), r, tunic2, -0.6, 1.6, 0); aL.rotation.z = 0.22;
-    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.62, 2.02, 0);
-    at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.28 }, scene), arm, tunic2, 0, -0.45, 0);
-    at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.5, 0);
+    legs(r, leather, M('smBoot', '#241710'), { h: 1.15, dia: 0.3, sx: 0.22 });
+    torso(r, tunic, 0.9, 1.34, 0, 1.62);
+    at(MB.CreateTorus('belt', { diameter: 0.82, thickness: 0.13, tessellation: 16 }, scene), r, M('smBelt', '#caa030', { emissive: '#3a2e08' }), 0, 1.22, 0).rotation.x = Math.PI / 2;
+    at(MB.CreateSphere('pauldron', { diameter: 0.56, slice: 0.6 }, scene), r, armor, -0.5, 2.05, 0);
+    const aL = cap(0.95, 0.26, tunic2, r, -0.56, 1.6, 0); aL.rotation.z = 0.26;
+    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.58, 2.02, 0);
+    cap(0.95, 0.26, tunic2, arm, 0, -0.45, 0);
+    at(MB.CreateSphere('head', { diameter: 0.6, segments: 16 }, scene), r, skin, 0, 2.5, 0);
     face(r, 2.55, 0.6, { brow: '#5a3a18', angry: true });
     hand(aL, 0, -0.5, 0, '#cf9a78'); hand(arm, 0, -0.92, 0.05, '#cf9a78');
     at(MB.CreateSphere('hair', { diameter: 0.66, slice: 0.55 }, scene), r, hair, 0, 2.62, -0.04);
@@ -1166,14 +1182,13 @@ window.Models = (function () {
   function mac(weaponKey) { // The Thing — parka'd survivor with a flamethrower
     const r = new BABYLON.TransformNode('mac', scene);
     const parka = M('mcP', '#9aa0a8'), parka2 = M('mcP2', '#7a828c'), skin = M('mcS', '#cf9a78'), beard = M('mcB', '#caa86a'), fur = M('mcF', '#d8d0c0'), steel = M('mcSt', '#5a6068', { spec: 0.6 });
-    at(MB.CreateCylinder('lL', { height: 1.2, diameter: 0.36 }, scene), r, parka2, -0.24, 0.6, 0);
-    at(MB.CreateCylinder('lR', { height: 1.2, diameter: 0.36 }, scene), r, parka2, 0.24, 0.6, 0);
-    at(MB.CreateBox('torso', { width: 1.05, height: 1.3, depth: 0.7 }, scene), r, parka, 0, 1.75, 0);
-    at(MB.CreateBox('tank', { width: 0.7, height: 1.0, depth: 0.4 }, scene), r, M('mcTank', '#3a4a3a'), 0, 1.8, -0.5);
-    at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.3 }, scene), r, parka, -0.62, 1.7, 0.1).rotation.z = 0.25;
-    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.62, 2.05, 0);
-    at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.3 }, scene), arm, parka, 0, -0.45, 0);
-    at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.55, 0);
+    legs(r, parka2, M('mcBoot', '#2a2a30'), { h: 1.2, dia: 0.34, sx: 0.24 });
+    torso(r, parka, 1.05, 1.4, 0, 1.75);
+    at(MB.CreateSphere('tank', { diameterX: 0.6, diameterY: 1.0, diameterZ: 0.42, segments: 12 }, scene), r, M('mcTank', '#3a4a3a'), 0, 1.8, -0.5);
+    cap(0.95, 0.28, parka, r, -0.6, 1.7, 0.1).rotation.z = 0.28;
+    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.6, 2.05, 0);
+    cap(0.95, 0.28, parka, arm, 0, -0.45, 0);
+    at(MB.CreateSphere('head', { diameter: 0.6, segments: 16 }, scene), r, skin, 0, 2.55, 0);
     face(r, 2.62, 0.6, { brow: '#caa86a' });
     hand(r, -0.72, 1.2, 0.16, '#cf9a78');
     at(MB.CreateTorus('hood', { diameter: 0.84, thickness: 0.22, tessellation: 12 }, scene), r, fur, 0, 2.6, -0.04).rotation.x = Math.PI / 2;
@@ -1189,18 +1204,17 @@ window.Models = (function () {
   function sane(weaponKey) { // Princess Mononoke — wolf-raised warrior + her wolf
     const r = new BABYLON.TransformNode('sane', scene);
     const fur = M('snF', '#e8e0d4'), skin = M('snS', '#dcb89a'), hair = M('snH', '#2a1810'), paint = M('snP', '#b0302a'), flint = M('snFl', '#bcb4a0', { spec: 0.4 }), wolfM = M('snW', '#9aa0a8');
-    at(MB.CreateCylinder('lL', { height: 1.2, diameter: 0.28 }, scene), r, skin, -0.2, 0.6, 0);
-    at(MB.CreateCylinder('lR', { height: 1.2, diameter: 0.28 }, scene), r, skin, 0.2, 0.6, 0);
-    at(MB.CreateBox('tunic', { width: 0.8, height: 1.0, depth: 0.46 }, scene), r, fur, 0, 1.55, 0);
-    at(MB.CreateBox('mantle', { width: 1.1, height: 0.7, depth: 0.6 }, scene), r, fur, 0, 1.95, -0.04); // fur shoulder mantle
-    at(MB.CreateCylinder('aL', { height: 0.85, diameter: 0.2 }, scene), r, skin, -0.5, 1.55, 0.05).rotation.z = 0.4;
-    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.5, 1.95, 0);
-    at(MB.CreateCylinder('aR', { height: 0.85, diameter: 0.2 }, scene), arm, skin, 0, -0.4, 0);
-    at(MB.CreateSphere('head', { diameter: 0.54 }, scene), r, skin, 0, 2.35, 0);
+    legs(r, skin, M('snBoot', '#3a2a1a'), { h: 1.2, dia: 0.26, sx: 0.2 });
+    torso(r, fur, 0.8, 1.14, 0, 1.55);
+    at(MB.CreateSphere('mantle', { diameterX: 1.1, diameterY: 0.62, diameterZ: 0.7, segments: 12 }, scene), r, fur, 0, 1.95, -0.04); // fur shoulder mantle
+    cap(0.85, 0.18, skin, r, -0.46, 1.55, 0.05).rotation.z = 0.44;
+    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.48, 1.95, 0);
+    cap(0.85, 0.18, skin, arm, 0, -0.4, 0);
+    at(MB.CreateSphere('head', { diameter: 0.54, segments: 16 }, scene), r, skin, 0, 2.35, 0);
     face(r, 2.38, 0.54, { pupil: '#3a1810' });
     [-1, 1].forEach(s => at(MB.CreateBox('paint', { width: 0.1, height: 0.16, depth: 0.06 }, scene), r, paint, s * 0.16, 2.3, 0.25)); // red war-paint cheek marks
     at(MB.CreateSphere('hairTop', { diameter: 0.6, slice: 0.55 }, scene), r, hair, 0, 2.46, -0.04);
-    at(MB.CreateBox('hairBack', { width: 0.6, height: 1.5, depth: 0.18 }, scene), r, hair, 0, 1.85, -0.24);
+    at(MB.CreateSphere('hairBack', { diameterX: 0.58, diameterY: 1.6, diameterZ: 0.26, segments: 12 }, scene), r, hair, 0, 1.85, -0.24);
     // stone dagger in hand
     const dg = new BABYLON.TransformNode('dg', scene); dg.parent = arm; dg.position.set(0, -0.6, 0.2); dg.rotation.x = 1.2;
     at(MB.CreateCylinder('blade', { height: 0.7, diameterTop: 0, diameterBottom: 0.18, tessellation: 4 }, scene), dg, flint, 0, 0.35, 0);
@@ -1216,13 +1230,12 @@ window.Models = (function () {
   function marvyn(weaponKey) { // Hitchhiker's — the morose android
     const r = new BABYLON.TransformNode('marvyn', scene);
     const body = M('mvB', '#b8bcc4', { spec: 0.7, specPower: 60 }), joint = M('mvJ', '#5a6068'), eye = M('mvE', '#9fd0ff', { emissive: '#3a8ad0' });
-    at(MB.CreateCylinder('lL', { height: 0.9, diameter: 0.3 }, scene), r, joint, -0.26, 0.45, 0);
-    at(MB.CreateCylinder('lR', { height: 0.9, diameter: 0.3 }, scene), r, joint, 0.26, 0.45, 0);
-    at(MB.CreateBox('torso', { width: 1.1, height: 1.2, depth: 0.8 }, scene), r, body, 0, 1.55, 0);
-    at(MB.CreateBox('panel', { width: 0.6, height: 0.5, depth: 0.1 }, scene), r, M('mvPan', '#3a4048', { emissive: '#0a2a3a' }), 0, 1.6, 0.41);
-    at(MB.CreateCylinder('aL', { height: 0.9, diameter: 0.22 }, scene), r, joint, -0.66, 1.5, 0).rotation.z = 0.2;
-    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.66, 1.95, 0);
-    at(MB.CreateCylinder('aR', { height: 0.9, diameter: 0.22 }, scene), arm, joint, 0, -0.42, 0);
+    legs(r, joint, joint, { h: 0.9, dia: 0.28, sx: 0.26 });
+    at(MB.CreateSphere('torso', { diameterX: 1.1, diameterY: 1.3, diameterZ: 0.85, segments: 14 }, scene), r, body, 0, 1.55, 0); // rounded chassis
+    at(MB.CreateSphere('panel', { diameterX: 0.6, diameterY: 0.5, diameterZ: 0.2, segments: 12 }, scene), r, M('mvPan', '#3a4048', { emissive: '#0a2a3a' }), 0, 1.6, 0.36);
+    cap(0.9, 0.2, joint, r, -0.62, 1.5, 0).rotation.z = 0.24;
+    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.62, 1.95, 0);
+    cap(0.9, 0.2, joint, arm, 0, -0.42, 0);
     // big round drooping head
     const head = at(MB.CreateSphere('head', { diameter: 0.95 }, scene), r, body, 0, 2.5, 0.05);
     [-0.2, 0.2].forEach(x => at(MB.CreateSphere('e', { diameter: 0.2 }, scene), r, eye, x, 2.5, 0.4));
@@ -1235,14 +1248,13 @@ window.Models = (function () {
   function quijano(weaponKey) { // Don Quixote — the gaunt, earnest knight-errant
     const r = new BABYLON.TransformNode('quijano', scene);
     const steel = M('qjSt', '#aab0b8', { spec: 0.7 }), cloth = M('qjC', '#7a5a3a'), skin = M('qjS', '#cf9a78'), beard = M('qjB', '#d8d0c0'), brass = M('qjBr', '#caa030');
-    at(MB.CreateCylinder('lL', { height: 1.3, diameter: 0.24 }, scene), r, cloth, -0.2, 0.65, 0);
-    at(MB.CreateCylinder('lR', { height: 1.3, diameter: 0.24 }, scene), r, cloth, 0.2, 0.65, 0);
-    at(MB.CreateBox('breast', { width: 0.78, height: 1.0, depth: 0.5 }, scene), r, steel, 0, 1.7, 0); // dented breastplate
-    at(MB.CreateBox('pauldron', { width: 0.4, height: 0.3, depth: 0.55 }, scene), r, steel, -0.5, 2.05, 0);
-    at(MB.CreateCylinder('aL', { height: 0.9, diameter: 0.18 }, scene), r, steel, -0.52, 1.65, 0.05).rotation.z = 0.4;
-    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.52, 2.0, 0);
-    at(MB.CreateCylinder('aR', { height: 0.9, diameter: 0.18 }, scene), arm, steel, 0, -0.42, 0);
-    at(MB.CreateSphere('head', { diameter: 0.5 }, scene), r, skin, 0, 2.4, 0);
+    legs(r, cloth, M('qjBoot', '#4a3624'), { h: 1.3, dia: 0.22, sx: 0.2 });
+    at(MB.CreateSphere('breast', { diameterX: 0.78, diameterY: 1.05, diameterZ: 0.6, segments: 14 }, scene), r, steel, 0, 1.7, 0); // dented breastplate
+    at(MB.CreateSphere('pauldron', { diameter: 0.46, slice: 0.6 }, scene), r, steel, -0.46, 2.02, 0);
+    cap(0.9, 0.18, steel, r, -0.5, 1.65, 0.05).rotation.z = 0.42;
+    const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.5, 2.0, 0);
+    cap(0.9, 0.18, steel, arm, 0, -0.42, 0);
+    at(MB.CreateSphere('head', { diameter: 0.5, segments: 16 }, scene), r, skin, 0, 2.4, 0);
     face(r, 2.46, 0.5, { brow: '#b8b0a0' });
     hand(r, -0.64, 1.2, 0.12, '#cf9a78');
     at(MB.CreateBox('beard', { width: 0.34, height: 0.5, depth: 0.26 }, scene), r, beard, 0, 2.1, 0.14); // long thin beard
