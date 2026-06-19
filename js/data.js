@@ -288,6 +288,14 @@ window.Data = (function () {
       { name: 'sweeps a colossal sail-arm', min: 30, max: 44, all: true },
       { name: 'grinds down upon a hero', min: 34, max: 48 },
       { name: 'hurls a millstone', min: 32, max: 46 } ], drops: [ { mat: 'sand', chance: 1 }, { mat: 'abyssscale', chance: 0.4 } ] },
+    // ---- themed dungeon mobs (creative, dungeon-specific rosters) ----
+    thingspawn: { name: 'Thing-Spawn',   model: 'thingspawn', hp: 124, xp: 40, gold: 28, baseY: 0, moves: [ { name: 'lashes a fused limb', min: 15, max: 22 }, { name: 'tries to assimilate flesh', min: 12, max: 18, status: 'poison', turns: 3 } ], drops: [ { mat: 'goo', chance: 0.8 }, { mat: 'ectoplasm', chance: 0.4 } ] },
+    kodama:  { name: 'Kodama',           model: 'kodama', hp: 64,  xp: 26, gold: 18, baseY: 0, moves: [ { name: 'rattles its hollow head', min: 9, max: 14, status: 'slow', turns: 2 }, { name: 'calls the wood to bind', min: 11, max: 16, all: true } ], drops: [ { mat: 'feather', chance: 0.5 }, { mat: 'goo', chance: 0.3 } ] },
+    boarspirit:{ name: 'Cursed Boar',    model: 'boarspirit', hp: 138, xp: 42, gold: 26, baseY: 0, moves: [ { name: 'charges, trailing curse', min: 16, max: 24 }, { name: 'erupts in tatari tendrils', min: 13, max: 19, all: true, status: 'poison', turns: 3 } ], drops: [ { mat: 'fang', chance: 0.7 }, { mat: 'ectoplasm', chance: 0.4 } ] },
+    vogonclerk:{ name: 'Vogon Clerk',    model: 'vogonclerk', hp: 130, xp: 40, gold: 30, baseY: 0, moves: [ { name: 'demands a form in triplicate', min: 13, max: 19, status: 'weaken', turns: 3 }, { name: 'reads subsection 7(b) aloud', min: 11, max: 17, all: true, status: 'slow', turns: 2 } ], drops: [ { mat: 'ink', chance: 0.7 }, { mat: 'brine', chance: 0.3 } ] },
+    sentry:  { name: 'Sentry Drone',     model: 'sentry', hp: 88,  xp: 34, gold: 26, baseY: 1.4, moves: [ { name: 'fires a scanning beam', min: 14, max: 20 }, { name: 'paints all targets', min: 10, max: 15, all: true } ], drops: [ { mat: 'brine', chance: 0.5 }, { mat: 'shellfrag', chance: 0.3 } ] },
+    mutton:  { name: 'Battle-Mutton',    model: 'mutton', hp: 96,  xp: 24, gold: 16, baseY: 0, moves: [ { name: 'headbutts indignantly', min: 11, max: 17 }, { name: 'stampedes the flock', min: 13, max: 19, all: true } ], drops: [ { mat: 'feather', chance: 0.4 }, { mat: 'sand', chance: 0.3 } ] },
+    windvane:{ name: 'Windvane',         model: 'windvane', hp: 142, xp: 38, gold: 28, baseY: 0, moves: [ { name: 'sweeps a sail-arm', min: 15, max: 22 }, { name: 'grinds in a slow turn', min: 12, max: 18, all: true } ], drops: [ { mat: 'sand', chance: 0.7 }, { mat: 'shellfrag', chance: 0.3 } ] },
     bat:    { name: 'Nightwing Bat',     model: 'bat',   hp: 78,  xp: 30, gold: 20, baseY: 1.6, moves: [ { name: 'bites with a screech', min: 12, max: 18 }, { name: 'drains warm blood', min: 14, max: 20 } ], drops: [ { mat: 'ectoplasm', chance: 0.4 }, { mat: 'feather', chance: 0.3 } ] },
     ghoul:  { name: 'Drowned Ghoul',     model: 'ghoul', hp: 132, xp: 38, gold: 28, baseY: 0,   moves: [ { name: 'rakes with rotted claws', min: 15, max: 22 }, { name: 'exhales grave-rot', min: 12, max: 18, all: true } ], drops: [ { mat: 'ectoplasm', chance: 0.7 }, { mat: 'brine', chance: 0.3 } ] },
     wraith: { name: 'Tide Wraith',       model: 'wraith', hp: 110, xp: 40, gold: 30, baseY: 0.6, moves: [ { name: 'phases through a soul', min: 16, max: 23 }, { name: 'wails a dirge', min: 13, max: 19, all: true } ], drops: [ { mat: 'ectoplasm', chance: 0.8 } ] },
@@ -549,6 +557,14 @@ window.Data = (function () {
   const SHOP_ACCESSORIES = ['coral_bangle', 'seaglass_ring', 'tortoise_charm', 'tiger_fang', 'venom_ward', 'aegis_pearl'];
   // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
   const AFFINITIES = {
+    // themed dungeon mobs
+    thingspawn: { weak: ['fire', 'holy'], resist: ['water'] },
+    kodama:  { weak: ['fire'], resist: ['earth', 'holy'] },
+    boarspirit: { weak: ['holy', 'fire'], absorb: ['dark'] },
+    vogonclerk: { weak: ['water'], resist: ['physical'] },
+    sentry:  { weak: ['thunder', 'water'], resist: ['physical', 'fire'] },
+    mutton:  { weak: ['fire'], resist: ['physical'] },
+    windvane: { weak: ['fire'], resist: ['physical', 'earth'] },
     shark:  { weak: ['thunder'], resist: ['water'] },
     crab:   { weak: ['thunder'], resist: ['physical'] },
     jelly:  { weak: ['thunder'], absorb: ['water'] },
@@ -1091,7 +1107,7 @@ window.Data = (function () {
       spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
       hint: 'Whiteout Station — the generators are dead and something in the kennels got loose. Nobody knows who\'s still human. Burn a path to the core.',
       ally: { key: 'mac', metFlag: 'macMet', join: 'macJoin', pre: 'thingPre', fall: 'thingFall', leave: 'macLeave', holdMsg: 'Mac racks the flamethrower. "I\'ll watch the door. Don\'t take too long."' },
-      mobs: [ { x: -8, z: -4, pool: ['ghoul', 'wraith'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['bat', 'ghoul'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['wraith', 'ghoul'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['ghoul', 'wraith', 'bat'], min: 3, max: 3 } ],
+      mobs: [ { x: -8, z: -4, pool: ['thingspawn'], min: 1, max: 2 }, { x: 8, z: 6, pool: ['thingspawn', 'ghoul'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['thingspawn'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['thingspawn', 'ghoul'], min: 2, max: 3 } ],
       bossMob: { x: 0, z: 27, key: 'thething' }, reward: { gold: 900, shell: 'conch_ember' },
     },
     spirit_wood: {
@@ -1099,7 +1115,7 @@ window.Data = (function () {
       spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
       hint: 'The Spirit Wood — the trees have gone quiet and the Forest God walks angry. Reach the still pool at its heart.',
       ally: { key: 'sane', metFlag: 'saneMet', join: 'saneJoin', pre: 'forestPre', fall: 'forestFall', leave: 'saneLeave', holdMsg: 'Sané bares her teeth. "Leave, then. The wolves and I will hold the path."' },
-      mobs: [ { x: -8, z: -4, pool: ['golem', 'wyvern'], min: 2, max: 2 }, { x: 8, z: 6, pool: ['scarab', 'golem'], min: 2, max: 3 }, { x: -7, z: 14, pool: ['wyvern', 'scarab'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['golem', 'wyvern', 'scarab'], min: 3, max: 3 } ],
+      mobs: [ { x: -8, z: -4, pool: ['kodama'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['kodama', 'boarspirit'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['boarspirit'], min: 1, max: 2 }, { x: 7, z: 24, pool: ['kodama', 'boarspirit'], min: 2, max: 3 } ],
       bossMob: { x: 0, z: 27, key: 'forestgod' }, reward: { gold: 950, shell: 'nautilus_surge' },
     },
     crash_site: {
@@ -1107,7 +1123,7 @@ window.Data = (function () {
       spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
       hint: 'A crashed ship humming with improbability. A Vogon demolition crew is aboard, and they have FORMS. So very many forms.',
       ally: { key: 'marvyn', metFlag: 'marvynMet', join: 'marvynJoin', pre: 'vogonPre', fall: 'vogonFall', leave: 'marvynLeave', holdMsg: 'Marvyn sighs at 0.0001 decibels. "Fine. I\'ll wait. I\'m very good at waiting."' },
-      mobs: [ { x: -8, z: -4, pool: ['golem', 'scarab'], min: 2, max: 2 }, { x: 8, z: 6, pool: ['scarab', 'golem'], min: 2, max: 3 }, { x: -7, z: 14, pool: ['golem', 'scarab'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['scarab', 'golem', 'scarab'], min: 3, max: 3 } ],
+      mobs: [ { x: -8, z: -4, pool: ['vogonclerk'], min: 1, max: 2 }, { x: 8, z: 6, pool: ['sentry', 'vogonclerk'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['sentry'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['vogonclerk', 'sentry'], min: 2, max: 3 } ],
       bossMob: { x: 0, z: 27, key: 'vogon' }, reward: { gold: 920, shell: 'hex_conch' },
     },
     mill_keep: {
@@ -1115,7 +1131,7 @@ window.Data = (function () {
       spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
       hint: 'Quijano insists the windmill is a fearsome giant. He is, of course, completely wrong. He is also, somehow, completely right.',
       ally: { key: 'quijano', metFlag: 'quijanoMet', join: 'quijanoJoin', pre: 'giantPre', fall: 'giantFall', leave: 'quijanoLeave', holdMsg: 'Quijano bows gravely. "I shall guard the gate against all giants, friend. Return when honour calls."' },
-      mobs: [ { x: -8, z: -4, pool: ['golem', 'urchin'], min: 2, max: 2 }, { x: 8, z: 6, pool: ['urchin', 'cobra'], min: 2, max: 3 }, { x: -7, z: 14, pool: ['golem', 'cobra'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['golem', 'urchin', 'cobra'], min: 3, max: 3 } ],
+      mobs: [ { x: -8, z: -4, pool: ['mutton'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['mutton', 'windvane'], min: 2, max: 3 }, { x: -7, z: 14, pool: ['windvane'], min: 1, max: 2 }, { x: 7, z: 24, pool: ['windvane', 'mutton'], min: 2, max: 3 } ],
       bossMob: { x: 0, z: 27, key: 'windmill' }, reward: { gold: 900, shell: 'venom_spiral' },
     },
   };

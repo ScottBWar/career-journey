@@ -871,7 +871,104 @@ window.Models = (function () {
     [-1, 1].forEach(s => at(MB.CreateCylinder('leg', { height: 1.4, diameter: 0.55 }, scene), r, hide2, s * 1.1, 0.7, 0.4));
     return { node: r, idle(t) { heads.forEach((h, i) => { h.piv.rotation.z = Math.sin(t * 1.5 + i * 2) * 0.12; h.piv.rotation.x = Math.sin(t * 1.2 + i) * 0.08; }); r.position.y = (r._baseY || 0) + Math.sin(t * 1.1) * 0.12; } };
   }
-  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill };
+  // ---------------- THEMED DUNGEON MOBS (one creative set per new dungeon) ----------------
+  // Whiteout Station — a quivering Thing-spawn: assimilated flesh, bone spurs, grasping limbs
+  function thingspawn() {
+    const r = new BABYLON.TransformNode('eThingspawn', scene);
+    const flesh = M('tsF', '#b04a52', { spec: 0.5, emissive: '#3a0e12' }), flesh2 = M('tsF2', '#8a363f'), bone = M('tsB', '#e6ddc6'), maw = M('tsM', '#1a0608'), eye = M('tsE', '#ffe08a', { emissive: '#ffb030' });
+    at(MB.CreateSphere('mass', { diameterX: 2.2, diameterY: 1.7, diameterZ: 2.0, segments: 12 }, scene), r, flesh, 0, 1.0, 0);
+    at(MB.CreateSphere('lump', { diameter: 1.3 }, scene), r, flesh2, 0.6, 1.5, -0.3);
+    // gaping maw ringed with bone teeth
+    at(MB.CreateSphere('maw', { diameterX: 1.0, diameterY: 0.7, diameterZ: 0.6 }, scene), r, maw, 0, 1.1, 1.0);
+    for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; at(MB.CreateCylinder('tooth', { height: 0.34, diameterTop: 0, diameterBottom: 0.12 }, scene), r, bone, Math.cos(a) * 0.5, 1.1 + Math.sin(a) * 0.4, 1.15).rotation.x = Math.PI / 2; }
+    // scattered alien eyes that shouldn't be there
+    [[-0.5, 1.7, 0.7], [0.7, 1.0, 0.8], [0.1, 0.6, 0.9]].forEach(p => at(MB.CreateSphere('eye', { diameter: 0.3 }, scene), r, eye, p[0], p[1], p[2]));
+    // grasping limbs that writhe
+    const limbs = [];
+    for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2; const piv = new BABYLON.TransformNode('lp' + i, scene); piv.parent = r; piv.position.set(Math.cos(a) * 0.9, 0.7, Math.sin(a) * 0.9);
+      const arm = at(MB.CreateCylinder('limb', { height: 1.8, diameterTop: 0.06, diameterBottom: 0.3, tessellation: 6 }, scene), piv, i % 2 ? flesh : flesh2, 0, 0.6, 0); arm.rotation.x = Math.sin(a) * 0.5; arm.rotation.z = -Math.cos(a) * 0.5;
+      const claw = at(MB.CreateCylinder('cl', { height: 0.4, diameterTop: 0, diameterBottom: 0.14 }, scene), arm, bone, 0, 0.9, 0); claw.rotation.x = Math.PI; limbs.push({ piv, a, i }); }
+    return { node: r, idle(t) { limbs.forEach(o => { o.piv.rotation.y = Math.sin(t * 2 + o.i) * 0.3; o.piv.rotation.x = Math.sin(t * 1.7 + o.i * 1.5) * 0.25; }); r.scaling.y = 1 + Math.sin(t * 3) * 0.05; } };
+  }
+  // Spirit Wood — a Kodama: tiny pale forest spirit, oversized rattling head, hollow eyes
+  function kodama() {
+    const r = new BABYLON.TransformNode('eKodama', scene);
+    const pale = M('kdP', '#e8efe6', { spec: 0.1 }), dark = M('kdD', '#2a2a2a'), body = M('kdB', '#d8e2d6');
+    at(MB.CreateCylinder('body', { height: 0.7, diameterTop: 0.4, diameterBottom: 0.32 }, scene), r, body, 0, 0.55, 0);
+    [-0.18, 0.18].forEach(x => at(MB.CreateCylinder('leg', { height: 0.3, diameter: 0.12 }, scene), r, body, x, 0.15, 0));
+    [-0.28, 0.28].forEach(x => at(MB.CreateCylinder('arm', { height: 0.3, diameter: 0.1 }, scene), r, body, x, 0.7, 0).rotation.z = x > 0 ? 0.5 : -0.5);
+    const head = new BABYLON.TransformNode('kh', scene); head.parent = r; head.position.set(0, 1.25, 0);
+    at(MB.CreateSphere('head', { diameterX: 1.0, diameterY: 1.05, diameterZ: 0.9, segments: 12 }, scene), head, pale, 0, 0, 0);
+    // three hollow holes (two eyes, one mouth) — the iconic kodama face
+    [[-0.22, 0.1, 0.42], [0.22, 0.1, 0.42], [0, -0.25, 0.44]].forEach((p, i) => at(MB.CreateCylinder('hole', { height: 0.12, diameter: i === 2 ? 0.28 : 0.2, tessellation: 12 }, scene), head, dark, p[0], p[1], p[2]).rotation.x = Math.PI / 2);
+    return { node: r, idle(t) { head.rotation.z = Math.sin(t * 4) * 0.25; head.rotation.y = Math.sin(t * 1.5) * 0.3; } }; // the head clicks back and forth
+  }
+  // Spirit Wood — a cursed Boar: demon-boar wreathed in writhing curse-tendrils, red eyes
+  function boarspirit() {
+    const r = new BABYLON.TransformNode('eBoar', scene);
+    const hide = M('bsH', '#2a1c22', { spec: 0.2 }), curse = M('bsC', '#7a1f2a', { emissive: '#2a0608' }), tusk = M('bsT', '#e6ddc6'), eye = M('bsE', '#ff3a3a', { emissive: '#ff2020' });
+    at(MB.CreateSphere('body', { diameterX: 2.6, diameterY: 1.6, diameterZ: 1.7, segments: 12 }, scene), r, hide, -0.2, 1.2, 0);
+    const snout = at(MB.CreateCylinder('snout', { height: 1.1, diameterTop: 0.5, diameterBottom: 0.7, tessellation: 10 }, scene), r, hide, 1.3, 1.0, 0); snout.rotation.z = -Math.PI / 2;
+    [-0.35, 0.35].forEach(z => at(MB.CreateSphere('eye', { diameter: 0.26 }, scene), r, eye, 1.0, 1.4, z));
+    [-0.3, 0.3].forEach(z => { const tk = at(MB.CreateCylinder('tusk', { height: 0.7, diameterTop: 0, diameterBottom: 0.12 }, scene), r, tusk, 1.6, 0.85, z); tk.rotation.z = 0.6; });
+    [-1, 1].forEach(s => [0.6, -0.6].forEach(zo => at(MB.CreateCylinder('leg', { height: 1.0, diameter: 0.28 }, scene), r, hide, s * 0.7, 0.5, zo)));
+    // curse tendrils erupting from the back like Mononoke's tatarigami
+    const tend = [];
+    for (let i = 0; i < 7; i++) { const piv = new BABYLON.TransformNode('cp' + i, scene); piv.parent = r; piv.position.set(-1.2 + i * 0.35, 1.9, (i % 2 ? 0.4 : -0.4));
+      const t = at(MB.CreateCylinder('tn', { height: 1.2, diameterTop: 0.02, diameterBottom: 0.12, tessellation: 5 }, scene), piv, curse, 0, 0.5, 0); t.rotation.z = (Math.random() - 0.5) * 0.6; tend.push({ piv, i }); }
+    return { node: r, idle(t) { tend.forEach(o => { o.piv.rotation.x = Math.sin(t * 4 + o.i) * 0.4; o.piv.rotation.z = Math.cos(t * 3 + o.i) * 0.3; }); r.position.y = (r._baseY || 0) + Math.abs(Math.sin(t * 2)) * 0.06; } };
+  }
+  // Heart of Gold crash — a Vogon Clerk: lumpen bureaucrat alien clutching a stack of FORMS
+  function vogonclerk() {
+    const r = new BABYLON.TransformNode('eVogonclerk', scene);
+    const skin = M('vcS', '#5a6e4a', { spec: 0.2 }), skin2 = M('vcS2', '#46583a'), suit = M('vcSuit', '#3a3026'), paper = M('vcP', '#e6e0cc'), eye = M('vcE', '#d4c050', { emissive: '#5a4e10' });
+    at(MB.CreateBox('body', { width: 1.5, height: 1.6, depth: 1.1 }, scene), r, suit, 0, 1.3, 0);
+    at(MB.CreateSphere('gut', { diameterX: 1.7, diameterY: 1.3, diameterZ: 1.2 }, scene), r, skin2, 0, 1.0, 0.2);
+    const head = at(MB.CreateSphere('head', { diameterX: 1.4, diameterY: 1.1, diameterZ: 1.2, segments: 12 }, scene), r, skin, 0, 2.4, 0);
+    at(MB.CreateBox('brow', { width: 1.3, height: 0.3, depth: 0.4 }, scene), r, skin2, 0, 2.55, 0.45);
+    [-0.32, 0.32].forEach(x => at(MB.CreateSphere('eye', { diameter: 0.2 }, scene), r, eye, x, 2.35, 0.55));
+    at(MB.CreateBox('jowl', { width: 1.2, height: 0.5, depth: 0.5 }, scene), r, skin, 0, 1.95, 0.45);
+    [-1, 1].forEach(s => at(MB.CreateCylinder('arm', { height: 1.2, diameter: 0.32 }, scene), r, skin, s * 0.95, 1.3, 0.1).rotation.z = s * 0.3);
+    // a teetering stack of forms held out front
+    const stack = new BABYLON.TransformNode('stk', scene); stack.parent = r; stack.position.set(0, 1.3, 0.8);
+    for (let i = 0; i < 5; i++) at(MB.CreateBox('form', { width: 0.7, height: 0.05, depth: 0.5 }, scene), stack, paper, (Math.random() - 0.5) * 0.1, i * 0.09, 0).rotation.y = (Math.random() - 0.5) * 0.3;
+    return { node: r, idle(t) { stack.rotation.z = Math.sin(t * 2) * 0.05; r.rotation.y = Math.sin(t * 0.8) * 0.05; } };
+  }
+  // Heart of Gold crash — a Sentry: a hovering surveillance drone with a single scanning eye
+  function sentry() {
+    const r = new BABYLON.TransformNode('eSentry', scene);
+    const hull = M('snH', '#9aa6b4', { spec: 0.7, specPower: 60 }), dark = M('snD', '#2a3038'), eye = M('snE', '#ff5a4a', { emissive: '#ff3020' }), glow = M('snG', '#5ec8ff', { emissive: '#2090ff' });
+    at(MB.CreateSphere('core', { diameter: 1.3, segments: 14 }, scene), r, hull, 0, 1.6, 0);
+    at(MB.CreateCylinder('ring', { height: 0.18, diameter: 2.0, tessellation: 20 }, scene), r, dark, 0, 1.6, 0);
+    const e = at(MB.CreateSphere('eye', { diameter: 0.5 }, scene), r, eye, 0, 1.6, 0.6);
+    for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2; at(MB.CreateSphere('thr', { diameter: 0.22 }, scene), r, glow, Math.cos(a) * 0.85, 1.6, Math.sin(a) * 0.85); }
+    return { node: r, idle(t) { r.rotation.y = t * 1.2; e.scaling.z = 1 + Math.sin(t * 6) * 0.2; r.position.y = (r._baseY || 0) + Math.sin(t * 2) * 0.18; } };
+  }
+  // The Giant's Mill — a Mutton: a fat fluffy sheep (Quixote's "enemy army")
+  function mutton() {
+    const r = new BABYLON.TransformNode('eMutton', scene);
+    const wool = M('muW', '#e8e4da', { spec: 0.05 }), face = M('muF', '#2a2420'), horn = M('muH', '#c9b98a');
+    for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2; at(MB.CreateSphere('puff', { diameter: 1.0 }, scene), r, wool, Math.cos(a) * 0.7, 1.1 + (i % 2) * 0.25, Math.sin(a) * 0.5); }
+    at(MB.CreateSphere('core', { diameterX: 1.7, diameterY: 1.3, diameterZ: 1.5 }, scene), r, wool, 0, 1.1, 0);
+    const head = at(MB.CreateSphere('head', { diameterX: 0.7, diameterY: 0.8, diameterZ: 0.75 }, scene), r, face, 1.0, 1.2, 0);
+    [-1, 1].forEach(s => at(MB.CreateTorus('horn', { diameter: 0.4, thickness: 0.1, tessellation: 8, arc: 0.6 }, scene), r, horn, 1.0, 1.5, s * 0.3).rotation.z = 1);
+    [-0.18, 0.18].forEach(z => at(MB.CreateSphere('eye', { diameter: 0.12 }, scene), r, M('muE', '#0a0a0a'), 1.25, 1.3, z));
+    [-1, 1].forEach(s => [0.4, -0.4].forEach(zo => at(MB.CreateCylinder('leg', { height: 0.7, diameter: 0.18 }, scene), r, face, s * 0.4, 0.35, zo)));
+    return { node: r, idle(t) { r.position.y = (r._baseY || 0) + Math.abs(Math.sin(t * 4)) * 0.08; } };
+  }
+  // The Giant's Mill — a Windvane: an animate sail-arm shard of the windmill-"giant"
+  function windvane() {
+    const r = new BABYLON.TransformNode('eWindvane', scene);
+    const wood = M('wvW', '#7a5a32', { spec: 0.2 }), wood2 = M('wvW2', '#5a401f'), sail = M('wvS', '#d8cba0'), eye = M('wvE', '#caa030', { emissive: '#6a5410' });
+    at(MB.CreateCylinder('post', { height: 2.4, diameter: 0.5, tessellation: 8 }, scene), r, wood2, 0, 1.2, 0);
+    const stoneEye = at(MB.CreateSphere('eye', { diameterX: 0.6, diameterY: 0.4, diameterZ: 0.3 }, scene), r, eye, 0, 1.9, 0.3);
+    const hub = new BABYLON.TransformNode('hub', scene); hub.parent = r; hub.position.set(0, 1.9, 0.35);
+    for (let i = 0; i < 4; i++) { const a = (i / 4) * Math.PI * 2; const arm = at(MB.CreateBox('arm', { width: 0.18, height: 1.6, depth: 0.12 }, scene), hub, wood, 0, 0, 0); arm.position.set(Math.sin(a) * 0.8, Math.cos(a) * 0.8, 0); arm.rotation.z = -a; at(MB.CreateBox('sail', { width: 0.5, height: 1.2, depth: 0.05 }, scene), hub, sail, Math.sin(a) * 1.0 + Math.cos(a) * 0.3, Math.cos(a) * 1.0 - Math.sin(a) * 0.3, 0.05).rotation.z = -a; }
+    [-1, 1].forEach(s => at(MB.CreateCylinder('leg', { height: 1.0, diameter: 0.2 }, scene), r, wood2, s * 0.4, 0.5, 0).rotation.z = s * 0.2);
+    return { node: r, idle(t) { hub.rotation.z = t * 2; stoneEye.scaling.y = 1 + Math.sin(t * 5) * 0.2; } };
+  }
+
+  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane };
 
   // ---------------- ALADDIN (street-rat ally) ----------------
   function aladdin(weaponKey) {

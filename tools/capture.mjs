@@ -54,6 +54,7 @@ const STATES = [
   { name: '25_gallery_mobs',    drive: `__gallery({enemy:['shark','jelly','octo','crab','gull','golem']})`,     wait: 600 },
   { name: '26_gallery_bosses',  drive: `__gallery({enemy:['kraken','selachoth','medusa','minotaur']})`,         wait: 600 },
   { name: '27_gallery_bosses2', drive: `__gallery({enemy:['thething','forestgod','vogon','windmill']})`,        wait: 600 },
+  { name: '28_gallery_dunmobs', drive: `__gallery({enemy:['thingspawn','kodama','boarspirit','vogonclerk','sentry','mutton','windvane']})`, wait: 600 },
 ];
 
 function serve() {
