@@ -6,6 +6,7 @@ window.Sea = (function () {
   const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
   let scene, cam, ship, engine, ocean, oceanBase;
   let isles = [], idlers = [], foes = [], paused = false, locked = false, nearTarget = null, t = 0, buoy = null, coveBuoy = null, camYaw = 0;
+  let horror = null, horrorT = 0; // a rare, huge roaming deep-sea terror
   const SPEED = 11;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
@@ -30,7 +31,7 @@ window.Sea = (function () {
   function build() {
     engine = Game.engine;
     if (scene) scene.dispose();
-    isles = []; idlers = []; foes = []; nearTarget = null; t = 0; paused = false; locked = false; coveBuoy = null;
+    isles = []; idlers = []; foes = []; nearTarget = null; t = 0; paused = false; locked = false; coveBuoy = null; horror = null; horrorT = 0;
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.55, 0.78, 0.95); scene.fogDensity = 0.004;
@@ -128,8 +129,18 @@ window.Sea = (function () {
       });
       return;
     }
-    // rare deep-sea leviathan ambush
-    if (!locked && Math.random() < 0.0004) { ambush(); return; }
+    // rare deep-sea HORROR: it surfaces far off, then stalks the ship across the map
+    if (!locked && !horror && Math.random() < 0.0007) spawnHorror();
+    if (horror && !locked) {
+      horrorT += dt;
+      const dir = ship.position.subtract(horror.node.position); const d = dir.length(); if (d > 0.1) { dir.x /= d; dir.z /= d; }
+      horror.node.position.x += dir.x * horror.spd * dt; horror.node.position.z += dir.z * horror.spd * dt;
+      horror.node.position.y = -1.3 + Math.sin(t * 0.7) * 0.5;            // mostly submerged, breaching
+      horror.node.rotation.y = Math.atan2(dir.x, dir.z);
+      if (horror.idle) horror.idle(t);
+      if (d < 6) { startHorrorFight(); return; }
+      if (horrorT > 24) despawnHorror();                                  // it sinks back into the deep — a near miss
+    }
 
     // animate ocean
     const pos = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind);
@@ -162,12 +173,23 @@ window.Sea = (function () {
     c.fillStyle = '#0e3550'; c.beginPath(); c.arc(cx, cy, W * 0.47, 0, 7); c.fill();
     isles.forEach(i => { const [ix, iy] = px(i.pos.x, i.pos.z); c.fillStyle = i.key === 'spire' ? '#ff8a6a' : '#7fd06a'; c.beginPath(); c.arc(ix, iy, 4, 0, 7); c.fill(); });
     foes.forEach(f => { if (!f.node.isEnabled()) return; const [fx, fy] = px(f.node.position.x, f.node.position.z); c.fillStyle = f.ghost ? '#bfe6e0' : '#ff5e5e'; c.fillRect(fx - 1.5, fy - 1.5, 3, 3); });
+    if (horror && horror.node) { const [hx, hy] = px(horror.node.position.x, horror.node.position.z); c.fillStyle = '#ff2a2a'; c.beginPath(); c.arc(hx, hy, 5 + Math.sin(t * 6) * 1.5, 0, 7); c.fill(); }
     const [Px, Py] = px(ship.position.x, ship.position.z); c.fillStyle = '#fde047'; c.beginPath(); c.arc(Px, Py, 4, 0, 7); c.fill(); c.strokeStyle = '#000'; c.lineWidth = 1; c.stroke();
   }
-  function ambush() {
-    locked = true; paused = true; Music.play('boss');
-    Game.toast('⚠ SOMETHING STIRS IN THE DEEP...');
+  function spawnHorror() {
     const key = Data.AMBUSH[Math.floor(Math.random() * Data.AMBUSH.length)];
+    const built = Models.enemy(key); built.node.scaling.setAll(2.6);
+    const a = Math.random() * Math.PI * 2;
+    built.node.position.set(ship.position.x + Math.cos(a) * 34, -1.3, ship.position.z + Math.sin(a) * 34);
+    horror = { key, node: built.node, idle: built.idle, spd: 3.2 + Math.random() * 1.2 }; horrorT = 0;
+    Game.toast('⚠ Something VAST surfaces in the distance, and turns toward you...');
+    if (window.SFX) SFX.play('door');
+  }
+  function despawnHorror() { if (horror && horror.node) horror.node.dispose(); horror = null; }
+  function startHorrorFight() {
+    locked = true; paused = true; Music.play('boss');
+    Game.toast('IT HAS FOUND YOU.');
+    const key = horror.key; despawnHorror();
     Game.startBattle([key], { boss: true, ambush: true }, () => { paused = false; locked = false; Game.resumeSea(); });
   }
   function interact() {
