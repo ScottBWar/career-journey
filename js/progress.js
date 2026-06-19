@@ -271,6 +271,7 @@ window.Progress = (function () {
   function tierOf(tree, node, memo = {}) { if (memo[node.id] != null) return memo[node.id]; if (!node.req) return memo[node.id] = 0; const parent = tree.find(t => t.id === node.req); return memo[node.id] = (parent ? tierOf(tree, parent, memo) + 1 : 0); }
 
   function renderSkillTree(state, container, onClose) {
+    const prevWrap = container.querySelector('.sk-wrap'); const savedScroll = prevWrap ? prevWrap.scrollTop : 0; // keep scroll position across re-renders
     container.innerHTML = '';
     const wrap = document.createElement('div'); wrap.className = 'sk-wrap';
     const head = document.createElement('div'); head.className = 'sk-head';
@@ -278,7 +279,7 @@ window.Progress = (function () {
     const close = document.createElement('button'); close.className = 'pill ghost'; close.textContent = 'Close'; close.onclick = onClose; head.appendChild(close);
     wrap.appendChild(head);
 
-    state.party.forEach(p => {
+    state.party.filter(p => p.recruited !== false).forEach(p => {
       const tree = def(p.key).tree; const d = derived(p, state);
       const block = document.createElement('div'); block.className = 'sk-block';
       const need = p.level < Data.MAX_LEVEL ? Data.xpForLevel(p.level) : 0;
@@ -317,21 +318,25 @@ window.Progress = (function () {
       wrap.appendChild(block);
     });
     container.appendChild(wrap);
+    wrap.scrollTop = savedScroll; // restore scroll so picking a node doesn't jump to the top
   }
 
   // ---------------- GEAR / SEASHELL UI ----------------
   let gearSel = 'pirate';
   function renderGear(state, container, onClose) {
+    const prevWrap = container.querySelector('.sk-wrap'); const savedScroll = prevWrap ? prevWrap.scrollTop : 0;
     container.innerHTML = '';
+    const roster = state.party.filter(p => p.recruited !== false);
+    if (!roster.find(p => p.key === gearSel)) gearSel = roster[0] ? roster[0].key : 'pirate'; // don't point at a member who left
     const wrap = document.createElement('div'); wrap.className = 'sk-wrap';
     const head = document.createElement('div'); head.className = 'sk-head';
     head.innerHTML = `<h2>Gear &amp; Seashells</h2><div class="sk-gold">⛃ ${state.gold} gold</div>`;
     const close = document.createElement('button'); close.className = 'pill ghost'; close.textContent = 'Close'; close.onclick = onClose; head.appendChild(close);
     wrap.appendChild(head);
 
-    // character tabs
+    // character tabs (only members actually in the party)
     const tabs = document.createElement('div'); tabs.className = 'gear-tabs';
-    state.party.forEach(p => { const d = derived(p, state); const b = document.createElement('button'); b.className = 'gear-tab' + (gearSel === p.key ? ' on' : ''); b.textContent = d.name; b.onclick = () => { gearSel = p.key; renderGear(state, container, onClose); }; tabs.appendChild(b); });
+    roster.forEach(p => { const d = derived(p, state); const b = document.createElement('button'); b.className = 'gear-tab' + (gearSel === p.key ? ' on' : ''); b.textContent = d.name; b.onclick = () => { gearSel = p.key; renderGear(state, container, onClose); }; tabs.appendChild(b); });
     wrap.appendChild(tabs);
 
     const p = state.party.find(x => x.key === gearSel); const d = derived(p, state); const eq = state.equip[gearSel];
@@ -404,6 +409,7 @@ window.Progress = (function () {
 
     wrap.appendChild(body);
     container.appendChild(wrap);
+    wrap.scrollTop = savedScroll;
   }
 
   // ---------------- PARTY MANAGEMENT (swap active 3 of 6) ----------------

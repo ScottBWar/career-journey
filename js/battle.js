@@ -39,7 +39,7 @@ window.Battle = (function () {
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.6, 0.45, 0.45); scene.fogDensity = 0.009;
     Models.use(scene);
 
-    camera = new BABYLON.ArcRotateCamera('cam', -Math.PI/2 - 0.5, 1.14, 16.5, new V3(0, 2.1, 0), scene);
+    camera = new BABYLON.ArcRotateCamera('cam', -Math.PI/2 - 0.62, 1.12, 21, new V3(0, 2.2, 0), scene);
     const hemi = new BABYLON.HemisphericLight('hemi', new V3(0.1, 1, 0.1), scene); hemi.intensity = 0.55; hemi.groundColor = new Color3(0.3, 0.28, 0.3);
     const sun = new BABYLON.DirectionalLight("sun", new V3(-0.5, -1, 0.3), scene); sun.intensity = 1.4; sun.diffuse = new Color3(1, 0.88, 0.74); sun.specular = new Color3(1, 0.95, 0.85);
 
@@ -57,7 +57,7 @@ window.Battle = (function () {
       const d = Progress.derived(ms);
       const built = Models[d.model]((Game.state.equip[ms.key] || {}).weapon);
       Models.cosmetic(built.node, (Game.state.equip[ms.key] || {}).accessory);
-      const home = new V3(-4.4, 0, 3.0 - i * 2.6);
+      const home = new V3(-8.2, 0, 3.4 - i * 2.7);
       built.node.position.copyFrom(home); built.node.rotation.y = Math.PI/2.2;
       const hp = clamp(ms.hpCur == null ? d.maxhp : ms.hpCur, 0, d.maxhp);
       const mp = clamp(ms.mpCur == null ? d.maxmp : ms.mpCur, 0, d.maxmp);
@@ -73,7 +73,7 @@ window.Battle = (function () {
     placed.forEach((key, i) => {
       const def = Data.ENEMIES[key];
       const built = Models.enemy(key);
-      let x = boss ? 4.8 : 4.4, z = boss ? 0 : 3.0 - i * 2.6;
+      let x = boss ? 8.0 : 7.4, z = boss ? 0 : 3.4 - i * 2.7;
       const home = new V3(x, def.baseY, z);
       built.node.position.copyFrom(home); built.node._baseY = def.baseY; built.node.rotation.y = -Math.PI/2.2;
       if (boss) built.node.scaling.setAll(def.scale || 1.3);
@@ -102,21 +102,24 @@ window.Battle = (function () {
     shakeAmt = 0;
     scene.onBeforeRenderObservable.add(() => {
       const dt = engine.getDeltaTime() / 1000; t += dt;
-      if (!cineActive) camera.alpha = -Math.PI/2 - 0.5 + Math.sin(t*0.22)*0.04;
+      if (!cineActive) { camera.alpha = -Math.PI/2 - 0.62 + Math.sin(t*0.2)*0.05; camera.radius = 21 + Math.sin(t*0.16)*0.6; } // slow dynamic drift
       if (shakeAmt > 0.001) { camera.targetScreenOffset.x = (Math.random()-0.5)*shakeAmt; camera.targetScreenOffset.y = (Math.random()-0.5)*shakeAmt; shakeAmt *= 0.84; } else if (camera.targetScreenOffset.x) { camera.targetScreenOffset.set(0, 0); shakeAmt = 0; }
       for (const a of actors) {
         if (!a.alive || a._busy) continue;
+        // hasted units visibly twitch faster; slowed ones move sluggishly
+        const sp = (a.st && a.st.haste > 0) ? 1.9 : (a.st && a.st.slow > 0) ? 0.5 : 1;
+        const tt = t * sp;
         if (a.side === 'party') {
           const act = a === activeMember;
-          a.node.position.y = a.baseY + Math.sin(t*1.6 + a.phase) * (act ? 0.1 : 0.05);
-          a.node.rotation.z = Math.sin(t*1.15 + a.phase) * (act ? 0.05 : 0.02);          // subtle body sway / "vibing"
-          a.node.rotation.y = (Math.PI/2.2) + (act ? Math.sin(t*0.9)*0.05 : 0);            // active turns to face foes a touch
-          if (a.arm) a.arm.rotation.x = act ? (-0.5 + Math.sin(t*2.0 + a.phase)*0.13) : (Math.sin(t*1.3 + a.phase)*0.05); // active holds weapon ready
-          if (a.staffPiv) a.staffPiv.rotation.z = Math.sin(t*1.5 + a.phase) * (act ? 0.11 : 0.04);
-          if (a.idle) a.idle(t);
+          a.node.position.y = a.baseY + Math.sin(tt*1.6 + a.phase) * (act ? 0.1 : 0.05);
+          a.node.rotation.z = Math.sin(tt*1.15 + a.phase) * (act ? 0.05 : 0.02);          // subtle body sway / "vibing"
+          a.node.rotation.y = (Math.PI/2.2) + (act ? Math.sin(tt*0.9)*0.05 : 0);            // active turns to face foes a touch
+          if (a.arm) a.arm.rotation.x = act ? (-0.5 + Math.sin(tt*2.0 + a.phase)*0.13) : (Math.sin(tt*1.3 + a.phase)*0.05); // active holds weapon ready
+          if (a.staffPiv) a.staffPiv.rotation.z = Math.sin(tt*1.5 + a.phase) * (act ? 0.11 : 0.04);
+          if (a.idle) a.idle(tt);
         } else {
-          a.node.position.y = a.baseY + Math.sin(t*1.5 + a.phase)*0.05;
-          if (a.idle) a.idle(t);
+          a.node.position.y = a.baseY + Math.sin(tt*1.5 + a.phase)*0.05;
+          if (a.idle) a.idle(tt);
         }
         // rotating-weakness aura: gentle breathing pulse, easing down from any shift-flare
         if (a.aura) { const base = 2.5 + Math.sin(t*2.2 + a.phase)*0.2; const cur = a.aura.scaling.x; a.aura.scaling.setAll(cur + (base - cur)*0.08); if (a.auraMat) a.auraMat.alpha = 0.13 + Math.sin(t*2.2 + a.phase)*0.05; }
@@ -242,7 +245,21 @@ window.Battle = (function () {
   const deadParty = () => party.filter(p => !p.alive);
 
   // ----- attacks / abilities -----
-  async function dashAttack(attacker, target, onHit) { attacker._busy = true; const home = attacker.home.clone(); const dest = home.add(target.home.subtract(home).scale(0.66)); dest.y = attacker.baseY; await moveTo(attacker.node, dest, 170); await onHit(); await wait(90); /* hitstop */ await moveTo(attacker.node, home, 260); attacker.node.position.copyFrom(home); attacker._busy = false; }
+  // FF8-style charge: the fighter sprints across the field (with a running bob), strikes, then dashes home
+  async function runTo(node, dest, ms) {
+    const from = node.position.clone();
+    await tween(k => { node.position.x = from.x + (dest.x - from.x) * k; node.position.z = from.z + (dest.z - from.z) * k; node.position.y = dest.y + Math.abs(Math.sin(k * Math.PI * 7)) * 0.28; }, ms, t => t); // linear sprint
+    node.position.copyFrom(dest);
+  }
+  async function dashAttack(attacker, target, onHit) {
+    attacker._busy = true; const home = attacker.home.clone();
+    const dest = home.add(target.home.subtract(home).scale(0.82)); dest.y = attacker.baseY; // sprint most of the way across
+    const lean = attacker.node.rotation.z; attacker.node.rotation.z = lean - 0.18; // forward lean while running
+    await runTo(attacker.node, dest, 300);
+    attacker.node.rotation.z = lean;
+    await onHit(); await wait(90); /* hitstop */
+    await moveTo(attacker.node, home, 320); attacker.node.position.copyFrom(home); attacker._busy = false;
+  }
   async function swing(arm) { await rotTo(arm, 'x', 0, -2.3, 110); await rotTo(arm, 'x', -2.3, 0.6, 100); await rotTo(arm, 'x', 0.6, 0, 130); }
 
   // ---- status ailments / buffs ----
@@ -411,12 +428,31 @@ window.Battle = (function () {
     burst(worldOf(node, 0.5), col, '#ffffff', 130, 13); shake(1.0); flashScreen('rgba(253,224,71,0.2)'); if (window.SFX) SFX.play('crit');
     setTimeout(() => bolt.dispose(), 150);
   }
+  // generic GPU particle puff for elemental effects
+  function particles(pos, o) {
+    const ps = new BABYLON.ParticleSystem('pfx', o.count || 140, scene); ps.particleTexture = flare;
+    ps.emitter = pos; ps.minEmitBox = new V3(-(o.spread || 0.4), 0, -(o.spread || 0.4)); ps.maxEmitBox = new V3(o.spread || 0.4, 0, o.spread || 0.4);
+    ps.color1 = BABYLON.Color4.FromHexString((o.c1 || '#ffffff') + 'ff'); ps.color2 = BABYLON.Color4.FromHexString((o.c2 || '#ffffff') + 'ff'); ps.colorDead = new BABYLON.Color4(0, 0, 0, 0);
+    ps.minSize = o.minSize || 0.2; ps.maxSize = o.maxSize || 0.6; ps.minLifeTime = o.life0 || 0.2; ps.maxLifeTime = o.life1 || 0.6;
+    ps.emitRate = o.rate || 400; ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
+    ps.direction1 = o.dir1 || new V3(-1, 4, -1); ps.direction2 = o.dir2 || new V3(1, 6, 1);
+    ps.minEmitPower = o.pow0 || 1; ps.maxEmitPower = o.pow1 || 3; ps.gravity = o.gravity || new V3(0, -2, 0);
+    ps.start(); setTimeout(() => ps.stop(), o.dur || 240); setTimeout(() => ps.dispose(), (o.dur || 240) + 1500);
+    return ps;
+  }
+  // element-specific impact — a gout of flame looks like a gout of flame, etc.
+  function elemImpact(node, elem, col) {
+    if (elem === 'fire') { particles(worldOf(node, -0.3), { count: 220, c1: '#ffe066', c2: '#ff3a1a', minSize: 0.4, maxSize: 1.2, life0: 0.25, life1: 0.7, rate: 700, dir1: new V3(-0.7, 5, -0.7), dir2: new V3(0.7, 9, 0.7), pow0: 2, pow1: 5, gravity: new V3(0, -2.5, 0), spread: 0.6, dur: 300 }); flashScreen('rgba(255,120,40,0.18)'); shake(0.8); }
+    else if (elem === 'water') { particles(worldOf(node, 2.0), { count: 200, c1: '#bff0ff', c2: '#2f7fff', minSize: 0.25, maxSize: 0.8, life0: 0.2, life1: 0.6, rate: 600, dir1: new V3(-2, -7, -2), dir2: new V3(2, -2, 2), pow0: 3, pow1: 7, gravity: new V3(0, -10, 0), spread: 0.8, dur: 280 }); shake(0.6); }
+    else if (elem === 'earth') { particles(worldOf(node, -0.3), { count: 110, c1: '#d8b878', c2: '#5a3a1e', minSize: 0.35, maxSize: 0.9, life0: 0.3, life1: 0.7, rate: 500, dir1: new V3(-3, 4, -3), dir2: new V3(3, 9, 3), pow0: 2, pow1: 5, gravity: new V3(0, -14, 0), spread: 0.5, dur: 220 }); shake(1.0); }
+    else if (elem === 'holy') { const cyl = MB.CreateCylinder('holyP', { height: 16, diameter: 2.4 }, scene); cyl.material = M('holyPM', '#fff0a0', { emissive: '#fff0a0' }); cyl.material.alpha = 0.4; cyl.position = worldOf(node, 7); particles(worldOf(node, 5), { count: 160, c1: '#fff6c2', c2: '#ffe08a', minSize: 0.2, maxSize: 0.7, life0: 0.3, life1: 0.9, rate: 500, dir1: new V3(-0.5, -7, -0.5), dir2: new V3(0.5, -2, 0.5), pow0: 2, pow1: 5, gravity: new V3(0, -1, 0), spread: 0.9, dur: 320 }); flashScreen('rgba(255,240,170,0.22)'); shake(0.9); setTimeout(() => cyl.dispose(), 220); }
+    else if (elem === 'dark') { particles(worldOf(node, 1.6), { count: 180, c1: '#c08aff', c2: '#3a0a52', minSize: 0.3, maxSize: 0.9, life0: 0.2, life1: 0.55, rate: 700, dir1: new V3(-3, -3, -3), dir2: new V3(3, 1, 3), pow0: 1, pow1: 3, gravity: new V3(0, 2.5, 0), spread: 1.2, dur: 260 }); flashScreen('rgba(120,40,200,0.18)'); shake(0.8); }
+    else { burst(worldOf(node, 0.4), col, '#ffffff', 100, 11); shake(0.6); }
+    hitFlash(node, col, 220);
+  }
   function spellHit(e, elem, col) {
-    if (elem === 'thunder' || elem === 'holy' || elem === 'dark') lightningStrike(e.node, col);
-    else if (elem === 'fire') { burst(worldOf(e.node, 0.4), '#ffd166', '#ff3a1a', 130, 12); flashScreen('rgba(255,140,60,0.16)'); shake(0.7); }
-    else if (elem === 'water') { burst(worldOf(e.node, -0.2), '#9be7ff', '#3b82f6', 120, 13, -3); shake(0.6); }
-    else { burst(worldOf(e.node, 0.4), col, '#ffffff', 100, 11); shake(0.6); }
-    hitFlash(e.node, col, 200);
+    if (elem === 'thunder') lightningStrike(e.node, col);
+    else elemImpact(e.node, elem, col);
   }
   async function projectile(from, to, col) {
     const ball = MB.CreateSphere('p', { diameter: 0.5 }, scene); ball.material = M('pm', col, { emissive: col }); ball.position.copyFrom(from);
@@ -479,8 +515,8 @@ window.Battle = (function () {
     else if (it.kind === 'fullrevive') { const p = targets[0]; reviveMember(p, true); msg(`${p.name} surges back to life!`); renderParty(false); await wait(650); }
     else if (it.kind === 'cure') { const p = targets[0]; msg(`${m.name} uses ${it.name}.`); if (window.SFX) SFX.play('heal'); cureStatus(p, it.cures); renderParty(false); await wait(500); }
     else if (it.kind === 'buff') { const p = targets[0]; msg(`${m.name} uses ${it.name}!`); applyStatusList(p, it.status, it.turns); renderParty(false); await wait(550); }
-    else if (it.kind === 'damageall') { msg(`${m.name} hurls a ${it.name}!`); flashScreen('rgba(255,160,80,0.35)'); shake(1.2); for (const e of aliveEnemies()) { burst(worldOf(e.node, 0.2), ...fx, 80, 9); damageEnemy(e, rnd(it.min, it.max), col, it.el); } await wait(550); }
-    else { msg(`${m.name} hurls a ${it.name}!`); const ball = MB.CreateSphere('b', { diameter: 0.4 }, scene); ball.material = M('bMat', '#222', { emissive: '#1a0a00' }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(targets[0].node, -0.2), 340); ball.dispose(); burst(worldOf(targets[0].node, 0.2), ...fx, 100, 11); damageEnemy(targets[0], rnd(it.min, it.max), col, it.el); await wait(450); }
+    else if (it.kind === 'damageall') { msg(`${m.name} hurls a ${it.name}!`); for (const e of aliveEnemies()) { elemImpact(e.node, it.el, col); damageEnemy(e, rnd(it.min, it.max), col, it.el); } await wait(550); }
+    else { msg(`${m.name} hurls a ${it.name}!`); const ball = MB.CreateSphere('b', { diameter: 0.4 }, scene); ball.material = M('bMat', col, { emissive: col }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(targets[0].node, -0.2), 340); ball.dispose(); elemImpact(targets[0].node, it.el, col); damageEnemy(targets[0], rnd(it.min, it.max), col, it.el); await wait(450); }
   }
 
   // shift a rotating boss to its next elemental weakness (subtle aura + telegraph)

@@ -252,7 +252,7 @@ window.Game = (function () {
     });
 
     shopHeading(list, '⚔️ Weapons');
-    Game.state.party.forEach(p => {
+    Game.state.party.filter(p => p.recruited !== false).forEach(p => {
       const d = Progress.derived(p);
       Data.WEAPONS[p.key].forEach(w => {
         if (w.price <= 0) return;
