@@ -157,12 +157,25 @@ window.Game = (function () {
   // Cutscenes/dialogue gate movement via Game.blocking() (dialogueOpen), so
   // they never need to touch the explore pause flag — avoids stuck states
   // when beats are chained.
-  Game.cutscene = function (beats, onDone) {
+  // resolve a dialogue speaker name to a 3D model the cinematic stage can build
+  Game.cutsceneActorKey = function (name) {
+    const k = NAME2PORT[name]; if (!k) return null;
+    if (Data.PARTY.find(p => p.key === k)) return { type: 'party', key: k };
+    if (Data.ENEMIES[k]) return { type: 'enemy', key: k };
+    if (Data.MERMAIDS && Data.MERMAIDS[k]) return { type: 'mermaid', key: k };
+    return null;
+  };
+  function lightweightCutscene(beats, onDone) {
     let i = 0; Game.dialogueOpen = true; el('dialogue').classList.add('show');
     function show() { el('dlgName').textContent = beats[i].name; el('dlgText').textContent = beats[i].text; dlgPortrait(beats[i].name); el('dlgNext').textContent = i < beats.length - 1 ? 'Next ▶' : 'Continue'; }
     Game._advanceDlg = () => { if (i < beats.length - 1) { i++; show(); } else { closeDialogue(); Game._advanceDlg = null; if (onDone) onDone(); } };
     el('dlgNext').onclick = Game._advanceDlg;
     show();
+  }
+  // character-driven story beats play as a staged cinematic; narrator/riddle-only beats use the box
+  Game.cutscene = function (beats, onDone) {
+    if (window.Cutscene && beats.some(b => Game.cutsceneActorKey(b.name))) Cutscene.play(beats, onDone);
+    else lightweightCutscene(beats, onDone);
   };
   Game.startCutscene = function (key, onDone) { Game.cutscene(Data.STORY[key], onDone); };
 

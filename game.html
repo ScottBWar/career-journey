@@ -205,6 +205,23 @@
     .col-lg-lock { font-size: 0.74rem; color: #c06a7a; margin-top: 0.3rem; }
     .col-acts { display: flex; gap: 0.6rem; justify-content: center; margin-top: 1rem; }
     .col-result { font-size: 1rem; line-height: 1.5; margin: 1rem 0; }
+    /* cinematic cutscene */
+    #cine { position: fixed; inset: 0; z-index: 40; display: none; }
+    #cine.show { display: block; cursor: pointer; }
+    .cine-bar { position: absolute; left: 0; right: 0; height: 11vh; background: #000; transform: scaleY(0); transition: transform 0.5s ease; z-index: 2; }
+    .cine-top { top: 0; transform-origin: top; } .cine-bot { bottom: 0; transform-origin: bottom; }
+    #cine.show .cine-bar { transform: scaleY(1); }
+    .cine-vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 42%, rgba(0,0,0,0.6) 100%); z-index: 1; }
+    .cine-cap { position: absolute; left: 6%; right: 6%; bottom: 13.5vh; display: flex; gap: 0.9rem; align-items: center; z-index: 3;
+      background: linear-gradient(180deg, rgba(8,10,24,0.0), rgba(8,10,24,0.85)); border-left: 3px solid #fcd34d; border-radius: 0.6rem; padding: 0.85rem 1.1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+    .cine-port { width: 64px; flex: 0 0 64px; }
+    .cine-port img, .cine-port .portrait { width: 64px; height: 64px; image-rendering: pixelated; border-radius: 0.45rem; border: 1px solid rgba(255,255,255,0.2); }
+    .cine-body { flex: 1; min-width: 0; }
+    .cine-name { color: #fcd34d; font-weight: 700; letter-spacing: 0.07em; font-size: 0.9rem; margin-bottom: 0.22rem; text-transform: uppercase; }
+    .cine-line { font-size: 1.05rem; line-height: 1.45; color: #f2f4ff; }
+    .cine-next { color: #fcd34d; align-self: flex-end; font-size: 1.1rem; animation: cineblink 1s ease-in-out infinite; }
+    @keyframes cineblink { 50% { opacity: 0.25; } }
+    body.cine-on #worldHUD, body.cine-on #minimap, body.cine-on #worldPrompt, body.cine-on #dialogue { display: none !important; }
 
     /* gear / seashells */
     #gear .sk-wrap { width: min(760px, 96vw); max-height: 90vh; overflow: auto; }
@@ -595,6 +612,18 @@
   <!-- COLISEUM -->
   <div class="overlay" id="coliseum"></div>
 
+  <!-- CINEMATIC CUTSCENE -->
+  <div id="cine">
+    <div class="cine-bar cine-top"></div>
+    <div class="cine-bar cine-bot"></div>
+    <div class="cine-vig"></div>
+    <div class="cine-cap">
+      <div class="cine-port" id="cinePort"></div>
+      <div class="cine-body"><div class="cine-name" id="cineName"></div><div class="cine-line" id="cineLine"></div></div>
+      <div class="cine-next" id="cineNext">▶</div>
+    </div>
+  </div>
+
   <!-- TOAST + ENDING -->
   <div id="toast"></div>
   <div class="overlay" id="end"><div class="box"><h1 id="endTitle"></h1><p id="endText"></p><div class="actions"><button class="pill" id="endContinue">Keep Playing</button><a class="pill ghost" href="coming-soon.html">Back to Site</a></div></div></div>
@@ -616,6 +645,7 @@
   <script src="js/observatory.js"></script>
   <script src="js/arcade.js"></script>
   <script src="js/coliseum.js"></script>
+  <script src="js/cutscene.js"></script>
   <script src="js/dating.js"></script>
   <script src="js/main.js"></script>
 </body>
