@@ -394,6 +394,7 @@ window.Battle = (function () {
     cmd('⚔️  Fight', '', () => chooseEnemy('Attack which foe?', e => act(done, () => doFight(m, e)), () => showMain(m, done)), false, '', `${m.fight.min}-${m.fight.max} ${fe ? fe.i + fe.name : '⚔️Physical'} · 1 foe`);
     cmd('✨  Magic', m.abilities.length + '', () => showMagic(m, done), false, '', 'Spells & abilities');
     cmd('🎒  Item', '', () => showItems(m, done), false, '', 'Use a consumable');
+    cmd('🔍  Analyze', '', () => chooseEnemy('Analyze which foe?', e => act(done, () => doAnalyze(m, e)), () => showMain(m, done)), false, '', "Reveal a foe's weaknesses");
     const L = Data.LIMITS[m.key];
     if (L && m.limit >= 100) {
       if (m.key === 'healer') { // Marina commands the mermaids she's courted as summons
@@ -588,6 +589,24 @@ window.Battle = (function () {
     gainLimit(m, 18);
   }
   async function doDefend(m) { msg(`${m.name} braces for impact.`); m._defend = true; await wait(300); }
+  // ANALYZE — scout a foe's elemental affinities (records them to the bestiary so they persist)
+  async function doAnalyze(m, e) {
+    if (window.SFX) SFX.play('item');
+    const EI = Data.ELEMENT_INFO, ICON = { weak: '▲', resist: '▽', absorb: '✚', null: '⊘' };
+    const reveal = [];
+    const rec = (el2, res) => { if (!el2 || el2 === 'physical') return; if (Progress.recordAffinity) Progress.recordAffinity(Game.state, e.keyRaw, el2, res); reveal.push(ICON[res] + (EI[el2] ? EI[el2].i + EI[el2].name : el2)); };
+    if (e.rotate) {
+      if (e.dynWeak) rec(e.dynWeak, 'weak');
+      msg(`${m.name} studies ${e.name}: its weakness shifts — strike the lit tell!`);
+    } else {
+      const a = Data.AFFINITIES[e.keyRaw] || {};
+      (a.weak || []).forEach(x => rec(x, 'weak')); (a.resist || []).forEach(x => rec(x, 'resist'));
+      (a.absorb || []).forEach(x => rec(x, 'absorb')); (a.nullify || []).forEach(x => rec(x, 'null'));
+      msg(`${m.name} analyzes ${e.name} — ${reveal.length ? reveal.join('  ') : 'no elemental affinities'}`);
+    }
+    floatDamage(e.node, 'Analyzed', '#9be7ff', 2.6); burst(worldOf(e.node, 0.6), '#9be7ff', '#e0f2ff', 34, 4);
+    renderEnemies(false); await wait(750);
+  }
   async function doSpell(m, s, targets) {
     actionCam(1, 0.9);
     const elem = Data.elementOf(s), col = ELEMCOL[elem] || '#a5b4fc';

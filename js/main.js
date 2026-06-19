@@ -363,7 +363,7 @@ window.Game = (function () {
   function openPause() {
     if (!HUD_MODES.includes(Game.mode)) return;
     if (Game.pauseOpen) return closePause();
-    Game.pauseOpen = true; pauseExplore(); Progress.save(Game.state); el('pause').classList.add('show');
+    Game.pauseOpen = true; pauseExplore(); Progress.save(Game.state); renderObjective(); el('pause').classList.add('show');
   }
   function closePause() { Game.pauseOpen = false; el('pause').classList.remove('show'); resumeExplore(); }
   Game.openPause = openPause;
@@ -382,6 +382,27 @@ window.Game = (function () {
     if (Music.setSfxVolume) Music.setSfxVolume(s.sfx != null ? s.sfx : 1.0);
   }
   Game.applySettings = applySettings;
+
+  // ---------- objective / Captain's Log ----------
+  function currentObjective() {
+    const s = Game.state, prog = s.prog || {}, MM = Data.MERMAIDS || {};
+    const mKeys = Object.keys(MM);
+    const charmed = mKeys.filter(k => s.mermaids && s.mermaids[k] && s.mermaids[k].rel >= MM[k].threshold).length;
+    const seen = Object.values(s.bestiary || {}).filter(b => b && b.seen).length;
+    const totalE = Object.keys(Data.ENEMIES || {}).length;
+    let title, detail;
+    if (prog.finalWin) { title = '⭐ The seas are yours, Captain.'; detail = 'Charm every mermaid and complete the bestiary for total mastery.'; }
+    else if (prog.krakenDown) { title = '🌅 The Kraken is slain — sail east to the final trial.'; detail = 'Seek the endgame challenge in the farthest waters.'; }
+    else if (charmed === 0) { title = '💞 Court an elemental mermaid.'; detail = 'Find a mermaid out at sea and win her favor — she\'ll enchant a blade with her element.'; }
+    else { title = '🦑 Hunt the Kraken menacing the sea lanes.'; detail = 'Grow stronger in dungeons and duels, then bring the beast down.'; }
+    return { title, detail, charmed, totalM: mKeys.length, seen, totalE };
+  }
+  Game.currentObjective = currentObjective;
+  function renderObjective() {
+    const o = currentObjective(); const box = el('pauseObjective'); if (!box) return;
+    box.innerHTML = `<div class="obj-title">${o.title}</div><div class="obj-detail">${o.detail}</div>` +
+      `<div class="obj-stats">💞 Mermaids charmed ${o.charmed}/${o.totalM} · 📖 Bestiary ${o.seen}/${o.totalE}</div>`;
+  }
   function openOptions() { Game.optionsOpen = true; el('pause').classList.remove('show'); el('options').classList.add('show'); renderOptions(); }
   function closeOptions() { Game.optionsOpen = false; el('options').classList.remove('show'); el('pause').classList.add('show'); }
   function renderOptions() {
@@ -546,6 +567,7 @@ window.Game = (function () {
     el('btnSkills').onclick = openSkills;
     el('btnGear').onclick = openGear;
     el('btnParty').onclick = openParty;
+    el('btnObjective').onclick = () => { const o = currentObjective(); Game.toast(o.title); };
     if (window.Render) el('btnFx').textContent = Render.isHigh() ? '✨' : '▫️';
     el('btnFx').onclick = () => { const q = Render.toggle(); el('btnFx').textContent = q === 'high' ? '✨' : '▫️'; Game.toast('Graphics: ' + (q === 'high' ? 'High' : 'Low') + ' — applies when you next enter an area or battle.'); };
     el('btnMusic').onclick = () => { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; };
