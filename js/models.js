@@ -125,7 +125,7 @@ window.Models = (function () {
   // ---------------- PARTY ----------------
   function pirate(weaponKey) {
     const r = new BABYLON.TransformNode('pirate', scene);
-    const coat = M('coat', '#7a1f1f'), coat2 = M('coat2', '#9c2a2a'), dark = M('dark', '#2a2018'),
+    const coat = M('coat', '#a83232'), coat2 = M('coat2', '#c4433f'), dark = M('dark', '#2a2018'),
           skin = M('skin', '#d9a06b'), gold = M('gold', '#d9a521', { emissive: '#4a3606' }),
           steel = M('steel', '#c9d2dc', { spec: 0.8 }), beard = M('beardP', '#7a3b12');
     at(MB.CreateCylinder('lL', { height: 1.1, diameter: 0.34 }, scene), r, dark, -0.22, 0.55, 0);
@@ -150,7 +150,7 @@ window.Models = (function () {
 
   function swordsman(weaponKey) {
     const r = new BABYLON.TransformNode('swordsman', scene);
-    const navy = M('navy', '#2c3a52'), navy2 = M('navy2', '#3a4d6b'), hair = M('hair', '#e7d27a', { emissive: '#4a4010' }),
+    const navy = M('navy', '#36537f'), navy2 = M('navy2', '#48689e'), hair = M('hair', '#efd87e'),
           skin = M('skin2', '#cf9a78'), steel = M('steel2', '#c9d2dc', { spec: 0.8 }), dark = M('dk', '#2a2018');
     at(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.32 }, scene), r, M('pant', '#1f2733'), -0.22, 0.57, 0);
     at(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.32 }, scene), r, M('pant2', '#1f2733'), 0.22, 0.57, 0);
@@ -172,7 +172,7 @@ window.Models = (function () {
 
   function healer(weaponKey) {
     const r = new BABYLON.TransformNode('healer', scene);
-    const robe = M('robe', '#2fae9a', { emissive: '#0c3a33' }), robe2 = M('robe2', '#7fe3d4'),
+    const robe = M('robe', '#37c0a8'), robe2 = M('robe2', '#8fefdf'),
           hairC = M('hairC', '#37c0e0', { emissive: '#0a3a48' }), skin = M('skinH', '#d9a06b');
     at(MB.CreateCylinder('robe', { height: 1.9, diameterTop: 0.5, diameterBottom: 1.4 }, scene), r, robe, 0, 0.95, 0);
     at(MB.CreateCylinder('trim', { height: 0.2, diameterTop: 1.32, diameterBottom: 1.42 }, scene), r, robe2, 0, 0.12, 0);
@@ -237,7 +237,7 @@ window.Models = (function () {
 
   function dragoon(weaponKey) { // "Quint" — grizzled harpoon-fisherman (Moby Dick whaler)
     const r = new BABYLON.TransformNode('dragoon', scene);
-    const coat = M('dgCoat', '#3a5a55', { spec: 0.2 }), coat2 = M('dgCoat2', '#2d4742'), pants = M('dgPants', '#3a3024'),
+    const coat = M('dgCoat', '#4a766d', { spec: 0.2 }), coat2 = M('dgCoat2', '#39594f'), pants = M('dgPants', '#4a3e30'),
           steel = M('dgSteel', '#c9d2dc', { spec: 0.9 }), skin = M('dgSkin', '#c89a72'), hair = M('dgHair', '#8a7a66'),
           dark = M('dgDark', '#1a1410'), rope = M('dgRope', '#caa86a');
     at(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.34 }, scene), r, pants, -0.22, 0.57, 0);

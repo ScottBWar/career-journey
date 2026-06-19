@@ -16,6 +16,8 @@ window.Battle = (function () {
 
   const FX = { fire:['#ffb347','#ff5e3a'], water:['#5eead4','#3b82f6'], beam:['#a5b4fc','#e0e7ff'], heal:['#6ee7b7','#bbf7d0'], mana:['#60a5fa','#bfdbfe'], hit:['#ff6b6b','#ffd1d1'] };
   const PSPD = { pirate: 11, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12, simon: 11, aladdin: 14, violca: 13, mac: 9, sane: 14, marvyn: 8, quijano: 9 };
+  // enemies whose model is built facing +X (snout/beak/head along +x) rather than the usual +Z
+  const FRONT_X = { shark: 1, octo: 1, eel: 1, leviathan: 1, angler: 1, gull: 1, kraken: 1, boarspirit: 1, mutton: 1 };
   const ESPD = { shark: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8, eel: 13, urchin: 6, bat: 15, ghoul: 7, wraith: 11, vampire: 12, drifter: 14, cobra: 12, scarab: 7, genie: 10, wyvern: 13, skydragon: 11, harpy: 15, satyr: 11, cyclops: 5, minotaur: 9, medusa: 11, hydra: 9, thething: 11, forestgod: 9, vogon: 6, windmill: 5, thingspawn: 8, kodama: 12, boarspirit: 11, vogonclerk: 6, sentry: 13, mutton: 8, windvane: 6, ruffy_duel: 12, selachoth_omega: 13, sentinel: 9, guardbot: 12 };
   const ELEMCOL = { fire: '#ff7b3a', water: '#5eead4', thunder: '#fde047', earth: '#c2a062', dark: '#b06aff', holy: '#fff0a0', physical: '#dfe7ef' };
   const fxKey = el => ({ fire: 'fire', water: 'water' })[el] || 'beam';
@@ -76,7 +78,10 @@ window.Battle = (function () {
       const built = Models.enemy(key);
       let x = boss ? 8.0 : 7.4, z = boss ? 0 : 3.4 - i * 2.7;
       const home = new V3(x, def.baseY, z);
-      built.node.position.copyFrom(home); built.node._baseY = def.baseY; built.node.rotation.y = -Math.PI/2.2;
+      built.node.position.copyFrom(home); built.node._baseY = def.baseY;
+      // most models are built facing +Z, but the horizontal sea-creatures/animals face +X —
+      // rotate each so it actually faces the party (-X) instead of standing sideways
+      built.node.rotation.y = FRONT_X[key] ? Math.PI : -Math.PI / 2.2;
       if (boss) built.node.scaling.setAll(def.scale || 1.3);
       seen[key] = (seen[key] || 0) + 1;
       if (Progress.recordSeen) Progress.recordSeen(Game.state, key);
