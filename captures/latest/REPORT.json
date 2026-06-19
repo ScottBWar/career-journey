@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-06-19T15:40:18.305Z",
+  "runAt": "2026-06-19T15:54:00.165Z",
   "states": [
     {
       "name": "01_overworld_tidehaven",
@@ -239,8 +239,6 @@
       "pirate:1",
       "swordsman:1",
       "healer:10",
-      "mage:1",
-      "dragoon:1",
       "ruffy:1",
       "simon:1",
       "aladdin:1",

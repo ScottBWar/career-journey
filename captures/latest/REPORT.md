@@ -1,4 +1,4 @@
-# Capture report — 2026-06-19T15:40:18.305Z
+# Capture report — 2026-06-19T15:54:00.165Z
 
 ## JS errors: 0
 _none — no runtime errors caught_
@@ -57,8 +57,6 @@ _none — no runtime errors caught_
     "pirate:1",
     "swordsman:1",
     "healer:10",
-    "mage:1",
-    "dragoon:1",
     "ruffy:1",
     "simon:1",
     "aladdin:1",
