@@ -492,7 +492,8 @@ window.Models = (function () {
     // smooth tapered tail: hips → graceful taper → soft twin fins
     at(MB.CreateSphere('hips', { diameterX: 1.0, diameterY: 0.82, diameterZ: 0.92, segments: 16 }, scene), r, tail, 0, 0.95, -0.05);
     const t1 = at(MB.CreateCylinder('tail', { height: 1.5, diameterTop: 0.74, diameterBottom: 0.22, tessellation: 16 }, scene), r, tail, 0, 0.5, 0.35); t1.rotation.x = 0.7;
-    [-1, 1].forEach(s => { const fin = at(MB.CreateSphere('fin', { diameterX: 0.95, diameterY: 0.1, diameterZ: 0.78, segments: 12 }, scene), r, tailLite, s * 0.32, 0.12, 1.2); fin.rotation.y = s * 0.5; fin.rotation.x = -0.18; });
+    // twin fins that fan UP/back like a tail, not flat flippers on the floor
+    [-1, 1].forEach(s => { const fin = at(MB.CreateSphere('fin', { diameterX: 0.85, diameterY: 0.1, diameterZ: 0.7, segments: 12 }, scene), r, tailLite, s * 0.3, 0.34, 1.0); fin.rotation.x = -0.95; fin.rotation.y = s * 0.55; fin.rotation.z = s * 0.25; });
     // shimmer rings down the tail catch the light
     [0.7, 1.05].forEach((y, i) => at(MB.CreateTorus('scale' + i, { diameter: 0.66 - i * 0.18, thickness: 0.05, tessellation: 16 }, scene), r, tailLite, 0, y, 0.2 + i * 0.12).rotation.x = Math.PI / 2 - 0.5);
     // hourglass torso → narrow waist, smooth
@@ -501,7 +502,7 @@ window.Models = (function () {
     [-0.18, 0.18].forEach(x => at(MB.CreateSphere('bust', { diameter: 0.34, segments: 12 }, scene), r, top, x, 1.92, 0.16));
     at(MB.CreateTorus('strap', { diameter: 0.72, thickness: 0.06, tessellation: 16 }, scene), r, top, 0, 1.98, 0.02).rotation.x = 1.3;
     // slender arms with soft hands
-    [-1, 1].forEach(s => { at(MB.CreateCylinder('arm', { height: 0.85, diameter: 0.13, tessellation: 10 }, scene), r, skin, s * 0.42, 1.7, 0.05).rotation.z = -s * 0.55; at(MB.CreateSphere('hand', { diameter: 0.16, segments: 10 }, scene), r, skin, s * 0.66, 1.36, 0.05); });
+    [-1, 1].forEach(s => { const a = at(MB.CreateCylinder('arm', { height: 0.85, diameter: 0.13, tessellation: 10 }, scene), r, skin, s * 0.36, 1.62, 0.08); a.rotation.z = -s * 0.22; a.rotation.x = -0.25; at(MB.CreateSphere('hand', { diameter: 0.15, segments: 10 }, scene), r, skin, s * 0.46, 1.18, 0.2); });
     // graceful neck + head
     at(MB.CreateCylinder('neck', { height: 0.25, diameter: 0.18, tessellation: 12 }, scene), r, skin, 0, 2.28, 0);
     at(MB.CreateSphere('head', { diameterX: 0.5, diameterY: 0.56, diameterZ: 0.52, segments: 16 }, scene), r, skin, 0, 2.55, 0.02);
@@ -518,7 +519,8 @@ window.Models = (function () {
       const lock = at(MB.CreateCylinder('hairBack' + i, { height: 1.85 + (i === 1 ? 0.25 : 0), diameterTop: 0.26, diameterBottom: 0.1, tessellation: 10 }, scene), r, hair, x, 1.9, -0.24); lock.rotation.x = -0.1;
       at(MB.CreateSphere('curl' + i, { diameter: 0.2, segments: 10 }, scene), r, hair, x * 1.25, 1.0, -0.16);
     });
-    [-1, 1].forEach(s => { const sl = at(MB.CreateCylinder('hairSide', { height: 1.35, diameterTop: 0.17, diameterBottom: 0.08, tessellation: 8 }, scene), r, hair, s * 0.28, 2.04, 0.1); sl.rotation.z = -s * 0.14; });
+    // face-framing locks that DRAPE down beside the cheeks (not stick up/out)
+    [-1, 1].forEach(s => { const sl = at(MB.CreateCylinder('hairSide', { height: 1.25, diameterTop: 0.18, diameterBottom: 0.07, tessellation: 8 }, scene), r, hair, s * 0.25, 1.78, 0.14); sl.rotation.z = s * 0.05; sl.rotation.x = 0.12; });
     // delicate shell tiara + center pearl
     at(MB.CreateCylinder('tiara', { height: 0.1, diameterTop: 0, diameterBottom: 0.2, tessellation: 8 }, scene), r, M('mmTiara', '#ffe9b0'), 0, 2.84, 0.16);
     at(MB.CreateSphere('pearl', { diameter: 0.1, segments: 10 }, scene), r, M('mmPearl', '#fff6e8'), 0, 2.78, 0.26);
