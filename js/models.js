@@ -32,7 +32,9 @@ window.Models = (function () {
     return parent;
   }
   // a small hand/glove sphere at the end of a limb
-  function hand(parent, x, y, z, hex) { return at(MB.CreateSphere('hand', { diameter: 0.2, segments: 6 }, scene), parent, M('handM', hex || '#d9a06b'), x, y, z); }
+  function hand(parent, x, y, z, hex) { return at(MB.CreateSphere('hand', { diameter: 0.2, segments: 8 }, scene), parent, M('handM', hex || '#d9a06b'), x, y, z); }
+  // subtle rounded shoulder caps so a box torso doesn't meet the arms at a hard corner
+  function shoulders(parent, mat, y, x, dia) { [-1, 1].forEach(s => at(MB.CreateSphere('shoulder', { diameter: dia, segments: 10 }, scene), parent, mat, s * x, y, 0)); }
 
   // ---------------- WEAPONS (FF7-style: the equipped weapon changes the held mesh) ----------------
   // per-character archetype: a hold style + a tier palette. weaponSpec() reads the
@@ -129,6 +131,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('lL', { height: 1.1, diameter: 0.34 }, scene), r, dark, -0.22, 0.55, 0);
     at(MB.CreateCylinder('lR', { height: 1.1, diameter: 0.34 }, scene), r, dark, 0.22, 0.55, 0);
     at(MB.CreateBox('torso', { width: 0.95, height: 1.15, depth: 0.6 }, scene), r, coat, 0, 1.6, 0);
+    shoulders(r, coat, 2.06, 0.46, 0.5);
     at(MB.CreateBox('sash', { width: 1.0, height: 0.22, depth: 0.62 }, scene), r, gold, 0, 1.3, 0);
     const aL = at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.3 }, scene), r, coat2, -0.62, 1.6, 0); aL.rotation.z = 0.25;
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.6, 2.0, 0);
@@ -152,6 +155,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.32 }, scene), r, M('pant', '#1f2733'), -0.22, 0.57, 0);
     at(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.32 }, scene), r, M('pant2', '#1f2733'), 0.22, 0.57, 0);
     at(MB.CreateBox('torso', { width: 0.92, height: 1.2, depth: 0.55 }, scene), r, navy, 0, 1.62, 0);
+    shoulders(r, navy, 2.08, 0.44, 0.5);
     at(MB.CreateBox('belt', { width: 0.96, height: 0.18, depth: 0.57 }, scene), r, M('belt', '#7a5230'), 0, 1.25, 0);
     at(MB.CreateSphere('pauldron', { diameter: 0.62, slice: 0.6 }, scene), r, steel, -0.55, 2.05, 0);
     const aL = at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.28 }, scene), r, navy2, -0.6, 1.6, 0); aL.rotation.z = 0.22;
@@ -240,6 +244,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.34 }, scene), r, pants, 0.22, 0.57, 0);
     at(MB.CreateBox('boots', { width: 0.95, height: 0.3, depth: 0.7 }, scene), r, dark, 0, 0.15, 0.05);
     at(MB.CreateBox('torso', { width: 0.95, height: 1.2, depth: 0.6 }, scene), r, coat, 0, 1.62, 0);
+    shoulders(r, coat, 2.08, 0.46, 0.5);
     at(MB.CreateBox('vest', { width: 0.55, height: 1.1, depth: 0.62 }, scene), r, coat2, 0, 1.6, 0);
     at(MB.CreateBox('belt', { width: 1.0, height: 0.16, depth: 0.62 }, scene), r, dark, 0, 1.12, 0);
     at(MB.CreateCylinder('aL', { height: 0.98, diameter: 0.3 }, scene), r, coat, -0.62, 1.6, 0).rotation.z = 0.2;
@@ -455,6 +460,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('lL', { height: 1.0, diameter: 0.3 }, scene), r, shorts, -0.22, 0.5, 0);
     at(MB.CreateCylinder('lR', { height: 1.0, diameter: 0.3 }, scene), r, shorts, 0.22, 0.5, 0);
     at(MB.CreateBox('torso', { width: 0.82, height: 1.0, depth: 0.48 }, scene), r, skin, 0, 1.5, 0); // open vest = bare chest
+    shoulders(r, skin, 1.9, 0.4, 0.44);
     at(MB.CreateBox('vestL', { width: 0.18, height: 1.0, depth: 0.5 }, scene), r, vest, -0.34, 1.5, 0);
     at(MB.CreateBox('vestR', { width: 0.18, height: 1.0, depth: 0.5 }, scene), r, vest, 0.34, 1.5, 0);
     at(MB.CreateBox('sash', { width: 0.86, height: 0.18, depth: 0.5 }, scene), r, band, 0, 1.05, 0);
@@ -1092,6 +1098,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('lR', { height: 1.2, diameter: 0.34 }, scene), r, pants, 0.22, 0.6, 0);
     at(MB.CreateBox('sash', { width: 0.96, height: 0.2, depth: 0.58 }, scene), r, fez, 0, 1.3, 0);
     at(MB.CreateBox('torso', { width: 0.86, height: 1.1, depth: 0.5 }, scene), r, skin, 0, 1.7, 0);   // bare chest
+    shoulders(r, skin, 2.12, 0.42, 0.46);
     at(MB.CreateBox('vest', { width: 0.94, height: 1.0, depth: 0.54 }, scene), r, vest, 0, 1.75, -0.02).scaling.x = 0.5; // open vest sides
     const aL = at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.26 }, scene), r, skin, -0.58, 1.7, 0); aL.rotation.z = 0.22;
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.6, 2.05, 0);
@@ -1114,6 +1121,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('lL', { height: 1.3, diameter: 0.3 }, scene), r, leather, -0.2, 0.65, 0);
     at(MB.CreateCylinder('lR', { height: 1.3, diameter: 0.3 }, scene), r, leather, 0.2, 0.65, 0);
     at(MB.CreateBox('torso', { width: 0.84, height: 1.2, depth: 0.5 }, scene), r, leather2, 0, 1.65, 0);
+    shoulders(r, leather2, 2.1, 0.42, 0.48);
     at(MB.CreateBox('strap', { width: 0.9, height: 0.9, depth: 0.52 }, scene), r, accent, 0, 1.7, 0).scaling.x = 0.28; // diagonal quiver strap
     at(MB.CreateBox('belt', { width: 0.9, height: 0.16, depth: 0.54 }, scene), r, M('viBelt', '#caa030', { emissive: '#3a2e08' }), 0, 1.2, 0);
     // shoulder cloak
@@ -1142,6 +1150,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('lL', { height: 1.15, diameter: 0.32 }, scene), r, leather, -0.22, 0.57, 0);
     at(MB.CreateCylinder('lR', { height: 1.15, diameter: 0.32 }, scene), r, leather, 0.22, 0.57, 0);
     at(MB.CreateBox('torso', { width: 0.92, height: 1.2, depth: 0.55 }, scene), r, tunic, 0, 1.62, 0);
+    shoulders(r, tunic, 2.08, 0.45, 0.5);
     at(MB.CreateBox('belt', { width: 0.96, height: 0.18, depth: 0.57 }, scene), r, M('smBelt', '#caa030', { emissive: '#3a2e08' }), 0, 1.25, 0);
     at(MB.CreateBox('pauldron', { width: 0.5, height: 0.3, depth: 0.6 }, scene), r, armor, -0.55, 2.08, 0);
     const aL = at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.28 }, scene), r, tunic2, -0.6, 1.6, 0); aL.rotation.z = 0.22;
@@ -1163,6 +1172,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('lL', { height: 1.2, diameter: 0.36 }, scene), r, parka2, -0.24, 0.6, 0);
     at(MB.CreateCylinder('lR', { height: 1.2, diameter: 0.36 }, scene), r, parka2, 0.24, 0.6, 0);
     at(MB.CreateBox('torso', { width: 1.05, height: 1.3, depth: 0.7 }, scene), r, parka, 0, 1.75, 0);
+    shoulders(r, parka, 2.24, 0.5, 0.56);
     at(MB.CreateBox('tank', { width: 0.7, height: 1.0, depth: 0.4 }, scene), r, M('mcTank', '#3a4a3a'), 0, 1.8, -0.5);
     at(MB.CreateCylinder('aL', { height: 0.95, diameter: 0.3 }, scene), r, parka, -0.62, 1.7, 0.1).rotation.z = 0.25;
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.62, 2.05, 0);
@@ -1186,6 +1196,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('lL', { height: 1.2, diameter: 0.28 }, scene), r, skin, -0.2, 0.6, 0);
     at(MB.CreateCylinder('lR', { height: 1.2, diameter: 0.28 }, scene), r, skin, 0.2, 0.6, 0);
     at(MB.CreateBox('tunic', { width: 0.8, height: 1.0, depth: 0.46 }, scene), r, fur, 0, 1.55, 0);
+    shoulders(r, fur, 1.96, 0.4, 0.46);
     at(MB.CreateBox('mantle', { width: 1.1, height: 0.7, depth: 0.6 }, scene), r, fur, 0, 1.95, -0.04); // fur shoulder mantle
     at(MB.CreateCylinder('aL', { height: 0.85, diameter: 0.2 }, scene), r, skin, -0.5, 1.55, 0.05).rotation.z = 0.4;
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.5, 1.95, 0);
@@ -1232,6 +1243,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('lL', { height: 1.3, diameter: 0.24 }, scene), r, cloth, -0.2, 0.65, 0);
     at(MB.CreateCylinder('lR', { height: 1.3, diameter: 0.24 }, scene), r, cloth, 0.2, 0.65, 0);
     at(MB.CreateBox('breast', { width: 0.78, height: 1.0, depth: 0.5 }, scene), r, steel, 0, 1.7, 0); // dented breastplate
+    shoulders(r, steel, 2.1, 0.4, 0.44);
     at(MB.CreateBox('pauldron', { width: 0.4, height: 0.3, depth: 0.55 }, scene), r, steel, -0.5, 2.05, 0);
     at(MB.CreateCylinder('aL', { height: 0.9, diameter: 0.18 }, scene), r, steel, -0.52, 1.65, 0.05).rotation.z = 0.4;
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.52, 2.0, 0);
