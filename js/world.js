@@ -6,6 +6,7 @@ window.World = (function () {
   const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
   let scene, cam, player, engine, def, key;
   let roamers = [], gates = [], idlers = [], gulls = [], water = null, waterBase = null, paused = false, locked = false, nearGate = null, t = 0, camYaw = 0, playerArm = null, swingT = 0;
+  let cuttables = [], debris = [];
   const SPEED = 9;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
@@ -15,6 +16,7 @@ window.World = (function () {
     key = islandKey; def = Data.ISLANDS[islandKey]; engine = Game.engine;
     if (scene) scene.dispose();
     roamers = []; gates = []; idlers = []; gulls = []; nearGate = null; t = 0; paused = false; locked = false;
+    cuttables = []; debris = [];
     scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.6, 0.8, 0.95); scene.fogDensity = 0.006;
@@ -148,6 +150,34 @@ window.World = (function () {
       idlers.push(ro);
     });
 
+    // cuttable scenery — Zelda-style grass tufts to slice and clay pots to smash
+    const grassCol = def.grassCut || '#6fae4b';
+    const makeGrass = () => {
+      const root = new BABYLON.TransformNode('grasstuft', scene); const mat = M('blade', grassCol, { spec: 0 });
+      for (let i = 0; i < 5; i++) { const b = MB.CreateCylinder('blade', { height: 0.7 + Math.random() * 0.4, diameterBottom: 0.16, diameterTop: 0.0, tessellation: 4 }, scene); b.material = mat; const a = Math.random() * 6.28, rr = Math.random() * 0.22; b.position.set(Math.cos(a) * rr, b.scaling.y * 0.35 + 0.1, Math.sin(a) * rr); b.rotation.x = (Math.random() - 0.5) * 0.4; b.rotation.z = (Math.random() - 0.5) * 0.4; b.parent = root; }
+      return { node: root, color: grassCol };
+    };
+    const makePot = () => {
+      const root = new BABYLON.TransformNode('pot', scene); const body = MB.CreateCylinder('potbody', { height: 0.85, diameterTop: 0.55, diameterBottom: 0.4, tessellation: 10 }, scene); body.material = M('clay', '#b46a3a'); body.position.y = 0.42; body.parent = root;
+      const rim = MB.CreateTorus('potrim', { diameter: 0.6, thickness: 0.12, tessellation: 10 }, scene); rim.material = M('clayrim', '#8a4e29'); rim.position.y = 0.82; rim.parent = root;
+      return { node: root, color: '#b46a3a' };
+    };
+    const scatterCut = (b, n, type) => {
+      for (let i = 0; i < n; i++) {
+        let x = 0, z = 0, ok = false;
+        for (let tries = 0; tries < 20 && !ok; tries++) {
+          const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (def.size * 0.42 - 6);
+          x = Math.cos(a) * r; z = Math.sin(a) * r; ok = true;
+          for (const k of keepOut) { const dx = x - k.x, dz = z - k.z; if (dx * dx + dz * dz < k.r * k.r) { ok = false; break; } }
+        }
+        if (!ok) continue;
+        const o = b(); o.node.position.set(x, 0, z); if (type === 'grass') o.node.rotation.y = Math.random() * 6.28;
+        cuttables.push({ node: o.node, type, color: o.color, pos: new V3(x, 0, z) });
+      }
+    };
+    scatterCut(makeGrass, 16, 'grass');
+    scatterCut(makePot, 7, 'pot');
+
     // ambient seagulls wheeling overhead
     for (let i = 0; i < 5; i++) { const g = Models.enemy('gull'); g.node.scaling.setAll(0.5);
       gulls.push({ node: g.node, idle: g.idle, cx: (Math.random()*2-1)*def.size*0.3, cz: (Math.random()*2-1)*def.size*0.3, rad: 6 + Math.random()*9, ang: Math.random()*6.28, spd: 0.4 + Math.random()*0.4, y: 7 + Math.random()*5 }); }
@@ -171,7 +201,14 @@ window.World = (function () {
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
     if (Input.down('KeyQ')) camYaw -= 1.7 * dt;
     if (Input.down('KeyE')) camYaw += 1.7 * dt;
-    if (swingT > 0 && playerArm) { swingT -= dt; playerArm.rotation.x = -Math.sin(Math.max(0, swingT) / 0.25 * Math.PI) * 1.4; if (swingT <= 0) playerArm.rotation.x = 1.0; }
+    if (swingT > 0 && playerArm) { swingT -= dt; playerArm.rotation.x = -Math.sin(Math.max(0, swingT) / 0.35 * Math.PI) * 1.6; if (swingT <= 0) playerArm.rotation.x = 1.0; }
+    // animate cut debris + slash arcs, dispose when spent
+    for (let i = debris.length - 1; i >= 0; i--) {
+      const d = debris[i]; d.life -= dt;
+      if (d.life <= 0) { d.node.dispose(); debris.splice(i, 1); continue; }
+      if (d.arc) { const k = d.life / d.max; d.mat.alpha = 0.85 * k; d.node.scaling.setAll(1 + (1 - k) * 0.6); }
+      else { d.node.position.x += d.vx * dt; d.node.position.z += d.vz * dt; d.vy -= 14 * dt; d.node.position.y = Math.max(0.05, d.node.position.y + d.vy * dt); d.node.rotation.y += d.spin * dt; d.node.rotation.x += d.spin * dt; }
+    }
     let mx = 0, mz = 0;
     if (Input.down('KeyW') || Input.down('ArrowUp')) mz += 1;
     if (Input.down('KeyS') || Input.down('ArrowDown')) mz -= 1;
@@ -236,10 +273,53 @@ window.World = (function () {
     const [Px, Py] = px(player.position.x, player.position.z); c.fillStyle = '#fde047'; c.beginPath(); c.arc(Px, Py, 4, 0, 7); c.fill(); c.strokeStyle = '#000'; c.lineWidth = 1; c.stroke();
   }
 
-  // overworld weapon swing — hit a nearby roamer to open battle with FIRST STRIKE
+  // a quick fading slash-arc that sweeps in front of the player — pure juice
+  function slashArc() {
+    const arc = MB.CreateTorus('slash', { diameter: 2.6, thickness: 0.18, tessellation: 16 }, scene);
+    const m = new BABYLON.StandardMaterial('arcM', scene); m.emissiveColor = new Color3(1, 1, 0.92); m.diffuseColor = new Color3(0, 0, 0); m.alpha = 0.85; arc.material = m;
+    const fX = Math.sin(player.rotation.y), fZ = Math.cos(player.rotation.y);
+    arc.position.set(player.position.x + fX * 1.1, 0.9, player.position.z + fZ * 1.1);
+    arc.rotation.x = Math.PI / 2; arc.rotation.y = player.rotation.y;
+    debris.push({ node: arc, mat: m, arc: true, life: 0.22, max: 0.22 });
+  }
+
+  // burst of little fragments that fly out + fall — sells the "it broke" feeling
+  function spawnDebris(pos, color, n) {
+    const mat = M('bit', color, { spec: 0 });
+    for (let i = 0; i < n; i++) {
+      const b = MB.CreateBox('bit', { size: 0.12 + Math.random() * 0.12 }, scene); b.material = mat;
+      b.position.set(pos.x, 0.4 + Math.random() * 0.4, pos.z);
+      const a = Math.random() * 6.28, sp = 1.5 + Math.random() * 2.5;
+      debris.push({ node: b, vx: Math.cos(a) * sp, vz: Math.sin(a) * sp, vy: 2.5 + Math.random() * 2, life: 0.7, max: 0.7, spin: (Math.random() - 0.5) * 12 });
+    }
+  }
+
+  // overworld weapon swing — slice grass, smash pots, and first-strike roamers
   function attack() {
     if (paused || locked) return;
-    swingT = 0.25; if (window.SFX) SFX.play('hit');
+    swingT = 0.35; if (window.SFX) SFX.play('slash'); slashArc();
+    const fX = Math.sin(player.rotation.y), fZ = Math.cos(player.rotation.y);
+    let smashedPot = false, cutGrass = false;
+    for (const c of cuttables) {
+      if (!c.node.isEnabled()) continue;
+      const dx = c.node.position.x - player.position.x, dz = c.node.position.z - player.position.z;
+      const dist = Math.hypot(dx, dz); if (dist > 2.4) continue;
+      // must be roughly in front of the swing (forgiving ~120° cone), or point-blank
+      if (dist > 0.6 && (dx * fX + dz * fZ) / dist < 0.3) continue;
+      c.node.setEnabled(false);
+      spawnDebris(c.node.position, c.color, c.type === 'pot' ? 9 : 6);
+      if (c.type === 'pot') {
+        smashedPot = true;
+        const g = 6 + Math.floor(Math.random() * 11); Game.state.gold += g; Game.toast('⛃ +' + g);
+        if (Math.random() < 0.3) { const mk = ['sand', 'shellfrag', 'feather'][Math.floor(Math.random() * 3)]; Progress.addMaterials(Game.state, { [mk]: 1 }); }
+      } else {
+        cutGrass = true;
+        if (Math.random() < 0.2) { const g = 1 + Math.floor(Math.random() * 3); Game.state.gold += g; }
+      }
+    }
+    if (smashedPot && window.SFX) SFX.play('smash');
+    else if (cutGrass && window.SFX) SFX.play('cut');
+    if (smashedPot || cutGrass) { Progress.save(Game.state); Game.updateHUD(); }
     let best = null, bd = 3.2;
     for (const r of roamers) { if (!r.node.isEnabled()) continue; const d = V3.Distance(r.node.position, player.position); if (d < bd) { bd = d; best = r; } }
     if (best) startRoamerBattle(best, true);
