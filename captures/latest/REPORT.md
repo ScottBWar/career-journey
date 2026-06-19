@@ -1,9 +1,9 @@
-# Capture report — 2026-06-19T13:31:52.662Z
+# Capture report — 2026-06-19T13:40:36.584Z
 
 ## JS errors: 0
 _none — no runtime errors caught_
 
-## States captured (33)
+## States captured (34)
 - ✅ `01_overworld_tidehaven.png`
 - ✅ `02_overworld_paegina.png`
 - ✅ `03_overworld_duskmoor.png`
@@ -37,11 +37,12 @@ _none — no runtime errors caught_
 - ✅ `31_gallery_omega.png`
 - ✅ `32_battle_sentinel.png`
 - ✅ `33_cutscene_reactor.png`
+- ✅ `34_gallery_mermaids.png`
 
 ## Game-state snapshot
 ```json
 {
-  "gold": 90,
+  "gold": 86,
   "pearls": 0,
   "active": [
     "pirate",
@@ -52,7 +53,7 @@ _none — no runtime errors caught_
   "levels": [
     "pirate:1",
     "swordsman:1",
-    "healer:1",
+    "healer:10",
     "mage:1",
     "dragoon:1",
     "ruffy:1",

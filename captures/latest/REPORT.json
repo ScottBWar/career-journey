@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-06-19T13:31:52.662Z",
+  "runAt": "2026-06-19T13:40:36.584Z",
   "states": [
     {
       "name": "01_overworld_tidehaven",
@@ -198,12 +198,18 @@
       "drove": true,
       "newErrors": 0,
       "screenshot": "33_cutscene_reactor.png"
+    },
+    {
+      "name": "34_gallery_mermaids",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "34_gallery_mermaids.png"
     }
   ],
   "consoleErrors": [],
   "pageErrors": [],
   "snapshot": {
-    "gold": 90,
+    "gold": 86,
     "pearls": 0,
     "active": [
       "pirate",
@@ -214,7 +220,7 @@
     "levels": [
       "pirate:1",
       "swordsman:1",
-      "healer:1",
+      "healer:10",
       "mage:1",
       "dragoon:1",
       "ruffy:1",
