@@ -102,7 +102,7 @@ window.Game = (function () {
   // ---------- battle bridge ----------
   Game.musicForReturn = () => (Game.mode === 'sea' || Game.mode === 'shipbattle') ? 'sea' : 'island';
   Game.startBattle = function (keys, opts, onEnd) {
-    Music.play(opts && opts.boss ? 'boss' : 'battle');
+    Music.play((opts && opts.music) || (opts && opts.boss ? 'boss' : 'battle'));
     transition(() => { setMode('battle'); const s = Battle.build(keys, opts, onEnd); Game.scene = s; setTimeout(() => { if (Game.scene === s) Battle.startLoop(); }, 350); });
   };
   Game.startShipBattle = function (type, onEnd) {

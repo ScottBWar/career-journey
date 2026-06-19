@@ -88,6 +88,22 @@ window.Models = (function () {
     return wn;
   }
 
+  // cosmetic gear that shows on the model regardless of builder (currently the
+  // Golden Fleece, the Coliseum champion's prize, draped over the shoulders).
+  function cosmetic(node, accessoryKey) {
+    if (!node || accessoryKey !== 'golden_fleece') return;
+    const gold = M('flGold', '#e8c24a', { spec: 0.8, specPower: 80, emissive: '#6a4e0a' });
+    const wool = M('flWool', '#f0d870', { emissive: '#5a4408' });
+    // pelt hanging down the back
+    const cape = at(MB.CreateBox('fleece', { width: 0.95, height: 1.25, depth: 0.12 }, scene), node, gold, 0, 1.55, -0.36); cape.rotation.x = 0.12;
+    // fluffy shoulder mantle
+    [-0.42, 0, 0.42].forEach(x => at(MB.CreateSphere('flw', { diameter: 0.42 }, scene), node, wool, x, 2.05, -0.18));
+    // little hanging hooves/tassels
+    [-0.32, 0.32].forEach(x => at(MB.CreateCylinder('hoof', { height: 0.22, diameterTop: 0.06, diameterBottom: 0.12 }, scene), node, M('flHoof', '#8a6a1a'), x, 0.95, -0.34));
+    // soft glow so the champion reads at a glance
+    const gl = at(MB.CreateSphere('flGlow', { diameter: 1.4 }, scene), node, M('flGlowM', '#ffe9a8', { emissive: '#ffe9a8', alpha: 0.14 }), 0, 1.7, -0.2); gl.material.alphaMode = BABYLON.Engine.ALPHA_ADD; gl.isPickable = false;
+  }
+
   // ---------------- PARTY ----------------
   function pirate(weaponKey) {
     const r = new BABYLON.TransformNode('pirate', scene);
@@ -884,6 +900,6 @@ window.Models = (function () {
   }
   function pillar() { const r = new BABYLON.TransformNode('pillar', scene); at(MB.CreateCylinder('p', { height: 4, diameter: 1.0, tessellation: 8 }, scene), r, M('pil', '#5a5266'), 0, 2, 0); return { node: r }; }
 
-  return { use, M, at, pirate, swordsman, healer, mage, blader, dragoon, rival, simon, aladdin, violca, mermaid, hero, npc, tree, palm, rock, house, sign, portal, roamer,
+  return { use, M, at, weaponSpec, attachWeapon, cosmetic, pirate, swordsman, healer, mage, blader, dragoon, rival, simon, aladdin, violca, mermaid, hero, npc, tree, palm, rock, house, sign, portal, roamer,
            crystal, chest, pillar, enemy: (key) => ENEMY_BUILDERS[key](), ENEMY_BUILDERS };
 })();

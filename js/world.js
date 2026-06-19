@@ -132,6 +132,7 @@ window.World = (function () {
     const leaderKey = Game.state.active[0] || 'pirate'; const leaderModel = Progress.def(leaderKey).model;
     const leaderWeapon = (Game.state.equip[leaderKey] || {}).weapon;
     const hero = Models[leaderModel] ? Models[leaderModel](leaderWeapon) : Models.hero(); player = hero.node; playerArm = hero.arm || hero.staffPiv || null;
+    Models.cosmetic(player, (Game.state.equip[leaderKey] || {}).accessory);
     if (playerArm) playerArm.rotation.x = 1.0; // rest the weapon down instead of holding it straight out
     player.position.set(Game.state.location.x, 0, Game.state.location.z);
     cam = new BABYLON.UniversalCamera('wcam', new V3(0, 18, -16), scene); cam.fov = 0.8;
@@ -221,9 +222,10 @@ window.World = (function () {
   }
 
   function startRoamerBattle(r, firstStrike) {
-    locked = true; paused = true; Music.play('battle');
+    const track = key === 'paegina' ? 'paegina' : 'battle';
+    locked = true; paused = true; Music.play(track);
     if (firstStrike) Game.toast('First strike!');
-    Game.startBattle(Data.randomEncounter(r.enc), { firstStrike: !!firstStrike }, (res) => {
+    Game.startBattle(Data.randomEncounter(r.enc), { firstStrike: !!firstStrike, music: track }, (res) => {
       if (res.won) { Game.state.islands[key].cleared['e' + r.idx] = true; r.node.setEnabled(false); Progress.save(Game.state); }
       else { const dir = player.position.subtract(r.node.position); if (dir.length() < 0.1) dir.set(0,0,-1); dir.normalize(); player.position.addInPlace(dir.scale(4)); Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
       paused = false; locked = false; Game.resumeIsland();

@@ -56,6 +56,7 @@ window.Battle = (function () {
     Progress.activeMembers(Game.state).forEach((ms, i) => {
       const d = Progress.derived(ms);
       const built = Models[d.model]((Game.state.equip[ms.key] || {}).weapon);
+      Models.cosmetic(built.node, (Game.state.equip[ms.key] || {}).accessory);
       const home = new V3(-4.4, 0, 3.0 - i * 2.6);
       built.node.position.copyFrom(home); built.node.rotation.y = Math.PI/2.2;
       const hp = clamp(ms.hpCur == null ? d.maxhp : ms.hpCur, 0, d.maxhp);

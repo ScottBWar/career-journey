@@ -51,6 +51,7 @@ window.Town = (function () {
     // player = the active party leader (consistent with overworld)
     const leaderKey = Game.state.active[0] || 'pirate'; const leaderModel = Progress.def(leaderKey).model;
     const hero = Models[leaderModel] ? Models[leaderModel]((Game.state.equip[leaderKey] || {}).weapon) : Models.hero(); player = hero.node;
+    Models.cosmetic(player, (Game.state.equip[leaderKey] || {}).accessory);
     if (hero.arm) hero.arm.rotation.x = 1.0;
     player.position.set(def.exit.x, 0, def.exit.z + 3);
     cam = new BABYLON.UniversalCamera('tcam', new V3(0, 15, -14), scene); cam.fov = 0.85;

@@ -54,7 +54,7 @@ window.Coliseum = (function () {
   function runWave() {
     const wave = curLeague.waves[cleared];
     const boss = wave.length === 1 && Data.ENEMIES[wave[0]] && Data.ENEMIES[wave[0]].boss;
-    Game.startBattle(wave.slice(), { boss: !!boss, coliseum: true }, (res) => {
+    Game.startBattle(wave.slice(), { boss: !!boss, coliseum: true, music: 'paegina' }, (res) => {
       Game.resumeIsland();   // restore a live scene behind our overlay (battle scene is disposed)
       if (res.won) { cleared++; if (cleared >= curLeague.waves.length) finishLeague(); else interlude(); }
       else defeat();

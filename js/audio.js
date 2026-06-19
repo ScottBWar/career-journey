@@ -167,6 +167,15 @@
       bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.26,
       mel: [_,_,_,_, 71,_,_,_, 72,_,_,_, _,_,69,_,  _,_,_,_, 67,_,_,_, 69,_,_,_, _,_,_,_], leadPeak: 0.07 },
 
+    // the Coliseum of Paegina — trip-hop bed under a plucked, Phrygian lyre
+    paegina: { bpm: 88, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 1900,
+      bars: [[57,60,64,67],[58,62,65,69],[53,57,60,65],[55,58,62,67]],
+      keys: [_,_,K,_, K,_,_,K, _,_,K,_, K,_,K,_], keyLen: 1.5, keyPeak: 0.06,
+      bassP: [0,_,_,_, 0,_,7,_, 0,_,_,_, 7,_,5,_], bassPeak: 0.32,
+      // fast lyre arpeggios in A-Phrygian (A Bb C D E F G)
+      leadADSR: { a: 0.004, d: 0.16, s: 0.1, r: 0.16 }, leadDur: 0.9, leadPeak: 0.07,
+      mel: [57,60,64, 69,67,65, 64,_, 60,64,67, 72,_,67,_, _,  58,62,65, 69,65,62, 58,_, 57,60,64, 67,64,60, 57,_,_,_] },
+
     // sparse, dripping ambience
     dungeon: { bpm: 68, drums: 'soft', swing: 0.2, padWave: 'sawtooth', leadWave: 'sine', cut: 1000,
       bars: [[57,60,64],[52,55,59],[50,53,57],[51,55,58]],
@@ -224,9 +233,9 @@
     if (tk.stabs && tk.stabs[step]) chord.forEach(n => voice(midi(n), t, beat * 1.6, { type: 'sawtooth', detune: 10, peak: 0.06, cutoff: 1300, a: 0.02, d: 0.18, s: 0.4, r: 0.3 }));
     // deep sub bass
     const bp = tk.bassP[step]; if (bp !== _) subBass(midi(chord[0] - 24 + bp), t, beat * (tk.bassLen || 3.4), { peak: tk.bassPeak || 0.3 });
-    // sparse, reverbed lead (loops on its own length)
+    // sparse, reverbed lead (loops on its own length); leadADSR lets a track pluck (lyre) instead of sustain
     const note = tk.mel[gstep % tk.mel.length];
-    if (note) voice(midi(note), t, beat * 2.0, { type: tk.leadWave, peak: tk.leadPeak || 0.08, cutoff: tk.cut + 500, a: 0.02, d: 0.2, s: 0.4, r: 0.45 });
+    if (note) { const la = tk.leadADSR || { a: 0.02, d: 0.2, s: 0.4, r: 0.45 }; voice(midi(note), t, beat * (tk.leadDur || 2.0), { type: tk.leadWave, peak: tk.leadPeak || 0.08, cutoff: tk.cut + 500, a: la.a, d: la.d, s: la.s, r: la.r }); }
     // drums
     drumStep(tk, step, time, beat, sw);
     step++; gstep++; if (step >= STEPS) { step = 0; bar++; if (tk.once && bar >= tk.bars.length) { current = null; setTimeout(() => play(_after), 150); } }
