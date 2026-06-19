@@ -337,6 +337,13 @@ window.Data = (function () {
       { name: 'sings the drowning hymn', min: 26, max: 34, all: true, status: 'weaken', turns: 3 },
       { name: 'breaks the world — OMEGA RUIN', min: 48, max: 64, all: true },
     ] },
+    // ---- prologue raid: the harbor reactor's automated guardians ----
+    sentinel: { name: 'Harbor Sentinel', model: 'sentry', hp: 240, xp: 40, gold: 60, baseY: 1.2, boss: true, scale: 2.0, rotate: ['thunder', 'fire'], moves: [
+      { name: 'sweeps a search-laser', min: 11, max: 16, all: true },
+      { name: 'locks on and fires', min: 16, max: 23 },
+      { name: 'vents scalding steam', min: 12, max: 18, all: true, status: 'weaken', turns: 2 } ], drops: [] },
+    guardbot: { name: 'Dock Guard-Drone', model: 'sentry', hp: 64, xp: 12, gold: 14, baseY: 1.3, moves: [
+      { name: 'fires a warning shot', min: 7, max: 12 }, { name: 'rams forward', min: 9, max: 14 } ], drops: [] },
   };
 
   // shared inventory items (consumables)
@@ -573,6 +580,8 @@ window.Data = (function () {
   const AFFINITIES = {
     ruffy_duel: { resist: ['physical'] }, // a rubber-man shrugs off blunt force
     selachoth_omega: { resist: ['physical', 'water'] }, // its weakness is the rotating light/dark tell, not a fixed element
+    sentinel: { weak: ['water'], resist: ['physical'] },
+    guardbot: { weak: ['water', 'thunder'], resist: ['physical'] },
     // themed dungeon mobs
     thingspawn: { weak: ['fire', 'holy'], resist: ['water'] },
     kodama:  { weak: ['fire'], resist: ['earth', 'holy'] },
@@ -1192,6 +1201,27 @@ window.Data = (function () {
   // ---------------- STORY (cutscene beats) ----------------
   // each beat: { name, text }
   const STORY = {
+    // ---- PROLOGUE: the harbor-reactor raid (an action cold-open) ----
+    reactorRaid: [
+      { name: 'Narrator', text: 'Saltmere Harbor, the black hour before dawn. The cult of the One-Finned Angel has bolted a TIDE-ENGINE to the old reactor here — an iron heart pumping the sea higher with every beat. Three figures drop silently from the rafters.' },
+      { name: 'Capt. Redbeard', text: 'Charges on the core, then we\'re gone before the alarms finish screaming. Easy money. Mostly money. Some screaming.' },
+      { name: 'Marina', text: 'If we crack this engine, the flooding slows for every island east of here. That\'s worth the screaming.' },
+      { name: 'Lance Strider', text: 'Less talk. Guards on the gantry — MOVE!' },
+    ],
+    reactorCore: [
+      { name: 'Narrator', text: 'Deeper in, the reactor\'s heart roars: a churning column of stolen tide, caged in iron. Something vast unfolds from the gantry to meet you, optics flaring red.' },
+      { name: 'Marina', text: 'A Sentinel — the cult\'s guard dog. They really didn\'t want visitors.' },
+      { name: 'Capt. Redbeard', text: 'Then we put the mutt down and light the fuse. HEAVE TO!' },
+    ],
+    reactorBomb: [
+      { name: 'Narrator', text: 'The Sentinel bursts into a rain of sparks. Redbeard slams the charges against the tide-engine\'s core — and a red light begins to pulse. And to count down.' },
+      { name: 'Lance Strider', text: 'That\'s the alarm AND the timer. Both very bad. The whole harbor will be on us — GO, GO, GO!' },
+    ],
+    reactorEscape: [
+      { name: 'Narrator', text: 'You sprint the buckling gantries as the reactor tears itself apart behind you, the stolen tide roaring free. The dock\'s edge rushes up — and beyond it, your ship, sails already cut loose and waiting.' },
+      { name: 'Capt. Redbeard', text: 'JUMP, you beautiful fools! For the Free Seas — and for whatever\'s left of my deposit on this coat!' },
+      { name: 'Narrator', text: 'Three figures leap into the breaking dawn as the harbor reactor folds into the sea behind them. The war for the tide has begun — and you just fired the first shot.' },
+    ],
     opening: [
       { name: 'Narrator', text: 'For a thousand years the coast of Saltmere knew only gentle tides and golden mornings. The Free Seas were a promise: that anyone, from any shore, could chase a horizon and call it home.' },
       { name: 'Narrator', text: 'Then the sea began to RISE. Not in a day — in a slow, drowning patience. Beaches vanished. Beasts crawled from the foam. And the people learned a name to be afraid of.' },

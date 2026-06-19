@@ -51,6 +51,18 @@ window.Game = (function () {
     el('introBegin').onclick = finish; Game._introFinish = finish;
     Game._introTimer = setTimeout(finish, 22000);
   }
+  // the FF7-style opening raid: a chain of cutscenes and fights set to the assault theme
+  function runPrologue(done) {
+    const cut = (key, cb) => Game.cutscene(Data.STORY[key], cb, { music: 'assault' });
+    const fight = (keys, opts, cb) => Game.startBattle(keys, Object.assign({ music: 'assault' }, opts), () => cb());
+    cut('reactorRaid', () =>
+      fight(['guardbot', 'guardbot'], { firstStrike: true }, () =>
+        cut('reactorCore', () =>
+          fight(['sentinel'], { boss: true }, () =>
+            cut('reactorBomb', () =>
+              fight(['guardbot', 'guardbot', 'guardbot'], { firstStrike: true }, () =>
+                cut('reactorEscape', done)))))));
+  }
   function beginGame(fresh) {
     el('start').classList.remove('show');
     document.body.className = ''; // drop mode-start so the title screen can't linger behind the intro/cutscene
@@ -58,12 +70,15 @@ window.Game = (function () {
     if (fresh && !Game.state.flags.seenOpening) {
       playIntro(() => {
         Game.state.flags.seenOpening = true; Progress.save(Game.state);
-        // the crawl sets the scene; now the heroes are introduced in a staged cinematic before we hand over control
-        Game.cutscene(Data.STORY.opening, () => {
-          intoWorld();
-          // Ruffy is NOT in the crew yet — he chases you down at sea later and duels his way in.
-          Game.toast('WASD move · Q/E rotate camera · F interact · Space swing for a first strike!');
-        }, { set: 'cliff_dawn', music: 'adventure' });
+        // ACTION COLD-OPEN: raid the harbor tide-engine (cutscenes + fights + a driving theme),
+        // then the staged cliff cinematic before we hand over control.
+        runPrologue(() => {
+          Game.cutscene(Data.STORY.opening, () => {
+            intoWorld();
+            // Ruffy is NOT in the crew yet — he chases you down at sea later and duels his way in.
+            Game.toast('WASD move · Q/E rotate camera · F interact · Space swing for a first strike!');
+          }, { set: 'cliff_dawn', music: 'adventure' });
+        });
       });
     } else {
       intoWorld();

@@ -58,6 +58,8 @@ const STATES = [
   { name: '29_battle_ruffy',    drive: `Game.toSea(); Game.startBattle(['ruffy_duel'], { boss: true })`, wait: 1900 },
   { name: '30_battle_omega',    drive: `Game.startBattle(['selachoth_omega'], { boss: true })`, wait: 2000 },
   { name: '31_gallery_omega',   drive: `__gallery({enemy:['selachoth','selachoth_omega']})`, wait: 600 },
+  { name: '32_battle_sentinel', drive: `Game.startBattle(['sentinel'], { boss: true, music: 'assault' })`, wait: 2000 },
+  { name: '33_cutscene_reactor', drive: `Cutscene.play(Data.STORY.reactorRaid, null, { music: 'assault' })`, wait: 1600 },
 ];
 
 function serve() {
