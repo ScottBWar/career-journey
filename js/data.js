@@ -673,6 +673,8 @@ window.Data = (function () {
           lines: ['Step right up to the POWDER-KEG TIMING cabinet!', 'Stop the spark on the bullseye and the prizes are out of this world. Literally.', 'Best score wins something bubbly. Wanna play?'] },
         { name: 'A Brooding Spiky Teen', color: '#3a3f6b', hair: '#caa030', x: 5, z: 9, service: 'arcade2',
           lines: ['...', '...Fine. I run the REEF LIGHTS machine. Watch the buoys, repeat the pattern.', 'Don\'t embarrass yourself. (He clearly wandered in from another RPG.) Wanna play?'] },
+        { name: 'A Wandering Moogle', color: '#f0e8e0', hair: '#ff7eb0', x: -2, z: 11, service: 'respec',
+          lines: ['Kupo! I am a memory-moogle, kupo.', 'For seasoned heroes only — I can untangle your destinies and let your whole crew re-pick their skill paths, kupo!', 'Spent skill points all come back. Choose anew, kupo!'] },
       ],
       exit: { x: 0, z: -12 },
     },

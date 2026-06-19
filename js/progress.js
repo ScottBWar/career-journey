@@ -210,6 +210,10 @@ window.Progress = (function () {
     save(state);
     return true;
   }
+  // late-game respec: refund every skill point and clear learned nodes so a
+  // character can re-pick their branch. Total SP earned = level - 1.
+  function respec(state, charKey) { const p = state.party.find(m => m.key === charKey); if (!p) return; p.learned = {}; p.sp = Math.max(0, (p.level || 1) - 1); save(state); }
+  function respecAll(state) { state.party.forEach(p => { p.learned = {}; p.sp = Math.max(0, (p.level || 1) - 1); }); save(state); }
 
   function save(state) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {} }
   function migrate(state) {
@@ -469,5 +473,5 @@ window.Progress = (function () {
 
   return { freshState, derived, reward, fullHeal, canLearn, learn, save, load, clear, renderSkillTree, renderGear, renderRoster, renderShipyard,
            toggleActive, activeMembers, recruit, dismiss, shipStats, equipWeapon, equipAccessory, equipShell, unequipSlot, addShell, buyWeapon, buyAccessory, pouchShells, def,
-           addMaterials, canCraft, craft, recordSeen, recordSlain };
+           addMaterials, canCraft, craft, recordSeen, recordSlain, respec, respecAll };
 })();

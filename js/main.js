@@ -136,7 +136,7 @@ window.Game = (function () {
     Game.dialogueOpen = true; el('dialogue').classList.add('show'); dlgPortrait(npc.name);
     function show() {
       el('dlgName').textContent = npc.name; el('dlgText').textContent = lines[i];
-      const svcLabel = { inn: 'Rest ✓', shop: 'Open Shop 🛒', observatory: 'Stargaze 🔭', arcade1: 'Play 🎯', arcade2: 'Play 🪼' };
+      const svcLabel = { inn: 'Rest ✓', shop: 'Open Shop 🛒', observatory: 'Stargaze 🔭', arcade1: 'Play 🎯', arcade2: 'Play 🪼', respec: 'Re-pick paths ✦' };
       el('dlgNext').textContent = i < lines.length - 1 ? 'Next ▶' : (svcLabel[npc.service] || 'Close');
     }
     Game._advanceDlg = () => {
@@ -145,7 +145,8 @@ window.Game = (function () {
         if (s === 'inn') openInn(); else if (s === 'shop') openShop();
         else if (s === 'observatory') openObservatory();
         else if (s === 'arcade1') openArcade('timing');
-        else if (s === 'arcade2') openArcade('memory'); }
+        else if (s === 'arcade2') openArcade('memory');
+        else if (s === 'respec') openRespec(); }
     };
     el('dlgNext').onclick = Game._advanceDlg;
     show();
@@ -316,6 +317,16 @@ window.Game = (function () {
   // ---------- arcade ----------
   function openArcade(game) { pauseExplore(); Arcade.start(game, () => { Music.play(Game.mode === 'town' ? 'town' : 'island'); resumeExplore(); }); }
   Game.openArcade = openArcade;
+
+  // ---------- respec (late game: gated behind beating the Kraken) ----------
+  function openRespec() {
+    if (!Game.state.prog || !Game.state.prog.krakenDown) { Game.toast('Kupo... come back once you\'ve felled the Kraken, hero.'); return; }
+    Game.confirm('Untangle every skill tree? All spent SP returns and your whole crew re-picks their paths.', () => {
+      Progress.respecAll(Game.state); Progress.save(Game.state);
+      if (window.SFX) SFX.play('levelup'); Game.toast('Kupo! Destinies unwound — spend your SP anew in the Skills menu (M).');
+    });
+  }
+  Game.openRespec = openRespec;
 
   // ---------- dating (mermaids) ----------
   function openDating(key) { Game.datingOpen = true; pauseExplore(); Dating.start(key, () => { Game.datingOpen = false; Music.play(Game.mode === 'town' ? 'town' : 'island'); resumeExplore(); }); }
