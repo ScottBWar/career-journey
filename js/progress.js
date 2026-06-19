@@ -189,10 +189,18 @@ window.Progress = (function () {
     save(state);
   }
 
+  // is a node blocked because the member committed to the *other* branch of a fork?
+  function branchBlocked(p, node) {
+    if (!node.branch) return false;
+    const tree = def(p.key).tree;
+    const chosen = tree.find(n => n.branch && p.learned[n.id]);
+    return !!(chosen && chosen.branch !== node.branch);
+  }
   function canLearn(state, p, node) {
     if (p.learned[node.id]) return false;
     if (p.sp < node.cost) return false;
     if (node.req && !p.learned[node.req]) return false;
+    if (branchBlocked(p, node)) return false;
     return true;
   }
   function learn(state, p, node) {
@@ -239,6 +247,12 @@ window.Progress = (function () {
     Data.PARTY.forEach(def => { if (!state.equip[def.key]) { const w = Data.WEAPONS[def.key][0]; state.ownedWeapons[def.key] = [w.key]; state.equip[def.key] = { weapon: w.key, wslots: new Array(w.slots).fill(null), accessory: null, aslots: [] }; } });
     // migrate legacy weapon-only slots → weapon + accessory FF7 layout
     Object.values(state.equip).forEach(eq => { if (eq.slots && !eq.wslots) { eq.wslots = eq.slots; delete eq.slots; } if (!eq.wslots) eq.wslots = []; if (eq.accessory === undefined) eq.accessory = null; if (!eq.aslots) eq.aslots = []; });
+    // reconcile skill trees: if a save has learned nodes that no longer exist
+    // (trees were reworked), refund SP and clear so the player re-picks a path
+    state.party.forEach(p => {
+      const tree = (def(p.key) || {}).tree || []; const ids = new Set(tree.map(n => n.id));
+      if (p.learned && Object.keys(p.learned).some(id => !ids.has(id))) { p.learned = {}; p.sp = Math.max(0, (p.level || 1) - 1); }
+    });
     // initialise HP/MP for any uninitialised members
     state.party.forEach(p => { if (p.hpCur == null) { const d = derived(p, state); p.hpCur = d.maxhp; p.mpCur = d.maxmp; } });
     return state;
@@ -284,11 +298,11 @@ window.Progress = (function () {
       treeEl.appendChild(svg);
 
       tree.forEach(n => {
-        const pos = posOf[n.id]; const learned = !!p.learned[n.id]; const locked = n.req && !p.learned[n.req]; const affordable = canLearn(state, p, n);
+        const pos = posOf[n.id]; const learned = !!p.learned[n.id]; const pathOff = !learned && branchBlocked(p, n); const locked = n.req && !p.learned[n.req]; const affordable = canLearn(state, p, n);
         const b = document.createElement('button');
-        b.className = 'sk-n ' + (n.kind) + (learned ? ' learned' : affordable ? ' avail' : locked ? ' locked' : '');
+        b.className = 'sk-n ' + (n.kind) + (learned ? ' learned' : pathOff ? ' pathlocked' : affordable ? ' avail' : locked ? ' locked' : '');
         b.style.left = pos.xPct + '%'; b.style.top = pos.y + 'px';
-        b.innerHTML = `<span class="sk-n-ic">${NODE_ICON[n.kind]}</span><span class="sk-n-name">${n.name}</span><span class="sk-n-desc">${n.desc}</span><span class="sk-n-sub">${learned ? '✓ Learned' : n.cost + ' SP'}</span>`;
+        b.innerHTML = `<span class="sk-n-ic">${NODE_ICON[n.kind]}</span><span class="sk-n-name">${n.name}</span><span class="sk-n-desc">${n.desc}</span><span class="sk-n-sub">${learned ? '✓ Learned' : pathOff ? '✗ Path not taken' : n.cost + ' SP'}</span>`;
         b.disabled = learned || !affordable;
         b.onclick = () => { if (learn(state, p, n)) { if (window.SFX) SFX.play('levelup'); renderSkillTree(state, container, onClose); } };
         treeEl.appendChild(b);
