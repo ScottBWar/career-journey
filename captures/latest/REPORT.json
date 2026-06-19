@@ -1,0 +1,150 @@
+{
+  "runAt": "2026-06-19T11:09:40.051Z",
+  "states": [
+    {
+      "name": "01_overworld_tidehaven",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "01_overworld_tidehaven.png"
+    },
+    {
+      "name": "02_overworld_paegina",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "02_overworld_paegina.png"
+    },
+    {
+      "name": "03_overworld_duskmoor",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "03_overworld_duskmoor.png"
+    },
+    {
+      "name": "04_sea",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "04_sea.png"
+    },
+    {
+      "name": "05_town_tidehaven",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "05_town_tidehaven.png"
+    },
+    {
+      "name": "06_town_argo_greek",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "06_town_argo_greek.png"
+    },
+    {
+      "name": "07_town_bazaar",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "07_town_bazaar.png"
+    },
+    {
+      "name": "08_dungeon_tidecave",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "08_dungeon_tidecave.png"
+    },
+    {
+      "name": "09_dungeon_castle",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "09_dungeon_castle.png"
+    },
+    {
+      "name": "10_battle_mobs",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "10_battle_mobs.png"
+    },
+    {
+      "name": "11_battle_boss_kraken",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "11_battle_boss_kraken.png"
+    },
+    {
+      "name": "12_battle_greek_medusa",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "12_battle_greek_medusa.png"
+    },
+    {
+      "name": "13_cutscene_council",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "13_cutscene_council.png"
+    },
+    {
+      "name": "14_cutscene_opening",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "14_cutscene_opening.png"
+    },
+    {
+      "name": "15_menu_gear",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "15_menu_gear.png"
+    },
+    {
+      "name": "16_menu_skills",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "16_menu_skills.png"
+    },
+    {
+      "name": "17_coliseum",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "17_coliseum.png"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "snapshot": {
+    "gold": 80,
+    "pearls": 0,
+    "active": [
+      "pirate",
+      "swordsman",
+      "healer",
+      "simon"
+    ],
+    "levels": [
+      "pirate:1",
+      "swordsman:1",
+      "healer:1",
+      "mage:1",
+      "blader:1",
+      "dragoon:1",
+      "ruffy:1",
+      "simon:1",
+      "aladdin:1",
+      "violca:1",
+      "mac:1",
+      "sane:1",
+      "marvyn:1",
+      "quijano:1"
+    ],
+    "krakenDown": false,
+    "islandsVisited": [
+      "tidehaven",
+      "dunes",
+      "spire",
+      "mall",
+      "duskmoor",
+      "mirage",
+      "aerie",
+      "paegina",
+      "whiteout",
+      "wildwood",
+      "improbable",
+      "lamancha"
+    ]
+  }
+}
