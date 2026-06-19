@@ -9,6 +9,7 @@ window.Dungeon = (function () {
   let crystals = [], gate, chest, idlers = [], targets = [], paused = false, t = 0, camYaw = 0;
   let step = 0, solvedPuzzle = false, chestLooted = false, nearTarget = null;
   let mobs = [], mobDefeated = {}, bossDefeated = false, busy = false;
+  let hazards = [], hazCd = 0, bonusLooted = {};
   let zMin = -15, zMax = 17;
   const SPEED = 8;
 
@@ -41,13 +42,75 @@ window.Dungeon = (function () {
     }
   }
 
+  // procedural complexity: optional side caches off the critical path + telegraphed spike traps.
+  // generated against the hall length so EVERY dungeon gets it, gated around existing content.
+  function buildExtras(near, far, env) {
+    const occ = [{ z: def.spawn.z, r: 5 }, { z: def.exit.z, r: 5 }, { z: def.gate.z, r: 4 }, { z: def.chest.z, r: 4 }];
+    (def.crystals || []).forEach(c => occ.push({ z: c.z, r: 3 }));
+    (def.mobs || []).forEach(m => occ.push({ z: m.z, r: 4 }));
+    if (def.bossMob) occ.push({ z: def.bossMob.z, r: 6 });
+    const clearZ = (z, pad) => !occ.some(o => Math.abs(o.z - z) < (o.r + (pad || 0)));
+
+    // --- side alcoves: a framed nook against the wall holding a bonus cache ---
+    let side = -1, made = 0;
+    for (let z = near + 11; z < far - 9 && made < 3; z += 12) {
+      if (!clearZ(z, 2)) continue;
+      side = -side;
+      const x = side * 10;
+      const pad = MB.CreateBox('alcove', { width: 4.4, height: 0.12, depth: 4 }, scene); pad.material = M('alcoveF', def.wall, { spec: 0 }); pad.position.set(x, 0.06, z);
+      [-2.2, 2.2].forEach(dz => { const p = Models.pillar(); p.node.position.set(side * 7.8, 0, z + dz); p.node.scaling.set(0.7, 0.9, 0.7); });
+      const torch = MB.CreateSphere('atorch', { diameter: 0.4 }, scene); torch.material = M('atorch', env.torch, { emissive: env.torch }); torch.position.set(side * 11.6, 3.2, z); idlers.push({ idle(tt) { torch.scaling.setAll(1 + Math.sin(tt * 6 + z) * 0.2); } });
+      const ch = Models.chest(); ch.node.position.set(side * 10.5, 0, z); ch.node.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+      if (bonusLooted['b' + made]) ch.lid.rotation.x = -1.4;
+      targets.push({ kind: 'bonus', idx: made, pos: new V3(side * 10.5, 0, z), r: 2.1, lid: ch.lid });
+      made++;
+    }
+
+    // --- spike-trap tiles in the main corridor: rise and fall on a clear visual timer ---
+    let hmade = 0;
+    for (let z = near + 15; z < far - 11 && hmade < 3; z += 13) {
+      if (!clearZ(z, 3)) continue;
+      const hx = (hmade % 2 === 0) ? -3.2 : 3.2;
+      const plate = MB.CreateBox('trap', { width: 3, height: 0.1, depth: 3 }, scene); plate.material = M('trap', '#3a2624', { emissive: '#1a0a08' }); plate.position.set(hx, 0.06, z);
+      const spikeMat = M('spike', '#c9ccd4', { spec: 0.6 });
+      const spikes = [];
+      for (let sx = -1; sx <= 1; sx++) for (let sz = -1; sz <= 1; sz++) {
+        const sp = MB.CreateCylinder('spk', { height: 1.1, diameterBottom: 0.32, diameterTop: 0, tessellation: 6 }, scene); sp.material = spikeMat; sp.position.set(hx + sx * 0.9, -0.6, z + sz * 0.9); spikes.push(sp);
+      }
+      const haz = { x: hx, z, r: 1.6, spikes, armed: false, off: hmade * 0.7 };
+      idlers.push({ idle(tt) {
+        const c = (tt * 0.55 + haz.off) % 1;          // full cycle ~1.8s
+        const up = c < 0.42;                           // spikes out for ~0.75s, telegraphed by the rise
+        const raise = up ? Math.min(1, c * 8) : Math.max(0, 1 - (c - 0.42) * 8);
+        haz.armed = raise > 0.6;
+        spikes.forEach(sp => { sp.position.y = -0.6 + raise * 1.15; });
+        plate.material.emissiveColor = Color3.FromHexString(up ? '#5a1410' : '#1a0a08');
+      } });
+      hazards.push(haz);
+      hmade++;
+    }
+  }
+
+  function hazardStrike(h) {
+    hazCd = 1.3;
+    const members = Progress.activeMembers(Game.state);
+    members.forEach(p => { const d = Progress.derived(p, Game.state); const dmg = Math.ceil(d.maxhp * 0.12); p.hpCur = Math.max(1, (p.hpCur == null ? d.maxhp : p.hpCur) - dmg); });
+    Progress.save(Game.state);
+    // knock the player back along the hall, away from the spikes
+    const dir = player.position.z >= h.z ? 1 : -1;
+    player.position.z = clamp(player.position.z + dir * 2.6, zMin, zMax);
+    if (window.SFX) SFX.play('earth');
+    Game.toast('🩸 Spikes! The party is wounded.');
+  }
+
   function build(dungeonKey) {
     key = dungeonKey; def = Data.DUNGEONS[dungeonKey]; engine = Game.engine;
     if (scene) scene.dispose();
-    crystals = []; idlers = []; targets = []; mobs = []; nearTarget = null; t = 0; step = 0; paused = false; busy = false;
+    crystals = []; idlers = []; targets = []; mobs = []; hazards = []; nearTarget = null; t = 0; step = 0; hazCd = 0; paused = false; busy = false;
     const cleared = !!Game.state.dungeons[key];
     bossDefeated = !!Game.state.dungeons[key + '_boss'];
     mobDefeated = Game.state.dungeons[key + '_mobs'] || (Game.state.dungeons[key + '_mobs'] = {});
+    bonusLooted = Game.state.dungeons[key + '_bonus'] || (Game.state.dungeons[key + '_bonus'] = {});
     solvedPuzzle = def.bossMob ? bossDefeated : cleared; chestLooted = cleared;
     const theme = DUN_THEME[key] || 'cave', env = DUN_ENV[theme] || DUN_ENV.cave;
     scene = new BABYLON.Scene(engine);
@@ -94,6 +157,7 @@ window.Dungeon = (function () {
     targets.push({ kind: 'exit', pos: new V3(def.exit.x, 0, def.exit.z), r: 2.2 });
 
     spawnMobs();
+    buildExtras(near, far, env);
 
     if (solvedPuzzle) { gate.position.y = 8; crystals.forEach(c => setLit(c, true)); }
 
@@ -177,6 +241,14 @@ window.Dungeon = (function () {
 
     idlers.forEach(o => o.idle && o.idle(t));
 
+    // spike-trap contact → party takes a hit + knockback (with a short cooldown)
+    if (hazCd > 0) hazCd -= dt;
+    if (!busy && hazCd <= 0) {
+      for (const h of hazards) {
+        if (h.armed && Math.abs(player.position.x - h.x) < h.r && Math.abs(player.position.z - h.z) < h.r) { hazardStrike(h); break; }
+      }
+    }
+
     // monster contact → battle
     if (!busy) {
       for (const m of mobs) {
@@ -186,12 +258,13 @@ window.Dungeon = (function () {
     }
 
     nearTarget = null;
-    for (const tg of targets) { if (tg.kind === 'chest' && (chestLooted || !solvedPuzzle)) continue; if (V3.Distance(player.position, tg.pos) < tg.r) { nearTarget = tg; break; } }
+    for (const tg of targets) { if (tg.kind === 'chest' && (chestLooted || !solvedPuzzle)) continue; if (tg.kind === 'bonus' && bonusLooted['b' + tg.idx]) continue; if (V3.Distance(player.position, tg.pos) < tg.r) { nearTarget = tg; break; } }
     const prompt = document.getElementById('worldPrompt');
     if (nearTarget) {
       let label = '[F / Tap] ';
       if (nearTarget.kind === 'crystal') label += `Touch the ${crystals[nearTarget.idx].name} crystal`;
       else if (nearTarget.kind === 'chest') label += 'Open the vault chest';
+      else if (nearTarget.kind === 'bonus') label += 'Open the hidden cache';
       else label += 'Leave the dungeon';
       prompt.textContent = label; prompt.classList.add('show');
     } else prompt.classList.remove('show');
@@ -223,11 +296,19 @@ window.Dungeon = (function () {
     if (rw.shell) { Progress.addShell(Game.state, rw.shell); msg += ` and a ${Data.SHELLS[rw.shell].name} seashell!`; } else msg += '!';
     Progress.save(Game.state); if (window.SFX) SFX.play('gold'); Game.toast(msg);
   }
+  function lootBonus(tg) {
+    if (bonusLooted['b' + tg.idx]) return; bonusLooted['b' + tg.idx] = true; Game.state.dungeons[key + '_bonus'] = bonusLooted;
+    if (tg.lid) tg.lid.rotation.x = -1.4;
+    const g = 18 + Math.floor(Math.random() * 33); Game.state.gold += g; let msg = 'Hidden cache: ⛃ +' + g;
+    if (Math.random() < 0.45) { const mk = ['sand', 'shellfrag', 'feather', 'goo', 'fang'][Math.floor(Math.random() * 5)]; Progress.addMaterials(Game.state, { [mk]: 1 }); msg += ' + a ' + Data.MATERIALS[mk].name; }
+    Progress.save(Game.state); if (window.SFX) SFX.play('gold'); Game.toast(msg);
+  }
 
   function interact() {
     if (paused || !nearTarget) return;
     if (nearTarget.kind === 'crystal') activate(nearTarget.idx);
     else if (nearTarget.kind === 'chest') loot();
+    else if (nearTarget.kind === 'bonus') lootBonus(nearTarget);
     else if (nearTarget.kind === 'exit') {
       const ally = def.ally;
       if (ally && ally.key && !bossDefeated) { Progress.dismiss(Game.state, ally.key); Progress.save(Game.state); if (ally.holdMsg) Game.toast(ally.holdMsg); }
