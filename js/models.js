@@ -503,27 +503,38 @@ window.Models = (function () {
     at(MB.CreateTorus('strap', { diameter: 0.72, thickness: 0.06, tessellation: 16 }, scene), r, top, 0, 1.98, 0.02).rotation.x = 1.3;
     // slender arms with soft hands
     [-1, 1].forEach(s => { const a = at(MB.CreateCylinder('arm', { height: 0.85, diameter: 0.13, tessellation: 10 }, scene), r, skin, s * 0.36, 1.62, 0.08); a.rotation.z = -s * 0.22; a.rotation.x = -0.25; at(MB.CreateSphere('hand', { diameter: 0.15, segments: 10 }, scene), r, skin, s * 0.46, 1.18, 0.2); });
-    // graceful neck + head
-    at(MB.CreateCylinder('neck', { height: 0.25, diameter: 0.18, tessellation: 12 }, scene), r, skin, 0, 2.28, 0);
-    at(MB.CreateSphere('head', { diameterX: 0.5, diameterY: 0.56, diameterZ: 0.52, segments: 16 }, scene), r, skin, 0, 2.55, 0.02);
-    // restrained pretty face: large soft eyes + lash line (no clutter)
-    const eyeW = M('mmEyeW', '#fcfdff'), eyeP = M('mmEyeP', '#2a4e5a'), lash = M('mmLash', '#241318');
+    // graceful neck + a softly-larger head for pretty cartoon proportions
+    at(MB.CreateCylinder('neck', { height: 0.24, diameter: 0.17, tessellation: 12 }, scene), r, skin, 0, 2.3, 0);
+    at(MB.CreateSphere('head', { diameterX: 0.56, diameterY: 0.6, diameterZ: 0.54, segments: 18 }, scene), r, skin, 0, 2.58, 0.02);
+    // BIG expressive eyes — white + coloured iris + pupil + a catchlight sparkle; lashes & brows
+    const eyeW = M('mmEyeW', '#fdfeff'), iris = M('mmIris', shade(hHex, 0.85)), pupil = M('mmPupil', '#181820'), spark = M('mmSpark', '#ffffff'), lash = M('mmLash', '#1b0f15'), brow = M('mmBrow', shade(hHex, 0.8));
     [-1, 1].forEach(s => {
-      at(MB.CreateSphere('eyeW', { diameter: 0.16, segments: 10 }, scene), r, eyeW, s * 0.12, 2.57, 0.23);
-      at(MB.CreateSphere('eyeP', { diameter: 0.09, segments: 8 }, scene), r, eyeP, s * 0.12, 2.57, 0.28);
-      const l = at(MB.CreateBox('lash', { width: 0.18, height: 0.03, depth: 0.06 }, scene), r, lash, s * 0.12, 2.63, 0.22); l.rotation.z = -s * 0.18;
+      at(MB.CreateSphere('eyeW', { diameterX: 0.2, diameterY: 0.25, diameterZ: 0.13, segments: 12 }, scene), r, eyeW, s * 0.13, 2.6, 0.23);   // large almond eye
+      at(MB.CreateSphere('iris', { diameter: 0.14, segments: 12 }, scene), r, iris, s * 0.13, 2.59, 0.29);
+      at(MB.CreateSphere('pupil', { diameter: 0.08, segments: 8 }, scene), r, pupil, s * 0.13, 2.59, 0.31);
+      at(MB.CreateSphere('spark', { diameter: 0.04, segments: 6 }, scene), r, spark, s * 0.13 + 0.035, 2.64, 0.32); // catchlight
+      const l = at(MB.CreateBox('lash', { width: 0.24, height: 0.04, depth: 0.07 }, scene), r, lash, s * 0.13, 2.71, 0.22); l.rotation.z = -s * 0.28;       // upper lash line
+      const lo = at(MB.CreateBox('lashTip', { width: 0.1, height: 0.035, depth: 0.05 }, scene), r, lash, s * 0.24, 2.69, 0.21); lo.rotation.z = -s * 0.8;    // flicked outer corner
+      const b = at(MB.CreateBox('brow', { width: 0.19, height: 0.035, depth: 0.05 }, scene), r, brow, s * 0.13, 2.78, 0.23); b.rotation.z = -s * 0.14;
     });
-    // flowing hair — smooth cap + soft cylinder locks (no boxes), curled tips
-    at(MB.CreateSphere('hairTop', { diameter: 0.64, slice: 0.62, segments: 16 }, scene), r, hair, 0, 2.66, -0.03);
-    [-0.16, 0, 0.16].forEach((x, i) => {
-      const lock = at(MB.CreateCylinder('hairBack' + i, { height: 1.85 + (i === 1 ? 0.25 : 0), diameterTop: 0.26, diameterBottom: 0.1, tessellation: 10 }, scene), r, hair, x, 1.9, -0.24); lock.rotation.x = -0.1;
-      at(MB.CreateSphere('curl' + i, { diameter: 0.2, segments: 10 }, scene), r, hair, x * 1.25, 1.0, -0.16);
+    // little nose + a soft upturned smile + rosy cheeks
+    at(MB.CreateSphere('nose', { diameter: 0.05, segments: 6 }, scene), r, skin, 0, 2.53, 0.32);
+    const lip = M('mmLip', '#dc6f81');
+    at(MB.CreateBox('lipC', { width: 0.1, height: 0.032, depth: 0.05 }, scene), r, lip, 0, 2.45, 0.3);
+    [-1, 1].forEach(s => { const lc = at(MB.CreateBox('lipS', { width: 0.07, height: 0.03, depth: 0.05 }, scene), r, lip, s * 0.08, 2.465, 0.295); lc.rotation.z = s * 0.5; }); // corners turn up
+    [-1, 1].forEach(s => at(MB.CreateSphere('blush', { diameter: 0.12, segments: 8 }, scene), r, M('mmBlush' + s, '#ff9eaa', { alpha: 0.4 }), s * 0.21, 2.5, 0.24));
+    // VOLUMINOUS flowing hair — full crown + back volume, swept fringe, long bodied locks
+    at(MB.CreateSphere('hairCrown', { diameterX: 0.74, diameterY: 0.7, diameterZ: 0.72, segments: 18 }, scene), r, hair, 0, 2.74, -0.05);
+    at(MB.CreateSphere('hairBun', { diameter: 0.56, segments: 14 }, scene), r, hair, 0, 2.74, -0.26);
+    [-0.24, -0.08, 0.08, 0.24].forEach((x, i) => { const bang = at(MB.CreateSphere('bang' + i, { diameterX: 0.21, diameterY: 0.28, diameterZ: 0.18, segments: 10 }, scene), r, hair, x, 2.68, 0.18); bang.rotation.z = x < 0 ? 0.25 : -0.25; }); // swept fringe
+    [-0.27, -0.1, 0.1, 0.27].forEach((x, i) => {
+      const lock = at(MB.CreateCylinder('hairBack' + i, { height: 2.05, diameterTop: 0.32, diameterBottom: 0.12, tessellation: 10 }, scene), r, hair, x, 1.85, -0.26); lock.rotation.x = -0.08; lock.rotation.z = x * 0.16;
+      at(MB.CreateSphere('curl' + i, { diameter: 0.26, segments: 10 }, scene), r, hair, x * 1.3, 0.92, -0.2); // curled tips
     });
-    // face-framing locks that DRAPE down beside the cheeks (not stick up/out)
-    [-1, 1].forEach(s => { const sl = at(MB.CreateCylinder('hairSide', { height: 1.25, diameterTop: 0.18, diameterBottom: 0.07, tessellation: 8 }, scene), r, hair, s * 0.25, 1.78, 0.14); sl.rotation.z = s * 0.05; sl.rotation.x = 0.12; });
-    // delicate shell tiara + center pearl
-    at(MB.CreateCylinder('tiara', { height: 0.1, diameterTop: 0, diameterBottom: 0.2, tessellation: 8 }, scene), r, M('mmTiara', '#ffe9b0'), 0, 2.84, 0.16);
-    at(MB.CreateSphere('pearl', { diameter: 0.1, segments: 10 }, scene), r, M('mmPearl', '#fff6e8'), 0, 2.78, 0.26);
+    [-1, 1].forEach(s => { const sl = at(MB.CreateCylinder('hairSide', { height: 1.5, diameterTop: 0.24, diameterBottom: 0.08, tessellation: 8 }, scene), r, hair, s * 0.3, 1.72, 0.12); sl.rotation.z = s * 0.06; sl.rotation.x = 0.1; }); // face-framing locks
+    // a pretty flower tucked into one side of the hair
+    at(MB.CreateSphere('flowerC', { diameter: 0.1, segments: 8 }, scene), r, M('mmFlowerC', '#ffd24a', { emissive: '#5a4208' }), 0.32, 2.78, 0.18);
+    [0, 1, 2, 3, 4].forEach(i => { const a = i / 5 * Math.PI * 2; at(MB.CreateSphere('petal' + i, { diameterX: 0.11, diameterY: 0.05, diameterZ: 0.11, segments: 8 }, scene), r, M('mmPetal', '#ff8ab4'), 0.32 + Math.cos(a) * 0.09, 2.78 + Math.sin(a) * 0.09, 0.18); });
     return { node: r, idle(t) { r.rotation.y = Math.sin(t * 0.8) * 0.12; r.position.y = (r._baseY || 0) + Math.sin(t * 1.4) * 0.06; } };
   }
 
