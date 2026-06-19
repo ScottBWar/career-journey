@@ -417,38 +417,42 @@ window.World = (function () {
       else { player.position.z -= 4; Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
     });
   }
-  // ACT III FINAL TRIAL — the Neitherworld. Two crews brave two branches one after the
-  // other, then converge on Beetlejuice riding the Sandworm. Gated on having enough
-  // recruited heroes to field two parties of 3–4.
-  function neitherworldTrial() {
+  // ACT III FINAL TRIAL — the Drowned Spire. Two crews brave two branches of the spire,
+  // one after the other, then converge on Selachoth and the Omega Tide. Gated on having
+  // freed enough heroes from the cursed isles to field two crews of 3–4.
+  function finalTrial() {
     const st = Game.state;
-    const legend = ['simon', 'aladdin', 'violca', 'mac', 'sane', 'quijano'].filter(k => st.party.find(p => p.key === k && p.recruited)).length;
-    const hasLydia = !!st.party.find(p => p.key === 'lydia' && p.recruited);
-    const roster = st.party.filter(p => p.recruited).length + (hasLydia ? 0 : 1); // Lydia joins on entry
-    if (legend < 3 || roster < 6) {
-      Game.toast("The Neitherworld gate won't open — you need two full crews. Free more heroes from the cursed isles first.");
+    const ALLY_DUN = { simon: 'vampire_keep', aladdin: 'genie_cave', violca: 'dragon_vale', mac: 'frost_station', sane: 'spirit_wood', quijano: 'mill_keep', lydia: 'neitherworld' };
+    const cleared = k => { const d = ALLY_DUN[k]; return !!(st.dungeons[d] || st.dungeons[d + '_boss']); };
+    const freed = Object.keys(ALLY_DUN).filter(cleared).length;
+    const roster = 3 + freed + (st.party.find(p => p.key === 'ruffy' && p.recruited) ? 1 : 0); // core 3 + freed heroes (+ruffy)
+    if (freed < 3 || roster < 6) {
+      Game.toast("The spire's final door won't open — you need two full crews. Free more heroes from the cursed isles first.");
       return;
     }
-    if (!hasLydia) { Progress.recruit(st, 'lydia', 4); Progress.save(st); }
-    Game.confirm("Beyond the striped door coils the Neitherworld — Lydia's parents wail behind its bars and a Sandworm churns the dark. Send TWO crews, one down each branch, then face Beetlejuice. Assemble them?", () => {
+    Game.confirm('The spire descends into two flooded branches before Selachoth\'s heart. Send TWO crews — one down each branch — then face the Omega Tide together. Assemble them?', () => {
       Game.chooseTwoParties((A, B) => {
         const restore = st.active.slice();
         const setActive = team => { team.forEach(k => Progress.recruit(st, k, 4)); st.active = team.slice(0, 4); Progress.fullHeal(st); Progress.save(st); };
         const bail = () => { st.active = restore; Progress.save(st); paused = false; locked = false; Game.resumeIsland(); player.position.z -= 4; };
-        const runFinal = () => {
+        const runOmega = () => { // crews converge: Selachoth breaks, then the Omega Tide rises
           setActive(A); locked = true; paused = true; Music.play('boss');
-          Game.startBattle(['beetlejuice', 'sandworm'], { boss: true, fullLimit: true }, (res) => {
+          Game.startBattle(['selachoth'], { boss: true, fullLimit: true }, (res) => {
             if (!res.won) return bail();
-            st.active = restore; st.prog.finalWin = true; Progress.save(st);
-            paused = false; locked = false; Game.resumeIsland(); Game.finalEnding();
+            setActive(B); Music.play('boss');
+            Game.startBattle(['selachoth_omega'], { boss: true, fullLimit: true }, (r2) => {
+              if (!r2.won) return bail();
+              st.active = restore; st.prog.finalWin = true; Progress.save(st);
+              paused = false; locked = false; Game.resumeIsland(); Game.finalEnding();
+            });
           });
         };
         const branchB = () => {
           setActive(B); locked = true; paused = true; Music.play('boss');
-          Game.startBattle(['poltergeist'], { boss: true }, (res) => { if (!res.won) return bail(); Game.toast('The haunted branch is cleared. The crews regroup before the Sandworm...'); runFinal(); });
+          Game.startBattle(['angler'], { boss: true }, (res) => { if (!res.won) return bail(); Game.toast('The drowned branch is cleared. The crews converge on Selachoth\'s heart...'); runOmega(); });
         };
         setActive(A); locked = true; paused = true; Music.play('boss');
-        Game.startBattle(['graveworm'], { boss: true }, (res) => { if (!res.won) return bail(); Game.toast('The sand-tunnel branch is cleared. Send your second crew down the haunted hall...'); branchB(); });
+        Game.startBattle(['leviathan'], { boss: true }, (res) => { if (!res.won) return bail(); Game.toast('The first branch is cleared. Send your second crew down the flooded stair...'); branchB(); });
       });
     });
   }
@@ -479,7 +483,7 @@ window.World = (function () {
       });
     }
     if (g.kind === 'boss') {
-      if (Game.state.prog.finalWin) return Game.toast('Beetlejuice is banished and the Sandworm stilled. The Neitherworld is quiet.');
+      if (Game.state.prog.finalWin) return Game.toast('Selachoth is no more, and the Omega Tide has ebbed. The sea is yours.');
       if (!Game.state.prog.krakenDown) {
         Game.confirm('Enter the Maw and challenge the KRAKEN, guardian of the spire?', () => fightBoss(['kraken'], {}, () => {
           Game.state.prog.krakenDown = true; Progress.save(Game.state);
@@ -490,7 +494,7 @@ window.World = (function () {
           Game.startCutscene('krakenFall', () => Game.startCutscene('mermaidCouncil', afterCouncil));
         }));
       } else {
-        neitherworldTrial();   // Act III final trial: two crews, two branches, then Beetlejuice + Sandworm
+        finalTrial();   // Act III: two crews, two branches of the Drowned Spire, then Selachoth + the Omega Tide
       }
     }
   }

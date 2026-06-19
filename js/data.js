@@ -222,10 +222,7 @@ window.Data = (function () {
   ];
 
   const ENEMIES = {
-    graveworm:   { name: 'Graveling Worm', model: 'hydra',   hp: 300, xp: 120, gold: 120, baseY: 0,   boss: true, scale: 1.2, moves: [ { name: 'burrows and bites', min: 22, max: 32 }, { name: 'spits grave-sand', min: 18, max: 26, all: true } ], drops: [] },
-    poltergeist: { name: 'Poltergeist',    model: 'wraith',  hp: 280, xp: 120, gold: 120, baseY: 0.3, boss: true, scale: 1.2, moves: [ { name: 'flings the furniture', min: 20, max: 30 }, { name: 'wails through the walls', min: 16, max: 24, all: true, status: 'weaken', turns: 2 } ], drops: [] },
-    sandworm:    { name: 'The Sandworm',   model: 'hydra',   hp: 520, xp: 0,   gold: 0,   baseY: 0,   boss: true, scale: 1.7, moves: [ { name: 'erupts from the floor', min: 30, max: 44 }, { name: 'swallows the ground whole', min: 24, max: 34, all: true }, { name: 'coils and constricts', min: 34, max: 48 } ], drops: [] },
-    beetlejuice: { name: 'Betelgeuse',     model: 'drifter', hp: 700, xp: 0,   gold: 0,   baseY: 0.2, boss: true, scale: 1.3, moves: [ { name: 'cackles and conjures', min: 30, max: 42 }, { name: 'unleashes a striped storm', min: 22, max: 32, all: true }, { name: 'twists reality', min: 34, max: 46, status: 'slow', turns: 3 }, { name: 'summons biting snakes', min: 26, max: 36, all: true, status: 'weaken', turns: 3 } ], drops: [] },
+    beetlejuice: { name: 'Beetlejuice & the Sandworm', model: 'drifter', hp: 620, xp: 340, gold: 420, baseY: 0.2, boss: true, scale: 1.4, moves: [ { name: 'cackles and conjures', min: 28, max: 40 }, { name: 'the Sandworm erupts from below', min: 24, max: 34, all: true }, { name: 'twists the room sideways', min: 30, max: 44, status: 'slow', turns: 3 }, { name: 'summons biting snakes', min: 24, max: 34, all: true, status: 'weaken', turns: 3 } ], drops: [ { mat: 'ink', chance: 0.6 } ] },
     shark:  { name: 'Maneater Shark',   model: 'shark',  hp: 88,  xp: 24, gold: 18, baseY: 0,   moves: [ { name: 'sinks its teeth in', min: 11, max: 17 }, { name: 'whips its tail', min: 14, max: 21 } ], drops: [ { mat: 'fang', chance: 0.7 }, { mat: 'fin', chance: 0.4 } ] },
     crab:   { name: 'Giant Hermit Crab', model: 'crab',  hp: 118, xp: 28, gold: 22, baseY: 0,   moves: [ { name: 'snaps a giant claw', min: 13, max: 19 }, { name: 'bashes with its shell', min: 16, max: 23 } ], drops: [ { mat: 'shellfrag', chance: 0.75 }, { mat: 'brine', chance: 0.2 } ] },
     jelly:  { name: "Man-o'-War Jelly",  model: 'jelly', hp: 60,  xp: 20, gold: 13, baseY: 0.2, moves: [ { name: 'stings sharply', min: 9, max: 15 }, { name: 'discharges a shock', min: 9, max: 14, all: true } ], drops: [ { mat: 'goo', chance: 0.85 } ] },
@@ -577,10 +574,7 @@ window.Data = (function () {
   const SHOP_ACCESSORIES = ['coral_bangle', 'seaglass_ring', 'tortoise_charm', 'tiger_fang', 'venom_ward', 'aegis_pearl'];
   // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
   const AFFINITIES = {
-    graveworm: { weak: ['water'], resist: ['earth'] },
-    poltergeist: { weak: ['holy', 'fire'], resist: ['physical', 'dark'] },
-    sandworm: { weak: ['water', 'holy'], resist: ['earth'] },
-    beetlejuice: { weak: ['holy'], absorb: ['dark'] },
+    beetlejuice: { weak: ['holy', 'fire'], absorb: ['dark'] },
     ruffy_duel: { resist: ['physical'] }, // a rubber-man shrugs off blunt force
     selachoth_omega: { resist: ['physical', 'water'] }, // its weakness is the rotating light/dark tell, not a fixed element
     sentinel: { weak: ['water'], resist: ['physical'] },
@@ -972,6 +966,12 @@ window.Data = (function () {
       ],
       decor: { trees: 6, palms: 0, rocks: 10 },
     },
+    neither: {
+      name: 'The Neitherworld', size: 50, shape: 'crescent', treeType: 'deadTree', ground: '#2a2238', sand: '#3a2e4a', water: '#0e0a18', sky: { top: '#070410', horizon: '#2a1840' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      dungeon: { key: 'neitherworld', x: 0, z: 9, color: '#b06aff' },
+      decor: { trees: 6, palms: 0, rocks: 9 }, shells: { x: 12, z: 6 },
+    },
     cove: {
       name: 'Castaway Cove', size: 40, shape: 'twin', treeType: 'palm', ground: '#4fae6a', sand: '#ffe7b0', water: '#1fa0c0', sky: { top: '#ff9e6a', horizon: '#ffe7c0' },
       spawn: { x: 0, z: -9 }, dock: { x: 0, z: -12 },
@@ -1060,6 +1060,7 @@ window.Data = (function () {
       { key: 'whiteout', x: -94, z: 30 },
       { key: 'improbable', x: 26, z: 94 },
       { key: 'lamancha', x: -34, z: -94 },
+      { key: 'neither', x: 40, z: -86 },
     ],
     ships: [
       { id: 's0', type: 'sloop', x: -12, z: 26 },
@@ -1179,6 +1180,17 @@ window.Data = (function () {
         { name: 'Narrator', text: 'You accept a suspiciously versatile towel. (Received an Elixir.)' } ] },
       bossMob: { x: 0, z: 27, key: 'vogon' }, reward: { gold: 920, shell: 'hex_conch' },
     },
+    neitherworld: {
+      name: 'The Neitherworld', island: 'neither', ground: '#241630', wall: '#160e22', sky: { top: '#070410', horizon: '#2a0e3a' },
+      spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
+      ally: { key: 'lydia', metFlag: 'lydiaMet', join: 'lydiaJoin', holdMsg: 'Lydia steadies herself at the threshold. "Come back when you are ready to face him — and them."' },
+      mobs: [ { x: -8, z: -4, pool: ['wraith', 'ghoul'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['bat', 'wraith'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['ghoul', 'wraith'], min: 2, max: 2 }, { x: 7, z: 22, pool: ['bat', 'ghoul', 'wraith'], min: 3, max: 3 } ],
+      npc: { x: 7, z: 10, name: 'The Deetzes', color: '#5a4a6a', hair: '#cccccc', gift: { heal: true }, lines: [
+        { name: "Lydia's Parents", text: '(faint, behind the striped bars) You can see us? Oh, thank the dark. He calls himself Beetlejuice — say the name thrice and he comes. We said it once too often.' },
+        { name: "Lydia's Parents", text: 'He rides a thing from under the sand, all teeth and no mercy. Our Lydia has a gift for the dark — let her stand with you. Just bring her home.' },
+        { name: 'Narrator', text: 'The Deetzes press a warm thermos through the bars. (Party restored.)' } ] },
+      bossMob: { x: 0, z: 27, key: 'beetlejuice' },
+    },
     mill_keep: {
       name: "The Giant's Mill", island: 'lamancha', ground: '#3a2e1a', wall: '#241c10', sky: { top: '#3a3018', horizon: '#8a7a44' },
       spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
@@ -1233,6 +1245,10 @@ window.Data = (function () {
   // ---------------- STORY (cutscene beats) ----------------
   // each beat: { name, text }
   const STORY = {
+    lydiaJoin: [
+      { name: 'Lydia', text: '(stepping from the shadows, calm as a held breath) You can see me. Good — most of the living look right through a girl in black.' },
+      { name: 'Lydia', text: 'My parents are caged in his striped little kingdom, and the only language he respects is the one I speak: the dark. Take me with you. We end him — and we do not say his name even once.' },
+    ],
     // ---- PROLOGUE: the harbor-reactor raid (an action cold-open) ----
     reactorRaid: [
       { name: 'Narrator', text: 'Saltmere Harbor, the black hour before dawn. The cult of the One-Finned Angel has bolted a TIDE-ENGINE to the old reactor here — an iron heart pumping the sea higher with every beat. Three figures drop silently from the rafters.' },
@@ -1599,7 +1615,7 @@ window.Data = (function () {
   // The intended voyage — a suggested order with a logical thread, NOT a hard gate.
   // The Captain's Log walks this spine and surfaces the current chapter + the "why".
   // The legend-isles (Act II) are deliberately open: any order, none strictly required.
-  const LEGEND_ALLIES = ['simon', 'aladdin', 'violca', 'mac', 'sane', 'quijano'];
+  const LEGEND_ALLIES = ['simon', 'aladdin', 'violca', 'mac', 'sane', 'quijano', 'lydia'];
   const STORYBOARD = {
     allies: LEGEND_ALLIES,
     spine: [
@@ -1614,13 +1630,13 @@ window.Data = (function () {
         thread: 'The Kraken coils around the Abyssal Isle — the blight\'s herald, the lock on the door east. With the elements at your back, break it. The wider sea opens only once the Kraken sinks.' },
       { id: 'legends', act: 'II', actName: 'Legends of the Wider Sea', title: 'Break the cursed legends',
         goal: 'Sail the wider world; end the curse on each legend-isle and recruit its stranded hero.',
-        thread: 'Past the Abyss the world turns strange — a bleeding castle, a wishing cave, a grieving forest, a frozen station that wears men\'s faces. Each cursed story strands a hero who\'ll sail with you if you end their nightmare. Take them in any order, take as many as you like — but notice how every legend has curdled the same way. Something is wearing the world\'s old stories like masks.' },
-      { id: 'omega', act: 'III', actName: 'The Neitherworld', title: 'Brave the Neitherworld',
-        goal: 'Once enough heroes stand with you, split into TWO crews and brave the final trial — two branches, then Beetlejuice astride the Sandworm.',
-        thread: 'Past the Kraken a striped door waits at the spire — the Neitherworld, where the trickster Beetlejuice rides a Sandworm and a goth girl named Lydia is caged with her wailing parents. The gate opens only for a captain who can field two full crews, so you must first free enough heroes from the cursed isles. One crew braves the first branch, the next the second — then together you end him and set Lydia free (she joins your roster).' },
-      { id: 'mastery', act: 'III', actName: 'The Neitherworld', title: 'The seas are yours',
+        thread: 'Past the Abyss the world turns strange — a bleeding castle, a wishing cave, a grieving forest, a frozen station that wears men\'s faces, and a striped Neitherworld where a goth girl named Lydia is caged with her parents by a cackling trickster. Each cursed story strands a hero who\'ll sail with you if you end their nightmare. Take them in any order, take as many as you like — but notice how every legend has curdled the same way. Something is wearing the world\'s old stories like masks.' },
+      { id: 'omega', act: 'III', actName: 'The Drowned Spire', title: 'Brave the final trial',
+        goal: 'Once enough heroes stand with you, split into TWO crews and brave the Drowned Spire — a branch each, then Selachoth and the Omega Tide.',
+        thread: 'Past the Kraken the spire still drowns the horizon. Selachoth waits in its heart — the Omega Tide, a shark-god swallowing the sea\'s elements whole; the fading mermaids and the curdled legends were all its hunger spreading outward. The final door opens only for a captain who can field TWO full crews, so you must first free enough heroes from the cursed isles. One crew braves each branch of the spire; then, together, you end the Tide.' },
+      { id: 'mastery', act: 'III', actName: 'The Drowned Spire', title: 'The seas are yours',
         goal: 'Charm every mermaid and complete the bestiary for total mastery.',
-        thread: 'The Sandworm is stilled and the tide runs clean. What remains is legend-work: every mermaid charmed, every creature logged, the duelists of the arena and the lone blade of Castaway Cove answered. Sail for the joy of it now, Captain.' },
+        thread: 'Selachoth is sunk and the tide runs clean. What remains is legend-work: every mermaid charmed, every creature logged, the duelists of the arena and the lone blade of Castaway Cove answered. Sail for the joy of it now, Captain.' },
     ],
     side: [
       { title: '⚔️ The Arena (Paegina)', thread: 'A no-healing gauntlet of Greek myth — Medusa, Minotaur, Hydra and worse. Pure proving-ground; clear leagues for coin and glory.' },

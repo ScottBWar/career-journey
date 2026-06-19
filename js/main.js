@@ -388,7 +388,8 @@ window.Game = (function () {
     const s = Game.state, prog = s.prog || {}, MM = Data.MERMAIDS || {}, SB = Data.STORYBOARD || { spine: [], allies: [] };
     const mKeys = Object.keys(MM);
     const charmed = mKeys.filter(k => s.mermaids && s.mermaids[k] && s.mermaids[k].rel >= MM[k].threshold).length;
-    const allies = (SB.allies || []).filter(k => { const p = (s.party || []).find(x => x.key === k); return p && p.recruited; }).length;
+    const clearedDun = k => { const d = ALLY_DUN[k]; return !!(d && s.dungeons && (s.dungeons[d] || s.dungeons[d + '_boss'])); };
+    const allies = (SB.allies || []).filter(clearedDun).length;   // legend-isles cleared (allies part ways after, so count the deed)
     const totalAllies = (SB.allies || []).length;
     const seen = Object.values(s.bestiary || {}).filter(b => b && b.seen).length;
     const totalE = Object.keys(Data.ENEMIES || {}).length;
@@ -511,7 +512,7 @@ window.Game = (function () {
   };
 
   // ---------- endgame ally picker (Ruffy's strike team for the two-party finale) ----------
-  const ALLY_DUN = { simon: 'vampire_keep', aladdin: 'genie_cave', violca: 'dragon_vale', mac: 'frost_station', sane: 'spirit_wood', marvyn: 'crash_site', quijano: 'mill_keep' };
+  const ALLY_DUN = { simon: 'vampire_keep', aladdin: 'genie_cave', violca: 'dragon_vale', mac: 'frost_station', sane: 'spirit_wood', marvyn: 'crash_site', quijano: 'mill_keep', lydia: 'neitherworld' };
   Game.chooseEndgameAllies = function (cb) {
     const st = Game.state;
     const cleared = k => { const d = ALLY_DUN[k]; return !!(st.dungeons[d] || st.dungeons[d + '_boss']); };
@@ -552,10 +553,15 @@ window.Game = (function () {
     draw(); el('allyPick').classList.add('show');
   };
 
-  // pick TWO crews (3–4 each) from the recruited roster — for the Neitherworld final trial
+  // pick TWO crews (3–4 each) for the Drowned Spire final trial — core members plus every
+  // hero whose legend-isle you've cleared (temp allies are re-recruited when chosen)
   Game.chooseTwoParties = function (cb) {
     const st = Game.state;
-    const avail = st.party.filter(p => p.recruited).map(p => p.key);
+    const clearedDun = k => { const d = ALLY_DUN[k]; return !!(st.dungeons[d] || st.dungeons[d + '_boss']); };
+    const isTemp = k => !!(Data.PARTY.find(x => x.key === k) || {}).temporary;
+    const avail = st.party.filter(p => p.recruited && !isTemp(p.key)).map(p => p.key)   // permanent core
+      .concat(Object.keys(ALLY_DUN).filter(clearedDun))                                 // freed legend heroes
+      .concat(st.party.find(p => p.key === 'ruffy' && p.recruited) ? ['ruffy'] : []);   // Ruffy if aboard
     pauseExplore(); Game.allyPickOpen = true;
     const body = el('allyPickBody'); const assign = {};
     const countA = () => avail.filter(k => assign[k] === 'A').length;
@@ -578,13 +584,13 @@ window.Game = (function () {
     };
     function draw() {
       body.innerHTML = ''; const a = countA(), b = countB();
-      const h = document.createElement('div'); h.innerHTML = `<h2>🕯️ Two Crews for the Neitherworld</h2><div class="sk-gold">Tap a hero to assign them — first tap → <b>Crew A</b>, again → <b>Crew B</b>, again to clear. Each crew needs 3–4. Crew A braves the first branch, Crew B the second — then both face Beetlejuice.</div><div class="sk-gold">Crew A: ${a}/4 · Crew B: ${b}/4</div>`; body.appendChild(h);
+      const h = document.createElement('div'); h.innerHTML = `<h2>🌊 Two Crews for the Drowned Spire</h2><div class="sk-gold">Tap a hero to assign them — first tap → <b>Crew A</b>, again → <b>Crew B</b>, again to clear. Each crew needs 3–4. Crew A braves the first branch, Crew B the second — then both crews converge on Selachoth and the Omega Tide.</div><div class="sk-gold">Crew A: ${a}/4 · Crew B: ${b}/4</div>`; body.appendChild(h);
       const grid = document.createElement('div'); grid.className = 'ally-grid';
       avail.forEach(k => grid.appendChild(card(k))); body.appendChild(grid);
       const foot = document.createElement('div'); foot.style.cssText = 'display:flex; justify-content:flex-end; margin-top:0.7rem;';
       const ok = a >= 3 && a <= 4 && b >= 3 && b <= 4;
       const go = document.createElement('button'); go.className = 'pill' + (ok ? '' : ' ghost'); go.disabled = !ok;
-      go.textContent = ok ? '🚪 Into the Neitherworld' : 'Assign two crews of 3–4';
+      go.textContent = ok ? '🌊 Into the Drowned Spire' : 'Assign two crews of 3–4';
       go.onclick = () => { if (!ok) return; Game.allyPickOpen = false; el('allyPick').classList.remove('show'); cb(avail.filter(k => assign[k] === 'A'), avail.filter(k => assign[k] === 'B')); };
       foot.appendChild(go); body.appendChild(foot);
     }
@@ -602,8 +608,8 @@ window.Game = (function () {
     el('end').classList.add('show'); Music.play('victory', 'island');
   };
   Game.finalEnding = function () {
-    el('endTitle').textContent = 'The Neitherworld Closes';
-    el('endText').innerHTML = 'The Sandworm sinks back into the sand and Beetlejuice is dragged howling into the dark — Lydia closes the gate behind him. The two crews you forged from a world of broken legends sail home together under a clean horizon.<br><br><b>Thanks for playing!</b> You can keep exploring, or return to the site.';
+    el('endTitle').textContent = 'The Tide Turns';
+    el('endText').innerHTML = 'Selachoth dissolves into seafoam and the Omega Tide ebbs at last, the grey horizon blushing gold. The two crews you forged from a world of broken legends sail home together — and the song of how you turned the tide will be sung on every shore.<br><br><b>Thanks for playing!</b> You can keep exploring, or return to the site.';
     el('end').classList.add('show'); Music.play('victory', 'island');
   };
   el('endContinue') && (el('endContinue').onclick = () => el('end').classList.remove('show'));
