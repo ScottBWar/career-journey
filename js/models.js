@@ -498,11 +498,11 @@ window.Models = (function () {
     return { node: r, arm };
   }
 
-  function mermaid(hairHex, tailHex) {
+  function mermaid(hairHex, tailHex, skinHex) {
     const r = new BABYLON.TransformNode('mermaid', scene);
-    // clean palette — soft warm skin, vivid tail, no muddy emissive fighting the light
+    // clean palette — vivid tail + per-mermaid skin tone, no muddy emissive fighting the light
     const tHex = tailHex || '#2fae9a', hHex = hairHex || '#3fd0e0';
-    const skin = M('mmSkin', '#f2caa6'), hair = M('mmHair', hHex),
+    const skin = M('mmSkin', skinHex || '#f2caa6'), hair = M('mmHair', hHex),
           tail = M('mmTail', tHex, { spec: 0.45, specPower: 48 }),
           tailLite = M('mmTail2', shade(tHex, 1.25), { spec: 0.5 }),
           top = M('mmTop', '#ff9ec6');

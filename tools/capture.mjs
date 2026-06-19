@@ -125,7 +125,7 @@ function serve() {
           let m = null;
           try {
             if (it.kind === 'enemy') m = Models.enemy(it.key);
-            else if (it.kind === 'mermaid') { const md = Data.MERMAIDS[it.key]; m = Models.mermaid(md.color, md.tail); }
+            else if (it.kind === 'mermaid') { const md = Data.MERMAIDS[it.key]; m = Models.mermaid(md.color, md.tail, md.skin); }
             else { const md = (window.Progress && Progress.def(it.key) && Progress.def(it.key).model) || it.key; m = Models[md] ? Models[md]() : null; }
           } catch (e) { m = null; }
           if (!m || !m.node) return;

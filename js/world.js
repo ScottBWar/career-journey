@@ -97,7 +97,7 @@ window.World = (function () {
     if (def.mermaids) def.mermaids.forEach(mm => {
       const md = Data.MERMAIDS[mm.key];
       const rk = Models.rock(); rk.node.position.set(mm.x, 0, mm.z - 0.7); rk.node.scaling.setAll(1.7);
-      const mer = Models.mermaid(md.color, md.tail); mer.node.position.set(mm.x, 0.7, mm.z); mer.node._baseY = 0.7; mer.node.rotation.y = Math.PI; idlers.push(mer);
+      const mer = Models.mermaid(md.color, md.tail, md.skin); mer.node.position.set(mm.x, 0.7, mm.z); mer.node._baseY = 0.7; mer.node.rotation.y = Math.PI; idlers.push(mer);
       gates.push({ kind: 'mermaid', key: mm.key, name: md.name, pos: new V3(mm.x, 0, mm.z), r: 3 });
     });
 

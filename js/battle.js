@@ -428,7 +428,7 @@ window.Battle = (function () {
     const oRad = camera.radius, oTgt = camera.target.clone();
     const cen = aliveEnemies().reduce((a, e) => a.add(e.node.getAbsolutePosition()), new V3(0, 0, 0)).scale(1 / Math.max(1, aliveEnemies().length)).add(new V3(0, 2, 0));
     // the mermaid descends over the field, spinning into view
-    const built = Models.mermaid(md.color, md.tail); const node = built.node; node.scaling.setAll(1.7); node.position.set(-2, 12, -1); node.rotation.y = -0.5;
+    const built = Models.mermaid(md.color, md.tail, md.skin); const node = built.node; node.scaling.setAll(1.7); node.position.set(-2, 12, -1); node.rotation.y = -0.5;
     await tween(k => { node.position.y = 12 - k * 7.5; node.rotation.y = -0.5 + (1 - k) * Math.PI * 2; camera.radius = oRad + (13 - oRad) * k; camera.setTarget(V3.Lerp(oTgt, new V3(-1, 3, -0.5), k)); }, 620);
     if (window.SFX) SFX.play(md.element === 'fire' ? 'fire' : md.element === 'water' ? 'water' : 'magic');
     shake(0.7); await wait(220);

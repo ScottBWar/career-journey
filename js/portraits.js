@@ -43,7 +43,7 @@ window.Portraits = (function () {
     nyx:    { type: 'mermaid', skin: '#cfc0d8', hair: '#b06aff', eye: '#e0b3ff', bg: '#2a1840' },
     lumina: { type: 'mermaid', skin: '#f5e8d0', hair: '#fff3c0', eye: '#fffae0', bg: '#4a4636' },
   };
-  const S = 16, CELL = 8;
+  const S = 16, CELL = 14; // higher resolution output (224px) so portraits read crisp + detailed when shown large
 
   function draw(key, mood) {
     const p = SPEC[key]; if (!p) return null;
@@ -261,6 +261,16 @@ window.Portraits = (function () {
         // tentacles
         px(2, 13, 1, 2, shade(p.skin, 0.8)); px(5, 13, 1, 3, shade(p.skin, 0.8)); px(8, 13, 1, 3, shade(p.skin, 0.8)); px(11, 13, 1, 2, shade(p.skin, 0.8)); px(13, 13, 1, 2, shade(p.skin, 0.8)); break;
     }
+    // SNES-anime polish: soft form-shading over the pixel base (light from upper-left) + a vignette,
+    // drawn at full resolution so it adds sub-cell shading/depth without losing the pixel feel
+    const W = S * CELL;
+    const g1 = c.createRadialGradient(W * 0.34, W * 0.26, W * 0.08, W * 0.34, W * 0.26, W * 0.95);
+    g1.addColorStop(0, 'rgba(255,255,255,0.18)'); g1.addColorStop(0.55, 'rgba(255,255,255,0)'); g1.addColorStop(1, 'rgba(0,0,0,0.12)');
+    c.globalCompositeOperation = 'soft-light'; c.fillStyle = g1; c.fillRect(0, 0, W, W);
+    const g2 = c.createRadialGradient(W * 0.5, W * 0.46, W * 0.34, W * 0.5, W * 0.5, W * 0.74);
+    g2.addColorStop(0, 'rgba(0,0,0,0)'); g2.addColorStop(1, 'rgba(0,0,0,0.3)');
+    c.globalCompositeOperation = 'source-over'; c.fillStyle = g2; c.fillRect(0, 0, W, W);
+    c.globalCompositeOperation = 'source-over';
     return cv.toDataURL();
   }
 

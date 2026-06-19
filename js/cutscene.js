@@ -81,7 +81,7 @@ window.Cutscene = (function () {
       const a = actors[name]; let built;
       if (a.type === 'party') { const model = Progress.def(a.key).model; built = Models[model] ? Models[model]() : Models.hero(); }
       else if (a.type === 'enemy') built = Models.enemy(a.key);
-      else { const md = Data.MERMAIDS[a.key]; built = Models.mermaid(md.color, md.tail); }
+      else { const md = Data.MERMAIDS[a.key]; built = Models.mermaid(md.color, md.tail, md.skin); }
       const x = (i - (n - 1) / 2) * 3.4;
       built.node.position.set(x, (a.type === 'enemy' && Data.ENEMIES[a.key].baseY) || 0, 0);
       if (a.type === 'enemy' && Data.ENEMIES[a.key].boss) built.node.scaling.setAll(Math.min(1.2, Data.ENEMIES[a.key].scale || 1.1));

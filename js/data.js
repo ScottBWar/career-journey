@@ -694,7 +694,7 @@ window.Data = (function () {
       smitten: '"You\'ve set my heart ablaze, Captain. Bring me a blade — I\'ll wreath it in fire for whoever you choose."',
       enchant: '"Whose weapon shall I kiss with flame?"' },
 
-    nerida: { name: 'Nerida', element: 'water', color: '#3fd0e0', tail: '#2f8d9a', island: 'tidehaven', threshold: THRESH,
+    nerida: { name: 'Nerida', element: 'water', color: '#3fd0e0', tail: '#2f8d9a', skin: '#6a4733', island: 'tidehaven', threshold: THRESH,
       intro: 'A serene mermaid drifts in a tide pool, watching you with deep, knowing eyes.', likes: 'honesty and a gentle soul',
       dates: [
         { q: '"The water shows me everything. So tell me true — why are you really here?"', options: [ o('"Honestly? I wanted to meet you."', 2, 'She smiles softly. "...Honesty. How rare and lovely."'), o('"To get stronger for the journey."', 1, '"Driven. The current carries you far."'), o('"Treasure, mostly."', 0, 'She sighs like the tide pulling out.') ] },
@@ -714,7 +714,7 @@ window.Data = (function () {
       smitten: '"You\'ve got my heart racing at a thousand volts! Gimme a weapon — I\'ll charge it UP!"',
       enchant: '"Whose weapon gets the shock treatment?!"' },
 
-    gaia: { name: 'Gaia', element: 'earth', color: '#6ec06a', tail: '#3a7a3a', island: 'dunes', threshold: THRESH,
+    gaia: { name: 'Gaia', element: 'earth', color: '#6ec06a', tail: '#3a7a3a', skin: '#c08652', island: 'dunes', threshold: THRESH,
       intro: 'A gentle mermaid tends a little garden of sea-flowers growing from the sand.', likes: 'kindness and patience',
       dates: [
         { q: '"This little seedling won\'t bloom. What would you do?"', options: [ o('"Be patient. Give it time and care."', 2, 'She beams warmly. "...You\'d make a fine gardener."'), o('"Move it somewhere sunnier."', 1, '"Practical and kind. I like that."'), o('"Pull it up and plant a new one."', 0, 'She frowns. "Oh... no, no."') ] },

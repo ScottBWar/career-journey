@@ -417,9 +417,10 @@
     .sh-foot { margin-top: 0.8rem; text-align: center; color: rgba(255,255,255,0.6); font-size: 0.82rem; }
     .sh-result { text-align: center; line-height: 1.7; margin: 1rem 0; }
 
-    /* dating sim — per-element animated scene backgrounds */
-    #date.show[class*="scene-"] { backdrop-filter: none; }
-    #date[class*="scene-"]::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+    /* dating sim — the mermaid now floats as a live 3D scene; the overlay is transparent
+       so she shows through, with only the themed particle ::after as light ambiance */
+    #date.show[class*="scene-"] { backdrop-filter: none; background: transparent !important; }
+    #date[class*="scene-"]::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5; }
     #date { align-items: flex-end; padding-bottom: 3vh; }
     .date-box { position: relative; z-index: 1; width: min(560px, 96vw); padding: 1.2rem; }
     .date-char { position: absolute; top: 7%; left: 50%; transform: translateX(-50%); z-index: 1; pointer-events: none; }

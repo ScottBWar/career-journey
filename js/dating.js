@@ -5,22 +5,34 @@
 // =====================================================================
 window.Dating = (function () {
   const el = id => document.getElementById(id);
-  let key, m, st, onClose, mood = 'neutral', bodyImg = null;
+  const V3 = BABYLON.Vector3;
+  let key, m, st, onClose, mood = 'neutral', prevScene = null, dScene = null, dObs = null;
 
-  // render the full 3D mermaid body to a transparent image once, so the date screen shows
-  // her whole figure (not just a head portrait). Falls back to the portrait if it fails.
-  function renderBody(mer) {
-    try {
-      const eng = Game.engine; const scene = new BABYLON.Scene(eng); scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
-      Models.use(scene);
-      new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0.2, 1, 0.35), scene).intensity = 1.05;
-      const sun = new BABYLON.DirectionalLight('s', new BABYLON.Vector3(-0.35, -1, 0.45), scene); sun.intensity = 1.25; sun.specular = new BABYLON.Color3(1, 1, 1);
-      const built = Models.mermaid(mer.color, mer.tail); built.node.rotation.y = 0.18;
-      const cam = new BABYLON.UniversalCamera('c', new BABYLON.Vector3(0, 1.45, 7), scene); cam.setTarget(new BABYLON.Vector3(0, 1.35, 0)); cam.fov = 0.62;
-      BABYLON.Tools.CreateScreenshotUsingRenderTarget(eng, cam, { width: 540, height: 820 }, (data) => {
-        bodyImg = data; const img = el('dateBody'); if (img) img.src = data; try { scene.dispose(); } catch (e) {}
-      });
-    } catch (e) { bodyImg = null; }
+  // build a cutscene-style 3D backdrop: the mermaid floats LARGE behind the dialogue,
+  // bobbing in moonlit water with drifting bubbles. Becomes the live Game.scene.
+  function buildScene(mer) {
+    const eng = Game.engine; prevScene = Game.scene;
+    const scene = new BABYLON.Scene(eng); scene.clearColor = new BABYLON.Color4(0.03, 0.04, 0.08, 1);
+    Models.use(scene);
+    const elc = (Data.ELEMENT_INFO[mer.element] || {}).c || '#88aaff';
+    new BABYLON.HemisphericLight('h', new V3(0.1, 1, 0.2), scene).intensity = 0.85;
+    const key2 = new BABYLON.DirectionalLight('k', new V3(-0.4, -0.7, 0.5), scene); key2.intensity = 1.25; key2.diffuse = BABYLON.Color3.FromHexString('#fff0d8');
+    const rim = new BABYLON.PointLight('rim', new V3(2.5, 4, -6), scene); rim.intensity = 0.8; rim.diffuse = BABYLON.Color3.FromHexString(elc);
+    const built = Models.mermaid(mer.color, mer.tail, mer.skin); const node = built.node; node.scaling.setAll(2.7); node.position.set(0.4, -1.7, 0); node.rotation.y = -0.32;
+    // a glowing element-tinted moon disc behind her
+    const moon = BABYLON.MeshBuilder.CreateDisc('moon', { radius: 4.5, tessellation: 40 }, scene); const mm = new BABYLON.StandardMaterial('mm', scene); mm.emissiveColor = BABYLON.Color3.FromHexString(elc).scale(0.45); mm.diffuseColor = new BABYLON.Color3(0, 0, 0); mm.disableLighting = true; moon.material = mm; moon.position.set(2.5, 4.5, 13);
+    // drifting bubbles
+    const bub = []; for (let i = 0; i < 16; i++) { const b = BABYLON.MeshBuilder.CreateSphere('bub', { diameter: 0.08 + Math.random() * 0.26, segments: 8 }, scene); const bm = new BABYLON.StandardMaterial('bm', scene); bm.emissiveColor = new BABYLON.Color3(0.6, 0.82, 1); bm.diffuseColor = new BABYLON.Color3(0, 0, 0); bm.alpha = 0.28; bm.disableLighting = true; b.material = bm; b.position.set(Math.random() * 9 - 4.5, Math.random() * 7 - 1.5, Math.random() * 4 - 2); bub.push(b); }
+    const cam = new BABYLON.UniversalCamera('dc', new V3(0.3, 1.7, 7.4), scene); cam.setTarget(new V3(0.5, 1.9, 0)); cam.fov = 0.72;
+    if (window.Render) Render.setup(scene, cam, { skyTop: '#0a1430', skyHorizon: elc });
+    let t = 0;
+    dObs = scene.onBeforeRenderObservable.add(() => {
+      const dt = Math.min(0.05, eng.getDeltaTime() / 1000); t += dt;
+      if (built.idle) built.idle(t);
+      node.rotation.y = -0.32 + Math.sin(t * 0.4) * 0.18; node.position.y = -1.7 + Math.sin(t * 0.7) * 0.22;
+      bub.forEach((b, i) => { b.position.y += (0.3 + i * 0.04) * dt; if (b.position.y > 5.5) b.position.y = -1.8; });
+    });
+    dScene = scene; Game.scene = scene;
   }
 
   function hearts(rel, max) { const filled = Math.round(rel / max * 5); let s = ''; for (let i = 0; i < 5; i++) s += i < filled ? '❤' : '🤍'; return s; }
@@ -29,16 +41,15 @@ window.Dating = (function () {
     key = mermaidKey; m = Data.MERMAIDS[key]; onClose = close;
     if (!Game.state.mermaids[key]) Game.state.mermaids[key] = { rel: 0, idx: 0, enchanted: false };
     st = Game.state.mermaids[key]; mood = st.rel >= m.threshold ? 'happy' : 'shy';
-    el('date').className = 'overlay show scene-' + m.element; // element-themed scene background
+    el('date').className = 'overlay show scene-' + m.element; // themed particle ambiance over the 3D
     if (window.SFX) SFX.play('confirm');
     if (window.Music) Music.play('date');
-    bodyImg = null; render(); renderBody(m); // kick off the full-body render; frame() shows it once ready
+    buildScene(m); render();
   }
 
   function frame(bodyHtml, options) {
     const elInfo = Data.ELEMENT_INFO[m.element];
-    el('date').innerHTML = `<div class="date-char"><img id="dateBody" src="${bodyImg || Portraits.url(key, mood)}" alt=""></div>
-      <div class="box panel date-box">
+    el('date').innerHTML = `<div class="box panel date-box">
       <div class="date-head">${Portraits.img(key, 'date-port', mood)}
         <div class="date-meta"><div class="date-name">${m.name} <span class="date-el" style="color:${elInfo.c}">${elInfo.i} ${elInfo.name}</span></div>
         <div class="date-hearts">${hearts(st.rel, m.threshold + 2)}</div></div></div>
@@ -97,7 +108,12 @@ window.Dating = (function () {
       [{ label: 'Enchant another', fn: chooseEnchantTarget }, { label: 'Leave', fn: close }]);
   }
 
-  function close() { el('date').classList.remove('show'); el('date').innerHTML = ''; onClose && onClose(); }
+  function close() {
+    if (dScene && dObs) { try { dScene.onBeforeRenderObservable.remove(dObs); } catch (e) {} } dObs = null;
+    el('date').className = 'overlay'; el('date').innerHTML = '';
+    const cb = onClose; onClose = null; if (cb) cb();   // resumeExplore restores Game.scene to the world FIRST
+    if (dScene) { try { dScene.dispose(); } catch (e) {} dScene = null; } // then it's safe to dispose the date scene
+  }
 
   return { start };
 })();
