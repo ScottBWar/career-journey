@@ -475,10 +475,19 @@ window.Portraits = (function () {
     return cv.toDataURL();
   }
 
-  function url(key, mood) { const ck = key + '|' + (mood || 'neutral'); if (cache[ck] === undefined) cache[ck] = draw(key, mood); return cache[ck]; }
+  // ART OVERRIDES — drop a real PNG into assets/portraits/ and list it here to
+  // replace the procedural placeholder for that character (key = SPEC key).
+  // e.g.  pirate: 'redbeard.png',  healer: 'marina.png'
+  const ART = {};
+  const ART_DIR = 'assets/portraits/';
+
+  function url(key, mood) {
+    if (ART[key]) return ART_DIR + ART[key];                                  // real art if provided
+    const ck = key + '|' + (mood || 'neutral'); if (cache[ck] === undefined) cache[ck] = draw(key, mood); return cache[ck];
+  }
   function has(key) { return !!SPEC[key]; }
   // small <img> element string for inline use
   function img(key, cls, mood) { const u = url(key, mood); return u ? `<img class="portrait ${cls || ''}" src="${u}" alt="">` : ''; }
 
-  return { url, has, img };
+  return { url, has, img, ART };
 })();
