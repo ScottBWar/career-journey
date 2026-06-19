@@ -5,7 +5,11 @@
 // =====================================================================
 (function () {
   let ctx = null, master = null, musicBus = null, dry = null, wet = null, conv = null, comp = null;
+  let padBus = null, delaySend = null, tapeFilter = null; // production chain: tonal sub-bus, echo send, lo-fi tape lowpass
   let muted = false;
+
+  // soft-clip curve for analog-ish saturation/warmth (de-MIDIs the raw oscillators)
+  function makeSatCurve(k) { const n = 1024, c = new Float32Array(n); for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; c[i] = Math.tanh(x * k) / Math.tanh(k); } return c; }
 
   function ensure() {
     if (ctx) return;
@@ -20,8 +24,20 @@
     master.connect(comp);
     comp.connect(dry).connect(ctx.destination);
     comp.connect(conv).connect(wet).connect(ctx.destination);
-    musicBus = ctx.createGain(); musicBus.gain.value = 0.9; musicBus.connect(master);
+    // music bus → saturation → wobbling tape lowpass → master (warm, dusty, not clean-MIDI)
+    musicBus = ctx.createGain(); musicBus.gain.value = 0.9;
+    const sat = ctx.createWaveShaper(); sat.curve = makeSatCurve(2.4); sat.oversample = '2x';
+    tapeFilter = ctx.createBiquadFilter(); tapeFilter.type = 'lowpass'; tapeFilter.frequency.value = 3300; tapeFilter.Q.value = 0.5;
+    musicBus.connect(sat); sat.connect(tapeFilter); tapeFilter.connect(master);
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.16; const lfoG = ctx.createGain(); lfoG.gain.value = 650; lfo.connect(lfoG); lfoG.connect(tapeFilter.frequency); lfo.start(); // slow tape wobble
+    // tonal sub-bus (pads/keys/bass/lead) — ducked by the kick for that sidechain "pump"
+    padBus = ctx.createGain(); padBus.gain.value = 1.0; padBus.connect(musicBus);
+    // tape echo send (mainly the lead)
+    const delay = ctx.createDelay(1.0); delay.delayTime.value = 0.26; const fb = ctx.createGain(); fb.gain.value = 0.34;
+    delaySend = ctx.createGain(); delaySend.gain.value = 0.5; delaySend.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(musicBus);
   }
+  // sidechain duck — the kick momentarily pushes the tonal bus down, then it swells back
+  function pump(time) { if (!padBus) return; const g = padBus.gain; g.cancelScheduledValues(time); g.setValueAtTime(0.52, time); g.linearRampToValueAtTime(1.0, time + 0.18); }
   function makeImpulse(seconds, decay) {
     const rate = (ctx.sampleRate) || 44100; const len = rate * seconds; const buf = ctx.createBuffer(2, len, rate);
     for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
@@ -30,19 +46,23 @@
 
   const midi = m => 440 * Math.pow(2, (m - 69) / 12);
 
-  // a lush voice: two detuned oscillators -> lowpass -> ADSR gain
+  // a lush voice: two detuned oscillators -> lowpass (with movement) -> ADSR gain
   function voice(freq, time, dur, o = {}) {
-    const { type = 'sawtooth', detune = 6, cutoff = 2200, peak = 0.2, a = 0.01, d = 0.12, s = 0.5, r = 0.2, dest = musicBus } = o;
-    const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.6;
+    const { type = 'sawtooth', detune = 6, cutoff = 2200, peak = 0.2, a = 0.01, d = 0.12, s = 0.5, r = 0.2, dest = padBus, echo = 0 } = o;
+    const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.9;
+    // filter envelope: opens on attack, settles down — gives notes movement instead of a static buzz
+    f.frequency.setValueAtTime(cutoff * 1.6, time); f.frequency.exponentialRampToValueAtTime(Math.max(200, cutoff * 0.75), time + a + d + 0.05);
     const o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
     o1.type = o2.type = type; o1.frequency.value = freq; o2.frequency.value = freq; o1.detune.value = -detune; o2.detune.value = detune;
+    o1.detune.linearRampToValueAtTime(-detune - 4, time + dur); o2.detune.linearRampToValueAtTime(detune + 4, time + dur); // slow analog drift
     const sus = peak * s;
     g.gain.setValueAtTime(0.0001, time);
     g.gain.linearRampToValueAtTime(peak, time + a);
     g.gain.linearRampToValueAtTime(sus, time + a + d);
     g.gain.setValueAtTime(sus, time + Math.max(a + d, dur));
     g.gain.exponentialRampToValueAtTime(0.0001, time + Math.max(a + d, dur) + r);
-    o1.connect(f); o2.connect(f); f.connect(g).connect(dest);
+    o1.connect(f); o2.connect(f); f.connect(g); g.connect(dest || padBus);
+    if (echo && delaySend) { const eg = ctx.createGain(); eg.gain.value = echo; g.connect(eg); eg.connect(delaySend); }
     o1.start(time); o2.start(time); o1.stop(time + dur + r + 0.05); o2.stop(time + dur + r + 0.05);
   }
   function noise(time, dur, o = {}) {
@@ -57,7 +77,7 @@
   // ---- trip-hop instrument voices ----
   // warm electric piano (Rhodes-ish): sine body + octave shimmer + a bell "tine"
   function epiano(freq, time, dur, o = {}) {
-    const { peak = 0.08, cutoff = 2200, dest = musicBus } = o;
+    const { peak = 0.08, cutoff = 2200, dest = padBus } = o;
     const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.4;
     const body = ctx.createOscillator(); body.type = 'sine'; body.frequency.value = freq;
     const oct = ctx.createOscillator(); oct.type = 'sine'; oct.frequency.value = freq * 2; const og = ctx.createGain();
@@ -73,7 +93,7 @@
   }
   // deep round sub bass
   function subBass(freq, time, dur, o = {}) {
-    const { peak = 0.3, dest = musicBus } = o;
+    const { peak = 0.3, dest = padBus } = o;
     const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 220; f.Q.value = 0.8;
     const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = freq;
     const o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = freq; const o2g = ctx.createGain(); o2g.gain.value = 0.16;
@@ -86,11 +106,11 @@
   }
   // ---- drums: dusty, downtempo, head-nodding ----
   function kick(time, dest = musicBus, o = {}) {
-    const { peak = 0.6 } = o; const oo = ctx.createOscillator(), g = ctx.createGain();
-    oo.frequency.setValueAtTime(118, time); oo.frequency.exponentialRampToValueAtTime(42, time + 0.13);
-    g.gain.setValueAtTime(peak, time); g.gain.exponentialRampToValueAtTime(0.0001, time + 0.28);
-    oo.connect(g).connect(dest); oo.start(time); oo.stop(time + 0.3);
-    noise(time, 0.012, { cutoff: 2600, hp: true, peak: 0.1, dest });
+    const { peak = 0.6 } = o; pump(time); const oo = ctx.createOscillator(), g = ctx.createGain();
+    oo.frequency.setValueAtTime(120, time); oo.frequency.exponentialRampToValueAtTime(42, time + 0.13);
+    g.gain.setValueAtTime(peak, time); g.gain.exponentialRampToValueAtTime(0.0001, time + 0.3);
+    oo.connect(g).connect(dest); oo.start(time); oo.stop(time + 0.32);
+    noise(time, 0.014, { cutoff: 2400, hp: true, peak: 0.12, dest }); // beater click
   }
   function snare(time, dest = musicBus, o = {}) {
     const { peak = 0.2 } = o;
@@ -233,15 +253,17 @@
     if (step === 0) chord.forEach(n => voice(midi(n - 12), time, beat * STEPS, { type: tk.padWave, peak: 0.035, cutoff: tk.cut, a: 0.5, d: 0.8, s: 0.8, r: 1.2 }));
     // breathy choir/atmos pad (boss/date/intro)
     if (tk.choir && step === 0) chord.forEach(n => voice(midi(n + 12), time, beat * STEPS, { type: 'sine', detune: 7, peak: 0.04, cutoff: 3000, a: 0.8, d: 0.9, s: 0.85, r: 1.4 }));
+    const hum = () => (Math.random() - 0.5) * 0.014;   // micro-timing so it's not robotic
+    const vel = () => 0.82 + Math.random() * 0.36;      // velocity variation
     // electric-piano comping — the trip-hop heart
-    if (tk.keys && tk.keys[step]) chord.forEach(n => epiano(midi(n + (tk.keysOct || 0)), t, beat * (tk.keyLen || 3), { peak: tk.keyPeak || 0.07, cutoff: tk.cut + 600 }));
+    if (tk.keys && tk.keys[step]) chord.forEach(n => epiano(midi(n + (tk.keysOct || 0)), t + hum(), beat * (tk.keyLen || 3), { peak: (tk.keyPeak || 0.07) * vel(), cutoff: tk.cut + 600 }));
     // dark filtered stabs (battle/boss)
-    if (tk.stabs && tk.stabs[step]) chord.forEach(n => voice(midi(n), t, beat * 1.6, { type: 'sawtooth', detune: 10, peak: 0.06, cutoff: 1300, a: 0.02, d: 0.18, s: 0.4, r: 0.3 }));
+    if (tk.stabs && tk.stabs[step]) chord.forEach(n => voice(midi(n), t + hum(), beat * 1.6, { type: 'sawtooth', detune: 10, peak: 0.06, cutoff: 1300, a: 0.02, d: 0.18, s: 0.4, r: 0.3 }));
     // deep sub bass
     const bp = tk.bassP[step]; if (bp !== _) subBass(midi(chord[0] - 24 + bp), t, beat * (tk.bassLen || 3.4), { peak: tk.bassPeak || 0.3 });
     // sparse, reverbed lead (loops on its own length); leadADSR lets a track pluck (lyre) instead of sustain
     const note = tk.mel[gstep % tk.mel.length];
-    if (note) { const la = tk.leadADSR || { a: 0.02, d: 0.2, s: 0.4, r: 0.45 }; voice(midi(note), t, beat * (tk.leadDur || 2.0), { type: tk.leadWave, peak: tk.leadPeak || 0.08, cutoff: tk.cut + 500, a: la.a, d: la.d, s: la.s, r: la.r }); }
+    if (note) { const la = tk.leadADSR || { a: 0.02, d: 0.2, s: 0.4, r: 0.45 }; voice(midi(note), t + hum(), beat * (tk.leadDur || 2.0), { type: tk.leadWave, peak: (tk.leadPeak || 0.08) * vel(), cutoff: tk.cut + 500, a: la.a, d: la.d, s: la.s, r: la.r, echo: 0.32 }); }
     // optional counter-melody / harmony line (fuller, more interesting battle themes)
     if (tk.harm) { const hn = tk.harm[gstep % tk.harm.length]; if (hn) voice(midi(hn), t, beat * 1.5, { type: tk.harmWave || tk.leadWave, peak: tk.harmPeak || 0.05, cutoff: tk.cut + 200, a: 0.02, d: 0.18, s: 0.32, r: 0.4 }); }
     // drums
