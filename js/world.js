@@ -28,9 +28,21 @@ window.World = (function () {
 
     water = MB.CreateGround('water', { width: 280, height: 280, subdivisions: 40 }, scene); const wm = M('water', def.water, { spec: 0.8 }); wm.specularPower = 64; wm.emissiveColor = Color3.FromHexString(def.water).scale(0.18); water.material = wm; water.position.y = -0.35; waterBase = water.getVerticesData(BABYLON.VertexBuffer.PositionKind).slice();
     // island shape: non-round footprints + an organic, noisy coastline for variety
-    const SHAPES = { round: [1, 1], long: [1.45, 0.72], wide: [0.72, 1.45], oval: [1.25, 0.85], teardrop: [0.9, 1.3] };
-    const shp = SHAPES[def.shape] || SHAPES.round; const yaw = (def.shapeYaw || 0);
-    const wobble = (mesh, amp) => { const pos = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind); for (let i = 0; i < pos.length; i += 3) { const a = Math.atan2(pos[i + 1], pos[i]); const f = 1 + Math.sin(a * 5) * amp + Math.sin(a * 11 + 1.3) * amp * 0.5; pos[i] *= f; pos[i + 1] *= f; } mesh.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos); };
+    const SHAPES = { round: [1, 1], long: [1.45, 0.72], wide: [0.72, 1.45], oval: [1.25, 0.85], teardrop: [0.9, 1.3],
+      crescent: [1.1, 0.95], twin: [1.18, 0.86], star: [1, 1], clover: [1.04, 1.04], fin: [1.06, 0.98], horn: [1.22, 0.82], wedge: [1.18, 0.86], spiral: [1.08, 0.98] };
+    // per-shape radial profile r(angle) — distinct coastlines; kept >=0.7 so interactables never hit water
+    const RF = {
+      crescent: a => 1 - 0.30 * Math.pow(Math.max(0, Math.cos(a)), 2),     // a moonlit bite out of one shore
+      twin:     a => 0.85 + 0.20 * Math.abs(Math.cos(a)),                  // two-armed cove / peanut
+      star:     a => 1 + 0.14 * Math.sin(a * 6),                          // jagged, many-pointed coast
+      clover:   a => 1 + 0.16 * Math.cos(a * 3),                          // three leafy lobes
+      fin:      a => 1 + 0.26 * Math.max(0, Math.sin(a)),                 // a sweeping shark-fin point
+      horn:     a => 1 + 0.20 * Math.sin(a * 2 + 0.8),                    // a curved horn / hook
+      wedge:    a => 0.82 + 0.32 * ((Math.cos(a) + 1) / 2),               // a pointed dune-wedge
+      spiral:   a => 1 + 0.16 * Math.sin(a + Math.cos(a) * 1.4),          // a lazy comma swirl
+    };
+    const shp = SHAPES[def.shape] || SHAPES.round; const yaw = (def.shapeYaw || 0); const rf = RF[def.shape];
+    const wobble = (mesh, amp) => { const pos = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind); for (let i = 0; i < pos.length; i += 3) { const a = Math.atan2(pos[i + 1], pos[i]); let f = 1 + Math.sin(a * 5) * amp + Math.sin(a * 11 + 1.3) * amp * 0.5; if (rf) f *= rf(a); pos[i] *= f; pos[i + 1] *= f; } mesh.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos); };
     const sand = MB.CreateDisc('sand', { radius: def.size * 0.6, tessellation: 56 }, scene); wobble(sand, 0.06); sand.rotation.x = Math.PI/2; sand.rotation.y = yaw; sand.scaling.x = shp[0]; sand.scaling.y = shp[1]; sand.position.y = -0.04; sand.material = M('sand', def.sand);
     const grass = MB.CreateDisc('grass', { radius: def.size * 0.54, tessellation: 56 }, scene); wobble(grass, 0.07); grass.rotation.x = Math.PI/2; grass.rotation.y = yaw; grass.scaling.x = shp[0]; grass.scaling.y = shp[1]; grass.material = M('grass', def.ground);
     const treeFn = () => (Models[def.treeType] ? Models[def.treeType]() : Models.tree());

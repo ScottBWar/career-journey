@@ -905,7 +905,7 @@ window.Data = (function () {
       decor: { trees: 12, palms: 8, rocks: 8 }, shells: { x: 13, z: 9 }, mermaids: [ { key: 'ember', x: -7, z: -5 }, { key: 'nerida', x: 7, z: -6 } ],
     },
     dunes: {
-      name: 'Dunes Isle', size: 52, shape: 'wide', treeType: 'palm', ground: '#cdb06a', sand: '#e7c890', water: '#1e6f96', sky: { top: '#3a6a9a', horizon: '#f3e3b8' },
+      name: 'Dunes Isle', size: 52, shape: 'wedge', treeType: 'palm', ground: '#cdb06a', sand: '#e7c890', water: '#1e6f96', sky: { top: '#3a6a9a', horizon: '#f3e3b8' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'dunesport', x: 13, z: 3, color: '#ffd166' },
       dungeon: { key: 'dune_tomb', x: -11, z: 8, color: '#ffcf6a' },
@@ -916,7 +916,7 @@ window.Data = (function () {
       decor: { trees: 6, palms: 12, rocks: 12 }, shells: { x: -13, z: -6 }, mermaids: [ { key: 'volta', x: 5, z: -7 }, { key: 'gaia', x: -5, z: -7 } ],
     },
     spire: {
-      name: 'Abyssal Isle', size: 50, shape: 'teardrop', treeType: 'deadTree', ground: '#3a3a52', sand: '#5a5070', water: '#10182e', sky: { top: '#070a18', horizon: '#3a2f52' },
+      name: 'Abyssal Isle', size: 50, shape: 'horn', treeType: 'deadTree', ground: '#3a3a52', sand: '#5a5070', water: '#10182e', sky: { top: '#070a18', horizon: '#3a2f52' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       dungeon: { key: 'abyss_vault', x: -11, z: 6, color: '#c0c8ff' },
       encounters: [
@@ -927,14 +927,14 @@ window.Data = (function () {
       decor: { trees: 2, palms: 2, rocks: 9 }, shells: { x: 12, z: 6 }, mermaids: [ { key: 'nyx', x: -6, z: -6 }, { key: 'lumina', x: 6, z: -5 } ],
     },
     mall: {
-      name: 'Mall Isle', size: 46, shape: 'round', ground: '#b8b0c8', sand: '#d8d0e0', water: '#1e6f96', sky: { top: '#6a5ab0', horizon: '#f3d8ee' },
+      name: 'Mall Isle', size: 46, shape: 'clover', ground: '#b8b0c8', sand: '#d8d0e0', water: '#1e6f96', sky: { top: '#6a5ab0', horizon: '#f3d8ee' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'mall', x: 0, z: 5, color: '#ff9ec0' },
       encounters: [],
       decor: { trees: 4, palms: 6, rocks: 4 },
     },
     duskmoor: {
-      name: 'Duskmoor Isle', size: 50, shape: 'long', treeType: 'deadTree', ground: '#2a2230', sand: '#3a2e3a', water: '#101018', sky: { top: '#070410', horizon: '#2a0e22' },
+      name: 'Duskmoor Isle', size: 50, shape: 'crescent', treeType: 'deadTree', ground: '#2a2230', sand: '#3a2e3a', water: '#101018', sky: { top: '#070410', horizon: '#2a0e22' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       dungeon: { key: 'vampire_keep', x: 0, z: 9, color: '#b03050' },
       encounters: [
@@ -944,7 +944,7 @@ window.Data = (function () {
       decor: { trees: 6, palms: 0, rocks: 10 },
     },
     cove: {
-      name: 'Castaway Cove', size: 40, shape: 'round', treeType: 'palm', ground: '#4fae6a', sand: '#ffe7b0', water: '#1fa0c0', sky: { top: '#ff9e6a', horizon: '#ffe7c0' },
+      name: 'Castaway Cove', size: 40, shape: 'twin', treeType: 'palm', ground: '#4fae6a', sand: '#ffe7b0', water: '#1fa0c0', sky: { top: '#ff9e6a', horizon: '#ffe7c0' },
       spawn: { x: 0, z: -9 }, dock: { x: 0, z: -12 },
       bonfire: { x: 0, z: 4 },
       superboss: { x: 0, z: 12, key: 'drifter', color: '#caa030' },
@@ -952,7 +952,7 @@ window.Data = (function () {
       decor: { trees: 3, palms: 14, rocks: 5 },
     },
     mirage: {
-      name: 'Mirage Isle', size: 52, shape: 'wide', treeType: 'palm', ground: '#e0c074', sand: '#f0dca0', water: '#2090b0', sky: { top: '#e88a3a', horizon: '#ffe1a0' },
+      name: 'Mirage Isle', size: 52, shape: 'spiral', treeType: 'palm', ground: '#e0c074', sand: '#f0dca0', water: '#2090b0', sky: { top: '#e88a3a', horizon: '#ffe1a0' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'bazaar', x: 13, z: 3, color: '#ffcf6a' },
       dungeon: { key: 'genie_cave', x: -11, z: 8, color: '#ffd24a' },
@@ -963,7 +963,7 @@ window.Data = (function () {
       decor: { trees: 2, palms: 13, rocks: 11 },
     },
     aerie: {
-      name: 'Sky Dragon Isle', size: 54, shape: 'teardrop', treeType: 'pine', ground: '#7a8494', sand: '#9aa0ac', water: '#2a4a6a', sky: { top: '#3a4f7a', horizon: '#d8c4e0' },
+      name: 'Sky Dragon Isle', size: 54, shape: 'fin', treeType: 'pine', ground: '#7a8494', sand: '#9aa0ac', water: '#2a4a6a', sky: { top: '#3a4f7a', horizon: '#d8c4e0' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'aerie', x: 13, z: 4, color: '#7fd0ff' },
       dungeon: { key: 'dragon_vale', x: -11, z: 8, color: '#ff6a4a' },
@@ -986,28 +986,28 @@ window.Data = (function () {
       decor: { trees: 7, palms: 4, rocks: 10 },
     },
     whiteout: {
-      name: 'Whiteout Station', size: 50, shape: 'long', treeType: 'pine', ground: '#cdd8e2', sand: '#e8f0f6', water: '#2a4a6a', sky: { top: '#6a86aa', horizon: '#eef4fa' },
+      name: 'Whiteout Station', size: 50, shape: 'star', treeType: 'pine', ground: '#cdd8e2', sand: '#e8f0f6', water: '#2a4a6a', sky: { top: '#6a86aa', horizon: '#eef4fa' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       dungeon: { key: 'frost_station', x: 0, z: 9, color: '#bfe0ff' },
       encounters: [ { x: -6, z: 9, pool: ['wraith', 'ghoul'], min: 2, max: 3 }, { x: 7, z: 11, pool: ['bat', 'wraith'], min: 2, max: 2 } ],
       decor: { trees: 9, palms: 0, rocks: 12 },
     },
     wildwood: {
-      name: 'The Wildwood', size: 54, shape: 'oval', treeType: 'blossom', ground: '#2f7a3a', sand: '#caa86a', water: '#2a8a6a', sky: { top: '#3a6a4a', horizon: '#e2eec8' },
+      name: 'The Wildwood', size: 54, shape: 'clover', treeType: 'blossom', ground: '#2f7a3a', sand: '#caa86a', water: '#2a8a6a', sky: { top: '#3a6a4a', horizon: '#e2eec8' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       dungeon: { key: 'spirit_wood', x: -11, z: 8, color: '#9effb0' },
       encounters: [ { x: 5, z: 9, pool: ['golem', 'wyvern'], min: 2, max: 3 }, { x: -6, z: 11, pool: ['scarab', 'golem'], min: 2, max: 2 } ],
       decor: { trees: 16, palms: 0, rocks: 8 },
     },
     improbable: {
-      name: 'Improbability Shoals', size: 48, shape: 'teardrop', treeType: 'deadTree', ground: '#9a8ab0', sand: '#d0c2dc', water: '#3a8ac0', sky: { top: '#5a3a8a', horizon: '#f0d8ff' },
+      name: 'Improbability Shoals', size: 48, shape: 'spiral', treeType: 'deadTree', ground: '#9a8ab0', sand: '#d0c2dc', water: '#3a8ac0', sky: { top: '#5a3a8a', horizon: '#f0d8ff' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       dungeon: { key: 'crash_site', x: 0, z: 9, color: '#caa0ff' },
       encounters: [ { x: -6, z: 9, pool: ['golem', 'scarab'], min: 2, max: 2 }, { x: 7, z: 11, pool: ['scarab', 'golem'], min: 2, max: 3 } ],
       decor: { trees: 7, palms: 0, rocks: 13 },
     },
     lamancha: {
-      name: 'La Mancha Plains', size: 54, shape: 'wide', treeType: 'tree', ground: '#c2a85a', sand: '#e0c878', water: '#3a7a9a', sky: { top: '#9a8a4a', horizon: '#f3e8c0' },
+      name: 'La Mancha Plains', size: 54, shape: 'wedge', treeType: 'tree', ground: '#c2a85a', sand: '#e0c878', water: '#3a7a9a', sky: { top: '#9a8a4a', horizon: '#f3e8c0' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       dungeon: { key: 'mill_keep', x: -11, z: 8, color: '#e0c060' },
       encounters: [ { x: 5, z: 9, pool: ['golem', 'urchin'], min: 2, max: 2 }, { x: -6, z: 11, pool: ['cobra', 'scarab'], min: 2, max: 3 } ],
@@ -1565,7 +1565,40 @@ window.Data = (function () {
     quijano:  { def: 40, spec: 14, spd: 9,  gdef: 3.0, gspec: 1.0, gspd: 0.20 },
   };
 
-  return { PARTY, ENEMIES, ITEM_DEFS, COMBAT_STATS, SHOP_STOCK, SHOP_STOCK_BY_TOWN, MATERIALS, RECIPES, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY, COSMOS,
+  // ---------------- STORYBOARD ----------------
+  // The intended voyage — a suggested order with a logical thread, NOT a hard gate.
+  // The Captain's Log walks this spine and surfaces the current chapter + the "why".
+  // The legend-isles (Act II) are deliberately open: any order, none strictly required.
+  const LEGEND_ALLIES = ['simon', 'aladdin', 'violca', 'mac', 'sane', 'quijano'];
+  const STORYBOARD = {
+    allies: LEGEND_ALLIES,
+    spine: [
+      { id: 'footing', act: 'I', actName: 'The Home Tides', title: 'Find your footing',
+        goal: 'Explore Tidehaven and clear the Tide Cave.',
+        thread: 'Tidehaven is the last harbor the blight hasn\'t reached. The lanes east are strangled by something vast — so learn these home waters, blood a blade in the Tide Cave, and ready a crew before you sail into the dark.' },
+      { id: 'attune', act: 'I', actName: 'The Home Tides', title: 'Court the elemental mermaids',
+        goal: 'Win the favor of the six elemental mermaids across the home isles.',
+        thread: 'Steel alone can\'t cut the tide. The six mermaids still hold the sea\'s old power — fire, water, storm, stone, dark and light. Win their hearts and they\'ll enchant your crew\'s blades with their element. You don\'t need all six to push on, but every one makes the road kinder.' },
+      { id: 'kraken', act: 'I', actName: 'The Home Tides', title: 'Fell the Kraken',
+        goal: 'Sail to the Abyssal Isle and bring down the Kraken.',
+        thread: 'The Kraken coils around the Abyssal Isle — the blight\'s herald, the lock on the door east. With the elements at your back, break it. The wider sea opens only once the Kraken sinks.' },
+      { id: 'legends', act: 'II', actName: 'Legends of the Wider Sea', title: 'Break the cursed legends',
+        goal: 'Sail the wider world; end the curse on each legend-isle and recruit its stranded hero.',
+        thread: 'Past the Abyss the world turns strange — a bleeding castle, a wishing cave, a grieving forest, a frozen station that wears men\'s faces. Each cursed story strands a hero who\'ll sail with you if you end their nightmare. Take them in any order, take as many as you like — but notice how every legend has curdled the same way. Something is wearing the world\'s old stories like masks.' },
+      { id: 'omega', act: 'III', actName: 'The Omega Tide', title: 'Confront Selachoth',
+        goal: 'Track the Omega Tide to the final trial and end it.',
+        thread: 'It has a name now: Selachoth, the Omega Tide — a shark-god swallowing the sea\'s elements whole. The fading mermaids, the Kraken, the curdled legends were all its hunger spreading outward. Sail to the final trial and give the sea back its stories.' },
+      { id: 'mastery', act: 'III', actName: 'The Omega Tide', title: 'The seas are yours',
+        goal: 'Charm every mermaid and complete the bestiary for total mastery.',
+        thread: 'Selachoth is sunk and the tide runs clean. What remains is legend-work: every mermaid charmed, every creature logged, the duelists of the arena and the lone blade of Castaway Cove answered. Sail for the joy of it now, Captain.' },
+    ],
+    side: [
+      { title: '⚔️ The Arena (Paegina)', thread: 'A no-healing gauntlet of Greek myth — Medusa, Minotaur, Hydra and worse. Pure proving-ground; clear leagues for coin and glory.' },
+      { title: '🗡️ The Drifter (Castaway Cove)', thread: 'A lone magpie of blades waits on a sunset shore — an optional duel for the strong, no story strings attached.' },
+    ],
+  };
+
+  return { PARTY, ENEMIES, ITEM_DEFS, COMBAT_STATS, SHOP_STOCK, SHOP_STOCK_BY_TOWN, MATERIALS, RECIPES, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY, STORYBOARD, COSMOS,
            ELEMENT_INFO, elementOf, affMult, AFFINITIES, STATUS, ACCESSORIES, SHOP_ACCESSORIES, COLISEUM, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT, MERMAIDS, AMBUSH,
-           xpForLevel, MAX_LEVEL, randomEncounter };
+           xpForLevel, MAX_LEVEL, randomEncounter, STORYBOARD };
 })();
