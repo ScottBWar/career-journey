@@ -1,4 +1,4 @@
-# Capture report — 2026-06-19T12:48:48.864Z
+# Capture report — 2026-06-19T13:03:15.829Z
 
 ## JS errors: 0
 _none — no runtime errors caught_
@@ -41,7 +41,7 @@ _none — no runtime errors caught_
 ## Game-state snapshot
 ```json
 {
-  "gold": 92,
+  "gold": 88,
   "pearls": 0,
   "active": [
     "pirate",
