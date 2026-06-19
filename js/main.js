@@ -24,7 +24,7 @@ window.Game = (function () {
     setupInput();
 
     const save = Progress.load();
-    if (window.Portraits) el('startPortraits').innerHTML = ['pirate', 'swordsman', 'healer', 'mage', 'blader', 'dragoon'].map(k => Portraits.img(k, 'start-port')).join('');
+    if (window.Portraits) el('startPortraits').innerHTML = ['pirate', 'swordsman', 'healer', 'mage', 'dragoon'].map(k => Portraits.img(k, 'start-port')).join('');
     el('startContinue').style.display = save ? 'inline-flex' : 'none';
     el('startNew').onclick = () => { Music.start(); Progress.clear(); Game.state = Progress.freshState(); beginGame(true); };
     el('startContinue').onclick = () => { Music.start(); Game.state = save || Progress.freshState(); beginGame(false); };

@@ -406,15 +406,48 @@ window.Models = (function () {
   function hero() { // walking avatar (the SOLDIER), simplified swing not needed
     return swordsman();
   }
-  function npc(hex, hairHex) {
+  function npc(hex, hairHex, style) {
     const r = new BABYLON.TransformNode('npc', scene);
     const body = M('npcBody', hex), skin = M('npcSkin', '#d9a06b'), hair = M('npcHair', hairHex || '#3a2a18');
     at(MB.CreateCylinder('legs', { height: 1.0, diameterTop: 0.55, diameterBottom: 0.7 }, scene), r, body, 0, 0.5, 0);
     at(MB.CreateBox('torso', { width: 0.7, height: 0.9, depth: 0.45 }, scene), r, body, 0, 1.4, 0);
     at(MB.CreateSphere('head', { diameter: 0.55 }, scene), r, skin, 0, 2.05, 0);
-    at(MB.CreateSphere('hair', { diameter: 0.6, slice: 0.55 }, scene), r, hair, 0, 2.18, 0);
+    face(r, 2.08, 0.55);
+    const covered = style === 'desert' || style === 'arabian';   // headwear hides the hair
+    if (!covered) at(MB.CreateSphere('hair', { diameter: 0.6, slice: 0.55 }, scene), r, hair, 0, 2.18, 0);
+    // robe skirt for the flowing-garment cultures
+    if (style === 'desert' || style === 'arabian' || style === 'greek') {
+      at(MB.CreateCylinder('robe', { height: 1.3, diameterTop: 0.55, diameterBottom: 1.15 }, scene), r, M('npcRobe', style === 'greek' ? '#f0ece0' : hex, { spec: 0.05 }), 0, 0.65, 0);
+    }
+    switch (style) {
+      case 'coastal': { // wide straw sun-hat
+        const straw = M('npcStraw', '#e8c66a', { spec: 0.05 });
+        at(MB.CreateCylinder('brim', { height: 0.06, diameter: 0.95, tessellation: 16 }, scene), r, straw, 0, 2.32, 0);
+        at(MB.CreateCylinder('crown', { height: 0.22, diameterTop: 0.34, diameterBottom: 0.42 }, scene), r, straw, 0, 2.44, 0); break; }
+      case 'desert': { // head-wrap + back drape
+        const cloth = M('npcWrap', '#e0d6c0');
+        at(MB.CreateSphere('wrap', { diameter: 0.66, slice: 0.7 }, scene), r, cloth, 0, 2.16, 0);
+        at(MB.CreateBox('drape', { width: 0.5, height: 0.7, depth: 0.12 }, scene), r, cloth, 0, 1.85, -0.28);
+        at(MB.CreateTorus('cord', { diameter: 0.6, thickness: 0.05, tessellation: 12 }, scene), r, M('npcCord', '#8a6a3a'), 0, 2.28, 0).rotation.x = Math.PI / 2; break; }
+      case 'arabian': { // jewelled turban
+        const t = M('npcTurban', '#e8e0d0');
+        at(MB.CreateSphere('turban', { diameter: 0.7 }, scene), r, t, 0, 2.22, 0);
+        at(MB.CreateTorus('twist', { diameter: 0.66, thickness: 0.12, tessellation: 14 }, scene), r, t, 0, 2.18, 0).rotation.x = Math.PI / 2;
+        at(MB.CreateSphere('jewel', { diameter: 0.16 }, scene), r, M('npcJewel', '#caa030', { emissive: '#5a4208' }), 0, 2.3, 0.32); break; }
+      case 'greek': { // laurel wreath + shoulder toga sash
+        at(MB.CreateTorus('laurel', { diameter: 0.62, thickness: 0.07, tessellation: 16 }, scene), r, M('npcLaurel', '#6aa84a', { emissive: '#1a3a12' }), 0, 2.24, 0).rotation.x = Math.PI / 2;
+        const sash = at(MB.CreateBox('toga', { width: 0.78, height: 0.95, depth: 0.5 }, scene), r, M('npcToga', '#f0ece0'), 0, 1.42, 0); sash.scaling.x = 0.45; sash.rotation.z = 0.4; break; }
+      case 'rider': { // dragon-rider leathers: pauldron + short cape
+        at(MB.CreateSphere('pauldron', { diameter: 0.5, slice: 0.6 }, scene), r, M('npcPaul', '#3a2e22', { spec: 0.3 }), -0.34, 1.78, 0);
+        at(MB.CreateBox('cape', { width: 0.66, height: 1.0, depth: 0.1 }, scene), r, M('npcCape', shade(hex, 0.7)), 0, 1.5, -0.28); break; }
+      case 'arcade': { // backwards ball-cap
+        const cap = M('npcCap', shade(hex, 1.2));
+        at(MB.CreateSphere('cap', { diameter: 0.6, slice: 0.5 }, scene), r, cap, 0, 2.2, 0);
+        at(MB.CreateCylinder('capbrim', { height: 0.05, diameter: 0.5, tessellation: 12 }, scene), r, cap, 0, 2.16, -0.34); break; }
+    }
     return { node: r, idle(t) { r.position.y = (r._baseY || 0) + Math.sin(t * 2 + (r._ph || 0)) * 0.04; } };
   }
+  function shade(hex, f) { try { const n = parseInt(hex.slice(1), 16); const cl = v => Math.max(0, Math.min(255, Math.round(v * f))); return '#' + [cl((n>>16)&255), cl((n>>8)&255), cl(n&255)].map(v => v.toString(16).padStart(2, '0')).join(''); } catch (e) { return hex; } }
   function rival(weaponKey) { // "Ruffy" — straw-hat rubber pirate (Luffy homage)
     const r = new BABYLON.TransformNode('rival', scene);
     const skin = M('rvSkin', '#e8b48a'), vest = M('rvVest', '#c2332a'), shorts = M('rvShorts', '#2f5aa0'),

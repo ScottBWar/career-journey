@@ -50,6 +50,7 @@ window.Data = (function () {
       baseAbilities: [
         ab('Mend', { mp: 6, min: 40, max: 56, target: 'ally', fx: 'heal', heal: true }),
         ab('Brine Bolt', { mp: 8, min: 24, max: 34, target: 'enemy', fx: 'water' }),
+        ab('Coral Spire', { mp: 9, min: 28, max: 40, target: 'enemy', fx: 'beam', el: 'earth' }), // erupts a reef-stone spire — Earth, for variety
       ],
       tree: [
         { id: 'h_mp1', name: 'Deep Well', desc: '+15 Max MP', cost: 1, kind: 'stat', stat: { mp: 15 } },
@@ -748,7 +749,7 @@ window.Data = (function () {
   // npc: { name, color, hair, x, z, lines:[...], service?: 'inn'|'shop' }
   const TOWNS = {
     tidehaven: {
-      name: 'Tidehaven', sky: 'town',
+      name: 'Tidehaven', sky: 'town', npcStyle: 'coastal',
       ground: '#cdb98a', accent: '#8fd3f4',
       buildings: [
         { kind: 'inn',  x: -8, z: -4, label: 'Inn' },
@@ -778,7 +779,7 @@ window.Data = (function () {
       exit: { x: 0, z: -12 },
     },
     dunesport: {
-      name: 'Dunes Port', sky: 'town',
+      name: 'Dunes Port', sky: 'town', npcStyle: 'desert',
       ground: '#e3c98f', accent: '#ffd166',
       buildings: [
         { kind: 'inn',  x: 9,  z: -3, label: 'Inn' },
@@ -807,7 +808,7 @@ window.Data = (function () {
       exit: { x: 0, z: -11 },
     },
     mall: {
-      name: 'The Grand Bazaar', ground: '#c9c0d8', accent: '#ff9ec0',
+      name: 'The Grand Bazaar', ground: '#c9c0d8', accent: '#ff9ec0', npcStyle: 'arcade',
       buildings: [
         { kind: 'shop', x: -9, z: -2, label: 'Armory' },
         { kind: 'shop', x: 9, z: -2, label: 'Emporium' },
@@ -835,7 +836,7 @@ window.Data = (function () {
       exit: { x: 0, z: -12 },
     },
     bazaar: {
-      name: "Sultan's Bazaar", ground: '#e8cf8a', accent: '#ffcf6a',
+      name: "Sultan's Bazaar", ground: '#e8cf8a', accent: '#ffcf6a', npcStyle: 'arabian',
       buildings: [
         { kind: 'shop', x: -9, z: -3, label: 'Spice Stall' },
         { kind: 'shop', x: 9, z: -3, label: 'Arms Bazaar' },
@@ -861,7 +862,7 @@ window.Data = (function () {
       exit: { x: 0, z: -12 },
     },
     aerie: {
-      name: 'Riorson Outpost', ground: '#9aa6b4', accent: '#7fd0ff',
+      name: 'Riorson Outpost', ground: '#9aa6b4', accent: '#7fd0ff', npcStyle: 'rider',
       buildings: [
         { kind: 'shop', x: -9, z: -3, label: 'Quartermaster' },
         { kind: 'shop', x: 9, z: -3, label: 'Armory' },
@@ -887,7 +888,7 @@ window.Data = (function () {
       exit: { x: 0, z: -12 },
     },
     argo: {
-      name: 'Polis of Paegina', ground: '#e8e0cc', accent: '#4a90c0',
+      name: 'Polis of Paegina', ground: '#e8e0cc', accent: '#4a90c0', npcStyle: 'greek',
       buildings: [
         { kind: 'shop', x: -9, z: -3, label: 'Agora' },
         { kind: 'shop', x: 9, z: -3, label: 'Bronzesmith' },

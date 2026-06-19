@@ -135,7 +135,7 @@ window.Town = (function () {
     def.npcs.forEach((n, i) => {
       if (usedNpc.has(i)) return;
       const nx = n.x * SP, nz = n.z * SP;
-      const m = Models.npc(n.color, n.hair); m.node.position.set(nx, 0, nz); m.node._baseY = 0; m.node._ph = i; m.node.rotation.y = Math.PI;
+      const m = Models.npc(n.color, n.hair, def.npcStyle); m.node.position.set(nx, 0, nz); m.node._baseY = 0; m.node._ph = i; m.node.rotation.y = Math.PI;
       idlers.push(m);
       npcs.push({ data: n, node: m.node, pos: new V3(nx, 0, nz) });
     });
@@ -242,7 +242,7 @@ window.Town = (function () {
       at(MB.CreateBox('hearth', { width: 2.4, height: 1.4, depth: 0.8 }, scene), null, M('hearth', '#6a6a72'), 0, 0.7, -6);
       occData = HOME_FOLK[(door.idx + key.length) % HOME_FOLK.length];
     }
-    const occ = Models.npc((occData && occData.color) || occName, (occData && occData.hair) || occHair); occ.node.position.copyFrom(occPos); occ.node._baseY = 0; occ.node.rotation.y = Math.PI; idlers.push(occ);
+    const occ = Models.npc((occData && occData.color) || occName, (occData && occData.hair) || occHair, (Data.TOWNS[key] || {}).npcStyle); occ.node.position.copyFrom(occPos); occ.node._baseY = 0; occ.node.rotation.y = Math.PI; idlers.push(occ);
     npcs.push({ data: occData, node: occ.node, pos: occPos.clone() });
     // exit (south doorway)
     exitPos = new V3(0, 0, 6.2);
