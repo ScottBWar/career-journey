@@ -85,6 +85,8 @@
     .eaff .aff { font-size: 0.66rem; font-weight: 700; line-height: 1; padding: 0.08rem 0.22rem; border-radius: 0.35rem; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.12); }
     .eaff .aff.r { color: rgba(160,180,200,0.8); }
     .eaff .aff.a { color: #6ee7b7; }
+    .estag { margin-left: 0.3rem; font-size: 0.72em; letter-spacing: 1px; color: #fde047; vertical-align: middle; }
+    .ebreak { margin-left: 0.3rem; font-size: 0.66rem; font-weight: 800; letter-spacing: 1px; color: #1a1208; background: #fde047; padding: 0.05rem 0.3rem; border-radius: 0.3rem; box-shadow: 0 0 8px rgba(253,224,71,0.7); animation: weakpulse 0.8s ease-in-out infinite; }
     .st-strip { margin-left: 0.35rem; display: inline-flex; gap: 0.12rem; vertical-align: middle; }
     .st-ic { font-size: 0.86em; font-weight: 700; line-height: 1; }
     .pouch-item { display: flex; flex-direction: column; gap: 0.4rem; }
@@ -163,6 +165,11 @@
     .pause-menu .pill { width: 100%; }
     .pause-hint { font-size: 0.74rem; color: rgba(255,255,255,0.55); margin-top: 1rem; }
     .bestiary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.7rem; margin-top: 0.8rem; }
+    .opt-row { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.9rem 0; }
+    .opt-row > label { display: flex; justify-content: space-between; font-weight: 600; opacity: 0.92; }
+    .opt-row input[type=range] { width: 100%; accent-color: #37c0e0; }
+    .opt-seg { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .opt-seg .pill.small { flex: 1; min-width: 64px; }
     .best-card { display: flex; gap: 0.6rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 0.7rem; padding: 0.6rem; }
     .best-card.unknown { opacity: 0.55; }
     .best-card .portrait { width: 56px; height: 56px; image-rendering: pixelated; border-radius: 0.4rem; flex-shrink: 0; }
@@ -634,6 +641,7 @@
     <div class="pause-menu">
       <button class="pill" id="pResume">▶ Resume</button>
       <button class="pill ghost" id="pBestiary">📖 Bestiary</button>
+      <button class="pill ghost" id="pOptions">⚙️ Options</button>
       <button class="pill ghost" id="pLegend">🗺️ Map Legend</button>
       <button class="pill ghost" id="pParty">👥 Party</button>
       <button class="pill ghost" id="pQuit">🏳️ Save &amp; Quit to Title</button>
@@ -643,6 +651,9 @@
 
   <!-- BESTIARY -->
   <div class="overlay" id="bestiary"><div class="panel" id="bestiaryBody" style="padding:1.2rem;"></div></div>
+
+  <!-- OPTIONS -->
+  <div class="overlay" id="options"><div class="panel" id="optionsBody" style="padding:1.2rem;max-width:520px;"></div></div>
 
   <!-- MAP LEGEND -->
   <div class="overlay" id="legend"><div class="panel" id="legendBody" style="padding:1.2rem;"></div></div>

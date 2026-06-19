@@ -53,6 +53,7 @@ window.Game = (function () {
   }
   function beginGame(fresh) {
     el('start').classList.remove('show');
+    applySettings();              // apply saved volume settings now that state is loaded
     document.body.className = ''; // drop mode-start so the title screen can't linger behind the intro/cutscene
     const intoWorld = () => { if (Game.state.location.place === 'sea') toSea(); else toIsland(Game.state.location.island || 'tidehaven', false); };
     if (fresh && !Game.state.flags.seenOpening) {
@@ -373,27 +374,62 @@ window.Game = (function () {
     renderBestiary();
   }
   function closeBestiary() { Game.bestiaryOpen = false; el('bestiary').classList.remove('show'); el('pause').classList.add('show'); }
+
+  // ---------- options ----------
+  function applySettings() {
+    const s = Game.state && Game.state.settings; if (!s || !window.Music) return;
+    if (Music.setMusicVolume) Music.setMusicVolume(s.music != null ? s.music : 0.85);
+    if (Music.setSfxVolume) Music.setSfxVolume(s.sfx != null ? s.sfx : 1.0);
+  }
+  Game.applySettings = applySettings;
+  function openOptions() { Game.optionsOpen = true; el('pause').classList.remove('show'); el('options').classList.add('show'); renderOptions(); }
+  function closeOptions() { Game.optionsOpen = false; el('options').classList.remove('show'); el('pause').classList.add('show'); }
+  function renderOptions() {
+    const s = Game.state.settings || (Game.state.settings = { music: 0.85, sfx: 1.0, battleSpeed: 1, difficulty: 'normal' });
+    const pct = v => Math.round(v * 100);
+    const speeds = [['0.5×', 0.5], ['1×', 1], ['1.5×', 1.5], ['2×', 2]];
+    const diffs = [['Easy', 'easy'], ['Normal', 'normal'], ['Hard', 'hard']];
+    el('optionsBody').innerHTML = `<div class="scr-head"><h2>⚙️ Options</h2><button class="pill ghost small" id="optClose">Back</button></div>
+      <div class="opt-row"><label>🎵 Music<span id="optMusicVal">${pct(s.music)}%</span></label><input type="range" id="optMusic" min="0" max="100" value="${pct(s.music)}"></div>
+      <div class="opt-row"><label>🔊 Sound FX<span id="optSfxVal">${pct(s.sfx)}%</span></label><input type="range" id="optSfx" min="0" max="100" value="${pct(s.sfx)}"></div>
+      <div class="opt-row"><label>⏩ Battle speed</label><div class="opt-seg" id="optSpeed">${speeds.map(([l, v]) => `<button class="pill ${s.battleSpeed === v ? '' : 'ghost'} small" data-v="${v}">${l}</button>`).join('')}</div></div>
+      <div class="opt-row"><label>⚔️ Difficulty</label><div class="opt-seg" id="optDiff">${diffs.map(([l, v]) => `<button class="pill ${s.difficulty === v ? '' : 'ghost'} small" data-v="${v}">${l}</button>`).join('')}</div></div>
+      <p class="scr-sub">Difficulty changes enemy HP & damage. Battle speed takes effect next battle.</p>`;
+    const save = () => Progress.save(Game.state);
+    el('optMusic').oninput = e => { s.music = e.target.value / 100; el('optMusicVal').textContent = e.target.value + '%'; if (window.Music && Music.setMusicVolume) Music.setMusicVolume(s.music); };
+    el('optMusic').onchange = save;
+    el('optSfx').oninput = e => { s.sfx = e.target.value / 100; el('optSfxVal').textContent = e.target.value + '%'; if (window.Music && Music.setSfxVolume) Music.setSfxVolume(s.sfx); };
+    el('optSfx').onchange = () => { if (window.SFX) SFX.play('select'); save(); };
+    el('optSpeed').querySelectorAll('button').forEach(b => b.onclick = () => { s.battleSpeed = parseFloat(b.dataset.v); save(); renderOptions(); });
+    el('optDiff').querySelectorAll('button').forEach(b => b.onclick = () => { s.difficulty = b.dataset.v; save(); if (window.SFX) SFX.play('select'); renderOptions(); });
+    el('optClose').onclick = closeOptions;
+  }
+  Game.openOptions = openOptions;
   function renderBestiary() {
     const best = Game.state.bestiary || {};
     const keys = Object.keys(Data.ENEMIES);
     const seenCount = keys.filter(k => best[k] && best[k].seen).length;
     const EI = Data.ELEMENT_INFO;
-    const affTags = (k) => {
-      const a = Data.AFFINITIES[k] || {}; const out = [];
+    const ELEMS = Object.keys(EI).filter(e => e !== 'physical');
+    const affTags = (k, rec) => {
+      const aff = (rec && rec.aff) || {}; const out = [];
       const rot = Data.ENEMIES[k] && Data.ENEMIES[k].rotate;
-      if (rot && rot.length) out.push(`<span style="color:#fde047">⟳ shifting weakness: ${rot.map(e => EI[e] ? EI[e].i + EI[e].name : e).join(' → ')}</span>`);
-      else (a.weak || []).forEach(e => out.push(`<span style="color:#fca5a5">▲ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
-      (a.resist || []).forEach(e => out.push(`<span style="color:#9be7ff">▼ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
-      (a.absorb || []).forEach(e => out.push(`<span style="color:#6ee7b7">✚ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
-      (a.nullify || []).forEach(e => out.push(`<span style="color:#cbd5e1">○ ${EI[e] ? EI[e].i + EI[e].name : e}</span>`));
-      return out.length ? `<div class="best-aff">${out.join('')}</div>` : '<div class="best-aff"><span>no known affinities</span></div>';
+      if (rot && rot.length) out.push(`<span style="color:#fde047">⟳ shifting weakness</span>`);
+      ELEMS.forEach(e => { const r = aff[e]; if (!r) return; const ei = EI[e]; if (!ei) return;
+        if (r === 'weak') out.push(`<span style="color:#fca5a5">▲ ${ei.i}${ei.name}</span>`);
+        else if (r === 'resist') out.push(`<span style="color:#9be7ff">▼ ${ei.i}${ei.name}</span>`);
+        else if (r === 'absorb') out.push(`<span style="color:#6ee7b7">✚ ${ei.i}${ei.name}</span>`);
+        else if (r === 'null') out.push(`<span style="color:#cbd5e1">○ ${ei.i}${ei.name}</span>`); });
+      const tested = ELEMS.filter(e => aff[e]).length;
+      const probe = `<span style="opacity:.65">tested ${tested}/${ELEMS.length} elements</span>`;
+      return `<div class="best-aff">${out.length ? out.join('') : '<span style="opacity:.6">no affinities found yet</span>'} ${probe}</div>`;
     };
     let cards = '';
     keys.forEach(k => {
       const def = Data.ENEMIES[k]; const rec = best[k];
       if (!rec || !rec.seen) { cards += `<div class="best-card unknown"><div class="best-port-q">❓</div><div class="best-info"><b>? ? ?</b><br>Undiscovered</div></div>`; return; }
       const port = Portraits.has(k) ? Portraits.img(k, 'portrait') : `<div class="best-port-q">${def.boss ? '👑' : '👾'}</div>`;
-      cards += `<div class="best-card">${port}<div class="best-info"><b>${def.name}</b>${def.boss ? ' <span style="color:#fca5a5">BOSS</span>' : ''}<br>HP ${def.hp} · slain ×${rec.slain || 0}${affTags(k)}</div></div>`;
+      cards += `<div class="best-card">${port}<div class="best-info"><b>${def.name}</b>${def.boss ? ' <span style="color:#fca5a5">BOSS</span>' : ''}<br>HP ${def.hp} · slain ×${rec.slain || 0}${affTags(k, rec)}</div></div>`;
     });
     el('bestiaryBody').innerHTML = `<div class="scr-head"><h2>📖 Bestiary</h2><button class="pill ghost small" id="bestClose">Back</button></div>
       <p class="scr-sub">Discovered ${seenCount} / ${keys.length} creatures. ▲ weak · ▼ resists · ✚ absorbs · ○ immune</p>
@@ -516,6 +552,7 @@ window.Game = (function () {
     el('btnPause') && (el('btnPause').onclick = openPause);
     el('pResume').onclick = closePause;
     el('pBestiary').onclick = openBestiary;
+    el('pOptions').onclick = openOptions;
     el('pLegend').onclick = openLegend;
     el('pParty').onclick = () => { closePause(); openParty(); };
     el('pQuit').onclick = () => Game.confirm('Save and quit to the title screen?', quitToTitle);
@@ -539,6 +576,7 @@ window.Game = (function () {
     if (Game.confirmOpen) { if (code === 'Enter' || code === 'KeyF') el('confirmYes').click(); else if (code === 'Escape') el('confirmNo').click(); return; }
     if (Game.shopOpen) { if (code === 'Escape') closeShop(); return; }
     if (Game.bestiaryOpen) { if (code === 'Escape') closeBestiary(); return; }
+    if (Game.optionsOpen) { if (code === 'Escape') closeOptions(); return; }
     if (Game.legendOpen) { if (code === 'Escape') closeLegend(); return; }
     if (Game.pauseOpen) { if (code === 'Escape') closePause(); else if (code === 'KeyB') openBestiary(); return; }
     if (Game.dialogueOpen) { if (ACTION.has(code) || code === 'Space') Game._advanceDlg && Game._advanceDlg(); return; }

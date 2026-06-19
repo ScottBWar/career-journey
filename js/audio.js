@@ -6,7 +6,8 @@
 (function () {
   let ctx = null, master = null, musicBus = null, dry = null, wet = null, conv = null, comp = null;
   let padBus = null, delaySend = null, tapeFilter = null; // production chain: tonal sub-bus, echo send, lo-fi tape lowpass
-  let muted = false;
+  let sfxGain = null;                       // dedicated SFX bus so SFX volume is independent of music
+  let muted = false, musicVol = 0.9, sfxVol = 1;
 
   // soft-clip curve for analog-ish saturation/warmth (de-MIDIs the raw oscillators)
   function makeSatCurve(k) { const n = 1024, c = new Float32Array(n); for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; c[i] = Math.tanh(x * k) / Math.tanh(k); } return c; }
@@ -17,6 +18,7 @@
     comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -18; comp.knee.value = 24; comp.ratio.value = 3; comp.attack.value = 0.004; comp.release.value = 0.25;
     master = ctx.createGain(); master.gain.value = muted ? 0 : 0.85;
+    sfxGain = ctx.createGain(); sfxGain.gain.value = sfxVol; sfxGain.connect(master); // SFX → its own gain → master
     // reverb (convolution with a procedurally-generated impulse)
     conv = ctx.createConvolver(); conv.buffer = makeImpulse(3.2, 2.5);
     dry = ctx.createGain(); dry.gain.value = 0.8;
@@ -401,16 +403,18 @@
   function play(name, after) {
     ensure(); startTexture(); if (after) _after = after; if (current === name) return;
     current = name; step = 0; bar = 0; gstep = 0; nextTime = ctx.currentTime + 0.06;
-    musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setValueAtTime(0.0001, ctx.currentTime); musicBus.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 0.25);
+    musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setValueAtTime(0.0001, ctx.currentTime); musicBus.gain.linearRampToValueAtTime(musicVol, ctx.currentTime + 0.25);
     if (!sched) sched = setInterval(tick, 25);
   }
   function start() { ensure(); if (ctx.state === 'suspended') ctx.resume(); }
   function toggle() { ensure(); muted = !muted; master.gain.setTargetAtTime(muted ? 0 : 0.85, ctx.currentTime, 0.05); return muted; }
 
-  window.Music = { play, start, toggle, battleTheme, bossTheme, isMuted: () => muted, context: () => { ensure(); return ctx; }, get _after() { return _after; }, set _after(v) { _after = v; } };
+  function setMusicVolume(v) { musicVol = Math.max(0, Math.min(1, v)); if (musicBus && current) musicBus.gain.setTargetAtTime(musicVol, ctx.currentTime, 0.05); }
+  function setSfxVolume(v) { sfxVol = Math.max(0, Math.min(1, v)); if (sfxGain) sfxGain.gain.setTargetAtTime(sfxVol, ctx.currentTime, 0.05); }
+  window.Music = { play, start, toggle, battleTheme, bossTheme, setMusicVolume, setSfxVolume, getMusicVolume: () => musicVol, getSfxVolume: () => sfxVol, isMuted: () => muted, context: () => { ensure(); return ctx; }, get _after() { return _after; }, set _after(v) { _after = v; } };
 
   // ---------------- SFX ----------------
-  function sfxBus() { ensure(); return master; }
+  function sfxBus() { ensure(); return sfxGain || master; }
   function blip(freq, time, dur, type, peak, slideTo) {
     const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type || 'square'; o.frequency.setValueAtTime(freq, time);
     if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, time + dur);

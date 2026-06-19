@@ -26,6 +26,7 @@ window.Progress = (function () {
       gold: 80, pearls: 0, party, active: ['pirate', 'swordsman', 'healer'], inv, mats: {}, bestiary: {}, equip, ownedWeapons, ownedAccessories: ['coral_bangle'], shells, shellSeq,
       ship: { hull: Data.SHIP.defaults.hull, sail: Data.SHIP.defaults.sail, flag: Data.SHIP.defaults.flag, upg: {} },
       mermaids: {}, enchants: {},
+      settings: { music: 0.85, sfx: 1.0, battleSpeed: 1, difficulty: 'normal' },
       location: { place: 'island', island: 'tidehaven', x: start.spawn.x, z: start.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z },
       islands: { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} }, mall: { cleared: {} }, duskmoor: { cleared: {} }, mirage: { cleared: {} }, aerie: { cleared: {} }, paegina: { cleared: {} }, whiteout: { cleared: {} }, wildwood: { cleared: {} }, improbable: { cleared: {} }, lamancha: { cleared: {} } },
       coliseum: {},
@@ -233,6 +234,7 @@ window.Progress = (function () {
   function migrate(state) {
     if (!state) return state;
     if (!state.flags) state.flags = {};
+    if (!state.settings) state.settings = { music: 0.85, sfx: 1.0, battleSpeed: 1, difficulty: 'normal' }; // Options backfill
     // older saves used state.world; carry over progress flags
     const oldWorld = state.world || {};
     if (!state.prog) state.prog = { krakenDown: !!oldWorld.krakenDown, finalWin: !!oldWorld.finalWin };

@@ -6,7 +6,8 @@
 window.Battle = (function () {
   const V3 = BABYLON.Vector3, Color3 = BABYLON.Color3, MB = BABYLON.MeshBuilder;
   const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
-  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+  let SPEED = 1, ENEMY_DMG = 1, ENEMY_HP = 1;                 // set per-battle from Options (speed + difficulty)
+  const wait = (ms) => new Promise(r => setTimeout(r, ms / SPEED));
   const easeInOut = (k) => (k < 0.5 ? 2*k*k : 1 - Math.pow(-2*k+2, 2)/2);
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const el = id => document.getElementById(id);
@@ -35,6 +36,10 @@ window.Battle = (function () {
   // ----- build the scene + combatants -----
   function build(enemyKeys, opts, onEnd) {
     engine = Game.engine; canvas = Game.canvas; onEndCb = onEnd; over = false; t = 0;
+    const S = (Game.state && Game.state.settings) || {};
+    SPEED = S.battleSpeed || 1;
+    const DIFF = { easy: [0.78, 0.7], normal: [1, 1], hard: [1.35, 1.3] }[S.difficulty || 'normal'] || [1, 1];
+    ENEMY_HP = DIFF[0]; ENEMY_DMG = DIFF[1];
     party = []; enemies = []; activeMember = null;
 
     scene = new BABYLON.Scene(engine);
@@ -87,7 +92,8 @@ window.Battle = (function () {
       seen[key] = (seen[key] || 0) + 1;
       if (Progress.recordSeen) Progress.recordSeen(Game.state, key);
       const suffix = placed.filter(k => k === key).length > 1 ? ' ' + 'ABC'[seen[key]-1] : '';
-      const e = { side:'enemy', keyRaw: key, name: def.name + suffix, node: built.node, baseY: def.baseY, maxhp: def.hp, hp: def.hp,
+      const ehp = Math.max(1, Math.round(def.hp * ENEMY_HP));
+      const e = { side:'enemy', keyRaw: key, name: def.name + suffix, node: built.node, baseY: def.baseY, maxhp: ehp, hp: ehp,
         def: def.def != null ? def.def : Math.round(def.hp * 0.05), spec: def.spec != null ? def.spec : Math.round(def.hp * 0.045),
         home, phase: i*1.7 + 0.5, alive: true, _busy: false, idle: built.idle, moves: def.moves, xp: def.xp, gold: def.gold, drops: def.drops, st: {} };
       // rotating-weakness bosses get a current weakness + a subtle elemental aura
@@ -206,7 +212,10 @@ window.Battle = (function () {
           else if (res === 'absorb') parts.push(`<span class="aff a" title="Absorbs ${ei.name}">${ei.i}+</span>`); }
         if (parts.length) aff = `<div class="eaff">${parts.join('')}</div>`;
       }
-      d.innerHTML = `${port}<div class="einfo"><div class="row"><span class="name">${e.name}${wk}${stIcons(e)}</span><span class="hpnum">${Math.max(0,e.hp)}/${e.maxhp}</span></div><div class="bar hp"><i style="width:${clamp(e.hp/e.maxhp*100,0,100)}%"></i></div>${aff}</div>`;
+      const smax = e.staggerMax || 3;
+      const brk = e.broken ? `<span class="ebreak" title="Broken — skips a turn & takes +50%">BREAK</span>`
+        : (e.stagger ? `<span class="estag" title="Stagger ${e.stagger}/${smax} — fill it to BREAK">${'◆'.repeat(e.stagger)}${'◇'.repeat(Math.max(0, smax - e.stagger))}</span>` : '');
+      d.innerHTML = `${port}<div class="einfo"><div class="row"><span class="name">${e.name}${wk}${brk}${stIcons(e)}</span><span class="hpnum">${Math.max(0,e.hp)}/${e.maxhp}</span></div><div class="bar hp"><i style="width:${clamp(e.hp/e.maxhp*100,0,100)}%"></i></div>${aff}</div>`;
       if (Portraits.has(e.keyRaw)) d.classList.add('boss');
       if (targetMode && e.alive) { d.classList.add('targetable'); d.onclick = () => onPick(e); } wrap.appendChild(d); });
   }
@@ -343,6 +352,11 @@ window.Battle = (function () {
     const res = mult < 0 ? 'absorb' : mult === 0 ? 'null' : mult > 1 ? 'weak' : mult < 1 ? 'resist' : 'neutral';
     Progress.recordAffinity(Game.state, e.keyRaw, element, res);
   }
+  function breakEnemy(e) {                              // stagger meter filled → BREAK: skips next turn, takes +50%
+    e.broken = true; e.stagger = 0; e.ct += 100 / (e.spd || 8);
+    if (window.SFX) SFX.play('crit'); shake(1.2); hitStop(0.14, 1.5);
+    floatDamage(e.node, 'BREAK!', '#fff0a0', 3.0, 'big'); if (typeof flashScreen === 'function') flashScreen('rgba(255,240,160,0.45)');
+  }
   function damageEnemy(e, dmg, color = '#ffffff', element = 'physical', kind = 'phys') {
     const mult = enemyAffMult(e, element);
     recordAff(e, element, mult);
@@ -351,8 +365,13 @@ window.Battle = (function () {
       burst(worldOf(e.node, 0.6), ...FX.heal, 40, 5, -2); floatDamage(e.node, '+' + heal + ' absorb', '#6ee7b7', 2.6); renderEnemies(false); return;
     }
     if (mult === 0) { floatDamage(e.node, 'Null', '#9aa6b4', 2.6); return; }
-    if (mult > 1) e.ct += 28 / (e.spd || 8);   // STAGGER: a weakness hit shoves the foe's next turn back
+    if (mult > 1) {                                    // STAGGER: weakness hits push the turn back & build toward a BREAK
+      e.ct += 28 / (e.spd || 8);
+      e.stagger = (e.stagger || 0) + 1;
+      if (!e.broken && e.stagger >= (e.staggerMax || 3)) breakEnemy(e);
+    }
     dmg = Math.round(dmg * mult);
+    if (e.broken) dmg = Math.round(dmg * 1.5);          // BREAK window: bonus damage
     // Gen-1 mitigation: physical reduced by DEF, magic reduced (lightly) by SPEC
     if (kind === 'mag') dmg = Math.max(1, Math.round(dmg * (110 / (110 + (e.spec || 0)))));
     else dmg = Math.max(1, Math.round(dmg * (90 / (90 + (e.def || 0)))));
@@ -632,7 +651,7 @@ window.Battle = (function () {
     if (e.rotate) { rotateWeakness(e); await wait(360); renderEnemies(false); }
     const move = e.moves[rnd(0, e.moves.length - 1)]; const home = e.home.clone(); e._busy = true; actionCam(-1, 0.6);
     if (move.heal) { const h = Math.round(e.maxhp * 0.12); e.hp = Math.min(e.maxhp, e.hp + h); msg(`${e.name} ${move.name}!`); burst(worldOf(e.node, 0.6), '#6ee7b7', '#bbf7d0', 50, 5, -2); floatDamage(e.node, '+' + h, '#6ee7b7', 2.6); scalePunch(e.node, 1.08); renderEnemies(false); e._busy = false; await wait(500); return; }
-    const boost = hasSt(e, 'atkup') ? Data.STATUS.atkup.atk : 1;
+    const boost = (hasSt(e, 'atkup') ? Data.STATUS.atkup.atk : 1) * ENEMY_DMG;
     const mkind = (move.el && move.el !== 'physical') ? 'mag' : 'phys';
     if (move.all) { msg(`${e.name} ${move.name}!`); await moveTo(e.node, home.add(new V3(-1.2,0.4,0)), 220); for (const p of targetsAlive) { let dmg = Math.round(rnd(move.min, move.max) * boost); if (p._defend) dmg = Math.round(dmg*0.5); applyToMember(p, dmg, mkind); if (move.status) inflict(p, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); } await wait(200); await moveTo(e.node, home, 320); }
     else { const target = targetsAlive[rnd(0, targetsAlive.length - 1)]; msg(`${e.name} ${move.name} at ${target.name}!`); const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY; await moveTo(e.node, dest, 240); let dmg = Math.round(rnd(move.min, move.max) * boost); if (target._defend) dmg = Math.round(dmg*0.5); applyToMember(target, dmg, mkind); if (move.status) inflict(target, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); await wait(160); await moveTo(e.node, home, 340); }
@@ -677,7 +696,9 @@ window.Battle = (function () {
       const minCt = a.ct; actors.forEach(x => { if (x.alive) x.ct -= minCt; }); // normalize so current = 0
       renderTurnBar();
       if (a.alive) { const died = await tickStatus(a); if (checkEnd()) return; if (died || !a.alive) { a.ct += 100 / speedOf(a); await wait(120); continue; } }
-      if (a.side === 'party') { a._defend = false; await takeTurn(a); } else { await enemyAct(a); }
+      if (a.side === 'party') { a._defend = false; await takeTurn(a); }
+      else if (a.broken) { a.broken = false; floatDamage(a.node, 'Broken!', '#fde047', 2.6); renderEnemies(false); await wait(280); } // BREAK: skip turn & recover
+      else { await enemyAct(a); }
       a.ct += 100 / speedOf(a);
       if (checkEnd()) return;
       await wait(140);
