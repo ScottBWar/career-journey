@@ -83,6 +83,23 @@ window.Render = (function () {
     });
   }
 
+  // INK OUTLINES — the cel-shaded glow-up. Every solid character/enemy/prop part gets a
+  // dark back-face edge so the flat-colour primitives read as a deliberate cartoon, not
+  // programmer-art. Skips ground/water/sky, glows, and anything translucent.
+  const INK = new BABYLON.Color3(0.04, 0.05, 0.09);
+  const NO_OUTLINE = /water|ocean|sand|grass|floor|sea|skybox|isle|beach|plaza|sunE|jetty|stage|^gg$|halo|glow|aura|flare|^fx$|mote|spot|torch|crackle|slash|impact|bit\b|holyP|wglow|orbGlow/i;
+  function outlineMeshes(scene) {
+    const w = high() ? 0.03 : 0.02;
+    scene.meshes.forEach(m => {
+      if (!m || !m.material || !m.name || m._outlined) return;
+      if (NO_OUTLINE.test(m.name)) return;
+      const mat = m.material;
+      if (mat.alpha != null && mat.alpha < 0.99) return;   // skip translucent (jelly domes, FX)
+      if (mat.disableLighting) return;                     // skip unlit (sky)
+      try { m.renderOutline = true; m.outlineColor = INK; m.outlineWidth = w; m._outlined = true; } catch (e) {}
+    });
+  }
+
   // apply everything to a freshly-built scene
   function setup(scene, camera, opts) {
     opts = opts || {};
@@ -91,6 +108,7 @@ window.Render = (function () {
     if (high()) { try { ssao(scene, camera); } catch (e) { console.warn('ssao', e); } }
     if (high() && opts.sun) { try { shadows(scene, opts.sun); } catch (e) { console.warn('shadow', e); } }
     if (opts.sun) { try { lensFlare(scene, opts.sun); } catch (e) { console.warn('flare', e); } }
+    try { outlineMeshes(scene); } catch (e) { console.warn('outline', e); }
   }
 
   function setQuality(q) { quality = q; try { localStorage.setItem('bb_quality', q); } catch (e) {} }
