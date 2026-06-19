@@ -296,29 +296,49 @@
     /* redesigned skill trees */
     #skills .sk-wrap { width: min(960px, 96vw); }
     #partyScr .sk-wrap { width: min(900px, 96vw); max-height: 90vh; overflow: auto; }
-    .sk-block { background: linear-gradient(180deg, rgba(18,20,40,0.7), rgba(10,12,28,0.7)); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 0.9rem 1rem; margin-bottom: 1rem; }
-    .sk-bhead { display: flex; justify-content: space-between; align-items: baseline; }
-    .sk-bhead .sk-name { font-size: 1.05rem; font-weight: 700; }
-    .sk-sp { font-size: 0.85rem; color: rgba(255,255,255,0.75); }
-    .sk-sp b { color: #fcd34d; }
-    .sk-bstats { font-size: 0.72rem; color: rgba(255,255,255,0.6); margin: 0.3rem 0 0.5rem; }
+    /* skill CONSTELLATION — a starfield talent tree with branch-coloured paths */
+    .sk-block { position: relative; background:
+        radial-gradient(1px 1px at 18% 22%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 62% 14%, rgba(180,210,255,0.6), transparent),
+        radial-gradient(1px 1px at 82% 40%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 33% 64%, rgba(200,180,255,0.6), transparent),
+        radial-gradient(1px 1px at 73% 78%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(ellipse at 50% 0%, rgba(70,40,120,0.35), transparent 60%),
+        linear-gradient(180deg, rgba(12,14,34,0.94), rgba(6,7,20,0.96));
+      border: 1px solid rgba(150,140,255,0.22); border-radius: 16px; padding: 1rem 1.1rem 1.2rem; margin-bottom: 1.1rem; box-shadow: inset 0 0 40px rgba(60,40,120,0.18), 0 8px 30px rgba(0,0,0,0.4); }
+    .sk-bhead { display: flex; justify-content: space-between; align-items: center; }
+    .sk-bhead .sk-name { font-size: 1.15rem; font-weight: 700; letter-spacing: 0.02em; text-shadow: 0 0 12px rgba(140,170,255,0.5); }
+    .sk-sp { font-size: 0.8rem; color: rgba(255,255,255,0.7); background: rgba(252,211,77,0.1); border: 1px solid rgba(252,211,77,0.4); padding: 0.25rem 0.7rem; border-radius: 999px; }
+    .sk-sp b { color: #fcd34d; text-shadow: 0 0 8px rgba(252,211,77,0.7); }
+    .sk-bstats { font-size: 0.72rem; color: rgba(190,205,245,0.72); margin: 0.4rem 0 0.6rem; letter-spacing: 0.02em; }
     .sk-tree { position: relative; width: 100%; }
     .sk-svg { position: absolute; inset: 0; width: 100%; }
-    .sk-line { stroke: rgba(255,255,255,0.18); stroke-width: 3; }
-    .sk-line.on { stroke: #6ee7b7; stroke-width: 4; filter: drop-shadow(0 0 4px rgba(110,231,183,0.8)); }
-    .sk-n { position: absolute; transform: translate(-50%, -50%); width: 176px; display: flex; flex-direction: column; align-items: center; gap: 0.12rem; padding: 0.55rem 0.5rem; border-radius: 10px; font: inherit; color: #fff; cursor: pointer; border: 1px solid rgba(130,170,255,0.45); background: linear-gradient(180deg, rgba(18,34,86,0.96), rgba(10,18,52,0.97)); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); transition: transform 0.1s, box-shadow 0.2s; z-index: 2; }
-    .sk-n-desc { font-size: 0.64rem; color: rgba(210,224,255,0.78); text-align: center; line-height: 1.22; }
-    .sk-n:hover:not(:disabled) { transform: translate(-50%,-50%) scale(1.06); }
+    .sk-line { stroke: rgba(170,190,255,0.16); stroke-width: 3; stroke-linecap: round; }
+    .sk-line.on { stroke: #8fb0ff; stroke-width: 4.5; filter: drop-shadow(0 0 5px rgba(140,170,255,0.9)); stroke-dasharray: 7 6; animation: skflow 1.2s linear infinite; }
+    @keyframes skflow { to { stroke-dashoffset: -26; } }
+    .sk-line.br-a.on { stroke: #ffd24a; filter: drop-shadow(0 0 6px rgba(255,210,74,0.95)); }
+    .sk-line.br-b.on { stroke: #c08aff; filter: drop-shadow(0 0 6px rgba(192,138,255,0.95)); }
+    .sk-n { position: absolute; transform: translate(-50%, -50%); width: 168px; display: flex; flex-direction: column; align-items: center; gap: 0.14rem; padding: 0.6rem 0.5rem 0.55rem; border-radius: 13px; font: inherit; color: #fff; cursor: pointer;
+      border: 1px solid rgba(140,170,255,0.4); background: linear-gradient(180deg, rgba(26,34,72,0.97), rgba(12,16,40,0.98));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 14px rgba(0,0,0,0.45); transition: transform 0.12s, box-shadow 0.25s, border-color 0.25s; z-index: 2; }
+    .sk-n::before { content: ''; position: absolute; top: -7px; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle, #cfe0ff, #6a80c0); box-shadow: 0 0 8px rgba(160,190,255,0.7); } /* the "star" node bead */
+    .sk-n-desc { font-size: 0.64rem; color: rgba(206,220,255,0.78); text-align: center; line-height: 1.24; }
+    .sk-n:hover:not(:disabled) { transform: translate(-50%,-50%) scale(1.07); border-color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 6px 22px rgba(80,110,220,0.5); }
     .sk-n:disabled { cursor: default; }
-    .sk-n-ic { font-size: 1.1rem; line-height: 1; }
+    .sk-n-ic { font-size: 1.25rem; line-height: 1; filter: drop-shadow(0 0 6px currentColor); }
     .sk-n.ability .sk-n-ic { color: #f0abfc; }
     .sk-n.stat .sk-n-ic { color: #93c5fd; }
-    .sk-n-name { font-weight: 700; font-size: 0.78rem; text-align: center; }
-    .sk-n-sub { font-size: 0.66rem; color: #fcd34d; }
-    .sk-n.learned { border-color: #6ee7b7; background: rgba(52,211,153,0.2); box-shadow: 0 0 14px rgba(52,211,153,0.45); }
+    .sk-n-name { font-weight: 700; font-size: 0.8rem; text-align: center; letter-spacing: 0.01em; }
+    .sk-n-sub { font-size: 0.66rem; color: #fcd34d; font-weight: 700; }
+    /* branch identity: a coloured left-edge + bead so the two paths read at a glance */
+    .sk-n.br-a { border-left: 3px solid #ffd24a; } .sk-n.br-a::before { background: radial-gradient(circle, #fff0c0, #caa030); box-shadow: 0 0 8px rgba(255,210,74,0.8); }
+    .sk-n.br-b { border-left: 3px solid #c08aff; } .sk-n.br-b::before { background: radial-gradient(circle, #e8d0ff, #8a5ad0); box-shadow: 0 0 8px rgba(192,138,255,0.8); }
+    .sk-n.learned { border-color: #6ee7b7; background: linear-gradient(180deg, rgba(52,211,153,0.28), rgba(20,80,64,0.5)); box-shadow: 0 0 18px rgba(52,211,153,0.5), inset 0 0 12px rgba(110,231,183,0.2); }
+    .sk-n.learned::before { background: radial-gradient(circle, #d6fff0, #34d399); box-shadow: 0 0 12px rgba(52,211,153,0.95); }
     .sk-n.learned .sk-n-sub { color: #6ee7b7; }
-    .sk-n.avail { border-color: #fcd34d; box-shadow: 0 0 0 1px #fcd34d, 0 0 18px rgba(252,211,77,0.5); animation: skpulse 1.6s ease-in-out infinite; }
-    @keyframes skpulse { 0%,100%{ box-shadow: 0 0 0 1px #fcd34d, 0 0 10px rgba(252,211,77,0.35); } 50%{ box-shadow: 0 0 0 1px #fcd34d, 0 0 22px rgba(252,211,77,0.7); } }
+    .sk-n.avail { border-color: #fcd34d; box-shadow: 0 0 0 1px #fcd34d, 0 0 22px rgba(252,211,77,0.55); animation: skpulse 1.5s ease-in-out infinite; }
+    .sk-n.avail::before { background: radial-gradient(circle, #fff3c0, #fcd34d); box-shadow: 0 0 14px rgba(252,211,77,1); animation: skpulse 1.5s ease-in-out infinite; }
+    @keyframes skpulse { 0%,100%{ box-shadow: 0 0 0 1px #fcd34d, 0 0 12px rgba(252,211,77,0.4); } 50%{ box-shadow: 0 0 0 1px #fcd34d, 0 0 26px rgba(252,211,77,0.8); } }
     .sk-n.locked { opacity: 0.45; }
     .sk-n.pathlocked { opacity: 0.4; border-color: #6b3a4a; filter: grayscale(0.6); }
     .sk-n.pathlocked .sk-n-sub { color: #c06a7a; }

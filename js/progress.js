@@ -289,7 +289,7 @@ window.Progress = (function () {
     container.innerHTML = '';
     const wrap = document.createElement('div'); wrap.className = 'sk-wrap';
     const head = document.createElement('div'); head.className = 'sk-head';
-    head.innerHTML = `<h2>Skill Trees</h2><div class="sk-gold">Spend SP earned from leveling</div>`;
+    head.innerHTML = `<h2>✦ Skill Constellation</h2><div class="sk-gold">Spend SP to light new stars · choose a path</div>`;
     const close = document.createElement('button'); close.className = 'pill ghost'; close.textContent = 'Close'; close.onclick = onClose; head.appendChild(close);
     wrap.appendChild(head);
 
@@ -315,13 +315,13 @@ window.Progress = (function () {
       const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('class', 'sk-svg'); svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('viewBox', `0 0 1000 ${H}`); svg.setAttribute('height', H);
       tree.forEach(n => { if (!n.req) return; const a = posOf[n.req], b = posOf[n.id]; if (!a || !b) return;
         const ln = document.createElementNS(svgNS, 'line'); ln.setAttribute('x1', a.xPct * 10); ln.setAttribute('y1', a.y); ln.setAttribute('x2', b.xPct * 10); ln.setAttribute('y2', b.y);
-        ln.setAttribute('class', p.learned[n.id] ? 'sk-line on' : 'sk-line'); svg.appendChild(ln); });
+        ln.setAttribute('class', 'sk-line' + (n.branch ? ' br-' + n.branch : '') + (p.learned[n.id] ? ' on' : '')); svg.appendChild(ln); });
       treeEl.appendChild(svg);
 
       tree.forEach(n => {
         const pos = posOf[n.id]; const learned = !!p.learned[n.id]; const pathOff = !learned && branchBlocked(p, n); const locked = n.req && !p.learned[n.req]; const affordable = canLearn(state, p, n);
         const b = document.createElement('button');
-        b.className = 'sk-n ' + (n.kind) + (learned ? ' learned' : pathOff ? ' pathlocked' : affordable ? ' avail' : locked ? ' locked' : '');
+        b.className = 'sk-n ' + (n.kind) + (n.branch ? ' br-' + n.branch : '') + (learned ? ' learned' : pathOff ? ' pathlocked' : affordable ? ' avail' : locked ? ' locked' : '');
         b.style.left = pos.xPct + '%'; b.style.top = pos.y + 'px';
         b.innerHTML = `<span class="sk-n-ic">${NODE_ICON[n.kind]}</span><span class="sk-n-name">${n.name}</span><span class="sk-n-desc">${n.desc}</span><span class="sk-n-sub">${learned ? '✓ Learned' : pathOff ? '✗ Path not taken' : n.cost + ' SP'}</span>`;
         b.disabled = learned || !affordable;

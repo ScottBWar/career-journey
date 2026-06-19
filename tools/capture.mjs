@@ -38,7 +38,7 @@ const STATES = [
   { name: '13_cutscene_council',    drive: `Game.toIsland('tidehaven', false); Game.startCutscene('mermaidCouncil')`, wait: 1500 },
   { name: '14_cutscene_opening',    drive: `Cutscene.play(Data.STORY.opening, null, { set: 'cliff_dawn', music: 'adventure' })`, wait: 1600 },
   { name: '15_menu_gear',           drive: `Game.toIsland('tidehaven', false); Game.openGear()`,     wait: 900 },
-  { name: '16_menu_skills',         drive: `Game.toIsland('tidehaven', false); Game.openSkills()`, wait: 900 },
+  { name: '16_menu_skills',         drive: `(function(){var p=Game.state.party.find(x=>x.key==='healer'); if(p){p.level=10;p.sp=3;p.learned={h_mp1:true,h_hp1:true,h_b1:true,h_b2:true};}})(); Game.toIsland('tidehaven', false); Game.openSkills()`, wait: 900 },
   { name: '17_coliseum',            drive: `Game.toIsland('paegina', false); Game.openColiseum()`,   wait: 1000 },
 
   // --- new-feature framing: walk the player to the content the default cams miss ---
