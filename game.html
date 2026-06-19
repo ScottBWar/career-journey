@@ -161,7 +161,7 @@
     .bestiary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.7rem; margin-top: 0.8rem; }
     .best-card { display: flex; gap: 0.6rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 0.7rem; padding: 0.6rem; }
     .best-card.unknown { opacity: 0.55; }
-    .best-card .portrait { width: 56px; height: 56px; image-rendering: auto; border-radius: 0.4rem; flex-shrink: 0; }
+    .best-card .portrait { width: 56px; height: 56px; image-rendering: pixelated; border-radius: 0.4rem; flex-shrink: 0; }
     .best-card .best-port-q { width: 56px; height: 56px; display: grid; place-items: center; font-size: 2rem; background: rgba(0,0,0,0.3); border-radius: 0.4rem; flex-shrink: 0; }
     .best-info { font-size: 0.76rem; line-height: 1.35; }
     .best-info b { font-size: 0.86rem; color: #ffe9a8; }
@@ -215,7 +215,7 @@
     .cine-cap { position: absolute; left: 6%; right: 6%; bottom: 13.5vh; display: flex; gap: 0.9rem; align-items: center; z-index: 3;
       background: linear-gradient(180deg, rgba(8,10,24,0.0), rgba(8,10,24,0.85)); border-left: 3px solid #fcd34d; border-radius: 0.6rem; padding: 0.85rem 1.1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
     .cine-port { width: 64px; flex: 0 0 64px; }
-    .cine-port img, .cine-port .portrait { width: 64px; height: 64px; image-rendering: auto; border-radius: 0.45rem; border: 1px solid rgba(255,255,255,0.2); }
+    .cine-port img, .cine-port .portrait { width: 64px; height: 64px; image-rendering: pixelated; border-radius: 0.45rem; border: 1px solid rgba(255,255,255,0.2); }
     .cine-body { flex: 1; min-width: 0; }
     .cine-name { color: #fcd34d; font-weight: 700; letter-spacing: 0.07em; font-size: 0.9rem; margin-bottom: 0.22rem; text-transform: uppercase; }
     .cine-line { font-size: 1.05rem; line-height: 1.45; color: #f2f4ff; }
@@ -362,7 +362,7 @@
     .ally-card.locked { border-color: #6ee7b7; box-shadow: 0 0 0 2px rgba(110,231,183,0.6); cursor: default; }
     .ally-card.dim { opacity: 0.4; }
     .ally-port { width: 100%; aspect-ratio: 3/4; border-radius: 10px; overflow: hidden; background: radial-gradient(circle at 50% 35%, rgba(255,255,255,0.12), rgba(0,0,0,0.3)); display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; }
-    .ally-port canvas, .ally-port img { width: 100%; height: 100%; object-fit: cover; image-rendering: auto; }
+    .ally-port canvas, .ally-port img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
     .ally-name { font-weight: 700; font-size: 0.95rem; }
     .ally-role { font-size: 0.68rem; color: rgba(255,255,255,0.6); }
     .ally-lvl { font-size: 0.72rem; color: #93c5fd; margin-top: 0.15rem; }
@@ -370,7 +370,7 @@
     .ally-badge { position: absolute; top: 6px; left: 8px; font-size: 0.6rem; letter-spacing: 0.08em; background: rgba(110,231,183,0.9); color: #06281c; padding: 2px 6px; border-radius: 6px; font-weight: 700; }
 
     /* portraits */
-    .portrait { image-rendering: auto; width: 38px; height: 38px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25); display: block; }
+    .portrait { image-rendering: pixelated; width: 38px; height: 38px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25); display: block; }
     .pm-head { display: flex; gap: 0.5rem; align-items: center; }
     .pm-port { width: 44px; height: 44px; flex: 0 0 auto; }
     .pm-meta { flex: 1; min-width: 0; }
@@ -385,7 +385,7 @@
     /* dialogue portrait */
     .dlg-row { display: flex; gap: 0.8rem; align-items: flex-start; }
     .dlg-port { flex: 0 0 auto; }
-    .dlg-port img { width: 58px; height: 58px; image-rendering: auto; border-radius: 8px; }
+    .dlg-port img { width: 58px; height: 58px; image-rendering: pixelated; border-radius: 8px; }
     .dlg-body { flex: 1; }
 
     /* ship battle */
@@ -424,7 +424,7 @@
     #date { align-items: flex-end; padding-bottom: 3vh; }
     .date-box { position: relative; z-index: 1; width: min(560px, 96vw); padding: 1.2rem; }
     .date-char { position: absolute; top: 7%; left: 50%; transform: translateX(-50%); z-index: 1; pointer-events: none; }
-    .date-char img { width: clamp(150px, 30vh, 260px); height: clamp(150px, 30vh, 260px); image-rendering: auto; border-radius: 14px; border: 2px solid rgba(255,255,255,0.25); box-shadow: 0 16px 40px rgba(0,0,0,0.6); }
+    .date-char img { width: clamp(150px, 30vh, 260px); height: clamp(150px, 30vh, 260px); image-rendering: pixelated; border-radius: 14px; border: 2px solid rgba(255,255,255,0.25); box-shadow: 0 16px 40px rgba(0,0,0,0.6); }
     .date-head { display: flex; gap: 0.9rem; align-items: center; margin-bottom: 0.8rem; }
     .date-port { width: 84px; height: 84px; border-radius: 10px; }
     .date-name { font-weight: 700; font-size: 1.2rem; }
