@@ -187,6 +187,66 @@ window.Data = (function () {
         { id: 'vi_bond', name: 'Bonded Lightning', desc: 'Calls her dragon\'s lightning down on all foes', cost: 3, req: 'vi_atk', kind: 'ability', ability: ab('Bonded Lightning', { mp: 26, min: 48, max: 66, target: 'all', fx: 'beam', el: 'thunder' }) },
       ],
     },
+    { // The Thing (1982) — gruff outpost survivor with a flamethrower
+      key: 'mac', name: 'Mac', role: 'Outpost Survivor', model: 'mac', temporary: true,
+      base: { hp: 172, mp: 24, atkMin: 24, atkMax: 34, crit: 0.14, big: true }, growth: { hp: 17, mp: 3, atk: 4 },
+      baseAbilities: [ ab('Flamethrower', { mp: 10, min: 30, max: 44, target: 'all', fx: 'fire', el: 'fire' }), ab('Flare Gun', { mp: 8, min: 36, max: 50, target: 'enemy', fx: 'fire', el: 'fire', proj: true }) ],
+      tree: [
+        { id: 'mac_hp', name: 'Hard-Bitten', desc: '+30 Max HP', cost: 1, kind: 'stat', stat: { hp: 30 } },
+        { id: 'mac_atk', name: 'Steady Hands', desc: '+5 Attack', cost: 1, req: 'mac_hp', kind: 'stat', stat: { atk: 5 } },
+        { id: 'mac_a1', branch: 'a', name: 'Napalm', desc: 'PATH: Burn It All — heavy fire on all foes', cost: 1, req: 'mac_atk', kind: 'ability', ability: ab('Napalm', { mp: 18, min: 34, max: 48, target: 'all', fx: 'fire', el: 'fire' }) },
+        { id: 'mac_a2', branch: 'a', name: 'Pyromaniac', desc: '+16% Crit', cost: 2, req: 'mac_a1', kind: 'stat', stat: { crit: 0.16 } },
+        { id: 'mac_acap', branch: 'a', name: 'Scorched Earth', desc: 'Incinerate everything', cost: 3, req: 'mac_a2', kind: 'ability', ability: ab('Scorched Earth', { mp: 28, min: 48, max: 66, target: 'all', fx: 'fire', el: 'fire' }) },
+        { id: 'mac_b1', branch: 'b', name: 'Field Medic', desc: 'PATH: Survivor — Regen to an ally', cost: 1, req: 'mac_atk', kind: 'ability', ability: ab('Field Medic', { mp: 12, min: 0, max: 0, target: 'ally', fx: 'heal', status: 'regen', turns: 4 }) },
+        { id: 'mac_b2', branch: 'b', name: 'Bunker Down', desc: '+45 Max HP', cost: 2, req: 'mac_b1', kind: 'stat', stat: { hp: 45 } },
+        { id: 'mac_bcap', branch: 'b', name: 'Last Man Standing', desc: 'Attack Up + Haste to all allies', cost: 3, req: 'mac_b2', kind: 'ability', ability: ab('Last Man Standing', { mp: 24, min: 0, max: 0, target: 'allparty', fx: 'beam', status: ['atkup', 'haste'], turns: 4 }) },
+      ],
+    },
+    { // Princess Mononoke — fierce wolf-raised forest warrior
+      key: 'sane', name: 'Sané', role: 'Wolf-Raised', model: 'sane', temporary: true,
+      base: { hp: 150, mp: 30, atkMin: 22, atkMax: 32, crit: 0.20 }, growth: { hp: 15, mp: 4, atk: 4 },
+      baseAbilities: [ ab('Wolf Strike', { mp: 8, min: 34, max: 48, target: 'enemy', fx: 'beam', el: 'physical' }), ab("Forest's Wrath", { mp: 14, min: 26, max: 38, target: 'all', fx: 'water', el: 'earth' }) ],
+      tree: [
+        { id: 'sn_crit', name: 'Feral Speed', desc: '+18% Crit', cost: 1, kind: 'stat', stat: { crit: 0.18 } },
+        { id: 'sn_mp', name: 'Spirit Sense', desc: '+15 Max MP', cost: 1, req: 'sn_crit', kind: 'stat', stat: { mp: 15 } },
+        { id: 'sn_a1', branch: 'a', name: 'Throat Tear', desc: 'PATH: Huntress — savage single hit', cost: 1, req: 'sn_mp', kind: 'ability', ability: ab('Throat Tear', { mp: 12, min: 54, max: 72, target: 'enemy', fx: 'beam', el: 'physical' }) },
+        { id: 'sn_a2', branch: 'a', name: 'Pack Tactics', desc: '+6 Attack', cost: 2, req: 'sn_a1', kind: 'stat', stat: { atk: 6 } },
+        { id: 'sn_acap', branch: 'a', name: 'Wolf Pack', desc: 'The pack tears all foes apart', cost: 3, req: 'sn_a2', kind: 'ability', ability: ab('Wolf Pack', { mp: 24, min: 40, max: 56, target: 'all', fx: 'beam', el: 'physical' }) },
+        { id: 'sn_b1', branch: 'b', name: 'Greenheal', desc: 'PATH: Forest Warden — heal the whole party', cost: 1, req: 'sn_mp', kind: 'ability', ability: ab('Greenheal', { mp: 16, min: 30, max: 44, target: 'allparty', fx: 'heal', heal: true }) },
+        { id: 'sn_b2', branch: 'b', name: 'Bramble Snare', desc: 'Earth hit that Slows all foes', cost: 2, req: 'sn_b1', kind: 'ability', ability: ab('Bramble Snare', { mp: 16, min: 24, max: 34, target: 'all', fx: 'water', el: 'earth', status: 'slow', turns: 3 }) },
+        { id: 'sn_bcap', branch: 'b', name: "Spirit's Blessing", desc: 'Heal all allies + grant Regen', cost: 3, req: 'sn_b2', kind: 'ability', ability: ab("Spirit's Blessing", { mp: 26, min: 40, max: 54, target: 'allparty', fx: 'heal', heal: true, status: 'regen', turns: 4 }) },
+      ],
+    },
+    { // Hitchhiker's Guide — the morose android
+      key: 'marvyn', name: 'Marvyn', role: 'Morose Android', model: 'marvyn', temporary: true,
+      base: { hp: 162, mp: 40, atkMin: 18, atkMax: 28, crit: 0.10 }, growth: { hp: 14, mp: 6, atk: 3 },
+      baseAbilities: [ ab('Logic Bomb', { mp: 10, min: 34, max: 48, target: 'enemy', fx: 'beam', el: 'thunder' }), ab('Improbability Field', { mp: 14, min: 22, max: 34, target: 'all', fx: 'beam', el: 'thunder' }) ],
+      tree: [
+        { id: 'mv_mp', name: 'Planet-Sized Brain', desc: '+20 Max MP', cost: 1, kind: 'stat', stat: { mp: 20 } },
+        { id: 'mv_atk', name: 'Diodes Down My Side', desc: '+4 Attack', cost: 1, req: 'mv_mp', kind: 'stat', stat: { atk: 4 } },
+        { id: 'mv_a1', branch: 'a', name: 'Overclock', desc: 'PATH: Computation — heavy bolt on one foe', cost: 1, req: 'mv_atk', kind: 'ability', ability: ab('Overclock', { mp: 14, min: 50, max: 68, target: 'enemy', fx: 'beam', el: 'thunder' }) },
+        { id: 'mv_a2', branch: 'a', name: 'Recursive Dread', desc: '+18 Max MP', cost: 2, req: 'mv_a1', kind: 'stat', stat: { mp: 18 } },
+        { id: 'mv_acap', branch: 'a', name: 'Total Perspective Vortex', desc: 'Show all foes their insignificance (dark)', cost: 3, req: 'mv_a2', kind: 'ability', ability: ab('Total Perspective Vortex', { mp: 28, min: 44, max: 60, target: 'all', fx: 'beam', el: 'dark' }) },
+        { id: 'mv_b1', branch: 'b', name: 'Tedium Field', desc: 'PATH: Sysadmin — Slow ALL foes', cost: 1, req: 'mv_atk', kind: 'ability', ability: ab('Tedium Field', { mp: 16, min: 0, max: 0, target: 'all', fx: 'beam', el: 'dark', status: 'slow', turns: 3 }) },
+        { id: 'mv_b2', branch: 'b', name: 'Spare Capacity', desc: '+40 Max HP', cost: 2, req: 'mv_b1', kind: 'stat', stat: { hp: 40 } },
+        { id: 'mv_bcap', branch: 'b', name: 'System Restore', desc: 'Haste + Regen to all allies', cost: 3, req: 'mv_b2', kind: 'ability', ability: ab('System Restore', { mp: 26, min: 0, max: 0, target: 'allparty', fx: 'beam', status: ['haste', 'regen'], turns: 4 }) },
+      ],
+    },
+    { // Don Quixote — the earnest, deluded knight-errant
+      key: 'quijano', name: 'Quijano', role: 'Knight-Errant', model: 'quijano', temporary: true,
+      base: { hp: 165, mp: 26, atkMin: 23, atkMax: 34, crit: 0.15, big: true }, growth: { hp: 16, mp: 3, atk: 4 },
+      baseAbilities: [ ab('Tilt!', { mp: 8, min: 38, max: 52, target: 'enemy', fx: 'beam', el: 'physical' }), ab('Chivalrous Charge', { mp: 12, min: 24, max: 36, target: 'all', fx: 'beam', el: 'holy' }) ],
+      tree: [
+        { id: 'qj_hp', name: 'Stubborn Valor', desc: '+30 Max HP', cost: 1, kind: 'stat', stat: { hp: 30 } },
+        { id: 'qj_atk', name: 'Lance Drill', desc: '+5 Attack', cost: 1, req: 'qj_hp', kind: 'stat', stat: { atk: 5 } },
+        { id: 'qj_a1', branch: 'a', name: 'Joust', desc: 'PATH: Lancer — a thundering charge', cost: 1, req: 'qj_atk', kind: 'ability', ability: ab('Joust', { mp: 14, min: 54, max: 72, target: 'enemy', fx: 'beam', el: 'physical' }) },
+        { id: 'qj_a2', branch: 'a', name: 'Tempered Madness', desc: '+16% Crit', cost: 2, req: 'qj_a1', kind: 'stat', stat: { crit: 0.16 } },
+        { id: 'qj_acap', branch: 'a', name: 'The Impossible Dream', desc: 'A glorious lance of holy light', cost: 3, req: 'qj_a2', kind: 'ability', ability: ab('The Impossible Dream', { mp: 26, min: 50, max: 68, target: 'enemy', fx: 'beam', el: 'holy' }) },
+        { id: 'qj_b1', branch: 'b', name: 'Rally the Squire', desc: 'PATH: Champion — Attack Up to all allies', cost: 1, req: 'qj_atk', kind: 'ability', ability: ab('Rally the Squire', { mp: 14, min: 0, max: 0, target: 'allparty', fx: 'beam', status: 'atkup', turns: 4 }) },
+        { id: 'qj_b2', branch: 'b', name: 'Quixotic Resolve', desc: '+45 Max HP', cost: 2, req: 'qj_b1', kind: 'stat', stat: { hp: 45 } },
+        { id: 'qj_bcap', branch: 'b', name: 'For Dulcinea!', desc: 'Attack Up + Haste over all allies', cost: 3, req: 'qj_b2', kind: 'ability', ability: ab('For Dulcinea!', { mp: 26, min: 0, max: 0, target: 'allparty', fx: 'beam', status: ['atkup', 'haste'], turns: 4 }) },
+      ],
+    },
   ];
 
   const ENEMIES = {
@@ -226,6 +286,26 @@ window.Data = (function () {
       { name: 'spews venom from every maw', min: 22, max: 30, all: true, status: 'poison', turns: 4 },
       { name: 'regrows a severed head', min: 0, max: 0, heal: true },
       { name: 'crashes down in a coil', min: 36, max: 50 } ], drops: [ { mat: 'abyssscale', chance: 1 }, { mat: 'ectoplasm', chance: 0.6 } ] },
+    // ---- one-off temp-ally-island bosses ----
+    thething: { name: 'The Thing', model: 'thething', hp: 640, xp: 560, gold: 760, baseY: 0, boss: true, scale: 1.35, moves: [
+      { name: 'lashes out with fused limbs', min: 30, max: 44 },
+      { name: 'splits into screaming mouths', min: 22, max: 30, all: true },
+      { name: 'tries to ASSIMILATE', min: 20, max: 28, status: 'poison', turns: 4 },
+      { name: 'erupts in a spray of tendrils', min: 26, max: 38, all: true, status: 'weaken', turns: 3 } ], drops: [ { mat: 'goo', chance: 1 }, { mat: 'ectoplasm', chance: 1 } ] },
+    forestgod: { name: 'The Forest God', model: 'forestgod', hp: 720, xp: 600, gold: 800, baseY: 0, boss: true, scale: 1.4, moves: [
+      { name: 'where it steps, life withers', min: 28, max: 40, all: true },
+      { name: 'gores with antlers of bone', min: 34, max: 48 },
+      { name: 'the night-walker rises', min: 24, max: 34, all: true, status: 'slow', turns: 3 },
+      { name: 'reclaims a little life', min: 0, max: 0, heal: true } ], drops: [ { mat: 'abyssscale', chance: 1 }, { mat: 'goo', chance: 0.6 } ] },
+    vogon: { name: 'Vogon Constructor', model: 'vogon', hp: 560, xp: 480, gold: 700, baseY: 0, boss: true, scale: 1.3, moves: [
+      { name: 'files paperwork AT you', min: 26, max: 38 },
+      { name: 'recites AGONIZING poetry', min: 18, max: 26, all: true, status: 'weaken', turns: 3 },
+      { name: 'demobilizes your morale', min: 16, max: 24, all: true, status: 'slow', turns: 3 },
+      { name: 'swings a bureaucratic fist', min: 30, max: 42 } ], drops: [ { mat: 'ink', chance: 1 }, { mat: 'brine', chance: 0.5 } ] },
+    windmill: { name: 'The Giant (a windmill)', model: 'windmill', hp: 660, xp: 520, gold: 740, baseY: 0, boss: true, scale: 1.45, moves: [
+      { name: 'sweeps a colossal sail-arm', min: 30, max: 44, all: true },
+      { name: 'grinds down upon a hero', min: 34, max: 48 },
+      { name: 'hurls a millstone', min: 32, max: 46 } ], drops: [ { mat: 'sand', chance: 1 }, { mat: 'abyssscale', chance: 0.4 } ] },
     bat:    { name: 'Nightwing Bat',     model: 'bat',   hp: 78,  xp: 30, gold: 20, baseY: 1.6, moves: [ { name: 'bites with a screech', min: 12, max: 18 }, { name: 'drains warm blood', min: 14, max: 20 } ], drops: [ { mat: 'ectoplasm', chance: 0.4 }, { mat: 'feather', chance: 0.3 } ] },
     ghoul:  { name: 'Drowned Ghoul',     model: 'ghoul', hp: 132, xp: 38, gold: 28, baseY: 0,   moves: [ { name: 'rakes with rotted claws', min: 15, max: 22 }, { name: 'exhales grave-rot', min: 12, max: 18, all: true } ], drops: [ { mat: 'ectoplasm', chance: 0.7 }, { mat: 'brine', chance: 0.3 } ] },
     wraith: { name: 'Tide Wraith',       model: 'wraith', hp: 110, xp: 40, gold: 30, baseY: 0.6, moves: [ { name: 'phases through a soul', min: 16, max: 23 }, { name: 'wails a dirge', min: 13, max: 19, all: true } ], drops: [ { mat: 'ectoplasm', chance: 0.8 } ] },
@@ -376,6 +456,26 @@ window.Data = (function () {
       { key: 'recurve_bow', name: 'Recurve Warbow', atk: 24, slots: 2, price: 0, desc: '+24 ATK · 2 shell slots' },
       { key: 'stormbow',    name: 'Stormcaller Bow', atk: 36, slots: 3, price: 0, desc: 'A bow that hums with bonded lightning.' },
     ],
+    mac: [
+      { key: 'flamethrower', name: 'Flamethrower', atk: 16, slots: 2, price: 0, desc: 'It burns. That\'s the point.' },
+      { key: 'twin_torch',   name: 'Twin-Tank Torch', atk: 26, slots: 2, price: 0, desc: '+26 ATK · 2 shell slots' },
+      { key: 'inferno_rig',  name: 'Inferno Rig', atk: 38, slots: 3, price: 0, desc: 'Enough fuel to cleanse an outpost.' },
+    ],
+    sane: [
+      { key: 'stone_dagger', name: 'Stone Dagger', atk: 14, slots: 2, price: 0, desc: 'A flint blade, wolf-quick.' },
+      { key: 'crystal_spear', name: 'Crystal Spear', atk: 24, slots: 2, price: 0, desc: '+24 ATK · 2 shell slots' },
+      { key: 'fang_of_moro', name: 'Fang of the Wolf-God', atk: 36, slots: 3, price: 0, desc: 'A tusk-blade blessed by the forest.' },
+    ],
+    marvyn: [
+      { key: 'service_arm',  name: 'Service Arm', atk: 12, slots: 2, price: 0, desc: 'A reluctant manipulator limb.' },
+      { key: 'ion_emitter',  name: 'Ion Emitter', atk: 22, slots: 3, price: 0, desc: '+22 ATK · 3 shell slots' },
+      { key: 'improb_drive', name: 'Improbability Coil', atk: 32, slots: 3, price: 0, desc: 'Statistically, this shouldn\'t work.' },
+    ],
+    quijano: [
+      { key: 'rusty_lance',  name: 'Rusty Lance', atk: 14, slots: 2, price: 0, desc: 'Bent, but bravely held.' },
+      { key: 'tourney_lance', name: 'Tourney Lance', atk: 24, slots: 2, price: 0, desc: '+24 ATK · 2 shell slots' },
+      { key: 'dream_lance',  name: 'Lance of the Impossible Dream', atk: 36, slots: 3, price: 0, desc: 'For glory, for Dulcinea.' },
+    ],
   };
   // ultimate weapons (sold at the Mall Isle bazaar)
   const ULT = {
@@ -495,6 +595,10 @@ window.Data = (function () {
     minotaur:{ weak: ['thunder'], resist: ['physical', 'earth'] },
     medusa: { weak: ['fire'], resist: ['earth', 'physical'], absorb: ['dark'] },
     hydra:  { weak: ['fire'], resist: ['water', 'physical'] },
+    thething: { weak: ['fire'], resist: ['physical', 'water'] },
+    forestgod: { weak: ['fire'], absorb: ['earth'], resist: ['holy', 'water'] },
+    vogon: { weak: ['thunder'], resist: ['physical', 'dark'] },
+    windmill: { weak: ['thunder'], resist: ['physical', 'earth'] },
   };
   const AMBUSH = ['leviathan', 'angler']; // random deep-sea ambush bosses
   function affMult(enemyKey, element) {
@@ -518,10 +622,14 @@ window.Data = (function () {
     simon:     { name: 'Grand Cross',     target: 'all',      fx: 'beam',  el: 'holy',    min: 96, max: 132, flavor: 'calls down a cross of holy light!' },
     aladdin:   { name: 'A Whole New World', target: 'all',    fx: 'beam',  el: 'thunder', min: 90, max: 124, flavor: 'soars in on the carpet, blades flashing!' },
     violca:    { name: 'Bonded Storm',    target: 'all',      fx: 'beam',  el: 'thunder', min: 96, max: 132, flavor: 'and her dragon answer as one — the sky splits with lightning!' },
+    mac:       { name: 'Burn It All',     target: 'all',      fx: 'fire',  el: 'fire',    min: 92, max: 128, flavor: 'empties every tank in a roaring wall of flame!' },
+    sane:      { name: 'Spirit Howl',     target: 'all',      fx: 'beam',  el: 'earth',   min: 90, max: 124, flavor: 'and the whole forest answers her cry!' },
+    marvyn:    { name: 'Improbability Cascade', target: 'all', fx: 'beam', el: 'dark',    min: 94, max: 130, flavor: '"...here I am, brain the size of a planet." Reality buckles.' },
+    quijano:   { name: 'The Impossible Dream', target: 'all', fx: 'beam',  el: 'holy',    min: 92, max: 128, flavor: 'charges an imaginary giant — and somehow, gloriously, wins!' },
   };
 
   // ---------------- ICONS ----------------
-  const WEAPON_ICON = { pirate: '⚔️', swordsman: '🗡️', healer: '🪄', mage: '✨', blader: '🌀', dragoon: '🔱', ruffy: '🥊', simon: '🔗', aladdin: '🗡️', violca: '🏹' };
+  const WEAPON_ICON = { pirate: '⚔️', swordsman: '🗡️', healer: '🪄', mage: '✨', blader: '🌀', dragoon: '🔱', ruffy: '🥊', simon: '🔗', aladdin: '🗡️', violca: '🏹', mac: '🔥', sane: '🐺', marvyn: '🤖', quijano: '🛡️' };
   const weaponIcon = (charKey) => WEAPON_ICON[charKey] || '⚔️';
   const shellIcon = (sh) => (sh.kind === 'magic' ? '🔮' : '🛡️');
 
@@ -879,6 +987,34 @@ window.Data = (function () {
       ],
       decor: { trees: 7, palms: 4, rocks: 10 },
     },
+    whiteout: {
+      name: 'Whiteout Station', size: 50, shape: 'long', treeType: 'pine', ground: '#cdd8e2', sand: '#e8f0f6', water: '#2a4a6a', sky: { top: '#6a86aa', horizon: '#eef4fa' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      dungeon: { key: 'frost_station', x: 0, z: 9, color: '#bfe0ff' },
+      encounters: [ { x: -6, z: 9, pool: ['wraith', 'ghoul'], min: 2, max: 3 }, { x: 7, z: 11, pool: ['bat', 'wraith'], min: 2, max: 2 } ],
+      decor: { trees: 9, palms: 0, rocks: 12 },
+    },
+    wildwood: {
+      name: 'The Wildwood', size: 54, shape: 'oval', treeType: 'blossom', ground: '#2f7a3a', sand: '#caa86a', water: '#2a8a6a', sky: { top: '#3a6a4a', horizon: '#e2eec8' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      dungeon: { key: 'spirit_wood', x: -11, z: 8, color: '#9effb0' },
+      encounters: [ { x: 5, z: 9, pool: ['golem', 'wyvern'], min: 2, max: 3 }, { x: -6, z: 11, pool: ['scarab', 'golem'], min: 2, max: 2 } ],
+      decor: { trees: 16, palms: 0, rocks: 8 },
+    },
+    improbable: {
+      name: 'Improbability Shoals', size: 48, shape: 'teardrop', treeType: 'deadTree', ground: '#9a8ab0', sand: '#d0c2dc', water: '#3a8ac0', sky: { top: '#5a3a8a', horizon: '#f0d8ff' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      dungeon: { key: 'crash_site', x: 0, z: 9, color: '#caa0ff' },
+      encounters: [ { x: -6, z: 9, pool: ['golem', 'scarab'], min: 2, max: 2 }, { x: 7, z: 11, pool: ['scarab', 'golem'], min: 2, max: 3 } ],
+      decor: { trees: 7, palms: 0, rocks: 13 },
+    },
+    lamancha: {
+      name: 'La Mancha Plains', size: 54, shape: 'wide', treeType: 'tree', ground: '#c2a85a', sand: '#e0c878', water: '#3a7a9a', sky: { top: '#9a8a4a', horizon: '#f3e8c0' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      dungeon: { key: 'mill_keep', x: -11, z: 8, color: '#e0c060' },
+      encounters: [ { x: 5, z: 9, pool: ['golem', 'urchin'], min: 2, max: 2 }, { x: -6, z: 11, pool: ['cobra', 'scarab'], min: 2, max: 3 } ],
+      decor: { trees: 5, palms: 0, rocks: 10 },
+    },
   };
 
   // ---------------- SEA (sail between islands) ----------------
@@ -893,6 +1029,10 @@ window.Data = (function () {
       { key: 'mirage', x: -70, z: -36 },
       { key: 'aerie', x: 36, z: -46 },
       { key: 'paegina', x: -44, z: 70 },
+      { key: 'wildwood', x: 90, z: -18 },
+      { key: 'whiteout', x: -94, z: 30 },
+      { key: 'improbable', x: 26, z: 94 },
+      { key: 'lamancha', x: -34, z: -94 },
     ],
     ships: [
       { id: 's0', type: 'sloop', x: -12, z: 26 },
@@ -963,6 +1103,38 @@ window.Data = (function () {
       mobs: [ { x: -8, z: -4, pool: ['wyvern', 'gull'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['wyvern', 'wyvern'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['wyvern', 'golem'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['wyvern', 'wyvern', 'gull'], min: 3, max: 3 } ],
       bossMob: { x: 0, z: 28, key: 'skydragon' },
       reward: { gold: 1000, shell: 'nautilus_surge' },
+    },
+    frost_station: {
+      name: 'Whiteout Station', island: 'whiteout', ground: '#3a4a5a', wall: '#22323e', sky: { top: '#10202c', horizon: '#3a5a70' },
+      spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
+      hint: 'Whiteout Station — the generators are dead and something in the kennels got loose. Nobody knows who\'s still human. Burn a path to the core.',
+      ally: { key: 'mac', metFlag: 'macMet', join: 'macJoin', pre: 'thingPre', fall: 'thingFall', leave: 'macLeave', holdMsg: 'Mac racks the flamethrower. "I\'ll watch the door. Don\'t take too long."' },
+      mobs: [ { x: -8, z: -4, pool: ['ghoul', 'wraith'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['bat', 'ghoul'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['wraith', 'ghoul'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['ghoul', 'wraith', 'bat'], min: 3, max: 3 } ],
+      bossMob: { x: 0, z: 27, key: 'thething' }, reward: { gold: 900, shell: 'conch_ember' },
+    },
+    spirit_wood: {
+      name: 'The Spirit Wood', island: 'wildwood', ground: '#1f3a22', wall: '#142a16', sky: { top: '#0a1a0e', horizon: '#2a4a2e' },
+      spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
+      hint: 'The Spirit Wood — the trees have gone quiet and the Forest God walks angry. Reach the still pool at its heart.',
+      ally: { key: 'sane', metFlag: 'saneMet', join: 'saneJoin', pre: 'forestPre', fall: 'forestFall', leave: 'saneLeave', holdMsg: 'Sané bares her teeth. "Leave, then. The wolves and I will hold the path."' },
+      mobs: [ { x: -8, z: -4, pool: ['golem', 'wyvern'], min: 2, max: 2 }, { x: 8, z: 6, pool: ['scarab', 'golem'], min: 2, max: 3 }, { x: -7, z: 14, pool: ['wyvern', 'scarab'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['golem', 'wyvern', 'scarab'], min: 3, max: 3 } ],
+      bossMob: { x: 0, z: 27, key: 'forestgod' }, reward: { gold: 950, shell: 'nautilus_surge' },
+    },
+    crash_site: {
+      name: 'The Heart of Gold', island: 'improbable', ground: '#2a2438', wall: '#1a1628', sky: { top: '#0e0820', horizon: '#3a2a52' },
+      spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
+      hint: 'A crashed ship humming with improbability. A Vogon demolition crew is aboard, and they have FORMS. So very many forms.',
+      ally: { key: 'marvyn', metFlag: 'marvynMet', join: 'marvynJoin', pre: 'vogonPre', fall: 'vogonFall', leave: 'marvynLeave', holdMsg: 'Marvyn sighs at 0.0001 decibels. "Fine. I\'ll wait. I\'m very good at waiting."' },
+      mobs: [ { x: -8, z: -4, pool: ['golem', 'scarab'], min: 2, max: 2 }, { x: 8, z: 6, pool: ['scarab', 'golem'], min: 2, max: 3 }, { x: -7, z: 14, pool: ['golem', 'scarab'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['scarab', 'golem', 'scarab'], min: 3, max: 3 } ],
+      bossMob: { x: 0, z: 27, key: 'vogon' }, reward: { gold: 920, shell: 'hex_conch' },
+    },
+    mill_keep: {
+      name: "The Giant's Mill", island: 'lamancha', ground: '#3a2e1a', wall: '#241c10', sky: { top: '#3a3018', horizon: '#8a7a44' },
+      spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
+      hint: 'Quijano insists the windmill is a fearsome giant. He is, of course, completely wrong. He is also, somehow, completely right.',
+      ally: { key: 'quijano', metFlag: 'quijanoMet', join: 'quijanoJoin', pre: 'giantPre', fall: 'giantFall', leave: 'quijanoLeave', holdMsg: 'Quijano bows gravely. "I shall guard the gate against all giants, friend. Return when honour calls."' },
+      mobs: [ { x: -8, z: -4, pool: ['golem', 'urchin'], min: 2, max: 2 }, { x: 8, z: 6, pool: ['urchin', 'cobra'], min: 2, max: 3 }, { x: -7, z: 14, pool: ['golem', 'cobra'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['golem', 'urchin', 'cobra'], min: 3, max: 3 } ],
+      bossMob: { x: 0, z: 27, key: 'windmill' }, reward: { gold: 900, shell: 'venom_spiral' },
     },
   };
 
@@ -1171,6 +1343,111 @@ window.Data = (function () {
       { name: 'Violca', text: '(She almost smiles.) "Don\'t tempt me, sailor. I\'ve got a war college to finish humiliating and a brooding arc to complete. But that offer? ...I\'ll keep it. Like a secret. Like a FAVOR."' },
       { name: 'Violca', text: '"If the wind ever brings you back to the Aerie — I\'ll be the one looking devastating against the sunset. Now GO, before I say something with FEELINGS in it."' },
       { name: 'Narrator', text: 'Violca leaves the party with a swirl of cloak and one last lingering look. (She is no longer available — but Sky Dragon Isle remembers.)' },
+    ],
+
+    // ===== The Thing (1982) =====
+    macJoin: [
+      { name: 'Narrator', text: 'Whiteout Station. A dead research outpost half-buried in ice. The dogs are gone. The radios are dead. And something walks the halls wearing borrowed faces.' },
+      { name: '???', text: '(A flamethrower\'s pilot light hisses in the dark.) "Stop right there. Slow. Nobody touches anybody till I know what you are."' },
+      { name: 'Mac', text: 'Name\'s Mac. I flew the last chopper that\'ll ever land here. There\'s a thing in this station that can BE anybody — copy you down to the blood. You can\'t kill what you can\'t trust... but you CAN burn it.' },
+      { name: 'Capt. Redbeard', text: 'And how do we know YOU\'re not it?' },
+      { name: 'Mac', text: 'You don\'t. I don\'t know about you either. So we keep the fire close and we move TOGETHER. When the real thing shows its face — and it will — we light it up. Deal.' },
+      { name: 'Narrator', text: 'Mac joins your party as a fourth member — for as long as you\'re in the station. Trust no one. Burn everything. (Leave and he holds the door; end the Thing and he flies on.)' },
+    ],
+    thingPre: [
+      { name: 'Mac', text: 'There. That\'s no man anymore. Look at it.' },
+      { name: 'The Thing', text: '(A chorus of stolen voices, all wrong at once.) "We are everyone you trusted. We are warm now. Join us. JOIN US."' },
+      { name: 'Mac', text: 'Yeah? Join THIS. Light it up — every tank, right now!' },
+    ],
+    thingFall: [
+      { name: 'Narrator', text: 'The Thing shrieks in a hundred voices and finally, mercifully, burns. The screaming stops. The cold rushes in, clean.' },
+      { name: 'Mac', text: '...That\'s it. That\'s the last of it. I think. I HOPE.' },
+      { name: 'Narrator', text: 'In the embers you find a Cinder Conch, still warm. (Equip it from the Gear menu.)' },
+    ],
+    macLeave: [
+      { name: 'Mac', text: 'I\'m gonna sit here a while. Make sure nothing\'s still moving. You should go — while you still know who you are.' },
+      { name: 'Capt. Redbeard', text: 'Come with us, man. There\'s warmer seas than this.' },
+      { name: 'Mac', text: '(He pours a drink, watches the snow.) "Maybe. Why don\'t you... wait a while. See what happens. ...Go on. I\'ll be fine."' },
+      { name: 'Narrator', text: 'Mac stays behind to watch the fire. (He is no longer available — but Whiteout Station remembers.)' },
+    ],
+
+    // ===== Princess Mononoke =====
+    saneJoin: [
+      { name: 'Narrator', text: 'The Wildwood. Cherry blossom and old growth — but the birdsong has stopped, and the great trees lean as if in pain.' },
+      { name: '???', text: '(A blade of flint at your throat, blood-red war-paint, eyes like a wolf\'s.) "Humans. You STINK of iron and smoke. Give me one reason."' },
+      { name: 'Sané', text: 'I am Sané. The wolves raised me; this forest is my mother. Something has POISONED the Forest God — turned the giver of life into a walking death. I will not let it spread to the deep wood.' },
+      { name: 'Marina', text: 'We didn\'t bring the poison. But we can help you cut it out. The tides grieve for green things too.' },
+      { name: 'Sané', text: '(A long stare. The flint lowers.) "...You speak like the water. Fine. Walk behind me, breathe quietly, and do NOT touch the kodama. We end the God\'s suffering — together. Then you leave my forest."' },
+      { name: 'Narrator', text: 'Sané joins your party as a fourth member — for as long as you\'re in the Spirit Wood. Fierce, swift, and fully at home among the trees. (Leave and she guards the path; cleanse the God and she returns to the wolves.)' },
+    ],
+    forestPre: [
+      { name: 'Sané', text: 'There. The Nightwalker. That gentle thing should never look like THAT.' },
+      { name: 'The Forest God', text: '(It does not speak. Where its hooves fall, grass blackens and curls to ash. Its antlers drip a cold light.)' },
+      { name: 'Sané', text: 'Forgive me. This is mercy, not murder. STRIKE — and aim for the corruption, not the god beneath!' },
+    ],
+    forestFall: [
+      { name: 'Narrator', text: 'The corruption sloughs away like a shed skin. For one breath the Forest God stands whole and luminous — then dissolves into a wind of green that races out through the trees, and the birdsong comes flooding back.' },
+      { name: 'Sané', text: '...It\'s free. The wood will heal now. You did this for a forest that was never yours. I won\'t forget it.' },
+      { name: 'Narrator', text: 'A Nautilus Spiral, dewed with spirit-light, is left where the god stood. (Equip it from the Gear menu.)' },
+    ],
+    saneLeave: [
+      { name: 'Sané', text: 'My place is here, with the pack and the green. Yours is out there, on that restless water.' },
+      { name: 'Capt. Redbeard', text: 'A wolf could do worse than a ship, lass.' },
+      { name: 'Sané', text: '(A rare, fierce smile.) "I still don\'t like humans. ...But I think I like YOU. Go. And when your sea is sick the way my forest was — come find me. We\'ll heal it together."' },
+      { name: 'Narrator', text: 'Sané melts back into the trees with her wolves. (She is no longer available — but the Wildwood remembers.)' },
+    ],
+
+    // ===== Hitchhiker's Guide to the Galaxy =====
+    marvynJoin: [
+      { name: 'Narrator', text: 'A starship the size of a small town has improbably crashed onto a beach. Its door hisses open. The smell of ozone and existential dread wafts out.' },
+      { name: '???', text: '(A flat, crushingly bored voice.) "Oh. Visitors. How thrilling. I won\'t enjoy it. I never enjoy anything. Brain the size of a planet, and they crash-land me on a BEACH."' },
+      { name: 'Marvyn', text: 'I\'m Marvyn. A personality prototype. You can tell, can\'t you. There are Vogons aboard — galactic bureaucrats with a demolition order and the worst poetry in the universe. They\'ll process you into PAPERWORK.' },
+      { name: 'Capt. Redbeard', text: 'A talking pessimist robot. The crew\'s seen weirder. ...Barely.' },
+      { name: 'Marvyn', text: 'I could compute the exact futility of resisting them, to forty decimal places. ...Or I could just come and zap things. It\'s all the same to me. Let\'s get it over with.' },
+      { name: 'Narrator', text: 'Marvyn joins your party as a fourth member — for as long as you\'re aboard the wreck. A peerless (and deeply depressed) calculating mind. (Leave and he waits, morosely; clear the Vogons and he wanders off.)' },
+    ],
+    vogonPre: [
+      { name: 'Vogon Constructor', text: 'HALT. By order of the Galactic Hyperspace Planning Council, you are in an UNAUTHORIZED wreck. Form B-12 was not filed. The penalty is poetry.' },
+      { name: 'Marvyn', text: 'Oh no. Not the poetry. Anything but— actually, do your worst. I literally cannot feel worse.' },
+      { name: 'Vogon Constructor', text: '"Oh freddled gruntbuggly, thy micturations are to me..." PREPARE TO BE BORED TO DEATH.' },
+    ],
+    vogonFall: [
+      { name: 'Narrator', text: 'The Vogon Constructor topples under a barrage of un-filed grievances and one very large logic bomb. Its clipboard clatters away into the surf.' },
+      { name: 'Marvyn', text: 'It\'s over. We won. ...I would cheer, but I haven\'t got the heart. Or, technically, a heart. Here — the ship\'s improbability core. A Hex Conch, of sorts. Take it. It\'ll only depress me to keep it.' },
+      { name: 'Narrator', text: 'You received a HEX CONCH from the ship\'s drive. (Equip it from the Gear menu.)' },
+    ],
+    marvynLeave: [
+      { name: 'Marvyn', text: 'Well. You\'ll be wanting to leave now. Everyone always does. Don\'t mind me. I\'ll just sit in the wreck and think about the heat-death of the universe.' },
+      { name: 'Capt. Redbeard', text: 'You could think about it on the ship, with company.' },
+      { name: 'Marvyn', text: '(The longest pause.) "...That\'s the first nice thing anyone\'s said to me in nine hundred years. I shall now spend a decade analysing whether you meant it. Goodbye. Probably."' },
+      { name: 'Narrator', text: 'Marvyn trudges back into the wreck to sulk magnificently. (He is no longer available — but the Heart of Gold remembers.)' },
+    ],
+
+    // ===== Don Quixote =====
+    quijanoJoin: [
+      { name: 'Narrator', text: 'La Mancha Plains. Wind, dust, and on the rise ahead — a colossal windmill, its sails turning slow against the sky.' },
+      { name: '???', text: '(An old man in mismatched armour and a wash-basin helm levels a bent lance at it.) "Fortune guides us! Behold yonder GIANT — thirty monstrous arms, each a league long! Stand back, friends, while I do battle!"' },
+      { name: 'Quijano', text: 'I am Quijano — knight-errant, righter of wrongs, sworn champion of the peerless lady Dulcinea! That fiend has terrorized these plains long enough.' },
+      { name: 'Marina', text: '...That\'s a windmill.' },
+      { name: 'Quijano', text: 'So the enchanters would have you BELIEVE! They cloak the giant in humble timber to shame me! But a true heart sees truly. Ride with me — and we shall see whose madness wins the day!' },
+      { name: 'Narrator', text: 'Quijano joins your party as a fourth member — for as long as you\'re at the mill. Utterly deluded, impossibly brave, and (somehow) genuinely formidable. (Leave and he guards the gate from "giants"; fell the mill and he rides on.)' },
+    ],
+    giantPre: [
+      { name: 'Quijano', text: 'There! It wakes! See how it wheels its dreadful arms, the better to smite us!' },
+      { name: 'The Giant (a windmill)', text: '(The wind gusts. The great sails groan around with a sound like a waking colossus, and — improbably — the whole structure tears free of the earth.)' },
+      { name: 'Capt. Redbeard', text: '...Quijano. The windmill is GETTING UP.' },
+      { name: 'Quijano', text: 'Of COURSE it is! Did I not SAY so?! For Dulcinea — CHARGE!' },
+    ],
+    giantFall: [
+      { name: 'Narrator', text: 'The "giant" crashes back to earth in a heap of splintered timber and grinding stone, and is, once again, unmistakably a windmill. A broken one.' },
+      { name: 'Quijano', text: 'Vanquished! You SEE? You doubted, and yet the giant fell! ...Or perhaps it was a windmill after all. Does it matter? We rode at the impossible — and the impossible BROKE.' },
+      { name: 'Narrator', text: 'Among the wreckage: a Venom Spiral, glinting like a hidden treasure. (Equip it from the Gear menu.)' },
+    ],
+    quijanoLeave: [
+      { name: 'Quijano', text: 'There are giants yet uncountered, friends, and a knight\'s road is long and lonely and grand.' },
+      { name: 'Capt. Redbeard', text: 'There\'s giants at sea too, old man. Real ones. You\'d like them.' },
+      { name: 'Quijano', text: '(He bows, deeply, with creaking knees.) "A tempting quest! But Dulcinea waits, and a windmill in the next valley has been looking at me FUNNY. Should ever you need a champion — call the name Quijano, and I shall come."' },
+      { name: 'Narrator', text: 'Quijano rides off across the plains toward another "giant." (He is no longer available — but La Mancha remembers.)' },
     ],
   };
 

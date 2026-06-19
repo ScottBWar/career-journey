@@ -24,6 +24,14 @@ window.Portraits = (function () {
     minotaur:  { type: 'minotaur',  skin: '#4a2e1a', eye: '#ff3a1a', bg: '#2a1810' },
     cyclops:   { type: 'cyclops',   skin: '#b08a5a', eye: '#ffffff', bg: '#3a2a18' },
     hydra:     { type: 'hydra',     skin: '#2f6b54', eye: '#ffcf3a', bg: '#08201a' },
+    mac:       { type: 'survivor',  skin: '#cf9a78', hair: '#caa86a', eye: '#2a1a10', bg: '#5a6068' },
+    sane:      { type: 'wolfgirl',  skin: '#dcb89a', hair: '#2a1810', eye: '#b0302a', bg: '#2f5a32' },
+    marvyn:    { type: 'android',   skin: '#b8bcc4', eye: '#9fd0ff', bg: '#3a4048' },
+    quijano:   { type: 'knight',    skin: '#cf9a78', hair: '#d8d0c0', eye: '#2a2a1a', bg: '#8a7a44' },
+    thething:  { type: 'thing',     skin: '#9a4a5a', eye: '#ffd24a', bg: '#2a0a12' },
+    forestgod: { type: 'spirit',    skin: '#dfe8d8', eye: '#9fffd0', bg: '#142a1e' },
+    vogon:     { type: 'vogon',     skin: '#5a6a4a', eye: '#caa030', bg: '#2a3320' },
+    windmill:  { type: 'windmill',  skin: '#b0a488', eye: '#ff5e3a', bg: '#6a5a36' },
     kraken:    { type: 'kraken',    skin: '#2f6b54', eye: '#ffe08a', bg: '#0a2018' },
     leviathan: { type: 'kraken',    skin: '#2a4a5a', eye: '#7fffd0', bg: '#08161e' },
     angler:    { type: 'kraken',    skin: '#1a2230', eye: '#aef0ff', bg: '#050d16' },
@@ -50,7 +58,7 @@ window.Portraits = (function () {
 
     const skin = p.skin, sk2 = skin ? shade(skin, 0.82) : null;
     // head base (cols 4..11, rows 4..13) with trimmed corners
-    if (p.type !== 'kraken' && p.type !== 'dragon' && p.type !== 'hydra' && p.type !== 'minotaur') {
+    if (p.type !== 'kraken' && p.type !== 'dragon' && p.type !== 'hydra' && p.type !== 'minotaur' && p.type !== 'thing' && p.type !== 'spirit' && p.type !== 'windmill') {
       px(4, 4, 8, 10, skin); px(4, 4, 1, 1, p.bg); px(11, 4, 1, 1, p.bg); px(4, 13, 1, 1, p.bg); px(11, 13, 1, 1, p.bg);
       px(4, 8, 1, 4, sk2); px(11, 8, 1, 4, sk2); // cheek shade
     }
@@ -185,6 +193,48 @@ window.Portraits = (function () {
           px(hx, 10 - i % 2, 1, 1, eye); px(hx + 2, 10 - i % 2, 1, 1, eye);
         });
         px(2, 2, 12, 1, shade(p.skin, 1.2)); break;
+      case 'survivor': // Mac — fur-hood parka, beard, weathered
+        px(2, 2, 12, 4, '#d8d0c0'); px(1, 4, 1, 6, '#d8d0c0'); px(14, 4, 1, 6, '#d8d0c0'); // fur hood ruff
+        px(5, 1, 6, 2, p.bg); // beanie
+        px(6, 8, 1, 1, eye); px(9, 8, 1, 1, eye);
+        px(5, 11, 6, 3, p.hair); px(6, 12, 4, 1, '#8a6a3a'); break; // big beard
+      case 'wolfgirl': // Sané — black hair frame, red war-paint, fierce
+        px(2, 2, 2, 12, p.hair); px(12, 2, 2, 12, p.hair); px(4, 1, 8, 3, p.hair);
+        px(4, 7, 8, 1, '#b0302a'); px(4, 8, 8, 1, '#8a2420'); // war-paint band across the eyes
+        px(6, 8, 1, 1, '#1a1a1a'); px(9, 8, 1, 1, '#1a1a1a');
+        px(5, 6, 2, 1, p.hair); px(9, 6, 2, 1, p.hair); // sharp brows
+        px(7, 11, 3, 1, '#b06a7a'); break;
+      case 'android': // Marvyn — round metal head, sad glowing eyes, antenna
+        px(4, 4, 8, 8, p.skin); px(4, 4, 1, 1, p.bg); px(11, 4, 1, 1, p.bg); px(4, 11, 1, 1, p.bg); px(11, 11, 1, 1, p.bg);
+        px(7, 1, 2, 2, '#5a6068'); px(7, 0, 2, 1, eye); // antenna
+        px(5, 7, 2, 2, eye); px(9, 7, 2, 2, eye); px(5, 7, 1, 1, '#fff'); px(9, 7, 1, 1, '#fff');
+        px(6, 11, 4, 1, '#3a4048'); break; // flat frown
+      case 'knight': // Quijano — brass basin helm, gaunt face, long beard
+        px(4, 2, 8, 3, '#caa030'); px(3, 4, 10, 1, '#caa030'); px(2, 5, 12, 1, '#b8902a'); // basin helm + brim
+        px(5, 6, 6, 6, p.skin); px(6, 8, 1, 1, eye); px(9, 8, 1, 1, eye);
+        px(5, 11, 6, 3, p.hair); px(6, 13, 4, 1, p.hair); break; // long white beard
+      case 'thing': // assimilated horror — mouths, a stray staring eye
+        px(3, 3, 10, 10, p.skin); px(3, 3, 1, 1, p.bg); px(12, 3, 1, 1, p.bg);
+        px(4, 6, 3, 2, '#2a0508'); px(9, 9, 3, 2, '#2a0508'); px(7, 4, 2, 1, '#2a0508'); // screaming mouths
+        px(4, 6, 1, 1, '#fff'); px(6, 6, 1, 1, '#fff'); px(9, 9, 1, 1, '#fff'); px(11, 9, 1, 1, '#fff'); // teeth glints
+        px(9, 5, 2, 2, '#e8e0d0'); px(10, 5, 1, 1, eye); // one human eye, wrong
+        px(2, 13, 2, 2, shade(p.skin, 0.7)); px(12, 12, 2, 2, shade(p.skin, 0.7)); break; // oozing limbs
+      case 'spirit': // Forest God — pale antlered deer-face, glowing eyes
+        px(0, 1, 4, 4, '#e8e0c8'); px(12, 1, 4, 4, '#e8e0c8'); px(1, 0, 2, 2, '#e8e0c8'); px(13, 0, 2, 2, '#e8e0c8'); // antlers
+        px(5, 4, 6, 7, p.skin); px(6, 11, 4, 3, p.skin); // long pale face
+        px(6, 7, 1, 2, eye); px(9, 7, 1, 2, eye); px(5, 7, 1, 1, shade(eye, 0.6)); px(10, 7, 1, 1, shade(eye, 0.6));
+        px(7, 13, 2, 1, '#1a2a1e'); px(4, 9, 1, 3, '#1a0a18'); break; // a creep of corruption
+      case 'vogon': // bloated bureaucrat
+        px(3, 4, 10, 8, p.skin); px(3, 4, 1, 1, p.bg); px(12, 4, 1, 1, p.bg);
+        px(2, 8, 2, 4, shade(p.skin, 0.85)); px(12, 8, 2, 4, shade(p.skin, 0.85)); // droopy jowls
+        px(5, 7, 2, 1, eye); px(9, 7, 2, 1, eye);
+        px(5, 6, 2, 1, shade(p.skin, 0.7)); px(9, 6, 2, 1, shade(p.skin, 0.7)); // heavy brow
+        px(5, 11, 6, 1, '#2a0a0a'); break; // grim slot of a mouth
+      case 'windmill': // the "giant" — a stone mill with a face & sails
+        px(5, 4, 6, 10, p.skin); px(4, 3, 8, 2, '#7a3a2a'); // tower + roof cap
+        px(2, 1, 3, 1, '#e8e0d0'); px(11, 1, 3, 1, '#e8e0d0'); px(7, 0, 2, 3, '#6b4423'); px(1, 7, 2, 2, '#e8e0d0'); px(13, 7, 2, 2, '#e8e0d0'); // sail-arms
+        px(6, 6, 1, 2, eye); px(9, 6, 1, 2, eye); // window "eyes"
+        px(7, 11, 2, 3, '#3a2410'); break; // door "mouth"
       case 'harpooner':
         px(2, 3, 2, 11, p.hair); px(12, 3, 2, 11, p.hair); px(4, 2, 8, 2, p.hair); // long weathered hair
         px(4, 11, 8, 3, p.hair); px(4, 10, 8, 1, shade(p.hair, 1.1)); // big beard

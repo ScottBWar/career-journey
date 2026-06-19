@@ -132,6 +132,8 @@ window.Game = (function () {
   // ---------- dialogue ----------
   const NAME2PORT = { 'Capt. Redbeard': 'pirate', 'Lance Strider': 'swordsman', 'Marina': 'healer', 'Pip': 'mage', 'Ridge': 'blader', 'Quint': 'dragoon', 'Selachoth': 'selachoth', 'Ruffy': 'ruffy', 'Simon': 'simon', 'Count Saltorre': 'vampire', 'Gilgamuck': 'drifter',
     'Aladdin': 'aladdin', 'Jafira': 'genie', 'Violca': 'violca', 'Vyrmithrax': 'skydragon',
+    'Mac': 'mac', 'The Thing': 'thething', 'Sané': 'sane', 'The Forest God': 'forestgod',
+    'Marvyn': 'marvyn', 'Vogon Constructor': 'vogon', 'Quijano': 'quijano', 'The Giant (a windmill)': 'windmill',
     'Ember': 'ember', 'Nerida': 'nerida', 'Volta': 'volta', 'Gaia': 'gaia', 'Nyx': 'nyx', 'Lumina': 'lumina' };
   function dlgPortrait(name) { const k = NAME2PORT[name]; el('dlgPortrait').innerHTML = (k && Portraits.has(k)) ? Portraits.img(k) : ''; }
   Game.talk = function (npc) {
