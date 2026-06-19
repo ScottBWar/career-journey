@@ -62,6 +62,7 @@ const STATES = [
   { name: '32_battle_omega',    drive: `Game.startBattle(['selachoth_omega'], { boss: true })`, wait: 2000 },
   { name: '33_battle_sentinel', drive: `Game.startBattle(['sentinel'], { boss: true, music: 'assault' })`, wait: 2000 },
   { name: '34_cutscene_reactor', drive: `Cutscene.play(Data.STORY.reactorRaid, null, { music: 'assault' })`, wait: 1600 },
+  { name: '35_dungeon_npc',     drive: `Game.toDungeon('frost_station'); setTimeout(function(){ window.__reset&&window.__reset(); if(window.Dungeon&&Dungeon._debug) Dungeon._debug.warp(-3, 9); }, 700)`, wait: 1700 },
 ];
 
 function serve() {

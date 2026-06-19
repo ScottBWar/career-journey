@@ -159,6 +159,18 @@ window.Dungeon = (function () {
     spawnMobs();
     buildExtras(near, far, env);
 
+    // story NPC — a wayside character who deepens the dungeon's lore (and gives a one-time gift),
+    // standing in a small lamp-lit shrine nook so it reads as a landmark on the map
+    if (def.npc) {
+      const n = def.npc;
+      const built = Models.npc(n.color || '#8a7a9a', n.hair, n.style); built.node.position.set(n.x, 0, n.z); built.node._baseY = 0;
+      built.node.rotation.y = n.x > 0 ? -Math.PI / 2 : Math.PI / 2; idlers.push(built);
+      [-1.7, 1.7].forEach(dz => { const p = Models.pillar(); p.node.position.set(n.x + (n.x > 0 ? 1.4 : -1.4), 0, n.z + dz); p.node.scaling.set(0.7, 0.85, 0.7); });
+      const lamp = MB.CreateSphere('npclamp', { diameter: 0.42 }, scene); lamp.material = M('npclamp', '#ffe09a', { emissive: '#ffe09a' }); lamp.position.set(n.x, 3.0, n.z); idlers.push({ idle(tt) { lamp.scaling.setAll(1 + Math.sin(tt * 4 + n.z) * 0.18); } });
+      const pad = MB.CreateCylinder('npcpad', { height: 0.08, diameter: 2.4, tessellation: 20 }, scene); pad.material = M('npcpad', env.torch); pad.position.set(n.x, 0.05, n.z);
+      targets.push({ kind: 'npc', pos: new V3(n.x, 0, n.z), r: 2.2, npc: n });
+    }
+
     if (solvedPuzzle) { gate.position.y = 8; crystals.forEach(c => setLit(c, true)); }
 
     const leaderKey = Game.state.active[0] || 'pirate'; const leaderModel = Progress.def(leaderKey).model;
@@ -265,6 +277,7 @@ window.Dungeon = (function () {
       if (nearTarget.kind === 'crystal') label += `Touch the ${crystals[nearTarget.idx].name} crystal`;
       else if (nearTarget.kind === 'chest') label += 'Open the vault chest';
       else if (nearTarget.kind === 'bonus') label += 'Open the hidden cache';
+      else if (nearTarget.kind === 'npc') label += 'Speak with ' + nearTarget.npc.name;
       else label += 'Leave the dungeon';
       prompt.textContent = label; prompt.classList.add('show');
     } else prompt.classList.remove('show');
@@ -309,11 +322,27 @@ window.Dungeon = (function () {
     if (nearTarget.kind === 'crystal') activate(nearTarget.idx);
     else if (nearTarget.kind === 'chest') loot();
     else if (nearTarget.kind === 'bonus') lootBonus(nearTarget);
+    else if (nearTarget.kind === 'npc') talkNpc(nearTarget.npc);
     else if (nearTarget.kind === 'exit') {
       const ally = def.ally;
       if (ally && ally.key && !bossDefeated) { Progress.dismiss(Game.state, ally.key); Progress.save(Game.state); if (ally.holdMsg) Game.toast(ally.holdMsg); }
       Game.toIsland(def.island, false, true);
     }
+  }
+  // talk to a wayside story NPC; grants its gift once per dungeon
+  function talkNpc(n) {
+    const flag = key + '_npc';
+    Game.cutscene(n.lines, () => {
+      resume();
+      if (n.gift && !Game.state.dungeons[flag]) {
+        Game.state.dungeons[flag] = true; const g = n.gift, st = Game.state;
+        if (g.heal && Progress.fullHeal) Progress.fullHeal(st);
+        if (g.gold) st.gold += g.gold;
+        if (g.item) { st.inv = st.inv || {}; st.inv[g.item] = (st.inv[g.item] || 0) + (g.n || 1); }
+        Progress.save(st);
+        if (window.SFX) SFX.play(g.heal ? 'heal' : 'gold');
+      }
+    });
   }
   function showRiddle() { Game.cutscene([{ name: def.name, text: def.hint }], () => resume()); }
 

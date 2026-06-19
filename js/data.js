@@ -1105,6 +1105,10 @@ window.Data = (function () {
       crystals: [],
       ally: { key: 'simon', metFlag: 'simonMet', join: 'simonJoin', pre: 'vampirePre', fall: 'vampireFall', leave: 'simonLeave', holdMsg: 'Simon holds the castle gate. "Come back when you\'re ready to finish this."' },
       mobs: [ { x: -8, z: -4, pool: ['bat', 'bat', 'ghoul'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['wraith', 'bat'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['ghoul', 'wraith'], min: 2, max: 2 }, { x: 7, z: 22, pool: ['bat', 'wraith', 'ghoul'], min: 3, max: 3 } ],
+      npc: { x: 7, z: 10, name: 'Brother Aldric', color: '#5a4a3a', hair: '#cccccc', gift: { item: 'holybomb', n: 2 }, lines: [
+        { name: 'Brother Aldric', text: '(through the chapel bars) A warm face. Good — you still bleed. Listen fast: the Count was a man once. Saltorre. He drank the rising tide to cheat death, and it cheated him back.' },
+        { name: 'Brother Aldric', text: 'His heart is the one thing the centuries left soft. When his eyes go red, that is the mortal in him surfacing — strike THEN. Take my flask. Holy water remembers what he forgot.' },
+        { name: 'Narrator', text: 'Brother Aldric presses two vials through the bars. (Received 2 Sunshards.)' } ] },
       bossMob: { x: 0, z: 27, key: 'vampire' },
       reward: { gold: 900, shell: 'triton_blast' },
     },
@@ -1115,6 +1119,10 @@ window.Data = (function () {
       crystals: [],
       ally: { key: 'aladdin', metFlag: 'aladdinMet', join: 'aladdinJoin', pre: 'geniePre', fall: 'genieFall', leave: 'aladdinLeave', holdMsg: 'Aladdin waits by the cave mouth. "Come find me when you\'re ready to grab that lamp."' },
       mobs: [ { x: -8, z: -4, pool: ['cobra', 'scarab'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['scarab', 'golem'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['cobra', 'cobra', 'scarab'], min: 2, max: 3 }, { x: 7, z: 22, pool: ['scarab', 'golem', 'cobra'], min: 3, max: 3 } ],
+      npc: { x: -7, z: 10, name: 'The Gilded Thief', color: '#caa030', hair: '#1a1208', gift: { gold: 320 }, lines: [
+        { name: 'The Gilded Thief', text: '(lips barely moving under a skin of gold leaf) Don\'t... touch... the treasure. I did. Forty years a statue, polished by the sand. The genie grants wishes, friend — but it ITEMIZES the cost.' },
+        { name: 'The Gilded Thief', text: 'You want the lamp? Then want nothing ELSE in here. Greed is the lock; an empty hand is the key. ...Take my purse. I\'ve no pockets left to spend it from.' },
+        { name: 'Narrator', text: 'A heavy coin-purse drops at your feet. (Received 320 gold.)' } ] },
       bossMob: { x: 0, z: 27, key: 'genie' },
       reward: { gold: 950, shell: 'conch_ember' },
     },
@@ -1125,6 +1133,10 @@ window.Data = (function () {
       crystals: [],
       ally: { key: 'violca', metFlag: 'violcaMet', join: 'violcaJoin', pre: 'dragonPre', fall: 'dragonFall', leave: 'violcaLeave', holdMsg: 'Violca smirks from the cliff edge. "Run back to safety, then. I\'ll be brooding dramatically until you return."' },
       mobs: [ { x: -8, z: -4, pool: ['wyvern', 'gull'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['wyvern', 'wyvern'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['wyvern', 'golem'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['wyvern', 'wyvern', 'gull'], min: 3, max: 3 } ],
+      npc: { x: 7, z: 11, name: 'Scout Imryll', color: '#3a4658', hair: '#3a2418', gift: { heal: true }, lines: [
+        { name: 'Scout Imryll', text: '(clutching a splinted leg) My dragon went up the peak without me. The Sky-Tyrant doesn\'t fight fair — it breathes IN when you breathe in, and catches the whole wing mid-gasp.' },
+        { name: 'Scout Imryll', text: 'Strike on its out-breath, when the throat-light dims. And eat something — you look half-dead, and riders don\'t fly on empty stomachs. Here.' },
+        { name: 'Narrator', text: 'Imryll shares her rations and field-kit. (Party fully restored.)' } ] },
       bossMob: { x: 0, z: 28, key: 'skydragon' },
       reward: { gold: 1000, shell: 'nautilus_surge' },
     },
@@ -1134,6 +1146,10 @@ window.Data = (function () {
       hint: 'Whiteout Station — the generators are dead and something in the kennels got loose. Nobody knows who\'s still human. Burn a path to the core.',
       ally: { key: 'mac', metFlag: 'macMet', join: 'macJoin', pre: 'thingPre', fall: 'thingFall', leave: 'macLeave', holdMsg: 'Mac racks the flamethrower. "I\'ll watch the door. Don\'t take too long."' },
       mobs: [ { x: -8, z: -4, pool: ['thingspawn'], min: 1, max: 2 }, { x: 8, z: 6, pool: ['thingspawn', 'ghoul'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['thingspawn'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['thingspawn', 'ghoul'], min: 2, max: 3 } ],
+      npc: { x: -7, z: 10, name: 'Operator Voss', color: '#9aa0a8', hair: '#caa86a', gift: { item: 'bomb', n: 2 }, lines: [
+        { name: 'Operator Voss', text: '(crackling through the intercom) STOP. Don\'t open this door. I sealed myself in three days back. Maybe I\'m the last human in here. Maybe... I don\'t know what I am anymore.' },
+        { name: 'Operator Voss', text: 'The thing from the kennels WEARS people. Don\'t trust a face that doesn\'t bleed right. Burn what\'s wrong — burn ALL of it if you have to. Take the incendiaries.' },
+        { name: 'Narrator', text: 'A box slides through the slot in the door. (Received 2 Powder Bombs.)' } ] },
       bossMob: { x: 0, z: 27, key: 'thething' }, reward: { gold: 900, shell: 'conch_ember' },
     },
     spirit_wood: {
@@ -1142,6 +1158,10 @@ window.Data = (function () {
       hint: 'The Spirit Wood — the trees have gone quiet and the Forest God walks angry. Reach the still pool at its heart.',
       ally: { key: 'sane', metFlag: 'saneMet', join: 'saneJoin', pre: 'forestPre', fall: 'forestFall', leave: 'saneLeave', holdMsg: 'Sané bares her teeth. "Leave, then. The wolves and I will hold the path."' },
       mobs: [ { x: -8, z: -4, pool: ['kodama'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['kodama', 'boarspirit'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['boarspirit'], min: 1, max: 2 }, { x: 7, z: 24, pool: ['kodama', 'boarspirit'], min: 2, max: 3 } ],
+      npc: { x: 7, z: 11, name: 'Granny Oku', color: '#5a7a4a', hair: '#cccccc', gift: { heal: true }, lines: [
+        { name: 'Granny Oku', text: 'The Forest God isn\'t cruel, child. He is GRIEVING. We took too much — the iron, the old trees — and something in him tore. Now all he touches withers, even what he loves.' },
+        { name: 'Granny Oku', text: 'You may have to put him down. Do it gently. Drink from the still pool first — the wood has a little mercy in it yet, and you\'ll need your strength.' },
+        { name: 'Narrator', text: 'Granny Oku cups cold spring-water to your lips. (Party fully restored.)' } ] },
       bossMob: { x: 0, z: 27, key: 'forestgod' }, reward: { gold: 950, shell: 'nautilus_surge' },
     },
     crash_site: {
@@ -1150,6 +1170,10 @@ window.Data = (function () {
       hint: 'A crashed ship humming with improbability. A Vogon demolition crew is aboard, and they have FORMS. So very many forms.',
       ally: { key: 'marvyn', metFlag: 'marvynMet', join: 'marvynJoin', pre: 'vogonPre', fall: 'vogonFall', leave: 'marvynLeave', holdMsg: 'Marvyn sighs at 0.0001 decibels. "Fine. I\'ll wait. I\'m very good at waiting."' },
       mobs: [ { x: -8, z: -4, pool: ['vogonclerk'], min: 1, max: 2 }, { x: 8, z: 6, pool: ['sentry', 'vogonclerk'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['sentry'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['vogonclerk', 'sentry'], min: 2, max: 3 } ],
+      npc: { x: -7, z: 10, name: 'A Stranded Hitchhiker', color: '#8a8a9a', hair: '#3a2a18', gift: { item: 'elixir', n: 1 }, lines: [
+        { name: 'A Stranded Hitchhiker', text: 'Oh — hello. Don\'t mind me, just been thumbing across the improbable for a few... years? Time went wobbly after the crash. You DID bring a towel, I trust? No? Rank amateur.' },
+        { name: 'A Stranded Hitchhiker', text: 'Advice: a Vogon can\'t be reasoned with, only OUT-bored. And never, ever let them read you their poetry. Here — my spare towel. Most useful thing in the universe, that.' },
+        { name: 'Narrator', text: 'You accept a suspiciously versatile towel. (Received an Elixir.)' } ] },
       bossMob: { x: 0, z: 27, key: 'vogon' }, reward: { gold: 920, shell: 'hex_conch' },
     },
     mill_keep: {
@@ -1158,6 +1182,10 @@ window.Data = (function () {
       hint: 'Quijano insists the windmill is a fearsome giant. He is, of course, completely wrong. He is also, somehow, completely right.',
       ally: { key: 'quijano', metFlag: 'quijanoMet', join: 'quijanoJoin', pre: 'giantPre', fall: 'giantFall', leave: 'quijanoLeave', holdMsg: 'Quijano bows gravely. "I shall guard the gate against all giants, friend. Return when honour calls."' },
       mobs: [ { x: -8, z: -4, pool: ['mutton'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['mutton', 'windvane'], min: 2, max: 3 }, { x: -7, z: 14, pool: ['windvane'], min: 1, max: 2 }, { x: 7, z: 24, pool: ['windvane', 'mutton'], min: 2, max: 3 } ],
+      npc: { x: 7, z: 11, name: 'The Bewildered Miller', color: '#a08050', hair: '#cccccc', gift: { item: 'baklava', n: 2 }, lines: [
+        { name: 'The Bewildered Miller', text: 'You\'re with the old knight? The one who keeps calling my windmill a "monstrous giant"? It is a MILL. It grinds WHEAT. ...Though lately the sails turn when there\'s no wind at all. Hm.' },
+        { name: 'The Bewildered Miller', text: 'Humour him, will you? Mad as a sack of cats, that one — but the biggest heart in all La Mancha. Here, take some bread and honey-cakes for the road.' },
+        { name: 'Narrator', text: 'The miller loads you up with provisions. (Received 2 Honey Baklava.)' } ] },
       bossMob: { x: 0, z: 27, key: 'windmill' }, reward: { gold: 900, shell: 'venom_spiral' },
     },
   };
