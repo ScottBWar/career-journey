@@ -96,133 +96,137 @@ window.Portraits = (function () {
     // backdrop — soft vertical gradient
     for (let y = 0; y < N; y++) fill(0, y, N, 1, sd(bg, 1.3 - (y / N) * 0.82));
 
-    // face profile — compact & round: full cheeks, soft (not pointy) chin
-    const faceTop = 16, faceBot = 49, faceMid = 31, maxHW = 14;
-    const hwAt = y => { if (y <= faceMid) { const t = (faceMid - y) / (faceMid - faceTop); return maxHW * Math.sqrt(Math.max(0, 1 - t * t * 0.82)); } const t = (y - faceMid) / (faceBot - faceMid); return maxHW * (1 - t * t * 0.84); };
+    // FULL-FRAME composition: big head, hair to the edges, shoulders filling the bottom
+    const faceTop = 10, faceBot = 53, faceMid = 32, maxHW = 19;
+    const hwAt = y => { if (y <= faceMid) { const t = (faceMid - y) / (faceMid - faceTop); return maxHW * Math.sqrt(Math.max(0, 1 - t * t * 0.8)); } const t = (y - faceMid) / (faceBot - faceMid); return maxHW * (1 - t * t * 0.82); };
 
-    // BACK HAIR mass (long/wild/slick) — behind the head, flowing to the shoulders
+    // BACK HAIR mass (long/wild/slick) — fills the top & sides, flowing past the shoulders
     const longHair = (S2.hair === 'long' || S2.hair === 'wild' || S2.hair === 'slick') && !S2.hood && !S2.helm;
     if (longHair) {
-      for (let y = 16; y <= 62; y++) { let hw = 17 - Math.abs(y - 38) * 0.12; if (y > 50) hw -= (y - 50) * 0.7; hw = Math.round(Math.max(0, hw)); if (hw < 1) continue; fill(cx - hw, y, hw * 2, 1, y > 46 ? hairS2 : hairS); }
-      fill(cx - 16, 24, 2, 26, hairS2); fill(cx + 14, 24, 2, 26, hairS2);  // depth strands
-      fill(cx - 15, 22, 4, 1, hairH); fill(cx + 11, 22, 4, 1, hairH);      // sheen
+      for (let y = 2; y <= 64; y++) { let hw = 25 - Math.abs(y - 34) * 0.16; if (y > 54) hw -= (y - 54) * 0.8; hw = Math.round(Math.max(0, hw)); if (hw < 1) continue; fill(cx - hw, y, hw * 2, 1, y > 48 ? hairS2 : hairS); }
+      fill(cx - 23, 26, 3, 30, hairS2); fill(cx + 20, 26, 3, 30, hairS2);  // depth strands
+      // flowing lock highlights cascading down the sides (gives hair MOVEMENT)
+      for (let y = 16; y < 52; y += 5) { const off = Math.sin(y * 0.4) * 1.5; fill(cx - 21 + off, y, 2, 3, hairH); fill(cx + 19 - off, y + 2, 2, 3, hairH); }
+      fill(cx - 22, 14, 6, 1, hairH2); fill(cx + 16, 14, 6, 1, hairH2);    // crown sparkle
     }
 
-    // NECK + SHOULDERS
-    fill(cx - 4, 52, 8, 5, skS); fill(cx - 5, 54, 10, 1, sd(sk, 0.72));
-    for (let y = 57; y < N; y++) { const hw = 13 + (y - 57) * 2.6; fill(cx - hw, y, hw * 2, 1, cloth); }
-    fill(cx - 8, 57, 16, 1, clothH);
+    // NECK + SHOULDERS — fill the whole bottom of the frame
+    fill(cx - 6, 50, 12, 6, skS); fill(cx - 7, 53, 14, 1, sd(sk, 0.72));
+    for (let y = 54; y < N; y++) { const hw = 15 + (y - 54) * 3.6; fill(cx - hw, y, hw * 2, 1, cloth); }
+    fill(cx - 11, 54, 22, 1, clothH);
 
     // FACE base + DIRECTIONAL form shading (light from the left): lit left cheek,
     // shadowed right cheek + jaw, soft silhouette edge — gives Stardew dimensionality
     for (let y = faceTop; y <= faceBot; y++) {
       const hw = Math.round(hwAt(y)); if (hw < 1) continue;
       fill(cx - hw, y, hw * 2, 1, sk);
-      // form shadow HUGGING the right (turned-away) edge → its inner boundary follows the
-      // face curve, so no vertical banding; three soft steps into the rim
-      fill(cx + hw - 7, y, 7, 1, skMid);
-      fill(cx + hw - 3, y, 3, 1, skS);
+      // form shadow HUGGING the right (turned-away) edge → boundary follows the curve (no banding)
+      fill(cx + hw - 9, y, 9, 1, skMid);
+      fill(cx + hw - 4, y, 4, 1, skS);
       fill(cx + hw - 1, y, 1, 1, skS2);
-      if (y < faceMid) fill(cx - hw, y, 2, 1, skH);                     // lit left rim
-      if (y >= faceBot - 5) fill(cx - 5, y, 9, 1, skMid);               // under-chin shadow
+      if (y < faceMid) fill(cx - hw, y, 3, 1, skH);                     // lit left rim
+      if (y >= faceBot - 6) fill(cx - 6, y, 11, 1, skMid);             // under-chin shadow
       dot(cx - hw - 1, y, skEdge); dot(cx + hw, y, skEdge);             // soft outline
     }
-    fill(cx - 11, 35, 4, 2, skH);                                       // lit cheekbone highlight
-    fill(cx - 15, 32, 2, 4, sk); fill(cx + 13, 32, 2, 4, skS);          // ears
-    fill(cx - 5, faceBot - 1, 10, 1, skS); fill(cx - 4, faceBot, 8, 1, skS2); // under-chin shadow
+    fill(cx - 14, 36, 5, 3, skH);                                       // lit cheekbone highlight
+    fill(cx - 20, 33, 2, 5, sk); fill(cx + 18, 33, 2, 5, skS);          // ears
+    fill(cx - 6, faceBot - 1, 13, 1, skS); fill(cx - 5, faceBot, 10, 1, skS2); // under-chin shadow
 
     // EYES — large angled almond, iris-dominant, full soft outline (Stardew-style). Villains/vampires get slits.
     const slit = (type === 'villain' || type === 'vampire');
-    const eyY = 30, browCol = sd(hair, 0.8);
+    const eyY = 28, browCol = sd(hair, 0.8);
     [-1, 1].forEach((s, i) => {
-      const ex = cx + s * 7, ic = eyes[i], icS = sd(ic, 0.55), icH = sd(ic, 1.55);
+      const ex = cx + s * 8, ic = eyes[i], icS = sd(ic, 0.55), icH = sd(ic, 1.55);
       if (slit) {
-        fill(ex - 4, eyY + 2, 9, 2, sd(sk, 0.5)); fill(ex - 3, eyY + 2, 7, 2, ic);
-        fill(ex - 3, eyY + 2, 7, 1, icH); fill(ex - 1, eyY + 2, 2, 2, '#140f18'); dot(ex - 2, eyY + 2, '#ffffff');
-        fill(ex - 4, eyY + 1, 9, 1, sd(eyec, 0.4)); fill(ex - 4, eyY + 4, 9, 1, sd(sk, 0.55));
-        fill(ex - 4, eyY - 1, 7, 1, browCol); dot(ex + s * 4, eyY - 2, browCol);
+        fill(ex - 5, eyY + 3, 11, 2, sd(sk, 0.5)); fill(ex - 4, eyY + 3, 9, 2, ic);
+        fill(ex - 4, eyY + 3, 9, 1, icH); fill(ex - 1, eyY + 3, 2, 2, '#140f18'); dot(ex - 2, eyY + 3, '#ffffff');
+        fill(ex - 5, eyY + 2, 11, 1, sd(eyec, 0.4)); fill(ex - 5, eyY + 5, 11, 1, sd(sk, 0.55));
+        fill(ex - 5, eyY, 9, 1, browCol); dot(ex + s * 5, eyY - 1, browCol);
         return;
       }
-      // sclera (7 wide) — iris will fill most of it
-      fill(ex - 3, eyY + 1, 7, 4, '#f7f9ff'); fill(ex - 2, eyY + 5, 5, 1, '#e7ebf4');
-      // iris (5 wide, 4 tall) sits high, touching the lash line — only thin white slivers show
-      fill(ex - 2, eyY + 1, 5, 4, ic); fill(ex - 2, eyY + 4, 5, 1, icS); fill(ex - 2, eyY + 1, 5, 1, icH);
-      fill(ex, eyY + 2, 1, 2, '#130e17');                              // small pupil
-      dot(ex - 1, eyY + 1, '#ffffff');                                // single catchlight dot
+      // sclera (9 wide) — iris fills most of it
+      fill(ex - 4, eyY + 1, 9, 5, '#f7f9ff'); fill(ex - 3, eyY + 6, 7, 1, '#e7ebf4');
+      // iris (7 wide, 5 tall) sits high, touching the lash line — thin white slivers
+      fill(ex - 3, eyY + 1, 7, 5, ic); fill(ex - 3, eyY + 5, 7, 1, icS); fill(ex - 3, eyY + 1, 7, 1, icH);
+      fill(ex - 1, eyY + 2, 2, 3, '#130e17');                          // pupil
+      fill(ex - 3, eyY + 1, 2, 1, '#ffffff'); dot(ex + 2, eyY + 4, 'rgba(255,255,255,0.55)'); // catchlights
       // outline — heavy top lash + outer-corner flick, soft corners + lower lid
-      fill(ex - 3, eyY, 7, 1, lashCol); fill(ex + s * 3, eyY, 1, 2, lashCol);
-      dot(ex - 3, eyY + 1, lashCol); dot(ex + 3, eyY + 1, lashCol);
-      fill(ex - 2, eyY + 6, 5, 1, sd(sk, 0.72));                       // lower lid
-      if (fem) { dot(ex + s * 4, eyY, lashCol); dot(ex + s * 4, eyY - 1, lashCol); }     // mascara flick
-      fill(ex - 3, eyY - 2, 6, 1, browCol); dot(ex + s * 3, eyY - 3, browCol);           // arched brow
-      if (S2.sharp) dot(ex - s * 3, eyY - 1, browCol);
+      fill(ex - 4, eyY, 9, 1, lashCol); fill(ex + s * 4, eyY, 1, 3, lashCol);
+      dot(ex - 4, eyY + 1, lashCol); dot(ex + 4, eyY + 1, lashCol);
+      fill(ex - 3, eyY + 7, 7, 1, sd(sk, 0.72));                       // lower lid
+      if (fem) { dot(ex + s * 5, eyY - 1, lashCol); dot(ex + s * 5, eyY, lashCol); dot(ex + s * 6, eyY - 2, lashCol); } // mascara flick
+      fill(ex - 4, eyY - 3, 8, 1, browCol); dot(ex + s * 4, eyY - 4, browCol); dot(ex - s * 4, eyY - 2, browCol); // arched brow
+      if (S2.sharp) fill(ex - s * 4, eyY - 1, 2, 1, browCol);
     });
 
     // NOSE — small but defined: lit bridge (left), shadow down the right, soft tip + nostril
-    dot(cx - 1, 37, skH); dot(cx - 1, 38, skH); fill(cx + 1, 37, 1, 4, skS);
-    dot(cx, 41, sd(sk, 0.72)); dot(cx + 1, 41, skS2);
+    fill(cx - 1, 37, 1, 4, skH); fill(cx + 1, 37, 1, 5, skS);
+    dot(cx, 42, sd(sk, 0.72)); dot(cx + 1, 42, skS2); dot(cx - 1, 42, skS);
 
     // MOUTH — feminine soft lips vs. a quiet line; ruffy gets a huge toothy grin
-    const lip = '#c0697b', lipS = '#9a4a5c', lineC = sd(sk, 0.56), my = 43;
-    if (type === 'rival' && mood !== 'upset') { fill(cx - 5, my, 10, 1, '#6e3424'); fill(cx - 4, my, 8, 1, '#ffffff'); fill(cx - 5, my + 1, 10, 1, '#6e3424'); }
-    else if (mood === 'upset') { fill(cx - 2, my, 4, 1, lineC); dot(cx - 3, my - 1, lineC); dot(cx + 3, my - 1, lineC); }
-    else if (mood === 'happy') { if (fem) { fill(cx - 2, my, 5, 1, lip); fill(cx - 1, my + 1, 3, 1, lipS); } else { fill(cx - 3, my, 6, 1, lineC); dot(cx - 4, my - 1, lineC); dot(cx + 3, my - 1, lineC); } }
-    else if (mood === 'shy') { fill(cx - 1, my, 3, 1, fem ? lip : lineC); }
-    else { if (fem) { fill(cx - 2, my, 4, 1, lip); dot(cx - 1, my + 1, lipS); dot(cx + 1, my + 1, lipS); } else fill(cx - 2, my, 4, 1, lineC); }
-    if (S2.fang) { dot(cx - 2, my + 1, '#ffffff'); dot(cx + 2, my + 1, '#ffffff'); }
+    const lip = '#c0697b', lipS = '#9a4a5c', lineC = sd(sk, 0.56), my = 46;
+    if (type === 'rival' && mood !== 'upset') { fill(cx - 6, my, 12, 1, '#6e3424'); fill(cx - 5, my, 10, 1, '#ffffff'); fill(cx - 6, my + 1, 12, 1, '#6e3424'); }
+    else if (mood === 'upset') { fill(cx - 3, my, 6, 1, lineC); dot(cx - 4, my - 1, lineC); dot(cx + 3, my - 1, lineC); }
+    else if (mood === 'happy') { if (fem) { fill(cx - 3, my, 6, 1, lip); fill(cx - 2, my + 1, 4, 1, lipS); } else { fill(cx - 4, my, 8, 1, lineC); dot(cx - 5, my - 1, lineC); dot(cx + 4, my - 1, lineC); } }
+    else if (mood === 'shy') { fill(cx - 2, my, 4, 1, fem ? lip : lineC); }
+    else { if (fem) { fill(cx - 3, my, 6, 1, lip); fill(cx - 2, my + 1, 4, 1, lipS); } else fill(cx - 3, my, 6, 1, lineC); }
+    if (S2.fang) { dot(cx - 3, my + 1, '#ffffff'); dot(cx + 2, my + 1, '#ffffff'); }
 
     // BLUSH / war-paint / scars
-    if (mood === 'happy' || mood === 'shy' || fem) { c.fillStyle = 'rgba(255,142,156,0.4)'; c.fillRect((cx - 12) * PX, 38 * PX, 4 * PX, 2 * PX); c.fillRect((cx + 8) * PX, 38 * PX, 4 * PX, 2 * PX); }
-    if (S2.paint) { fill(cx - 13, 33, 4, 1, '#b0302a'); fill(cx + 9, 33, 4, 1, '#b0302a'); fill(cx - 13, 38, 4, 1, '#b0302a'); fill(cx + 9, 38, 4, 1, '#b0302a'); } // San war stripes
-    if (type === 'rival') { fill(cx - 8, 37, 3, 1, '#b05038'); dot(cx - 8, 38, '#b05038'); } // Luffy scar
-    if (S2.scar) { fill(cx + 9, 24, 1, 8, '#9a5a4a'); }
+    if (mood === 'happy' || mood === 'shy' || fem) { fill(cx - 15, 40, 5, 3, 'rgba(255,142,156,0.42)'); fill(cx + 10, 40, 5, 3, 'rgba(255,142,156,0.42)'); }
+    if (S2.paint) { fill(cx - 17, 34, 5, 1, '#b0302a'); fill(cx + 12, 34, 5, 1, '#b0302a'); fill(cx - 17, 40, 5, 1, '#b0302a'); fill(cx + 12, 40, 5, 1, '#b0302a'); } // San war stripes
+    if (type === 'rival') { fill(cx - 10, 38, 4, 1, '#b05038'); dot(cx - 10, 39, '#b05038'); } // Luffy scar
+    if (S2.scar) { fill(cx + 11, 22, 1, 10, '#9a5a4a'); }
 
     // FRONT HAIR / FRINGE — voluminous, 4-tone (dark roots → base → highlight → specular)
     if (!S2.hood && !S2.helm && !S2.hat) {
       const ht = S2.hair || 'short';
-      // puffy rounded crown that sits a touch wider than the head
-      const crown = extra => { for (let y = 12; y <= 24; y++) { const t = (y - 12) / 12; const hw = Math.round((maxHW + extra) * Math.sqrt(Math.max(0.08, 1 - (1 - t) * (1 - t) * 0.78))); fill(cx - hw, y, hw * 2, 1, hair); } };
+      // puffy rounded crown that fills the top, sitting wider than the head
+      const crown = extra => { for (let y = 2; y <= 26; y++) { const t = (y - 2) / 24; const hw = Math.round((maxHW + extra) * Math.sqrt(Math.max(0.06, 1 - (1 - t) * (1 - t) * 0.8))); fill(cx - hw, y, hw * 2, 1, hair); } };
       if (ht === 'spiky') {
         crown(0);
-        for (let k = -4; k <= 4; k++) { const bx = cx + k * 4, h = 10 - Math.abs(k) * 1.1; fill(bx - 1, 14 - h, 3, h + 6, k % 2 ? hairS : hair); fill(bx, 14 - h, 1, Math.max(2, h), hairH); }
-        fill(cx - 12, 21, 16, 1, hairH); dot(cx - 7, 20, hairH2);
+        for (let k = -5; k <= 5; k++) { const bx = cx + k * 4, h = 13 - Math.abs(k) * 1.2; fill(bx - 1, 12 - h, 3, h + 8, k % 2 ? hairS : hair); fill(bx, 12 - h, 1, Math.max(2, h), hairH); }
+        fill(cx - 16, 22, 22, 1, hairH); dot(cx - 9, 20, hairH2);
       } else if (ht === 'wild') {
         crown(1);
-        for (let k = -5; k <= 5; k++) { const bx = cx + k * 3.2; fill(bx - 1, 10, 3, 9, k % 2 ? hairS : hair); fill(bx, 10, 1, 4, hairH); }
-        fill(cx - 17, 23, 5, 10, hair); fill(cx + 12, 23, 5, 10, hair); fill(cx - 12, 19, 8, 1, hairH);
+        for (let k = -6; k <= 6; k++) { const bx = cx + k * 3.4; fill(bx - 1, 2, 3, 12, k % 2 ? hairS : hair); fill(bx, 2, 1, 5, hairH); }
+        fill(cx - 23, 22, 6, 14, hair); fill(cx + 17, 22, 6, 14, hair); fill(cx - 16, 18, 10, 1, hairH);
       } else if (ht === 'slick') {
-        crown(0); fill(cx - 3, 22, 6, 5, hair); fill(cx - 13, 20, 10, 1, hairH);
-        fill(cx - 16, 24, 2, 7, hairS2); fill(cx + 14, 24, 2, 7, hairS2);
+        crown(0); fill(cx - 4, 22, 8, 6, hair); fill(cx - 17, 18, 13, 1, hairH);
+        fill(cx - 22, 24, 3, 10, hairS2); fill(cx + 19, 24, 3, 10, hairS2);
       } else if (ht === 'topknot') {
-        fill(cx - 9, 22, 18, 4, hair); fill(cx - 3, 12, 6, 9, hair); fill(cx - 2, 14, 2, 6, hairH); fill(cx - 8, 23, 5, 1, hairH);
-      } else { // short / long — clumpy swept bangs with a bright sheen band
+        fill(cx - 12, 22, 24, 5, hair); fill(cx - 4, 4, 8, 12, hair); fill(cx - 3, 6, 3, 8, hairH); fill(cx - 11, 23, 6, 1, hairH);
+      } else { // short / long — flowing clumps, each lock lit on its crest & shadowed at the tip
         crown(2);
-        fill(cx - 17, 22, 5, 13, hair); fill(cx + 12, 22, 5, 13, hair);               // side curtains framing cheeks
-        // overlapping bang clumps sweeping left→right, pointed tips
-        [[-16, 22, 6, 6], [-11, 22, 7, 5], [-5, 23, 7, 5], [2, 22, 8, 5], [10, 22, 5, 6]].forEach(([bx, by, bw, bh], j) => {
-          fill(cx + bx, by, bw, bh, j % 2 ? hairS : hair); fill(cx + bx + 1, by + bh, Math.max(1, bw - 2), 1, j % 2 ? hairS : hair);
+        fill(cx - 23, 22, 6, 20, hair); fill(cx + 17, 22, 6, 20, hair);                // side curtains framing cheeks
+        [[-22, 20, 9, 11], [-14, 21, 9, 10], [-6, 22, 9, 10], [2, 21, 10, 10], [11, 20, 9, 11]].forEach(([bx, by, bw, bh]) => {
+          fill(cx + bx, by, bw, bh, hair);
+          fill(cx + bx, by, bw - 2, 1, hairH);                                         // lit crest
+          fill(cx + bx + 1, by + 1, Math.max(1, bw - 4), 1, hairH2);                   // bright sub-crest
+          fill(cx + bx + bw - 1, by, 1, bh, hairS);                                    // shadow on the trailing edge
+          fill(cx + bx, by + bh - 1, bw, 1, hairS2);                                   // shadowed tip
         });
-        fill(cx - 2, 12, 3, 9, hairS2);                                               // dark roots / part
-        fill(cx - 14, 16, 11, 1, hairH); fill(cx - 11, 17, 8, 1, hairH); fill(cx - 15, 18, 6, 1, hairH); // sheen band
-        dot(cx - 12, 15, hairH2); dot(cx - 9, 16, hairH2);                            // specular sparkle
-        fill(cx - 16, 24, 1, 10, hairS2); fill(cx + 15, 24, 1, 10, hairS2);           // edge shadow strands
+        fill(cx - 3, 2, 5, 13, hairS2);                                                // dark roots / part
+        for (let k = -3; k <= 2; k++) fill(cx + k * 5, 5 + Math.abs(k + 1), 4, 1, hairH); // curved crown highlight (follows the dome)
+        dot(cx - 13, 7, hairH2); dot(cx - 4, 5, hairH2);                               // specular sparkle on the crown
+        fill(cx - 22, 24, 1, 16, hairS2); fill(cx + 21, 24, 1, 16, hairS2);            // edge shadow strands
       }
     }
 
-    // ACCESSORIES (64px)
-    if (S2.hat === 'tricorne') { for (let y = 11; y <= 19; y++) { const hw = 17 - Math.abs(y - 16); fill(cx - hw, y, hw * 2, 1, '#1d1d1d'); } fill(cx - 18, 17, 36, 4, '#1d1d1d'); fill(cx - 14, 20, 28, 1, '#2a2a2a'); fill(cx - 2, 14, 4, 3, '#f2ead9'); }
-    if (S2.hat === 'wizard') { for (let y = 0; y <= 20; y++) { const hw = Math.round(y * 0.85); fill(cx - hw - 1, y, hw * 2 + 2, 1, sd(bg, 0.7)); } fill(cx - 15, 20, 30, 2, '#e0b34a'); dot(cx + 3, 5, '#fff6c2'); }
-    if (S2.straw) { for (let y = 12; y <= 18; y++) { const hw = Math.round(18 - Math.abs(y - 15) * 0.6); fill(cx - hw, y, hw * 2, 1, '#e0b96a'); } fill(cx - 19, 18, 38, 1, '#c8a050'); fill(cx - 11, 15, 22, 1, '#b8342a'); }
-    if (S2.band) { fill(cx - 15, 25, 30, 2, S2.band); fill(cx - 15, 25, 30, 1, sd(S2.band, 1.3)); }
-    if (S2.fez) { fill(cx - 8, 12, 16, 8, '#b03030'); fill(cx - 8, 19, 16, 1, '#caa030'); fill(cx + 7, 12, 2, 7, '#caa030'); }
-    if (S2.halo) { fill(cx - 11, 12, 22, 1, '#fff0a0'); dot(cx - 11, 12, sd('#fff0a0', 0.8)); dot(cx + 10, 12, sd('#fff0a0', 0.8)); }
-    if (S2.helm) { for (let y = 14; y <= 26; y++) { const hw = 16 - Math.max(0, (y - 22)); fill(cx - hw, y, hw * 2, 1, '#c9cdd6'); } fill(cx - 16, 26, 32, 1, '#caa030'); fill(cx - 1, 18, 2, 11, '#9aa0aa'); }
-    if (S2.hood) { for (let y = 13; y <= 30; y++) { const hw = 17 - Math.max(0, (y - 24)); fill(cx - hw, y, hw * 2, 1, cloth); } for (let y = 30; y < N; y++) { fill(cx - 17, y, 4, 1, cloth); fill(cx + 13, y, 4, 1, cloth); } fill(cx - 13, 15, 26, 1, clothH); }
-    if (S2.tiara) { fill(cx - 8, 17, 16, 1, '#ffe9b0'); dot(cx, 15, '#fff6e8'); dot(cx - 6, 16, '#ffe9b0'); dot(cx + 6, 16, '#ffe9b0'); }
-    if (S2.flower) { fill(cx + 10, 21, 4, 4, '#ff8ab4'); dot(cx + 11, 22, '#ffd24a'); dot(cx + 10, 21, '#ffb0d0'); }
-    if (S2.beard) { for (let y = 47; y <= 55; y++) { const hw = Math.round(8 - (y - 47) * 0.7); fill(cx - hw, y, hw * 2, 1, hairS); } fill(cx - 7, 47, 14, 1, hair); }
-    if (S2.patch) { fill(cx + 4, 32, 5, 5, '#1a1410'); fill(cx - 3, 30, 14, 1, '#1a1410'); }
-    if (type === 'genie') { fill(cx - 3, 50, 6, 5, hairS); fill(cx - 2, 55, 4, 2, hairS); fill(cx - 15, 35, 3, 2, '#caa030'); fill(cx + 12, 35, 3, 2, '#caa030'); } // goatee + gold ear-cuffs
+    // ACCESSORIES (full-frame 64px)
+    if (S2.hat === 'tricorne') { for (let y = 3; y <= 13; y++) { const hw = 23 - Math.abs(y - 8); fill(cx - hw, y, hw * 2, 1, '#1d1d1d'); } fill(cx - 25, 11, 50, 5, '#1d1d1d'); fill(cx - 19, 15, 38, 1, '#2a2a2a'); fill(cx - 3, 6, 6, 4, '#f2ead9'); }
+    if (S2.hat === 'wizard') { for (let y = 0; y <= 26; y++) { const hw = Math.round(y * 0.78); fill(cx - hw - 2, y, hw * 2 + 4, 1, sd(bg, 0.7)); } fill(cx - 20, 26, 40, 3, '#e0b34a'); dot(cx + 4, 4, '#fff6c2'); }
+    if (S2.straw) { for (let y = 4; y <= 13; y++) { const hw = Math.round(24 - Math.abs(y - 9) * 0.6); fill(cx - hw, y, hw * 2, 1, '#e0b96a'); } fill(cx - 26, 13, 52, 1, '#c8a050'); fill(cx - 15, 9, 30, 1, '#b8342a'); }
+    if (S2.band) { fill(cx - 20, 22, 40, 3, S2.band); fill(cx - 20, 22, 40, 1, sd(S2.band, 1.3)); }
+    if (S2.fez) { fill(cx - 11, 3, 22, 11, '#b03030'); fill(cx - 11, 13, 22, 1, '#caa030'); fill(cx + 9, 3, 3, 9, '#caa030'); }
+    if (S2.halo) { fill(cx - 15, 4, 30, 1, '#fff0a0'); dot(cx - 15, 4, sd('#fff0a0', 0.8)); dot(cx + 14, 4, sd('#fff0a0', 0.8)); }
+    if (S2.helm) { for (let y = 5; y <= 28; y++) { const hw = 22 - Math.max(0, (y - 24)); fill(cx - hw, y, hw * 2, 1, '#c9cdd6'); } fill(cx - 22, 28, 44, 1, '#caa030'); fill(cx - 1, 12, 2, 16, '#9aa0aa'); }
+    if (S2.hood) { for (let y = 4; y <= 32; y++) { const hw = 23 - Math.max(0, (y - 26)); fill(cx - hw, y, hw * 2, 1, cloth); } for (let y = 32; y < N; y++) { fill(cx - 23, y, 5, 1, cloth); fill(cx + 18, y, 5, 1, cloth); } fill(cx - 18, 7, 36, 1, clothH); }
+    if (S2.tiara) { fill(cx - 11, 8, 22, 2, '#ffe9b0'); fill(cx - 11, 8, 22, 1, '#fff6e8'); fill(cx - 2, 6, 4, 3, '#ffd24a'); dot(cx, 5, '#fff6e8'); }
+    if (S2.flower) { const fx = cx + 16, fy = 20; [[0, -2], [2, -1], [2, 1], [0, 2], [-2, 1], [-2, -1]].forEach(([dx, dy]) => fill(fx + dx, fy + dy, 2, 2, '#ff8ab4')); fill(fx, fy, 2, 2, '#ffd24a'); dot(fx, fy, '#ffe9a0'); }
+    if (S2.beard) { for (let y = 49; y <= 56; y++) { const hw = Math.round(11 - (y - 49) * 0.9); fill(cx - hw, y, hw * 2, 1, hairS); } fill(cx - 9, 49, 18, 1, hair); }
+    if (S2.patch) { fill(cx + 5, 30, 7, 6, '#1a1410'); fill(cx - 4, 28, 18, 1, '#1a1410'); }
+    if (type === 'genie') { fill(cx - 4, 50, 8, 6, hairS); fill(cx - 2, 56, 4, 2, hairS); fill(cx - 20, 36, 4, 3, '#caa030'); fill(cx + 16, 36, 4, 3, '#caa030'); } // goatee + gold ear-cuffs
 
     return cv.toDataURL();
   }
