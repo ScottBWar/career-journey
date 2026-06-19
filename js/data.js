@@ -205,7 +205,7 @@ window.Data = (function () {
       ],
     },
     { // Beetlejuice — Lydia Deetz, a goth girl with pure dark magic (rescued in the Neitherworld trial)
-      key: 'lydia', name: 'Lydia', role: 'Goth Conjurer', model: 'mage', temporary: true,
+      key: 'lydia', name: 'Lydia', role: 'Goth Conjurer', model: 'lydia', temporary: true,
       base: { hp: 116, mp: 66, atkMin: 9, atkMax: 15, crit: 0.08 }, growth: { hp: 9, mp: 6, atk: 2 },
       baseAbilities: [ ab('Shadow Bolt', { mp: 8, min: 32, max: 46, target: 'enemy', fx: 'beam', el: 'dark' }), ab('Gloom', { mp: 16, min: 22, max: 34, target: 'all', fx: 'beam', el: 'dark' }) ],
       tree: [
@@ -222,7 +222,10 @@ window.Data = (function () {
   ];
 
   const ENEMIES = {
-    beetlejuice: { name: 'Beetlejuice & the Sandworm', model: 'drifter', hp: 620, xp: 340, gold: 420, baseY: 0.2, boss: true, scale: 1.4, moves: [ { name: 'cackles and conjures', min: 28, max: 40 }, { name: 'the Sandworm erupts from below', min: 24, max: 34, all: true }, { name: 'twists the room sideways', min: 30, max: 44, status: 'slow', turns: 3 }, { name: 'summons biting snakes', min: 24, max: 34, all: true, status: 'weaken', turns: 3 } ], drops: [ { mat: 'ink', chance: 0.6 } ] },
+    sandling:    { name: 'Sandling',       model: 'sandling',  hp: 96,  xp: 30, gold: 20, baseY: 0,   moves: [ { name: 'gnashes from the sand', min: 13, max: 19 }, { name: 'spits grit', min: 11, max: 16 } ], drops: [ { mat: 'brine', chance: 0.4 } ] },
+    shade:       { name: 'Neither-Shade',   model: 'shade',     hp: 84,  xp: 30, gold: 20, baseY: 0.3, moves: [ { name: 'wails', min: 12, max: 18, all: true }, { name: 'reaches through you', min: 14, max: 20, status: 'weaken', turns: 2 } ], drops: [ { mat: 'goo', chance: 0.5 } ] },
+    gravehand:   { name: 'Grave Hand',      model: 'gravehand', hp: 130, xp: 34, gold: 24, baseY: 0,   moves: [ { name: 'crushes', min: 15, max: 22 }, { name: 'drags you under', min: 12, max: 18, status: 'slow', turns: 2 } ], drops: [ { mat: 'shellfrag', chance: 0.4 } ] },
+    beetlejuice: { name: 'Beetlejuice & the Sandworm', model: 'beetlejuice', hp: 620, xp: 340, gold: 420, baseY: 0.2, boss: true, scale: 1.4, moves: [ { name: 'cackles and conjures', min: 28, max: 40 }, { name: 'the Sandworm erupts from below', min: 24, max: 34, all: true }, { name: 'twists the room sideways', min: 30, max: 44, status: 'slow', turns: 3 }, { name: 'summons biting snakes', min: 24, max: 34, all: true, status: 'weaken', turns: 3 } ], drops: [ { mat: 'ink', chance: 0.6 } ] },
     shark:  { name: 'Maneater Shark',   model: 'shark',  hp: 88,  xp: 24, gold: 18, baseY: 0,   moves: [ { name: 'sinks its teeth in', min: 11, max: 17 }, { name: 'whips its tail', min: 14, max: 21 } ], drops: [ { mat: 'fang', chance: 0.7 }, { mat: 'fin', chance: 0.4 } ] },
     crab:   { name: 'Giant Hermit Crab', model: 'crab',  hp: 118, xp: 28, gold: 22, baseY: 0,   moves: [ { name: 'snaps a giant claw', min: 13, max: 19 }, { name: 'bashes with its shell', min: 16, max: 23 } ], drops: [ { mat: 'shellfrag', chance: 0.75 }, { mat: 'brine', chance: 0.2 } ] },
     jelly:  { name: "Man-o'-War Jelly",  model: 'jelly', hp: 60,  xp: 20, gold: 13, baseY: 0.2, moves: [ { name: 'stings sharply', min: 9, max: 15 }, { name: 'discharges a shock', min: 9, max: 14, all: true } ], drops: [ { mat: 'goo', chance: 0.85 } ] },
@@ -574,6 +577,9 @@ window.Data = (function () {
   const SHOP_ACCESSORIES = ['coral_bangle', 'seaglass_ring', 'tortoise_charm', 'tiger_fang', 'venom_ward', 'aegis_pearl'];
   // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
   const AFFINITIES = {
+    sandling: { weak: ['water'], resist: ['earth'] },
+    shade: { weak: ['holy', 'fire'], resist: ['dark', 'physical'] },
+    gravehand: { weak: ['holy'], resist: ['physical'] },
     beetlejuice: { weak: ['holy', 'fire'], absorb: ['dark'] },
     ruffy_duel: { resist: ['physical'] }, // a rubber-man shrugs off blunt force
     selachoth_omega: { resist: ['physical', 'water'] }, // its weakness is the rotating light/dark tell, not a fixed element
@@ -1184,7 +1190,7 @@ window.Data = (function () {
       name: 'The Neitherworld', island: 'neither', ground: '#241630', wall: '#160e22', sky: { top: '#070410', horizon: '#2a0e3a' },
       spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
       ally: { key: 'lydia', metFlag: 'lydiaMet', join: 'lydiaJoin', holdMsg: 'Lydia steadies herself at the threshold. "Come back when you are ready to face him — and them."' },
-      mobs: [ { x: -8, z: -4, pool: ['wraith', 'ghoul'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['bat', 'wraith'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['ghoul', 'wraith'], min: 2, max: 2 }, { x: 7, z: 22, pool: ['bat', 'ghoul', 'wraith'], min: 3, max: 3 } ],
+      mobs: [ { x: -8, z: -4, pool: ['shade', 'sandling'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['gravehand', 'sandling'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['shade', 'gravehand'], min: 2, max: 2 }, { x: 7, z: 22, pool: ['sandling', 'shade', 'gravehand'], min: 3, max: 3 } ],
       npc: { x: 7, z: 10, name: 'The Deetzes', color: '#5a4a6a', hair: '#cccccc', gift: { heal: true }, lines: [
         { name: "Lydia's Parents", text: '(faint, behind the striped bars) You can see us? Oh, thank the dark. He calls himself Beetlejuice — say the name thrice and he comes. We said it once too often.' },
         { name: "Lydia's Parents", text: 'He rides a thing from under the sand, all teeth and no mercy. Our Lydia has a gift for the dark — let her stand with you. Just bring her home.' },

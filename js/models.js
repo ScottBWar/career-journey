@@ -1126,7 +1126,76 @@ window.Models = (function () {
     } };
   }
 
-  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane, omega, ruffy_duel: () => rival() };
+  // ---------------- NEITHERWORLD (Lydia's isle) ----------------
+  function lydia(weaponKey) { // goth dark-conjurer — long black hair, pale skin, dark dress, floating grimoire
+    const r = new BABYLON.TransformNode('lydia', scene);
+    const dress = M('lyD', '#1a1426', { spec: 0.2 }), dress2 = M('lyD2', '#2e2240'), skin = M('lyS', '#e6dde8'), hair = M('lyH', '#15101c'), lace = M('lyW', '#6a5a7a'), book = M('lyB', '#2a1a30'), glow = M('lyG', '#b06aff', { emissive: '#b06aff' });
+    at(MB.CreateCylinder('skirt', { height: 1.4, diameterTop: 0.5, diameterBottom: 1.0, tessellation: 12 }, scene), r, dress, 0, 0.7, 0);
+    at(MB.CreateBox('torso', { width: 0.6, height: 0.9, depth: 0.4 }, scene), r, dress, 0, 1.75, 0);
+    at(MB.CreateBox('collar', { width: 0.66, height: 0.18, depth: 0.44 }, scene), r, lace, 0, 2.18, 0);
+    shoulders(r, dress2, 2.05, 0.34, 0.4);
+    at(MB.CreateCylinder('aL', { height: 0.8, diameter: 0.16 }, scene), r, dress2, -0.42, 1.7, 0.05).rotation.z = 0.35;
+    const arm = new BABYLON.TransformNode('lyArm', scene); arm.parent = r; arm.position.set(0.42, 2.05, 0);
+    at(MB.CreateCylinder('aR', { height: 0.8, diameter: 0.16 }, scene), arm, dress2, 0, -0.38, 0);
+    at(MB.CreateSphere('handR', { diameter: 0.16 }, scene), arm, skin, 0, -0.78, 0.05);
+    at(MB.CreateSphere('head', { diameter: 0.52 }, scene), r, skin, 0, 2.5, 0);
+    face(r, 2.53, 0.52, { pupil: '#1a0a14' });
+    at(MB.CreateSphere('hairTop', { diameter: 0.6, slice: 0.6 }, scene), r, hair, 0, 2.62, -0.02);
+    at(MB.CreateBox('bangs', { width: 0.56, height: 0.18, depth: 0.5 }, scene), r, hair, 0, 2.66, 0.08);
+    at(MB.CreateBox('hairBack', { width: 0.5, height: 1.8, depth: 0.2 }, scene), r, hair, 0, 1.7, -0.26);
+    [-1, 1].forEach(s => at(MB.CreateBox('hairSide', { width: 0.16, height: 1.3, depth: 0.3 }, scene), r, hair, s * 0.28, 1.95, 0.04));
+    const bk = at(MB.CreateBox('book', { width: 0.42, height: 0.5, depth: 0.12 }, scene), r, book, -0.5, 1.72, 0.32);
+    at(MB.CreateBox('page', { width: 0.34, height: 0.42, depth: 0.06 }, scene), r, lace, -0.5, 1.72, 0.39);
+    const wisp = at(MB.CreateSphere('wisp', { diameter: 0.2 }, scene), arm, glow, 0, -0.95, 0.1);
+    return { node: r, arm, idle(t) { bk.rotation.y = t * 1.2; r.position.y = (r._baseY || 0) + Math.sin(t * 1.3) * 0.04; wisp.scaling.setAll(0.8 + Math.sin(t * 4) * 0.2); } };
+  }
+  function beetlejuice() { // boss — the striped trickster riding a colossal Sandworm
+    const r = new BABYLON.TransformNode('eBJ', scene);
+    const sand = M('bjSand', '#c2a468', { spec: 0.2 }), sand2 = M('bjSand2', '#8a6a3a'), stripeW = M('bjW', '#e8e2d0'), stripeB = M('bjB', '#161616'),
+          skin = M('bjSk', '#cfcfc4'), hair = M('bjH', '#7a8a4a', { emissive: '#1a2208' }), eye = M('bjE', '#fff6c2', { emissive: '#fff6c2' }), maw = M('bjM', '#5a1020');
+    let py = 0.5; for (let i = 0; i < 5; i++) { at(MB.CreateSphere('wseg' + i, { diameterX: 2.0 - i * 0.2, diameterY: 1.6 - i * 0.18, diameterZ: 2.0 - i * 0.2, segments: 12 }, scene), r, i % 2 ? sand2 : sand, Math.sin(i * 0.9) * 0.6, py, -1.4 + i * 0.18); py += 1.05; }
+    at(MB.CreateSphere('wHead', { diameterX: 2.0, diameterY: 1.7, diameterZ: 2.1, segments: 14 }, scene), r, sand, 0.7, py, 0.5);
+    at(MB.CreateTorus('lips', { diameter: 1.3, thickness: 0.32, tessellation: 14 }, scene), r, stripeW, 0.7, py, 1.3).rotation.x = Math.PI / 2;
+    at(MB.CreateSphere('maw', { diameter: 1.0 }, scene), r, maw, 0.7, py, 1.4);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * 6.28; at(MB.CreateCylinder('t' + i, { height: 0.45, diameterTop: 0, diameterBottom: 0.13, tessellation: 4 }, scene), r, stripeW, 0.7 + Math.cos(a) * 0.62, py + Math.sin(a) * 0.55, 1.25).rotation.x = Math.PI / 2; }
+    const bj = new BABYLON.TransformNode('bjRider', scene); bj.parent = r; bj.position.set(-0.5, 3.1, -0.7);
+    at(MB.CreateBox('torso', { width: 0.7, height: 1.0, depth: 0.42 }, scene), bj, stripeW, 0, 0.5, 0);
+    [0.2, 0, -0.2].forEach((y, i) => at(MB.CreateBox('stripe' + i, { width: 0.73, height: 0.13, depth: 0.44 }, scene), bj, stripeB, 0, 0.7 + y, 0));
+    at(MB.CreateSphere('bjhead', { diameter: 0.5 }, scene), bj, skin, 0, 1.25, 0);
+    for (let i = -2; i <= 2; i++) at(MB.CreateCylinder('h' + i, { height: 0.5, diameterTop: 0, diameterBottom: 0.15, tessellation: 5 }, scene), bj, hair, i * 0.12, 1.55, 0).rotation.z = i * 0.32;
+    [-0.12, 0.12].forEach(x => at(MB.CreateSphere('e', { diameter: 0.13 }, scene), bj, eye, x, 1.28, 0.21));
+    at(MB.CreateBox('grin', { width: 0.32, height: 0.06, depth: 0.06 }, scene), bj, stripeB, 0, 1.12, 0.23);
+    [-1, 1].forEach(s => { at(MB.CreateCylinder('arm', { height: 0.7, diameter: 0.14 }, scene), bj, stripeW, s * 0.46, 0.6, 0).rotation.z = s * 0.95; });
+    return { node: r, idle(t) { r.position.y = (r._baseY || 0) + Math.sin(t * 1.3) * 0.18; r.rotation.y = Math.sin(t * 0.5) * 0.08; bj.rotation.z = Math.sin(t * 2) * 0.08; } };
+  }
+  function sandling() { // mob — a small striped sand-worm
+    const r = new BABYLON.TransformNode('eSandling', scene);
+    const a = M('slA', '#c8a86a'), b = M('slB', '#2a2218'), maw = M('slM', '#5a1020');
+    let py = 0.3; for (let i = 0; i < 4; i++) { at(MB.CreateSphere('s' + i, { diameter: 1.0 - i * 0.16, segments: 10 }, scene), r, i % 2 ? a : b, 0, py, 0); py += 0.6; }
+    at(MB.CreateSphere('maw', { diameter: 0.5 }, scene), r, maw, 0, py - 0.1, 0.2);
+    for (let i = 0; i < 6; i++) { const ang = i / 6 * 6.28; at(MB.CreateCylinder('t' + i, { height: 0.22, diameterTop: 0, diameterBottom: 0.08, tessellation: 4 }, scene), r, a, Math.cos(ang) * 0.28, py - 0.1 + Math.sin(ang) * 0.25, 0.25).rotation.x = Math.PI / 2; }
+    return { node: r, idle(t) { r.rotation.z = Math.sin(t * 2.2) * 0.18; r.position.y = (r._baseY || 0) + Math.abs(Math.sin(t * 1.6)) * 0.2; } };
+  }
+  function shade() { // mob — a sheeted Neitherworld specter with glowing hollows
+    const r = new BABYLON.TransformNode('eShade', scene);
+    const sheet = M('shS', '#d8d8e0', { spec: 0.1, alpha: 0.94 }), eye = M('shE', '#9be7ff', { emissive: '#9be7ff' });
+    at(MB.CreateSphere('top', { diameter: 1.1, slice: 0.6 }, scene), r, sheet, 0, 2.0, 0);
+    at(MB.CreateCylinder('body', { height: 1.6, diameterTop: 1.05, diameterBottom: 1.5, tessellation: 12 }, scene), r, sheet, 0, 1.2, 0);
+    for (let i = 0; i < 5; i++) { const ang = i / 5 * 6.28; at(MB.CreateCylinder('hem' + i, { height: 0.5, diameterTop: 0.3, diameterBottom: 0, tessellation: 6 }, scene), r, sheet, Math.cos(ang) * 0.6, 0.4, Math.sin(ang) * 0.6); }
+    [-0.2, 0.2].forEach(x => at(MB.CreateSphere('e', { diameter: 0.22 }, scene), r, eye, x, 2.0, 0.42));
+    return { node: r, idle(t) { r.position.y = (r._baseY || 0) + Math.sin(t * 1.5) * 0.28; r.rotation.y = Math.sin(t * 0.7) * 0.2; } };
+  }
+  function gravehand() { // mob — a giant clawed hand bursting from the floor
+    const r = new BABYLON.TransformNode('eHand', scene);
+    const flesh = M('ghF', '#8a8a96', { spec: 0.1 }), nail = M('ghN', '#2a2630'), dirt = M('ghDirt', '#3a2e22');
+    at(MB.CreateCylinder('mound', { height: 0.5, diameterTop: 1.6, diameterBottom: 2.2, tessellation: 12 }, scene), r, dirt, 0, 0.25, 0);
+    at(MB.CreateBox('palm', { width: 1.0, height: 1.0, depth: 0.5 }, scene), r, flesh, 0, 1.3, 0);
+    [-0.35, -0.12, 0.12, 0.35].forEach((x, i) => { const lng = (i === 1 || i === 2) ? 1.4 : 1.1; at(MB.CreateCylinder('f' + i, { height: lng, diameter: 0.2 }, scene), r, flesh, x, 1.3 + lng / 2, 0).rotation.x = -0.2; at(MB.CreateCylinder('n' + i, { height: 0.25, diameterTop: 0, diameterBottom: 0.18, tessellation: 4 }, scene), r, nail, x, 1.3 + lng + 0.1, 0.05); });
+    at(MB.CreateCylinder('thumb', { height: 0.8, diameter: 0.2 }, scene), r, flesh, -0.55, 1.5, 0).rotation.z = 1.0;
+    return { node: r, idle(t) { r.rotation.y = Math.sin(t * 0.9) * 0.12; r.scaling.y = 1 + Math.sin(t * 1.4) * 0.06; } };
+  }
+
+  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane, omega, beetlejuice, sandling, shade, gravehand, ruffy_duel: () => rival() };
 
   // ---------------- ALADDIN (street-rat ally) ----------------
   function aladdin(weaponKey) {
@@ -1373,7 +1442,7 @@ window.Models = (function () {
   }
   function pillar() { const r = new BABYLON.TransformNode('pillar', scene); at(MB.CreateCylinder('p', { height: 4, diameter: 1.0, tessellation: 8 }, scene), r, M('pil', '#5a5266'), 0, 2, 0); return { node: r }; }
 
-  return { use, M, at, weaponSpec, attachWeapon, cosmetic, pirate, swordsman, healer, mage, blader, dragoon, rival, simon, aladdin, violca, mac, sane, marvyn, quijano, mermaid, hero, npc, tree, palm, pine, deadTree, blossom, rock, house, sign, portal, roamer,
+  return { use, M, at, weaponSpec, attachWeapon, cosmetic, pirate, swordsman, healer, mage, blader, dragoon, rival, simon, aladdin, violca, mac, sane, marvyn, quijano, lydia, mermaid, hero, npc, tree, palm, pine, deadTree, blossom, rock, house, sign, portal, roamer,
            crystal, chest, pillar,
            // dispatch by enemy id, falling back to its model (some enemies reuse another's builder), then a generic roamer
            enemy: (key) => (ENEMY_BUILDERS[key] || ENEMY_BUILDERS[((window.Data && Data.ENEMIES[key]) || {}).model] || roamer)('#b03050'),
