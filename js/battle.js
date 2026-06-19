@@ -724,5 +724,7 @@ window.Battle = (function () {
 
   function startLoop() { msg('The battle begins!'); refresh(); loop(); }
 
-  return { build, startLoop, onKey, getScene: () => scene };
+  // debug hook for the capture harness — force Marina's mermaid summon mid-battle
+  const _debug = { summon: (k) => { const m = party.find(p => p.key === 'healer'); if (m) { m.limit = 100; doSummon(m, k); } } };
+  return { build, startLoop, onKey, getScene: () => scene, _debug };
 })();

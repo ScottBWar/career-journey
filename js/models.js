@@ -181,11 +181,25 @@ window.Models = (function () {
     at(MB.CreateCylinder('trim', { height: 0.2, diameterTop: 1.32, diameterBottom: 1.42 }, scene), r, robe2, 0, 0.12, 0);
     const aL = at(MB.CreateCylinder('aL', { height: 0.8, diameter: 0.22 }, scene), r, robe, -0.5, 1.5, 0); aL.rotation.z = 0.4;
     const aR = at(MB.CreateCylinder('aR', { height: 0.8, diameter: 0.22 }, scene), r, robe, 0.5, 1.5, 0); aR.rotation.z = -0.4;
-    at(MB.CreateSphere('head', { diameter: 0.55 }, scene), r, skin, 0, 2.25, 0);
-    face(r, 2.3, 0.55, { pupil: '#2a4a52' });
+    at(MB.CreateSphere('head', { diameter: 0.55, segments: 16 }, scene), r, skin, 0, 2.25, 0);
     hand(aL, 0, -0.42, 0, '#d9a06b'); hand(aR, 0, -0.42, 0, '#d9a06b');
-    at(MB.CreateBox('hairBack', { width: 0.6, height: 1.1, depth: 0.25 }, scene), r, hairC, 0, 1.9, -0.18);
-    at(MB.CreateSphere('hairTop', { diameter: 0.6, slice: 0.6 }, scene), r, hairC, 0, 2.42, 0);
+    // Yuna-esque heterochromia — one blue eye, one green — with soft lashes
+    const eyeW = M('hEyeW', '#fbfdff'), lashM = M('hLash', '#2a1c14');
+    [[-1, '#3a7ad0'], [1, '#56a84a']].forEach(([s, col]) => {
+      at(MB.CreateSphere('eyeW', { diameter: 0.15, segments: 10 }, scene), r, eyeW, s * 0.12, 2.3, 0.22);
+      at(MB.CreateSphere('eyeP', { diameter: 0.09, segments: 8 }, scene), r, M('hEye' + s, col), s * 0.12, 2.3, 0.27);
+      const l = at(MB.CreateBox('lash', { width: 0.17, height: 0.03, depth: 0.06 }, scene), r, lashM, s * 0.12, 2.37, 0.22); l.rotation.z = -s * 0.2;
+    });
+    // short brown summoner's hair + the iconic single long bound tail down the back
+    const hairY = M('hHairY', '#5a3e2a');
+    at(MB.CreateSphere('hairTop', { diameter: 0.62, slice: 0.6, segments: 14 }, scene), r, hairY, 0, 2.4, -0.02);
+    at(MB.CreateSphere('hairBack', { diameterX: 0.58, diameterY: 0.66, diameterZ: 0.4, segments: 12 }, scene), r, hairY, 0, 2.2, -0.17);
+    [-1, 1].forEach(s => { const sl = at(MB.CreateCylinder('hairFringe', { height: 0.6, diameterTop: 0.16, diameterBottom: 0.08, tessellation: 6 }, scene), r, hairY, s * 0.24, 2.18, 0.16); sl.rotation.z = s * 0.1; });
+    const tail = at(MB.CreateCylinder('hairTail', { height: 1.7, diameterTop: 0.16, diameterBottom: 0.05, tessellation: 8 }, scene), r, hairY, 0, 1.5, -0.3); tail.rotation.x = -0.14;
+    at(MB.CreateTorus('tailRing', { diameter: 0.2, thickness: 0.04, tessellation: 12 }, scene), r, M('hRing', '#caa030', { emissive: '#4a3606' }), 0, 2.3, -0.26).rotation.x = Math.PI / 2;
+    // summoner's floral obi + a long hanging ribbon
+    at(MB.CreateBox('obi', { width: 0.62, height: 0.2, depth: 0.62 }, scene), r, M('hObi', '#e8728e'), 0, 1.18, 0);
+    at(MB.CreateBox('ribbon', { width: 0.13, height: 1.05, depth: 0.06 }, scene), r, M('hRib', '#e8728e'), 0.2, 0.66, 0.34);
     const halo = at(MB.CreateTorus('halo', { diameter: 0.7, thickness: 0.05, tessellation: 24 }, scene), r, M('halo', '#fff6c2', { emissive: '#fff0a0' }), 0, 2.85, 0);
     halo.rotation.x = Math.PI / 2.3;
     const sp = weaponSpec('healer', weaponKey);

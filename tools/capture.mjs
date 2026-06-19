@@ -63,6 +63,8 @@ const STATES = [
   { name: '33_battle_sentinel', drive: `Game.startBattle(['sentinel'], { boss: true, music: 'assault' })`, wait: 2000 },
   { name: '34_cutscene_reactor', drive: `Cutscene.play(Data.STORY.reactorRaid, null, { music: 'assault' })`, wait: 1600 },
   { name: '35_dungeon_npc',     drive: `Game.toDungeon('frost_station'); setTimeout(function(){ window.__reset&&window.__reset(); if(window.Dungeon&&Dungeon._debug) Dungeon._debug.warp(-3, 9); }, 700)`, wait: 1700 },
+  { name: '36_date_mermaid',    drive: `Game.toIsland('tidehaven', false); Game.openDating('nerida')`, wait: 1800 },
+  { name: '37_summon_mermaid',  drive: `Game.state.mermaids.ember = { rel: 99, idx: 0, enchanted: false }; Game.startBattle(['shark'], {}); setTimeout(function(){ if(window.Battle&&Battle._debug) Battle._debug.summon('ember'); }, 1000)`, wait: 2400 },
 ];
 
 function serve() {
