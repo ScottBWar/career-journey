@@ -18,6 +18,22 @@ window.Models = (function () {
   }
   function at(mesh, parent, m, x = 0, y = 0, z = 0) { mesh.material = m; mesh.parent = parent; mesh.position.set(x, y, z); return mesh; }
 
+  // shared face: a pair of eye-whites + pupils (and optional brows) on the +Z front of a head.
+  // d = head diameter; call after building the head sphere. opt.one = 'left'|'right' for an eyepatch.
+  function face(parent, y, d, opt = {}) {
+    const rr = d * 0.5, ez = rr * 0.82, ex = opt.spread != null ? opt.spread : d * 0.24, ey = y + (opt.eyeY != null ? opt.eyeY : d * 0.05);
+    const white = M('eyeW', opt.eyeW || '#f6f3ec'), pupil = M('eyeP', opt.pupil || '#241d17', opt.glow ? { emissive: opt.pupil || '#241d17' } : {});
+    const sides = opt.one === 'left' ? [-1] : opt.one === 'right' ? [1] : [-1, 1];
+    sides.forEach(s => {
+      at(MB.CreateSphere('eyeW', { diameter: d * 0.27, segments: 8 }, scene), parent, white, s * ex, ey, ez);
+      at(MB.CreateSphere('eyeP', { diameter: d * 0.14, segments: 6 }, scene), parent, pupil, s * ex, ey, ez + d * 0.08);
+    });
+    if (opt.brow) { const bm = M('brow', opt.brow); sides.forEach(s => { const b = at(MB.CreateBox('brow', { width: d * 0.3, height: d * 0.07, depth: d * 0.12 }, scene), parent, bm, s * ex, ey + d * 0.17, ez); b.rotation.z = s * (opt.angry ? -0.25 : 0); }); }
+    return parent;
+  }
+  // a small hand/glove sphere at the end of a limb
+  function hand(parent, x, y, z, hex) { return at(MB.CreateSphere('hand', { diameter: 0.2, segments: 6 }, scene), parent, M('handM', hex || '#d9a06b'), x, y, z); }
+
   // ---------------- WEAPONS (FF7-style: the equipped weapon changes the held mesh) ----------------
   // per-character archetype: a hold style + a tier palette. weaponSpec() reads the
   // equipped weapon's index in Data.WEAPONS[char] to pick size/colour/glow.
@@ -118,6 +134,8 @@ window.Models = (function () {
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.6, 2.0, 0);
     at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.3 }, scene), arm, coat2, 0, -0.45, 0);
     at(MB.CreateSphere('head', { diameter: 0.62 }, scene), r, skin, 0, 2.5, 0);
+    face(r, 2.56, 0.62, { one: 'left', brow: '#5a3b1c' }); // right eye covered by the patch
+    hand(aL, 0, -0.5, 0, '#d9a06b'); hand(arm, 0, -0.92, 0.05, '#d9a06b');
     at(MB.CreateBox('beard', { width: 0.5, height: 0.4, depth: 0.32 }, scene), r, beard, 0, 2.25, 0.18);
     at(MB.CreateBox('patch', { width: 0.18, height: 0.16, depth: 0.05 }, scene), r, dark, 0.14, 2.57, 0.3);
     at(MB.CreateCylinder('brim', { height: 0.08, diameter: 0.95 }, scene), r, dark, 0, 2.83, 0);
@@ -140,6 +158,8 @@ window.Models = (function () {
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.62, 2.02, 0);
     at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.28 }, scene), arm, navy2, 0, -0.45, 0);
     at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.5, 0);
+    face(r, 2.55, 0.6, { brow: '#9c8a3a' });
+    hand(aL, 0, -0.5, 0, '#cf9a78'); hand(arm, 0, -0.92, 0.05, '#cf9a78');
     const sp = [[0,0.45,0,0,0,0],[-0.18,0.42,0.05,0,0,0.5],[0.18,0.42,0.05,0,0,-0.5],[0,0.4,0.22,0.6,0,0],[0,0.4,-0.2,-0.6,0,0],[-0.22,0.3,-0.05,0,0,0.9],[0.22,0.3,-0.05,0,0,-0.9]];
     sp.forEach((s, i) => { const c = at(MB.CreateCylinder('hair'+i, { height: 0.6, diameterTop: 0, diameterBottom: 0.26 }, scene), r, hair, s[0], 2.72 + s[1]*0.2, s[2]); c.rotation.set(s[3], s[4], s[5]); });
     attachWeapon(arm, [0.1, -0.7, 0.3], [1.3, 0, 0], weaponSpec('swordsman', weaponKey));
@@ -155,6 +175,8 @@ window.Models = (function () {
     const aL = at(MB.CreateCylinder('aL', { height: 0.8, diameter: 0.22 }, scene), r, robe, -0.5, 1.5, 0); aL.rotation.z = 0.4;
     const aR = at(MB.CreateCylinder('aR', { height: 0.8, diameter: 0.22 }, scene), r, robe, 0.5, 1.5, 0); aR.rotation.z = -0.4;
     at(MB.CreateSphere('head', { diameter: 0.55 }, scene), r, skin, 0, 2.25, 0);
+    face(r, 2.3, 0.55, { pupil: '#2a4a52' });
+    hand(aL, 0, -0.42, 0, '#d9a06b'); hand(aR, 0, -0.42, 0, '#d9a06b');
     at(MB.CreateBox('hairBack', { width: 0.6, height: 1.1, depth: 0.25 }, scene), r, hairC, 0, 1.9, -0.18);
     at(MB.CreateSphere('hairTop', { diameter: 0.6, slice: 0.6 }, scene), r, hairC, 0, 2.42, 0);
     const halo = at(MB.CreateTorus('halo', { diameter: 0.7, thickness: 0.05, tessellation: 24 }, scene), r, M('halo', '#fff6c2', { emissive: '#fff0a0' }), 0, 2.85, 0);
@@ -224,6 +246,8 @@ window.Models = (function () {
     const arm = new BABYLON.TransformNode('dgArm', scene); arm.parent = r; arm.position.set(0.62, 2.05, 0);
     at(MB.CreateCylinder('aR', { height: 0.98, diameter: 0.3 }, scene), arm, coat, 0, -0.45, 0);
     at(MB.CreateSphere('head', { diameter: 0.58 }, scene), r, skin, 0, 2.52, 0);
+    face(r, 2.58, 0.58, { one: 'left', brow: '#7a6a56', angry: true }); // right eye under the patch
+    hand(r, -0.74, 1.1, 0.05, '#c89a72'); hand(arm, 0, -0.95, 0.08, '#c89a72');
     at(MB.CreateBox('beard', { width: 0.5, height: 0.4, depth: 0.3 }, scene), r, hair, 0, 2.28, 0.16); // grizzled beard
     // long flowing hair down the back + sides
     at(MB.CreateSphere('hairTop', { diameter: 0.62, slice: 0.5 }, scene), r, hair, 0, 2.6, -0.02);
@@ -406,6 +430,9 @@ window.Models = (function () {
     at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.26 }, scene), arm, skin, 0, -0.45, 0);
     at(MB.CreateSphere('fist', { diameter: 0.42 }, scene), arm, skin, 0, -0.95, 0); // big fist
     at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.35, 0);
+    face(r, 2.4, 0.6, { brow: '#161616' });
+    at(MB.CreateBox('grin', { width: 0.34, height: 0.07, depth: 0.06 }, scene), r, M('grinM', '#3a1a14'), 0, 2.22, 0.28); // toothy grin
+    hand(r, -0.66, 1.0, 0, '#e8b48a');
     at(MB.CreateSphere('hair', { diameter: 0.64, slice: 0.5 }, scene), r, hair, 0, 2.4, 0);
     // iconic straw hat worn ON the head
     at(MB.CreateCylinder('brim', { height: 0.07, diameter: 1.1, tessellation: 20 }, scene), r, straw, 0, 2.62, 0);
@@ -983,6 +1010,8 @@ window.Models = (function () {
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.6, 2.05, 0);
     at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.26 }, scene), arm, skin, 0, -0.45, 0);
     at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.55, 0);
+    face(r, 2.6, 0.6, { brow: '#1a1208' });
+    hand(aL, 0, -0.5, 0, '#c08a5a'); hand(arm, 0, -0.92, 0.05, '#c08a5a');
     at(MB.CreateSphere('hair', { diameter: 0.66, slice: 0.5 }, scene), r, hair, 0, 2.66, -0.04);
     at(MB.CreateCylinder('fez', { height: 0.36, diameterTop: 0.34, diameterBottom: 0.4 }, scene), r, fez, 0, 2.92, 0);
     at(MB.CreateBox('tassel', { width: 0.06, height: 0.3, depth: 0.06 }, scene), r, M('alTas', '#caa030'), 0.18, 2.95, 0);
@@ -1006,6 +1035,8 @@ window.Models = (function () {
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.56, 2.0, 0);
     at(MB.CreateCylinder('aR', { height: 0.9, diameter: 0.22 }, scene), arm, leather2, 0, -0.42, 0);
     at(MB.CreateSphere('head', { diameter: 0.58 }, scene), r, skin, 0, 2.5, 0);
+    face(r, 2.55, 0.58, { brow: '#3a2418' });
+    hand(aL, 0, -0.48, 0, '#dcb89a');
     // long braided hair
     at(MB.CreateSphere('hair', { diameter: 0.66, slice: 0.6 }, scene), r, hair, 0, 2.6, -0.04);
     at(MB.CreateCylinder('braid', { height: 1.3, diameterTop: 0.18, diameterBottom: 0.1 }, scene), r, hair, 0.18, 1.95, -0.28);
@@ -1030,6 +1061,8 @@ window.Models = (function () {
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.62, 2.02, 0);
     at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.28 }, scene), arm, tunic2, 0, -0.45, 0);
     at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.5, 0);
+    face(r, 2.55, 0.6, { brow: '#5a3a18', angry: true });
+    hand(aL, 0, -0.5, 0, '#cf9a78'); hand(arm, 0, -0.92, 0.05, '#cf9a78');
     at(MB.CreateSphere('hair', { diameter: 0.66, slice: 0.55 }, scene), r, hair, 0, 2.62, -0.04);
     at(MB.CreateBox('band', { width: 0.66, height: 0.14, depth: 0.62 }, scene), r, band, 0, 2.66, 0);
     attachWeapon(arm, [0, -0.7, 0.25], [1.2, 0, 0], weaponSpec('simon', weaponKey)); // the legendary whip
@@ -1048,6 +1081,8 @@ window.Models = (function () {
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.62, 2.05, 0);
     at(MB.CreateCylinder('aR', { height: 0.95, diameter: 0.3 }, scene), arm, parka, 0, -0.45, 0);
     at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.55, 0);
+    face(r, 2.62, 0.6, { brow: '#caa86a' });
+    hand(r, -0.72, 1.2, 0.16, '#cf9a78');
     at(MB.CreateTorus('hood', { diameter: 0.84, thickness: 0.22, tessellation: 12 }, scene), r, fur, 0, 2.6, -0.04).rotation.x = Math.PI / 2;
     at(MB.CreateBox('beard', { width: 0.5, height: 0.4, depth: 0.3 }, scene), r, beard, 0, 2.32, 0.16);
     at(MB.CreateSphere('hat', { diameter: 0.66, slice: 0.5 }, scene), r, parka2, 0, 2.66, 0);
@@ -1069,7 +1104,8 @@ window.Models = (function () {
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.5, 1.95, 0);
     at(MB.CreateCylinder('aR', { height: 0.85, diameter: 0.2 }, scene), arm, skin, 0, -0.4, 0);
     at(MB.CreateSphere('head', { diameter: 0.54 }, scene), r, skin, 0, 2.35, 0);
-    at(MB.CreateBox('paint', { width: 0.58, height: 0.12, depth: 0.5 }, scene), r, paint, 0, 2.4, 0.02); // war-paint stripe
+    face(r, 2.38, 0.54, { pupil: '#3a1810' });
+    [-1, 1].forEach(s => at(MB.CreateBox('paint', { width: 0.1, height: 0.16, depth: 0.06 }, scene), r, paint, s * 0.16, 2.3, 0.25)); // red war-paint cheek marks
     at(MB.CreateSphere('hairTop', { diameter: 0.6, slice: 0.55 }, scene), r, hair, 0, 2.46, -0.04);
     at(MB.CreateBox('hairBack', { width: 0.6, height: 1.5, depth: 0.18 }, scene), r, hair, 0, 1.85, -0.24);
     // stone dagger in hand
@@ -1114,6 +1150,8 @@ window.Models = (function () {
     const arm = new BABYLON.TransformNode('aRpiv', scene); arm.parent = r; arm.position.set(0.52, 2.0, 0);
     at(MB.CreateCylinder('aR', { height: 0.9, diameter: 0.18 }, scene), arm, steel, 0, -0.42, 0);
     at(MB.CreateSphere('head', { diameter: 0.5 }, scene), r, skin, 0, 2.4, 0);
+    face(r, 2.46, 0.5, { brow: '#b8b0a0' });
+    hand(r, -0.64, 1.2, 0.12, '#cf9a78');
     at(MB.CreateBox('beard', { width: 0.34, height: 0.5, depth: 0.26 }, scene), r, beard, 0, 2.1, 0.14); // long thin beard
     // the wash-basin helmet
     at(MB.CreateSphere('helm', { diameter: 0.62, slice: 0.5 }, scene), r, brass, 0, 2.52, 0);
