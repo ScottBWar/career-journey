@@ -60,6 +60,7 @@ const STATES = [
   { name: '31_gallery_omega',   drive: `__gallery({enemy:['selachoth','selachoth_omega']})`, wait: 600 },
   { name: '32_battle_sentinel', drive: `Game.startBattle(['sentinel'], { boss: true, music: 'assault' })`, wait: 2000 },
   { name: '33_cutscene_reactor', drive: `Cutscene.play(Data.STORY.reactorRaid, null, { music: 'assault' })`, wait: 1600 },
+  { name: '34_gallery_mermaids', drive: `__gallery({ mermaid:['ember','nerida','volta','gaia','nyx','lumina'] })`, wait: 600 },
 ];
 
 function serve() {
@@ -114,12 +115,13 @@ function serve() {
         const hemi = new B.HemisphericLight('h', new B.Vector3(0.2, 1, 0.15), scene); hemi.intensity = 0.85; hemi.groundColor = new B.Color3(0.22, 0.24, 0.3);
         const sun = new B.DirectionalLight('s', new B.Vector3(-0.4, -1, 0.3), scene); sun.intensity = 1.5; sun.specular = new B.Color3(1, 1, 1);
         const rim = new B.PointLight('rim', new B.Vector3(0, 5, -7), scene); rim.intensity = 0.6; rim.diffuse = new B.Color3(0.6, 0.72, 1);
-        const items = (spec.party || []).map(k => ({ kind: 'party', key: k })).concat((spec.enemy || []).map(k => ({ kind: 'enemy', key: k })));
+        const items = (spec.party || []).map(k => ({ kind: 'party', key: k })).concat((spec.enemy || []).map(k => ({ kind: 'enemy', key: k }))).concat((spec.mermaid || []).map(k => ({ kind: 'mermaid', key: k })));
         const n = items.length, sp = 4.6, x0 = -(n - 1) * sp / 2;
         items.forEach((it, i) => {
           let m = null;
           try {
             if (it.kind === 'enemy') m = Models.enemy(it.key);
+            else if (it.kind === 'mermaid') { const md = Data.MERMAIDS[it.key]; m = Models.mermaid(md.color, md.tail); }
             else { const md = (window.Progress && Progress.def(it.key) && Progress.def(it.key).model) || it.key; m = Models[md] ? Models[md]() : null; }
           } catch (e) { m = null; }
           if (!m || !m.node) return;
