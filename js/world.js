@@ -24,8 +24,13 @@ window.World = (function () {
     const sun = new BABYLON.DirectionalLight("s", new V3(-0.55, -1, 0.35), scene); sun.intensity = 1.4; sun.specular = new Color3(1, 0.95, 0.85);
 
     water = MB.CreateGround('water', { width: 280, height: 280, subdivisions: 40 }, scene); const wm = M('water', def.water, { spec: 0.8 }); wm.specularPower = 64; wm.emissiveColor = Color3.FromHexString(def.water).scale(0.18); water.material = wm; water.position.y = -0.35; waterBase = water.getVerticesData(BABYLON.VertexBuffer.PositionKind).slice();
-    const sand = MB.CreateDisc('sand', { radius: def.size * 0.6, tessellation: 48 }, scene); sand.rotation.x = Math.PI/2; sand.position.y = -0.04; sand.material = M('sand', def.sand);
-    const grass = MB.CreateDisc('grass', { radius: def.size * 0.54, tessellation: 48 }, scene); grass.rotation.x = Math.PI/2; grass.material = M('grass', def.ground);
+    // island shape: non-round footprints + an organic, noisy coastline for variety
+    const SHAPES = { round: [1, 1], long: [1.45, 0.72], wide: [0.72, 1.45], oval: [1.25, 0.85], teardrop: [0.9, 1.3] };
+    const shp = SHAPES[def.shape] || SHAPES.round; const yaw = (def.shapeYaw || 0);
+    const wobble = (mesh, amp) => { const pos = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind); for (let i = 0; i < pos.length; i += 3) { const a = Math.atan2(pos[i + 1], pos[i]); const f = 1 + Math.sin(a * 5) * amp + Math.sin(a * 11 + 1.3) * amp * 0.5; pos[i] *= f; pos[i + 1] *= f; } mesh.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos); };
+    const sand = MB.CreateDisc('sand', { radius: def.size * 0.6, tessellation: 56 }, scene); wobble(sand, 0.06); sand.rotation.x = Math.PI/2; sand.rotation.y = yaw; sand.scaling.x = shp[0]; sand.scaling.y = shp[1]; sand.position.y = -0.04; sand.material = M('sand', def.sand);
+    const grass = MB.CreateDisc('grass', { radius: def.size * 0.54, tessellation: 56 }, scene); wobble(grass, 0.07); grass.rotation.x = Math.PI/2; grass.rotation.y = yaw; grass.scaling.x = shp[0]; grass.scaling.y = shp[1]; grass.material = M('grass', def.ground);
+    const treeFn = () => (Models[def.treeType] ? Models[def.treeType]() : Models.tree());
 
     // keep-out zones so scenery never sits on top of an interactable (town, mermaids, dock, etc.)
     const keepOut = []; const ko = (o, r) => { if (o && o.x != null) keepOut.push({ x: o.x, z: o.z, r: r }); };
@@ -47,7 +52,7 @@ window.World = (function () {
         const o = b(); o.node.position.set(x, 0, z); o.node.scaling.setAll(0.8 + Math.random() * 0.6); if (o.idle) idlers.push(o);
       }
     };
-    place(() => Models.tree(), def.decor.trees, def.size*0.45);
+    place(treeFn, def.decor.trees, def.size*0.45);
     place(() => Models.palm(), def.decor.palms, def.size*0.5);
     place(() => Models.rock(), def.decor.rocks, def.size*0.5);
 

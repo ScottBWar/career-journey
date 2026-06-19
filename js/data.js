@@ -788,7 +788,7 @@ window.Data = (function () {
   // dungeon, roaming encounters, and a dock back to the ship.
   const ISLANDS = {
     tidehaven: {
-      name: 'Tidehaven Isle', size: 52, ground: '#5fa86a', sand: '#e7c890', water: '#1e6f96', sky: { top: '#2a5a9a', horizon: '#dfeef8' },
+      name: 'Tidehaven Isle', size: 52, shape: 'oval', treeType: 'tree', ground: '#5fa86a', sand: '#e7c890', water: '#1e6f96', sky: { top: '#2a5a9a', horizon: '#dfeef8' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'tidehaven', x: -13, z: 5, color: '#8fd3f4' },
       dungeon: { key: 'tide_cave', x: 11, z: 7, color: '#9be7ff' },
@@ -799,7 +799,7 @@ window.Data = (function () {
       decor: { trees: 12, palms: 8, rocks: 8 }, shells: { x: 13, z: 9 }, mermaids: [ { key: 'ember', x: -7, z: -5 }, { key: 'nerida', x: 7, z: -6 } ],
     },
     dunes: {
-      name: 'Dunes Isle', size: 52, ground: '#cdb06a', sand: '#e7c890', water: '#1e6f96', sky: { top: '#3a6a9a', horizon: '#f3e3b8' },
+      name: 'Dunes Isle', size: 52, shape: 'wide', treeType: 'palm', ground: '#cdb06a', sand: '#e7c890', water: '#1e6f96', sky: { top: '#3a6a9a', horizon: '#f3e3b8' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'dunesport', x: 13, z: 3, color: '#ffd166' },
       dungeon: { key: 'dune_tomb', x: -11, z: 8, color: '#ffcf6a' },
@@ -810,7 +810,7 @@ window.Data = (function () {
       decor: { trees: 6, palms: 12, rocks: 12 }, shells: { x: -13, z: -6 }, mermaids: [ { key: 'volta', x: 5, z: -7 }, { key: 'gaia', x: -5, z: -7 } ],
     },
     spire: {
-      name: 'Abyssal Isle', size: 50, ground: '#3a3a52', sand: '#5a5070', water: '#10182e', sky: { top: '#070a18', horizon: '#3a2f52' },
+      name: 'Abyssal Isle', size: 50, shape: 'teardrop', treeType: 'deadTree', ground: '#3a3a52', sand: '#5a5070', water: '#10182e', sky: { top: '#070a18', horizon: '#3a2f52' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       dungeon: { key: 'abyss_vault', x: -11, z: 6, color: '#c0c8ff' },
       encounters: [
@@ -821,14 +821,14 @@ window.Data = (function () {
       decor: { trees: 2, palms: 2, rocks: 9 }, shells: { x: 12, z: 6 }, mermaids: [ { key: 'nyx', x: -6, z: -6 }, { key: 'lumina', x: 6, z: -5 } ],
     },
     mall: {
-      name: 'Mall Isle', size: 46, ground: '#b8b0c8', sand: '#d8d0e0', water: '#1e6f96', sky: { top: '#6a5ab0', horizon: '#f3d8ee' },
+      name: 'Mall Isle', size: 46, shape: 'round', ground: '#b8b0c8', sand: '#d8d0e0', water: '#1e6f96', sky: { top: '#6a5ab0', horizon: '#f3d8ee' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'mall', x: 0, z: 5, color: '#ff9ec0' },
       encounters: [],
       decor: { trees: 4, palms: 6, rocks: 4 },
     },
     duskmoor: {
-      name: 'Duskmoor Isle', size: 50, ground: '#2a2230', sand: '#3a2e3a', water: '#101018', sky: { top: '#070410', horizon: '#2a0e22' },
+      name: 'Duskmoor Isle', size: 50, shape: 'long', treeType: 'deadTree', ground: '#2a2230', sand: '#3a2e3a', water: '#101018', sky: { top: '#070410', horizon: '#2a0e22' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       dungeon: { key: 'vampire_keep', x: 0, z: 9, color: '#b03050' },
       encounters: [
@@ -838,7 +838,7 @@ window.Data = (function () {
       decor: { trees: 6, palms: 0, rocks: 10 },
     },
     cove: {
-      name: 'Castaway Cove', size: 40, ground: '#4fae6a', sand: '#ffe7b0', water: '#1fa0c0', sky: { top: '#ff9e6a', horizon: '#ffe7c0' },
+      name: 'Castaway Cove', size: 40, shape: 'round', treeType: 'palm', ground: '#4fae6a', sand: '#ffe7b0', water: '#1fa0c0', sky: { top: '#ff9e6a', horizon: '#ffe7c0' },
       spawn: { x: 0, z: -9 }, dock: { x: 0, z: -12 },
       bonfire: { x: 0, z: 4 },
       superboss: { x: 0, z: 12, key: 'drifter', color: '#caa030' },
@@ -846,7 +846,7 @@ window.Data = (function () {
       decor: { trees: 3, palms: 14, rocks: 5 },
     },
     mirage: {
-      name: 'Mirage Isle', size: 52, ground: '#e0c074', sand: '#f0dca0', water: '#2090b0', sky: { top: '#e88a3a', horizon: '#ffe1a0' },
+      name: 'Mirage Isle', size: 52, shape: 'wide', treeType: 'palm', ground: '#e0c074', sand: '#f0dca0', water: '#2090b0', sky: { top: '#e88a3a', horizon: '#ffe1a0' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'bazaar', x: 13, z: 3, color: '#ffcf6a' },
       dungeon: { key: 'genie_cave', x: -11, z: 8, color: '#ffd24a' },
@@ -857,7 +857,7 @@ window.Data = (function () {
       decor: { trees: 2, palms: 13, rocks: 11 },
     },
     aerie: {
-      name: 'Sky Dragon Isle', size: 54, ground: '#7a8494', sand: '#9aa0ac', water: '#2a4a6a', sky: { top: '#3a4f7a', horizon: '#d8c4e0' },
+      name: 'Sky Dragon Isle', size: 54, shape: 'teardrop', treeType: 'pine', ground: '#7a8494', sand: '#9aa0ac', water: '#2a4a6a', sky: { top: '#3a4f7a', horizon: '#d8c4e0' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'aerie', x: 13, z: 4, color: '#7fd0ff' },
       dungeon: { key: 'dragon_vale', x: -11, z: 8, color: '#ff6a4a' },
@@ -868,7 +868,7 @@ window.Data = (function () {
       decor: { trees: 4, palms: 0, rocks: 14 },
     },
     paegina: {
-      name: 'Paegina', size: 54, ground: '#cdbd86', sand: '#ece2bf', water: '#2f9ec8', sky: { top: '#3a7ab0', horizon: '#f3ead0' },
+      name: 'Paegina', size: 54, shape: 'oval', treeType: 'tree', ground: '#cdbd86', sand: '#ece2bf', water: '#2f9ec8', sky: { top: '#3a7ab0', horizon: '#f3ead0' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       town: { key: 'argo', x: 13, z: 4, color: '#4a90c0' },
       coliseum: { x: -11, z: 8, color: '#caa030' },
