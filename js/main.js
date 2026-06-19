@@ -53,6 +53,7 @@ window.Game = (function () {
   }
   function beginGame(fresh) {
     el('start').classList.remove('show');
+    document.body.className = ''; // drop mode-start so the title screen can't linger behind the intro/cutscene
     const intoWorld = () => { if (Game.state.location.place === 'sea') toSea(); else toIsland(Game.state.location.island || 'tidehaven', false); };
     if (fresh && !Game.state.flags.seenOpening) {
       playIntro(() => {
