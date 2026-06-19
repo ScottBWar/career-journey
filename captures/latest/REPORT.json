@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-06-19T14:44:29.649Z",
+  "runAt": "2026-06-19T14:57:13.063Z",
   "states": [
     {
       "name": "01_overworld_tidehaven",
@@ -204,12 +204,18 @@
       "drove": true,
       "newErrors": 0,
       "screenshot": "34_cutscene_reactor.png"
+    },
+    {
+      "name": "35_dungeon_npc",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "35_dungeon_npc.png"
     }
   ],
   "consoleErrors": [],
   "pageErrors": [],
   "snapshot": {
-    "gold": 96,
+    "gold": 88,
     "pearls": 0,
     "active": [
       "pirate",
