@@ -48,7 +48,7 @@ const STATES = [
   { name: '21_dungeon_alcove',  drive: `Game.toDungeon('spirit_wood'); setTimeout(function(){window.__reset&&window.__reset(); var a=Dungeon._debug.alcove()||Dungeon._debug.hazard(); if(a)Dungeon._debug.warp(a.x<0?a.x+3.6:a.x-3.6, a.z);},700)`, wait: 1700 },
 
   // --- model gallery: clean, well-lit, close-up rows so models can be critiqued in detail ---
-  { name: '22_gallery_party1',  drive: `__gallery({party:['pirate','swordsman','healer','dragoon','mage']})`,    wait: 600 },
+  { name: '22_gallery_party1',  drive: `__gallery({party:['pirate','swordsman','healer']})`,    wait: 600 },
   { name: '23_gallery_party2',  drive: `__gallery({party:['ruffy','simon','aladdin','violca']})`,               wait: 600 },
   { name: '24_gallery_party3',  drive: `__gallery({party:['mac','sane','marvyn','quijano']})`,                  wait: 600 },
   { name: '25_gallery_mobs',    drive: `__gallery({enemy:['shark','jelly','octo','crab','gull','golem']})`,     wait: 600 },

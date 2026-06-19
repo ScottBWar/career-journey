@@ -9,8 +9,8 @@ window.Data = (function () {
   const PARTY = [
     {
       key: 'pirate', name: 'Capt. Redbeard', role: 'Pirate', model: 'pirate',
-      base: { hp: 130, mp: 22, atkMin: 16, atkMax: 24, crit: 0.12 },
-      growth: { hp: 14, mp: 3, atk: 3 },
+      base: { hp: 144, mp: 26, atkMin: 18, atkMax: 27, crit: 0.13 },
+      growth: { hp: 15, mp: 3, atk: 3 },
       baseAbilities: [ ab('Cannon Blast', { mp: 8, min: 26, max: 38, target: 'enemy', fx: 'fire', proj: true }) ],
       tree: [
         { id: 'p_hp1', name: 'Sea Legs', desc: '+25 Max HP', cost: 1, kind: 'stat', stat: { hp: 25 } },
@@ -23,11 +23,14 @@ window.Data = (function () {
         { id: 'p_b1', branch: 'b', name: 'Rally', desc: 'PATH: Captain — Attack Up to all allies', cost: 1, req: 'p_atk1', kind: 'ability', ability: ab('Rally', { mp: 12, min: 0, max: 0, target: 'allparty', fx: 'beam', status: 'atkup', turns: 4 }) },
         { id: 'p_b2', branch: 'b', name: 'Sea Dog Grit', desc: '+35 Max HP', cost: 2, req: 'p_b1', kind: 'stat', stat: { hp: 35 } },
         { id: 'p_bcap', branch: 'b', name: 'All Hands!', desc: 'Haste + Regen to all allies', cost: 3, req: 'p_b2', kind: 'ability', ability: ab('All Hands!', { mp: 24, min: 0, max: 0, target: 'allparty', fx: 'beam', status: ['haste', 'regen'], turns: 4 }) },
+        // ⟜ gunpowder elements — bigger booms + a thunder volley
+        { id: 'p_powder', name: 'Powder Monkey', desc: '+6 Special (bigger booms)', cost: 1, req: 'p_atk1', kind: 'stat', stat: { spec: 6 } },
+        { id: 'p_thunder', branch: 'a', name: 'Chain Shot', desc: 'Crackling thunder rounds rake all foes', cost: 2, req: 'p_a1', kind: 'ability', ability: ab('Chain Shot', { mp: 16, min: 24, max: 34, target: 'all', fx: 'beam', el: 'thunder' }) },
       ],
     },
     {
       key: 'swordsman', name: 'Lance Strider', role: 'SOLDIER', model: 'swordsman',
-      base: { hp: 160, mp: 16, atkMin: 24, atkMax: 36, crit: 0.16, big: true },
+      base: { hp: 174, mp: 18, atkMin: 25, atkMax: 38, crit: 0.16, big: true },
       growth: { hp: 18, mp: 2, atk: 4 },
       baseAbilities: [ ab('Blade Beam', { mp: 10, min: 38, max: 52, target: 'enemy', fx: 'beam' }) ],
       tree: [
@@ -41,16 +44,22 @@ window.Data = (function () {
         { id: 's_b1', branch: 'b', name: 'Hastega Edge', desc: 'PATH: Spellblade — Haste all allies', cost: 1, req: 's_atk1', kind: 'ability', ability: ab('Hastega Edge', { mp: 16, min: 0, max: 0, target: 'allparty', fx: 'beam', status: 'haste', turns: 4 }) },
         { id: 's_b2', branch: 'b', name: 'Delay Slash', desc: 'Thunder strike that Slows a foe', cost: 2, req: 's_b1', kind: 'ability', ability: ab('Delay Slash', { mp: 14, min: 30, max: 42, target: 'enemy', fx: 'beam', el: 'thunder', status: 'slow', turns: 3 }) },
         { id: 's_bcap', branch: 'b', name: 'Spiral Cut', desc: 'Hits all foes & Weakens them', cost: 3, req: 's_b2', kind: 'ability', ability: ab('Spiral Cut', { mp: 26, min: 34, max: 48, target: 'all', fx: 'beam', el: 'thunder', status: 'weaken', turns: 3 }) },
+        // ⟜ a fire option so the Spellblade covers more than thunder
+        { id: 's_fire', branch: 'b', name: 'Flametongue', desc: 'A blazing fire slash on a foe', cost: 2, req: 's_b1', kind: 'ability', ability: ab('Flametongue', { mp: 12, min: 36, max: 50, target: 'enemy', fx: 'fire', el: 'fire' }) },
       ],
     },
     {
       key: 'healer', name: 'Marina', role: 'Tide Priestess', model: 'healer',
-      base: { hp: 110, mp: 40, atkMin: 8, atkMax: 14, crit: 0.05 },
-      growth: { hp: 11, mp: 5, atk: 2 },
+      base: { hp: 120, mp: 52, atkMin: 8, atkMax: 14, crit: 0.05 },
+      growth: { hp: 12, mp: 6, atk: 2 },
+      // the party's elemental engine now that Pip is gone — innate Water/Earth/Fire/Thunder,
+      // with Holy & Dark unlocked in her tree (full six-element coverage)
       baseAbilities: [
         ab('Mend', { mp: 6, min: 40, max: 56, target: 'ally', fx: 'heal', heal: true }),
         ab('Brine Bolt', { mp: 8, min: 24, max: 34, target: 'enemy', fx: 'water' }),
-        ab('Coral Spire', { mp: 9, min: 28, max: 40, target: 'enemy', fx: 'beam', el: 'earth' }), // erupts a reef-stone spire — Earth, for variety
+        ab('Coral Spire', { mp: 9, min: 28, max: 40, target: 'enemy', fx: 'beam', el: 'earth' }),
+        ab('Embertide', { mp: 9, min: 28, max: 42, target: 'enemy', fx: 'fire', proj: true }),
+        ab('Stormcall', { mp: 10, min: 26, max: 38, target: 'enemy', fx: 'beam', el: 'thunder' }),
       ],
       tree: [
         { id: 'h_mp1', name: 'Deep Well', desc: '+15 Max MP', cost: 1, kind: 'stat', stat: { mp: 15 } },
@@ -63,45 +72,10 @@ window.Data = (function () {
         { id: 'h_b1', branch: 'b', name: 'Maelstrom', desc: 'PATH: Witch — water damage to all foes', cost: 1, req: 'h_hp1', kind: 'ability', ability: ab('Maelstrom', { mp: 16, min: 26, max: 38, target: 'all', fx: 'water' }) },
         { id: 'h_b2', branch: 'b', name: 'Hex', desc: 'Slow + Weaken a foe', cost: 2, req: 'h_b1', kind: 'ability', ability: ab('Hex', { mp: 14, min: 0, max: 0, target: 'enemy', fx: 'beam', el: 'dark', status: ['slow', 'weaken'], turns: 3 }) },
         { id: 'h_bcap', branch: 'b', name: 'Tsunami', desc: 'Devastating water hit on all foes', cost: 3, req: 'h_b2', kind: 'ability', ability: ab('Tsunami', { mp: 26, min: 38, max: 52, target: 'all', fx: 'water' }) },
-      ],
-    },
-    {
-      key: 'mage', name: 'Pip', role: 'Black Mage', model: 'mage',
-      base: { hp: 95, mp: 46, atkMin: 6, atkMax: 12, crit: 0.05 },
-      growth: { hp: 10, mp: 6, atk: 1 },
-      baseAbilities: [
-        ab('Flare Bolt', { mp: 8, min: 30, max: 44, target: 'enemy', fx: 'fire', proj: true }),
-        ab('Frost', { mp: 8, min: 28, max: 40, target: 'enemy', fx: 'water', proj: true }),
-      ],
-      tree: [
-        { id: 'm_mp1', name: 'Mana Font', desc: '+18 Max MP', cost: 1, kind: 'stat', stat: { mp: 18 } },
-        { id: 'm_atk', name: 'Spell Focus', desc: '+4 Attack', cost: 1, req: 'm_mp1', kind: 'stat', stat: { atk: 4 } },
-        // ⟜ PATH: Elementalist — overwhelming raw magic
-        { id: 'm_a1', branch: 'a', name: 'Firaga', desc: 'PATH: Elementalist — fire on all foes', cost: 1, req: 'm_atk', kind: 'ability', ability: ab('Firaga', { mp: 18, min: 30, max: 44, target: 'all', fx: 'fire' }) },
-        { id: 'm_a2', branch: 'a', name: 'Thundara', desc: 'Heavy bolt on one foe', cost: 2, req: 'm_a1', kind: 'ability', ability: ab('Thundara', { mp: 14, min: 48, max: 66, target: 'enemy', fx: 'beam' }) },
-        { id: 'm_acap', branch: 'a', name: 'Meteor', desc: 'Catastrophe on all foes', cost: 3, req: 'm_a2', kind: 'ability', ability: ab('Meteor', { mp: 28, min: 44, max: 60, target: 'all', fx: 'fire' }) },
-        // ⟜ PATH: Time Sage — bend the battle's tempo
-        { id: 'm_b1', branch: 'b', name: 'Haste', desc: 'PATH: Time Sage — Haste an ally', cost: 1, req: 'm_atk', kind: 'ability', ability: ab('Haste', { mp: 12, min: 0, max: 0, target: 'ally', fx: 'beam', status: 'haste', turns: 4 }) },
-        { id: 'm_b2', branch: 'b', name: 'Slowga', desc: 'Slow ALL foes', cost: 2, req: 'm_b1', kind: 'ability', ability: ab('Slowga', { mp: 18, min: 0, max: 0, target: 'all', fx: 'beam', el: 'dark', status: 'slow', turns: 3 }) },
-        { id: 'm_bcap', branch: 'b', name: 'Comet', desc: 'Dark catastrophe + Weaken all foes', cost: 3, req: 'm_b2', kind: 'ability', ability: ab('Comet', { mp: 28, min: 40, max: 56, target: 'all', fx: 'beam', el: 'dark', status: 'weaken', turns: 3 }) },
-      ],
-    },
-    {
-      key: 'dragoon', name: 'Quint', role: 'Harpooner', model: 'dragoon',
-      base: { hp: 165, mp: 20, atkMin: 22, atkMax: 32, crit: 0.12, big: true },
-      growth: { hp: 17, mp: 3, atk: 4 },
-      baseAbilities: [ ab('Harpoon Cast', { mp: 10, min: 40, max: 56, target: 'enemy', fx: 'beam', el: 'physical' }) ],
-      tree: [
-        { id: 'd_hp', name: 'Old Sea Dog', desc: '+32 Max HP', cost: 1, kind: 'stat', stat: { hp: 32 } },
-        { id: 'd_atk', name: 'Harpoon Mastery', desc: '+5 Attack', cost: 1, req: 'd_hp', kind: 'stat', stat: { atk: 5 } },
-        // ⟜ PATH: Whaler — one colossal throw to fell the biggest prey
-        { id: 'd_a1', branch: 'a', name: 'The White Whale', desc: 'PATH: Whaler — a legendary killing throw', cost: 1, req: 'd_atk', kind: 'ability', ability: ab('The White Whale', { mp: 14, min: 54, max: 72, target: 'enemy', fx: 'beam', el: 'physical' }) },
-        { id: 'd_a2', branch: 'a', name: 'Salt of the Deep', desc: '+40 Max HP', cost: 2, req: 'd_a1', kind: 'stat', stat: { hp: 40 } },
-        { id: 'd_acap', branch: 'a', name: "Leviathan's Wake", desc: 'A harpoon throw that shakes the sea', cost: 3, req: 'd_a2', kind: 'ability', ability: ab("Leviathan's Wake", { mp: 22, min: 80, max: 108, target: 'enemy', fx: 'beam', el: 'water' }) },
-        // ⟜ PATH: Tempest — chum the water and hit the whole school
-        { id: 'd_b1', branch: 'b', name: 'Oil Fire', desc: 'PATH: Tempest — burning oil over all foes', cost: 1, req: 'd_atk', kind: 'ability', ability: ab('Oil Fire', { mp: 16, min: 26, max: 38, target: 'all', fx: 'fire' }) },
-        { id: 'd_b2', branch: 'b', name: 'Net Cast', desc: 'Snares & Slows all foes', cost: 2, req: 'd_b1', kind: 'ability', ability: ab('Net Cast', { mp: 16, min: 0, max: 0, target: 'all', fx: 'beam', status: 'slow', turns: 3 }) },
-        { id: 'd_bcap', branch: 'b', name: 'Maelstrom', desc: 'Water over all foes + Weaken', cost: 3, req: 'd_b2', kind: 'ability', ability: ab('Maelstrom', { mp: 26, min: 36, max: 50, target: 'all', fx: 'water', el: 'water', status: 'weaken', turns: 3 }) },
+        // ⟜ deeper mastery: a Special boost + a Holy & a Dark capstone (round out all six elements)
+        { id: 'h_spec', name: 'Tidecaller', desc: '+10 Special', cost: 1, req: 'h_hp1', kind: 'stat', stat: { spec: 10 } },
+        { id: 'h_holy', branch: 'a', name: 'Radiant Tide', desc: 'Searing holy light over all foes', cost: 3, req: 'h_a2', kind: 'ability', ability: ab('Radiant Tide', { mp: 28, min: 40, max: 56, target: 'all', fx: 'heal', el: 'holy' }) },
+        { id: 'h_dark', branch: 'b', name: 'Abyssal Verdict', desc: 'Dark ruin that Weakens all foes', cost: 3, req: 'h_b2', kind: 'ability', ability: ab('Abyssal Verdict', { mp: 28, min: 38, max: 54, target: 'all', fx: 'beam', el: 'dark', status: 'weaken', turns: 3 }) },
       ],
     },
     {

@@ -132,7 +132,7 @@ window.Game = (function () {
   };
 
   // ---------- dialogue ----------
-  const NAME2PORT = { 'Capt. Redbeard': 'pirate', 'Lance Strider': 'swordsman', 'Marina': 'healer', 'Pip': 'mage', 'Quint': 'dragoon', 'Selachoth': 'selachoth', 'Ruffy': 'ruffy', 'Simon': 'simon', 'Count Saltorre': 'vampire', 'Gilgamuck': 'drifter',
+  const NAME2PORT = { 'Capt. Redbeard': 'pirate', 'Lance Strider': 'swordsman', 'Marina': 'healer', 'Selachoth': 'selachoth', 'Ruffy': 'ruffy', 'Simon': 'simon', 'Count Saltorre': 'vampire', 'Gilgamuck': 'drifter',
     'Aladdin': 'aladdin', 'Jafira': 'genie', 'Violca': 'violca', 'Vyrmithrax': 'skydragon',
     'Mac': 'mac', 'The Thing': 'thething', 'Sané': 'sane', 'The Forest God': 'forestgod',
     'Marvyn': 'marvyn', 'Vogon Constructor': 'vogon', 'Quijano': 'quijano', 'The Giant (a windmill)': 'windmill',
