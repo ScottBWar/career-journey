@@ -155,7 +155,7 @@ window.World = (function () {
     // roamers
     if (!Game.state.islands[key]) Game.state.islands[key] = { cleared: {} };
     const cleared = Game.state.islands[key].cleared;
-    def.encounters.forEach((enc, idx) => {
+    def.encounters && def.encounters.forEach((enc, idx) => {
       if (cleared['e' + idx]) return;
       const colorByPool = { gull: '#cdd6e0', jelly: '#d98cff', shark: '#6f7f8c', crab: '#e0573a', octo: '#a05bd6', golem: '#d9b779' };
       const ro = Models.roamer(colorByPool[enc.pool[0]] || '#ff6b6b'); ro.node.position.set(enc.x, 0, enc.z); ro.node._ph = idx;

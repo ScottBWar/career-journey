@@ -976,7 +976,7 @@ window.Data = (function () {
       name: 'The Neitherworld', size: 50, shape: 'crescent', treeType: 'deadTree', ground: '#2a2238', sand: '#3a2e4a', water: '#0e0a18', sky: { top: '#070410', horizon: '#2a1840' },
       spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
       dungeon: { key: 'neitherworld', x: 0, z: 9, color: '#b06aff' },
-      decor: { trees: 6, palms: 0, rocks: 9 }, shells: { x: 12, z: 6 },
+      decor: { trees: 6, palms: 0, rocks: 9 }, shells: { x: 12, z: 6 }, encounters: [],
     },
     cove: {
       name: 'Castaway Cove', size: 40, shape: 'twin', treeType: 'palm', ground: '#4fae6a', sand: '#ffe7b0', water: '#1fa0c0', sky: { top: '#ff9e6a', horizon: '#ffe7c0' },
