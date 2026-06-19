@@ -116,7 +116,8 @@ window.World = (function () {
 
     // player avatar = the active party leader
     const leaderKey = Game.state.active[0] || 'pirate'; const leaderModel = Progress.def(leaderKey).model;
-    const hero = Models[leaderModel] ? Models[leaderModel]() : Models.hero(); player = hero.node; playerArm = hero.arm || hero.staffPiv || null;
+    const leaderWeapon = (Game.state.equip[leaderKey] || {}).weapon;
+    const hero = Models[leaderModel] ? Models[leaderModel](leaderWeapon) : Models.hero(); player = hero.node; playerArm = hero.arm || hero.staffPiv || null;
     if (playerArm) playerArm.rotation.x = 1.0; // rest the weapon down instead of holding it straight out
     player.position.set(Game.state.location.x, 0, Game.state.location.z);
     cam = new BABYLON.UniversalCamera('wcam', new V3(0, 18, -16), scene); cam.fov = 0.8;

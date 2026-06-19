@@ -58,8 +58,8 @@ window.Dungeon = (function () {
 
     if (solvedPuzzle) { gate.position.y = 8; crystals.forEach(c => setLit(c, true)); }
 
-    const leaderModel = Progress.def(Game.state.active[0] || 'pirate').model;
-    const hero = Models[leaderModel] ? Models[leaderModel]() : Models.hero(); player = hero.node;
+    const leaderKey = Game.state.active[0] || 'pirate'; const leaderModel = Progress.def(leaderKey).model;
+    const hero = Models[leaderModel] ? Models[leaderModel]((Game.state.equip[leaderKey] || {}).weapon) : Models.hero(); player = hero.node;
     if (hero.arm) hero.arm.rotation.x = 1.0;
     player.position.set(def.spawn.x, 0, def.spawn.z);
     cam = new BABYLON.UniversalCamera('dcam', new V3(0, 16, -15), scene); cam.fov = 0.9;

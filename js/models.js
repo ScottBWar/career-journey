@@ -18,8 +18,78 @@ window.Models = (function () {
   }
   function at(mesh, parent, m, x = 0, y = 0, z = 0) { mesh.material = m; mesh.parent = parent; mesh.position.set(x, y, z); return mesh; }
 
+  // ---------------- WEAPONS (FF7-style: the equipped weapon changes the held mesh) ----------------
+  // per-character archetype: a hold style + a tier palette. weaponSpec() reads the
+  // equipped weapon's index in Data.WEAPONS[char] to pick size/colour/glow.
+  const WEAP_ARCH = {
+    pirate:   { style: 'sword',    base: '#c9d2dc', guard: '#d9a521', top: '#ffe08a' },
+    swordsman:{ style: 'bigsword', base: '#cdd6e0', guard: '#7a8190', top: '#ff6a6a' },
+    blader:   { style: 'katana',   base: '#dfe7ef', guard: '#caa84a', top: '#7fffd0' },
+    dragoon:  { style: 'lance',    base: '#c9d2dc', guard: '#caa030', top: '#5eead4' },
+    ruffy:    { style: 'fist',     base: '#b8342a', guard: '#d9a521', top: '#ffd24a' },
+    simon:    { style: 'whip',     base: '#9a9aa8', guard: '#3a2616', top: '#caa030' },
+    aladdin:  { style: 'scimitar', base: '#cfd8e4', guard: '#caa030', top: '#ffe08a' },
+    violca:   { style: 'bow',      base: '#6b4a2a', guard: '#cfd8e4', top: '#fde047' },
+    healer:   { style: 'staff',    base: '#9be7ff', guard: '#caa030', top: '#fff0a0' },
+    mage:     { style: 'wand',     base: '#ff7eb0', guard: '#b06aff', top: '#b06aff' },
+  };
+  function weaponSpec(charKey, weaponKey) {
+    const a = WEAP_ARCH[charKey] || WEAP_ARCH.pirate;
+    const list = (window.Data && Data.WEAPONS[charKey]) || [];
+    let idx = list.findIndex(w => w.key === weaponKey); if (idx < 0) idx = 0;
+    const top = list.length > 1 && idx === list.length - 1;
+    return { style: a.style, tier: idx, top, grow: 1 + idx * 0.13, col: top ? a.top : a.base, guard: a.guard, glow: top };
+  }
+  function attachWeapon(parent, pos, rot, spec) {
+    const wn = new BABYLON.TransformNode('weapon', scene); wn.parent = parent; wn.position.set(pos[0], pos[1], pos[2]); wn.rotation.set(rot[0] || 0, rot[1] || 0, rot[2] || 0);
+    const g = spec.grow, col = spec.col, glow = spec.glow;
+    const blade = (hex) => M('wBlade', hex, glow ? { spec: 0.9, specPower: 80, emissive: hex } : { spec: 0.9, specPower: 80 });
+    const guardM = M('wGuard', spec.guard, { emissive: glow ? spec.guard : '#3a2e08' });
+    const grip = M('wGrip', '#2a2018');
+    switch (spec.style) {
+      case 'sword':
+        at(MB.CreateBox('bl', { width: 0.09, height: 1.3 * g, depth: 0.16 }, scene), wn, blade(col), 0, 0.55 * g, 0);
+        at(MB.CreateBox('gd', { width: 0.34, height: 0.1, depth: 0.22 }, scene), wn, guardM, 0, -0.05, 0);
+        at(MB.CreateCylinder('gr', { height: 0.3, diameter: 0.09 }, scene), wn, grip, 0, -0.25, 0); break;
+      case 'scimitar': {
+        const b = at(MB.CreateBox('bl', { width: 0.1, height: 1.2 * g, depth: 0.14 }, scene), wn, blade(col), 0.06, 0.55 * g, 0); b.rotation.z = 0.16;
+        at(MB.CreateBox('gd', { width: 0.32, height: 0.1, depth: 0.2 }, scene), wn, guardM, 0, -0.05, 0); break; }
+      case 'bigsword':
+        at(MB.CreateBox('bl', { width: 0.4 * Math.min(1.4, g), height: 2.4 * g, depth: 0.1 }, scene), wn, blade(col), 0, 1.1 * g, 0);
+        at(MB.CreateBox('edge', { width: 0.1, height: 2.3 * g, depth: 0.12 }, scene), wn, M('wEdge', '#9aa6b4', glow ? { spec: 0.9, emissive: col } : { spec: 0.9 }), 0.15, 1.1 * g, 0);
+        at(MB.CreateBox('gd', { width: 0.5, height: 0.14, depth: 0.2 }, scene), wn, guardM, 0, -0.1, 0);
+        at(MB.CreateCylinder('gr', { height: 0.5, diameter: 0.1 }, scene), wn, grip, 0, -0.4, 0); break;
+      case 'katana':
+        at(MB.CreateBox('bl', { width: 0.07, height: 1.6 * g, depth: 0.14 }, scene), wn, blade(col), 0, 0.8 * g, 0);
+        at(MB.CreateBox('gd', { width: 0.26, height: 0.08, depth: 0.2 }, scene), wn, guardM, 0, -0.05, 0);
+        at(MB.CreateCylinder('gr', { height: 0.34, diameter: 0.09 }, scene), wn, grip, 0, -0.25, 0); break;
+      case 'lance':
+        at(MB.CreateCylinder('shaft', { height: 2.6 * g, diameter: 0.09 }, scene), wn, M('wShaft', '#6b4423'), 0, 0.7, 0);
+        at(MB.CreateCylinder('tip', { height: 0.55, diameterTop: 0, diameterBottom: 0.2 }, scene), wn, blade(col), 0, 1.95 * g, 0);
+        [-1, 1].forEach(s => at(MB.CreateCylinder('barb', { height: 0.3, diameterTop: 0, diameterBottom: 0.12 }, scene), wn, blade(col), s * 0.12, 1.72 * g, 0).rotation.z = s * 1.0);
+        at(MB.CreateTorus('coil', { diameter: 0.4, thickness: 0.07, tessellation: 12 }, scene), wn, M('wRope', '#caa86a'), 0, 0, 0).rotation.x = Math.PI / 2; break;
+      case 'fist':
+        at(MB.CreateBox('gaunt', { width: 0.42, height: 0.5, depth: 0.42 }, scene), wn, M('wFist', col, { emissive: glow ? col : '#3a0a08' }), 0, 0, 0);
+        [-0.13, 0, 0.13].forEach(x => at(MB.CreateSphere('stud', { diameter: 0.13 }, scene), wn, guardM, x, 0.18, 0.22)); break;
+      case 'whip': {
+        at(MB.CreateBox('handle', { width: 0.1, height: 0.4, depth: 0.1 }, scene), wn, M('wHandle', spec.guard), 0, 0.2, 0);
+        const links = 5 + spec.tier; for (let i = 0; i < links; i++) at(MB.CreateSphere('lk' + i, { diameter: 0.16 - i * 0.012 }, scene), wn, M('wLink' + i, col, glow ? { spec: 0.6, emissive: col } : { spec: 0.6 }), 0, 0.45 + i * 0.16, 0); break; }
+      case 'bow': {
+        const b = at(MB.CreateTorus('arc', { diameter: 1.7 * g, thickness: 0.08, tessellation: 20, arc: 0.5 }, scene), wn, M('wBow', col, glow ? { emissive: col } : {}), 0, 0, 0); b.rotation.z = Math.PI / 2;
+        at(MB.CreateCylinder('str', { height: 1.65 * g, diameter: 0.02 }, scene), wn, M('wStr', '#e8e0d0'), 0, 0, -0.12); break; }
+      case 'staff':
+        at(MB.CreateCylinder('pole', { height: 2.0 * g, diameter: 0.08 }, scene), wn, M('wPole', '#b07a3a'), 0, 0, 0);
+        at(MB.CreateSphere('orb', { diameter: 0.42 }, scene), wn, M('wOrb', col, { emissive: col }), 0, 1.05 * g, 0); break;
+      case 'wand':
+        at(MB.CreateCylinder('pole', { height: 1.8 * g, diameter: 0.07 }, scene), wn, M('wPole2', '#7a5230'), 0, 0.2, 0);
+        at(MB.CreateSphere('orb', { diameter: 0.34 }, scene), wn, M('wOrb2', col, { emissive: col }), 0, 1.1 * g, 0); break;
+    }
+    if (glow) { const yy = (spec.style === 'bigsword' ? 1.1 : spec.style === 'lance' ? 1.9 : spec.style === 'staff' || spec.style === 'wand' ? 1.05 : 0.55) * g; const s = at(MB.CreateSphere('wglow', { diameter: 0.7 }, scene), wn, M('wGlowM', col, { emissive: col, alpha: 0.18 }), 0, yy, 0); s.material.alphaMode = BABYLON.Engine.ALPHA_ADD; s.isPickable = false; }
+    return wn;
+  }
+
   // ---------------- PARTY ----------------
-  function pirate() {
+  function pirate(weaponKey) {
     const r = new BABYLON.TransformNode('pirate', scene);
     const coat = M('coat', '#7a1f1f'), coat2 = M('coat2', '#9c2a2a'), dark = M('dark', '#2a2018'),
           skin = M('skin', '#d9a06b'), gold = M('gold', '#d9a521', { emissive: '#4a3606' }),
@@ -37,13 +107,11 @@ window.Models = (function () {
     at(MB.CreateCylinder('brim', { height: 0.08, diameter: 0.95 }, scene), r, dark, 0, 2.83, 0);
     at(MB.CreateSphere('htop', { diameter: 0.62, slice: 0.5 }, scene), r, dark, 0, 2.85, 0);
     at(MB.CreateBox('skull', { width: 0.16, height: 0.16, depth: 0.05 }, scene), r, M('skullP', '#f2ead9', { emissive: '#3a3528' }), 0, 2.97, 0.3);
-    const sw = new BABYLON.TransformNode('swR', scene); sw.parent = arm; sw.position.set(0, -0.7, 0.3); sw.rotation.x = 1.35;
-    at(MB.CreateBox('blade', { width: 0.08, height: 1.3, depth: 0.16 }, scene), sw, steel, 0, 0.55, 0);
-    at(MB.CreateBox('guard', { width: 0.32, height: 0.1, depth: 0.22 }, scene), sw, gold, 0, -0.05, 0);
+    attachWeapon(arm, [0, -0.7, 0.3], [1.35, 0, 0], weaponSpec('pirate', weaponKey));
     return { node: r, arm };
   }
 
-  function swordsman() {
+  function swordsman(weaponKey) {
     const r = new BABYLON.TransformNode('swordsman', scene);
     const navy = M('navy', '#2c3a52'), navy2 = M('navy2', '#3a4d6b'), hair = M('hair', '#e7d27a', { emissive: '#4a4010' }),
           skin = M('skin2', '#cf9a78'), steel = M('steel2', '#c9d2dc', { spec: 0.8 }), dark = M('dk', '#2a2018');
@@ -58,15 +126,11 @@ window.Models = (function () {
     at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.5, 0);
     const sp = [[0,0.45,0,0,0,0],[-0.18,0.42,0.05,0,0,0.5],[0.18,0.42,0.05,0,0,-0.5],[0,0.4,0.22,0.6,0,0],[0,0.4,-0.2,-0.6,0,0],[-0.22,0.3,-0.05,0,0,0.9],[0.22,0.3,-0.05,0,0,-0.9]];
     sp.forEach((s, i) => { const c = at(MB.CreateCylinder('hair'+i, { height: 0.6, diameterTop: 0, diameterBottom: 0.26 }, scene), r, hair, s[0], 2.72 + s[1]*0.2, s[2]); c.rotation.set(s[3], s[4], s[5]); });
-    const sw = new BABYLON.TransformNode('swR', scene); sw.parent = arm; sw.position.set(0.1, -0.7, 0.3); sw.rotation.x = 1.3;
-    at(MB.CreateBox('blade', { width: 0.38, height: 2.7, depth: 0.09 }, scene), sw, M('busterBlade', '#cdd6e0', { spec: 0.9, specPower: 80 }), 0, 1.25, 0);
-    at(MB.CreateBox('edge', { width: 0.1, height: 2.6, depth: 0.11 }, scene), sw, M('busterEdge', '#9aa6b4', { spec: 0.9 }), 0.14, 1.25, 0);
-    at(MB.CreateBox('guard', { width: 0.5, height: 0.14, depth: 0.2 }, scene), sw, steel, 0, -0.1, 0);
-    at(MB.CreateCylinder('grip', { height: 0.5, diameter: 0.1 }, scene), sw, dark, 0, -0.4, 0);
+    attachWeapon(arm, [0.1, -0.7, 0.3], [1.3, 0, 0], weaponSpec('swordsman', weaponKey));
     return { node: r, arm };
   }
 
-  function healer() {
+  function healer(weaponKey) {
     const r = new BABYLON.TransformNode('healer', scene);
     const robe = M('robe', '#2fae9a', { emissive: '#0c3a33' }), robe2 = M('robe2', '#7fe3d4'),
           hairC = M('hairC', '#37c0e0', { emissive: '#0a3a48' }), skin = M('skinH', '#d9a06b');
@@ -79,14 +143,16 @@ window.Models = (function () {
     at(MB.CreateSphere('hairTop', { diameter: 0.6, slice: 0.6 }, scene), r, hairC, 0, 2.42, 0);
     const halo = at(MB.CreateTorus('halo', { diameter: 0.7, thickness: 0.05, tessellation: 24 }, scene), r, M('halo', '#fff6c2', { emissive: '#fff0a0' }), 0, 2.85, 0);
     halo.rotation.x = Math.PI / 2.3;
+    const sp = weaponSpec('healer', weaponKey);
     const staffPiv = new BABYLON.TransformNode('staffPiv', scene); staffPiv.parent = r; staffPiv.position.set(0.72, 1.6, 0.1);
-    at(MB.CreateCylinder('staff', { height: 2.0, diameter: 0.08 }, scene), staffPiv, M('staffMat', '#b07a3a'), 0, 0, 0);
-    const orb = at(MB.CreateSphere('orb', { diameter: 0.42 }, scene), staffPiv, M('orbMat', '#9be7ff', { emissive: '#3fb8ff' }), 0, 1.05, 0);
+    at(MB.CreateCylinder('staff', { height: 2.0 * sp.grow, diameter: 0.08 }, scene), staffPiv, M('staffMat', sp.top ? sp.guard : '#b07a3a'), 0, 0, 0);
+    const orb = at(MB.CreateSphere('orb', { diameter: 0.42 }, scene), staffPiv, M('orbMat', sp.col, { emissive: sp.col }), 0, 1.05 * sp.grow, 0);
+    if (sp.top) { const gl = at(MB.CreateSphere('orbGlow', { diameter: 0.8 }, scene), staffPiv, M('orbGlowM', sp.col, { emissive: sp.col, alpha: 0.2 }), 0, 1.05 * sp.grow, 0); gl.material.alphaMode = BABYLON.Engine.ALPHA_ADD; gl.isPickable = false; }
     return { node: r, halo, orb, staffPiv, idle(t) { halo.rotation.z = t * 1.2; orb.scaling.setAll(1 + Math.sin(t * 3) * 0.08); } };
   }
 
   // ---- new PS1-RPG-inspired party members ----
-  function mage() { // "Pip" — tiny black mage (FF9 Vivi vibe): huge hat, glowing eyes
+  function mage(weaponKey) { // "Pip" — tiny black mage (FF9 Vivi vibe): huge hat, glowing eyes
     const r = new BABYLON.TransformNode('mage', scene);
     const robe = M('mgRobe', '#3a3f6b'), robe2 = M('mgRobe2', '#2a2e52'), hat = M('mgHat', '#1c2040'),
           glow = M('mgEye', '#ffe066', { emissive: '#ffd000' }), gold = M('mgGold', '#e0b34a', { emissive: '#5a4208' });
@@ -100,13 +166,15 @@ window.Models = (function () {
     at(MB.CreateBox('band', { width: 1.05, height: 0.16, depth: 1.05 }, scene), r, gold, 0, 2.12, 0);
     // arms
     at(MB.CreateCylinder('aL', { height: 0.7, diameter: 0.18 }, scene), r, robe, -0.5, 1.1, 0).rotation.z = 0.4;
+    const sp = weaponSpec('mage', weaponKey);
     const staffPiv = new BABYLON.TransformNode('mgStaff', scene); staffPiv.parent = r; staffPiv.position.set(0.55, 1.0, 0.1);
-    at(MB.CreateCylinder('staff', { height: 1.8, diameter: 0.07 }, scene), staffPiv, M('mgStaffMat', '#7a5230'), 0, 0.2, 0);
-    const orb = at(MB.CreateSphere('orb', { diameter: 0.34 }, scene), staffPiv, M('mgOrb', '#ff7eb0', { emissive: '#ff3a8a' }), 0, 1.1, 0);
+    at(MB.CreateCylinder('staff', { height: 1.8 * sp.grow, diameter: 0.07 }, scene), staffPiv, M('mgStaffMat', sp.top ? sp.guard : '#7a5230'), 0, 0.2, 0);
+    const orb = at(MB.CreateSphere('orb', { diameter: 0.34 }, scene), staffPiv, M('mgOrb', sp.col, { emissive: sp.col }), 0, 1.1 * sp.grow, 0);
+    if (sp.top) { const gl = at(MB.CreateSphere('mgGlow', { diameter: 0.7 }, scene), staffPiv, M('mgGlowM', sp.col, { emissive: sp.col, alpha: 0.2 }), 0, 1.1 * sp.grow, 0); gl.material.alphaMode = BABYLON.Engine.ALPHA_ADD; gl.isPickable = false; }
     return { node: r, staffPiv, idle(t) { orb.scaling.setAll(1 + Math.sin(t * 4) * 0.1); } };
   }
 
-  function blader() { // "Ridge" — spiky-haired katana fighter (Chrono Trigger vibe)
+  function blader(weaponKey) { // "Ridge" — spiky-haired katana fighter (Chrono Trigger vibe)
     const r = new BABYLON.TransformNode('blader', scene);
     const tunic = M('blTunic', '#3f7fae'), pants = M('blPants', '#2b3a4a'), skin = M('blSkin', '#d9a06b'),
           hair = M('blHair', '#e2622a', { emissive: '#5a1e08' }), steel = M('blSteel', '#cdd6e0', { spec: 0.9 }), band = M('blBand', '#d83a3a');
@@ -121,15 +189,11 @@ window.Models = (function () {
     at(MB.CreateTorus('band', { diameter: 0.62, thickness: 0.08, tessellation: 16 }, scene), r, band, 0, 2.45, 0).rotation.x = Math.PI / 2;
     // spiky hair
     [[0,0.4,0,0,0,0],[-0.2,0.35,0,0,0,0.6],[0.2,0.35,0,0,0,-0.6],[0,0.34,0.2,0.7,0,0],[-0.15,0.3,-0.15,0,0,1.0],[0.15,0.3,-0.15,0,0,-1.0]].forEach((s,i)=>{ const c = at(MB.CreateCylinder('hair'+i,{height:0.55,diameterTop:0,diameterBottom:0.24},scene), r, hair, s[0], 2.62+s[1]*0.2, s[2]); c.rotation.set(s[3],s[4],s[5]); });
-    // katana
-    const sw = new BABYLON.TransformNode('blSword', scene); sw.parent = arm; sw.position.set(0, -0.7, 0.3); sw.rotation.x = 1.35;
-    at(MB.CreateBox('blade', { width: 0.07, height: 1.7, depth: 0.14 }, scene), sw, steel, 0, 0.8, 0);
-    at(MB.CreateBox('guard', { width: 0.26, height: 0.08, depth: 0.2 }, scene), sw, M('blGuard', '#caa84a', { emissive: '#5a4208' }), 0, -0.05, 0);
-    at(MB.CreateCylinder('grip', { height: 0.34, diameter: 0.09 }, scene), sw, M('blGrip', '#2a2018'), 0, -0.25, 0);
+    attachWeapon(arm, [0, -0.7, 0.3], [1.35, 0, 0], weaponSpec('blader', weaponKey));
     return { node: r, arm };
   }
 
-  function dragoon() { // "Quint" — grizzled harpoon-fisherman (Moby Dick whaler)
+  function dragoon(weaponKey) { // "Quint" — grizzled harpoon-fisherman (Moby Dick whaler)
     const r = new BABYLON.TransformNode('dragoon', scene);
     const coat = M('dgCoat', '#3a5a55', { spec: 0.2 }), coat2 = M('dgCoat2', '#2d4742'), pants = M('dgPants', '#3a3024'),
           steel = M('dgSteel', '#c9d2dc', { spec: 0.9 }), skin = M('dgSkin', '#c89a72'), hair = M('dgHair', '#8a7a66'),
@@ -152,12 +216,7 @@ window.Models = (function () {
     // eyepatch
     at(MB.CreateBox('patch', { width: 0.2, height: 0.18, depth: 0.06 }, scene), r, dark, 0.15, 2.56, 0.28);
     at(MB.CreateBox('strap', { width: 0.62, height: 0.05, depth: 0.5 }, scene), r, dark, 0, 2.62, 0.05);
-    // harpoon in hand: shaft, rope coil, barbed tip
-    const sp = new BABYLON.TransformNode('dgSpear', scene); sp.parent = arm; sp.position.set(0, -0.7, 0.35); sp.rotation.x = 1.45;
-    at(MB.CreateCylinder('shaft', { height: 2.8, diameter: 0.09 }, scene), sp, M('dgShaft', '#6b4423'), 0, 0.7, 0);
-    at(MB.CreateTorus('coil', { diameter: 0.4, thickness: 0.07, tessellation: 12 }, scene), sp, rope, 0, 0.0, 0).rotation.x = Math.PI / 2;
-    at(MB.CreateCylinder('tip', { height: 0.55, diameterTop: 0, diameterBottom: 0.2 }, scene), sp, steel, 0, 2.2, 0);
-    [-1, 1].forEach(s => at(MB.CreateCylinder('barb', { height: 0.3, diameterTop: 0, diameterBottom: 0.12 }, scene), sp, steel, s * 0.12, 1.95, 0).rotation.z = s * 1.0);
+    attachWeapon(arm, [0, -0.7, 0.35], [1.45, 0, 0], weaponSpec('dragoon', weaponKey));
     return { node: r, arm };
   }
 
@@ -298,7 +357,7 @@ window.Models = (function () {
     at(MB.CreateSphere('hair', { diameter: 0.6, slice: 0.55 }, scene), r, hair, 0, 2.18, 0);
     return { node: r, idle(t) { r.position.y = (r._baseY || 0) + Math.sin(t * 2 + (r._ph || 0)) * 0.04; } };
   }
-  function rival() { // "Ruffy" — straw-hat rubber pirate (Luffy homage)
+  function rival(weaponKey) { // "Ruffy" — straw-hat rubber pirate (Luffy homage)
     const r = new BABYLON.TransformNode('rival', scene);
     const skin = M('rvSkin', '#e8b48a'), vest = M('rvVest', '#c2332a'), shorts = M('rvShorts', '#2f5aa0'),
           hair = M('rvHair', '#161616'), straw = M('rvStraw', '#e0b96a'), band = M('rvBand', '#b8342a');
@@ -318,6 +377,7 @@ window.Models = (function () {
     at(MB.CreateCylinder('brim', { height: 0.07, diameter: 1.1, tessellation: 20 }, scene), r, straw, 0, 2.62, 0);
     at(MB.CreateTorus('hatband', { diameter: 0.66, thickness: 0.08, tessellation: 18 }, scene), r, band, 0, 2.66, 0).rotation.x = Math.PI/2;
     at(MB.CreateCylinder('dome', { height: 0.34, diameterTop: 0.5, diameterBottom: 0.64, tessellation: 20 }, scene), r, straw, 0, 2.82, 0);
+    attachWeapon(arm, [0, -0.95, 0], [0, 0, 0], weaponSpec('ruffy', weaponKey)); // gauntlets over the fist
     return { node: r, arm };
   }
 
@@ -638,9 +698,9 @@ window.Models = (function () {
   const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon };
 
   // ---------------- ALADDIN (street-rat ally) ----------------
-  function aladdin() {
+  function aladdin(weaponKey) {
     const r = new BABYLON.TransformNode('aladdin', scene);
-    const vest = M('alVest', '#7a1f6a'), skin = M('alSkin', '#c08a5a'), pants = M('alPants', '#e8e0d0'), hair = M('alHair', '#1a1208'), fez = M('alFez', '#b03030'), steel = M('alSteel', '#cfd8e4', { spec: 0.8 });
+    const vest = M('alVest', '#7a1f6a'), skin = M('alSkin', '#c08a5a'), pants = M('alPants', '#e8e0d0'), hair = M('alHair', '#1a1208'), fez = M('alFez', '#b03030');
     at(MB.CreateCylinder('lL', { height: 1.2, diameter: 0.34 }, scene), r, pants, -0.22, 0.6, 0);
     at(MB.CreateCylinder('lR', { height: 1.2, diameter: 0.34 }, scene), r, pants, 0.22, 0.6, 0);
     at(MB.CreateBox('sash', { width: 0.96, height: 0.2, depth: 0.58 }, scene), r, fez, 0, 1.3, 0);
@@ -653,17 +713,15 @@ window.Models = (function () {
     at(MB.CreateSphere('hair', { diameter: 0.66, slice: 0.5 }, scene), r, hair, 0, 2.66, -0.04);
     at(MB.CreateCylinder('fez', { height: 0.36, diameterTop: 0.34, diameterBottom: 0.4 }, scene), r, fez, 0, 2.92, 0);
     at(MB.CreateBox('tassel', { width: 0.06, height: 0.3, depth: 0.06 }, scene), r, M('alTas', '#caa030'), 0.18, 2.95, 0);
-    const sw = new BABYLON.TransformNode('swR', scene); sw.parent = arm; sw.position.set(0, -0.7, 0.25); sw.rotation.x = 1.3;
-    at(MB.CreateBox('blade', { width: 0.08, height: 1.1, depth: 0.14 }, scene), sw, steel, 0, 0.5, 0).rotation.z = 0.12; // curved scimitar feel
-    at(MB.CreateBox('guard', { width: 0.3, height: 0.1, depth: 0.2 }, scene), sw, M('alG', '#caa030'), 0, -0.05, 0);
+    attachWeapon(arm, [0, -0.7, 0.25], [1.3, 0, 0], weaponSpec('aladdin', weaponKey));
     return { node: r, arm };
   }
 
   // ---------------- VIOLCA (Fourth-Wing-style archer ally) ----------------
-  function violca() {
+  function violca(weaponKey) {
     const r = new BABYLON.TransformNode('violca', scene);
     const leather = M('viL', '#2a3242'), leather2 = M('viL2', '#3a4658'), skin = M('viSkin', '#dcb89a'), hair = M('viHair', '#3a2418'),
-          accent = M('viAcc', '#7a2a4a'), bow = M('viBow', '#5a3a1e'), steel = M('viSteel', '#cfd8e4', { spec: 0.8 });
+          accent = M('viAcc', '#7a2a4a'), steel = M('viSteel', '#cfd8e4', { spec: 0.8 });
     at(MB.CreateCylinder('lL', { height: 1.3, diameter: 0.3 }, scene), r, leather, -0.2, 0.65, 0);
     at(MB.CreateCylinder('lR', { height: 1.3, diameter: 0.3 }, scene), r, leather, 0.2, 0.65, 0);
     at(MB.CreateBox('torso', { width: 0.84, height: 1.2, depth: 0.5 }, scene), r, leather2, 0, 1.65, 0);
@@ -681,15 +739,12 @@ window.Models = (function () {
     // a quiver of arrows on the back
     at(MB.CreateCylinder('quiver', { height: 0.9, diameter: 0.28 }, scene), r, M('viQ', '#3a2418'), -0.32, 2.0, -0.34).rotation.z = -0.2;
     for (let i = 0; i < 4; i++) at(MB.CreateCylinder('arr', { height: 0.5, diameter: 0.04 }, scene), r, steel, -0.32 + i*0.06, 2.6, -0.34);
-    // the bow, held forward in the right hand
-    const bowPiv = new BABYLON.TransformNode('bow', scene); bowPiv.parent = arm; bowPiv.position.set(0, -0.6, 0.2);
-    const b = at(MB.CreateTorus('bowarc', { diameter: 1.9, thickness: 0.08, tessellation: 20, arc: 0.5 }, scene), bowPiv, bow, 0, 0, 0); b.rotation.z = Math.PI / 2;
-    at(MB.CreateCylinder('string', { height: 1.85, diameter: 0.02 }, scene), bowPiv, M('viStr', '#e8e0d0'), 0.0, 0, -0.12);
+    attachWeapon(arm, [0, -0.6, 0.2], [0, 0, 0], weaponSpec('violca', weaponKey)); // bow, held forward
     return { node: r, arm };
   }
 
   // ---------------- SIMON (temporary vampire-hunter ally) ----------------
-  function simon() {
+  function simon(weaponKey) {
     const r = new BABYLON.TransformNode('simon', scene);
     const tunic = M('smTunic', '#7a4a1f'), tunic2 = M('smTunic2', '#94632c'), armor = M('smArmor', '#b8bcc8', { spec: 0.7 }),
           skin = M('smSkin', '#cf9a78'), hair = M('smHair', '#5a3a18'), band = M('smBand', '#b03030'), leather = M('smLeather', '#3a2616');
@@ -704,10 +759,7 @@ window.Models = (function () {
     at(MB.CreateSphere('head', { diameter: 0.6 }, scene), r, skin, 0, 2.5, 0);
     at(MB.CreateSphere('hair', { diameter: 0.66, slice: 0.55 }, scene), r, hair, 0, 2.62, -0.04);
     at(MB.CreateBox('band', { width: 0.66, height: 0.14, depth: 0.62 }, scene), r, band, 0, 2.66, 0);
-    // the legendary whip — a chain of short links hanging from the right hand
-    const whip = new BABYLON.TransformNode('whip', scene); whip.parent = arm; whip.position.set(0, -0.7, 0.25); whip.rotation.x = 1.2;
-    at(MB.CreateBox('handle', { width: 0.1, height: 0.4, depth: 0.1 }, scene), whip, leather, 0, 0.2, 0);
-    for (let i = 0; i < 6; i++) at(MB.CreateSphere('lk'+i, { diameter: 0.16 - i*0.012 }, scene), whip, M('smLink'+i, '#9a9aa8', { spec: 0.6 }), 0, 0.45 + i*0.18, 0);
+    attachWeapon(arm, [0, -0.7, 0.25], [1.2, 0, 0], weaponSpec('simon', weaponKey)); // the legendary whip
     return { node: r, arm };
   }
 
