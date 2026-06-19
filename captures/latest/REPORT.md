@@ -1,9 +1,14 @@
-# Capture report — 2026-06-19T12:13:14.696Z
+# Capture report — 2026-06-19T12:28:19.262Z
 
-## JS errors: 0
-_none — no runtime errors caught_
+## JS errors: 1
+- **30_battle_omega**: TypeError: ENEMY_BUILDERS[key] is not a function
+    at Object.enemy (http://localhost:61464/js/models.js:1279:71)
+    at http://localhost:61464/js/battle.js:75:28
+    at Array.forEach (<anonymous>)
+    at Object.build (http://localhost:61464/js/battle.js:73:12)
+    at http://localhost:61464/js/main.js:110:60
 
-## States captured (29)
+## States captured (31)
 - ✅ `01_overworld_tidehaven.png`
 - ✅ `02_overworld_paegina.png`
 - ✅ `03_overworld_duskmoor.png`
@@ -33,11 +38,13 @@ _none — no runtime errors caught_
 - ✅ `27_gallery_bosses2.png`
 - ✅ `28_gallery_dunmobs.png`
 - ✅ `29_battle_ruffy.png`
+- ⚠️ `30_battle_omega.png` — 1 new error(s)
+- ✅ `31_gallery_omega.png`
 
 ## Game-state snapshot
 ```json
 {
-  "gold": 89,
+  "gold": 98,
   "pearls": 0,
   "active": [
     "pirate",

@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-06-19T12:13:14.696Z",
+  "runAt": "2026-06-19T12:28:19.262Z",
   "states": [
     {
       "name": "01_overworld_tidehaven",
@@ -174,12 +174,29 @@
       "drove": true,
       "newErrors": 0,
       "screenshot": "29_battle_ruffy.png"
+    },
+    {
+      "name": "30_battle_omega",
+      "drove": true,
+      "newErrors": 1,
+      "screenshot": "30_battle_omega.png"
+    },
+    {
+      "name": "31_gallery_omega",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "31_gallery_omega.png"
     }
   ],
   "consoleErrors": [],
-  "pageErrors": [],
+  "pageErrors": [
+    {
+      "state": "30_battle_omega",
+      "text": "TypeError: ENEMY_BUILDERS[key] is not a function\n    at Object.enemy (http://localhost:61464/js/models.js:1279:71)\n    at http://localhost:61464/js/battle.js:75:28\n    at Array.forEach (<anonymous>)\n    at Object.build (http://localhost:61464/js/battle.js:73:12)\n    at http://localhost:61464/js/main.js:110:60"
+    }
+  ],
   "snapshot": {
-    "gold": 89,
+    "gold": 98,
     "pearls": 0,
     "active": [
       "pirate",
