@@ -15,6 +15,7 @@ window.Cutscene = (function () {
   function play(bts, onDone) {
     beats = bts; idx = 0; onDoneCb = onDone; engine = Game.engine;
     prevScene = Game.scene; Game.dialogueOpen = true;
+    if (window.Music) Music.play('cutscene');
     build();
     Game.scene = scene;
     document.body.classList.add('cine-on');
@@ -98,6 +99,7 @@ window.Cutscene = (function () {
     el('cine').classList.remove('show'); el('cine').onclick = null; document.body.classList.remove('cine-on');
     if (scene) { scene.dispose(); scene = null; }
     Game.scene = prevScene; Game.dialogueOpen = false; Game._advanceDlg = null;
+    if (window.Music && Game.musicForReturn) Music.play(Game.musicForReturn()); // restore the area's track (a boss/battle that follows will override)
     const cb = onDoneCb; onDoneCb = null; if (cb) cb();
   }
 

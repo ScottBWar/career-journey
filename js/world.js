@@ -241,10 +241,10 @@ window.World = (function () {
   }
 
   function startRoamerBattle(r, firstStrike) {
-    const track = key === 'paegina' ? 'paegina' : 'battle';
-    locked = true; paused = true; Music.play(track);
+    const music = key === 'paegina' ? 'paegina' : null; // null → startBattle cycles through the battle themes
+    locked = true; paused = true;
     if (firstStrike) Game.toast('First strike!');
-    Game.startBattle(Data.randomEncounter(r.enc), { firstStrike: !!firstStrike, music: track }, (res) => {
+    Game.startBattle(Data.randomEncounter(r.enc), { firstStrike: !!firstStrike, music: music }, (res) => {
       if (res.won) { Game.state.islands[key].cleared['e' + r.idx] = true; r.node.setEnabled(false); Progress.save(Game.state); }
       else { const dir = player.position.subtract(r.node.position); if (dir.length() < 0.1) dir.set(0,0,-1); dir.normalize(); player.position.addInPlace(dir.scale(4)); Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
       paused = false; locked = false; Game.resumeIsland();

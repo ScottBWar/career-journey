@@ -100,9 +100,9 @@ window.Game = (function () {
   Game.transition = transition;
 
   // ---------- battle bridge ----------
-  Game.musicForReturn = () => (Game.mode === 'sea' || Game.mode === 'shipbattle') ? 'sea' : 'island';
+  Game.musicForReturn = () => (Game.mode === 'sea' || Game.mode === 'shipbattle') ? 'sea' : Game.mode === 'town' ? 'town' : Game.mode === 'dungeon' ? 'dungeon' : 'island';
   Game.startBattle = function (keys, opts, onEnd) {
-    Music.play((opts && opts.music) || (opts && opts.boss ? 'boss' : 'battle'));
+    Music.play((opts && opts.music) || (opts && opts.boss ? 'boss' : (Music.battleTheme ? Music.battleTheme() : 'battle')));
     transition(() => { setMode('battle'); const s = Battle.build(keys, opts, onEnd); Game.scene = s; setTimeout(() => { if (Game.scene === s) Battle.startLoop(); }, 350); });
   };
   Game.startShipBattle = function (type, onEnd) {

@@ -222,7 +222,39 @@
       keys: [K,_,K,_, K,_,_,_, K,_,K,_, K,_,_,_], keyLen: 1.6, keyPeak: 0.085,
       bassP: [0,_,_,_, 0,_,_,_, 0,_,_,_, 0,_,_,_], bassPeak: 0.32,
       mel: [72,_,76,_, 79,_,_,_, 77,_,76,_, _,_,_,_,  72,_,76,_, 79,_,84,_, 83,_,_,_, _,_,_,_], leadPeak: 0.09 },
+
+    // ---- cinematic cutscene bed: slow, emotional, drumless, swelling strings/choir ----
+    cutscene: { bpm: 72, drums: 'none', swing: 0.2, padWave: 'sine', leadWave: 'triangle', cut: 1500, choir: true,
+      bars: [[57,60,64,67],[53,57,60,64],[55,59,62,65],[52,55,59,62],[50,53,57,60],[55,59,62,65],[53,57,60,64],[52,56,59,64]],
+      keys: [_,_,K,_, _,_,_,_, _,_,K,_, _,_,_,_], keyLen: 3.4, keyPeak: 0.055,
+      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.24, bassLen: 5,
+      leadADSR: { a: 0.06, d: 0.3, s: 0.6, r: 0.9 }, leadDur: 3, leadPeak: 0.07,
+      mel: [_,_,_,_, 64,_,_,_, 67,_,_,_, _,_,62,_,  _,_,_,_, 60,_,_,_, 59,_,_,_, _,_,_,_,  _,_,_,_, 67,_,_,_, 72,_,71,_, 67,_,_,_,  _,_,_,_, 64,_,_,_, 62,_,60,_, _,_,_,_] },
+
+    // ---- battle theme B: aggressive D-minor drive ----
+    battle2: { bpm: 100, drums: 'heavy', swing: 0.08, padWave: 'sawtooth', leadWave: 'square', cut: 2100,
+      bars: [[50,53,57,60],[55,58,62,65],[48,52,55,60],[50,53,57,62],[50,53,57,60],[57,60,64,67],[55,58,62,65],[50,53,57,60]],
+      keys: [K,_,K,_, _,K,_,K, K,_,K,_, _,K,_,_], keyLen: 1.0, keyPeak: 0.055,
+      stabs: [K,_,_,K, _,_,K,_, K,_,_,K, _,_,K,_],
+      bassP: [0,_,0,_, 7,_,0,_, 0,_,0,7, 12,_,7,_], bassPeak: 0.34, bassLen: 1.1,
+      leadADSR: { a: 0.004, d: 0.12, s: 0.2, r: 0.16 }, leadDur: 1.0, leadPeak: 0.085,
+      mel: [62,_,65,_, 69,_,67,65, 62,_,60,_, 62,_,_,_,  57,_,60,_, 65,_,64,62, 60,_,57,_, 62,_,_,_,
+            69,_,67,_, 65,_,62,_, 60,_,62,65, 67,_,_,_,  65,_,62,_, 60,_,_,_, 62,_,65,_, 62,60,57,_],
+      harm: [_,_,_,_, 62,_,_,_, _,_,_,_, 57,_,_,_], harmPeak: 0.05, harmWave: 'triangle' },
+
+    // ---- battle theme C: groovy E-minor head-nodder ----
+    battle3: { bpm: 90, drums: 'triphop', swing: 0.18, padWave: 'triangle', leadWave: 'square', cut: 1900,
+      bars: [[52,55,59,62],[48,52,55,59],[57,60,64,67],[50,54,57,62],[52,55,59,62],[48,52,55,59],[55,59,62,66],[52,55,59,62]],
+      keys: [_,_,K,_, K,_,_,K, _,_,K,_, K,_,K,_], keyLen: 1.3, keyPeak: 0.06,
+      stabs: [K,_,_,_, _,_,K,_, _,_,_,_, _,K,_,_],
+      bassP: [0,_,_,7, 0,_,0,_, _,_,7,_, 0,_,5,_], bassPeak: 0.33, bassLen: 1.4,
+      leadADSR: { a: 0.006, d: 0.16, s: 0.28, r: 0.2 }, leadDur: 1.1, leadPeak: 0.08,
+      mel: [64,_,_,67, 71,_,67,_, 64,_,62,_, _,_,_,_,  59,_,62,_, 67,_,_,_, 64,_,59,_, 62,_,_,_,
+            67,_,71,_, 74,_,71,67, 64,_,67,_, _,_,_,_,  62,_,59,_, 64,_,67,_, 71,_,67,_, 64,62,59,_],
+      harm: [_,_,_,_, 59,_,_,_, _,_,_,_, 55,_,_,_], harmPeak: 0.045, harmWave: 'triangle' },
   };
+  let battleIdx = 0; const BATTLE_THEMES = ['battle', 'battle2', 'battle3'];
+  function battleTheme() { const tk = BATTLE_THEMES[battleIdx % BATTLE_THEMES.length]; battleIdx++; return tk; }
 
   let current = null, sched = null, nextTime = 0, step = 0, bar = 0, gstep = 0, _after = 'island';
   const STEPS = 16;
@@ -283,7 +315,7 @@
   function start() { ensure(); if (ctx.state === 'suspended') ctx.resume(); }
   function toggle() { ensure(); muted = !muted; master.gain.setTargetAtTime(muted ? 0 : 0.85, ctx.currentTime, 0.05); return muted; }
 
-  window.Music = { play, start, toggle, isMuted: () => muted, context: () => { ensure(); return ctx; }, get _after() { return _after; }, set _after(v) { _after = v; } };
+  window.Music = { play, start, toggle, battleTheme, isMuted: () => muted, context: () => { ensure(); return ctx; }, get _after() { return _after; }, set _after(v) { _after = v; } };
 
   // ---------------- SFX ----------------
   function sfxBus() { ensure(); return master; }
