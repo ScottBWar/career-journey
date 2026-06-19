@@ -358,10 +358,17 @@ window.Battle = (function () {
     cmd('✨  Magic', m.abilities.length + '', () => showMagic(m, done), false, '', 'Spells & abilities');
     cmd('🎒  Item', '', () => showItems(m, done), false, '', 'Use a consumable');
     const L = Data.LIMITS[m.key];
-    if (L && m.limit >= 100) cmd('💥  Limit: ' + L.name, 'READY', () => {
-      if (L.target === 'enemy') chooseEnemy('Unleash ' + L.name + ' on?', e => act(done, () => doLimit(m, [e])), () => showMain(m, done));
-      else act(done, () => doLimit(m, L.target === 'allparty' ? party.slice() : aliveEnemies()));
-    }, false, 'lim', L.heal ? `Heal & revive whole party` : `${L.min}-${L.max} ${(Data.ELEMENT_INFO[L.el]||{}).name||''} · ${TGT[L.target]||''}`);
+    if (L && m.limit >= 100) {
+      if (m.key === 'healer') { // Marina commands the mermaids she's courted as summons
+        const roster = summonRoster();
+        cmd('💥  Limit: ' + (roster.length ? 'Summon Mermaid' : L.name), 'READY',
+          () => { if (roster.length) showSummonMenu(m, done); else act(done, () => doLimit(m, party.slice())); },
+          false, 'lim', roster.length ? `Call a courted mermaid · all foes` : 'Heal & revive whole party');
+      } else cmd('💥  Limit: ' + L.name, 'READY', () => {
+        if (L.target === 'enemy') chooseEnemy('Unleash ' + L.name + ' on?', e => act(done, () => doLimit(m, [e])), () => showMain(m, done));
+        else act(done, () => doLimit(m, L.target === 'allparty' ? party.slice() : aliveEnemies()));
+      }, false, 'lim', L.heal ? `Heal & revive whole party` : `${L.min}-${L.max} ${(Data.ELEMENT_INFO[L.el]||{}).name||''} · ${TGT[L.target]||''}`);
+    }
     cmd('🛡️  Defend', '', () => act(done, () => doDefend(m)), false, '', 'Halve damage this turn');
     captureNav();
   }
@@ -400,6 +407,42 @@ window.Battle = (function () {
     }
     const cr = camera.radius, ct = camera.target.clone();
     await tween(k => { camera.radius = cr + (oRad - cr) * k; camera.setTarget(V3.Lerp(ct, oTgt, k)); }, 280);
+    camera.radius = oRad; camera.setTarget(oTgt); cineActive = false; renderEnemies(false);
+  }
+  // ---- Marina's mermaid summons ----
+  function summonRoster() { // mermaids she's courted to "smitten" are available to summon
+    const mm = (Game.state && Game.state.mermaids) || {};
+    return Object.keys(Data.MERMAIDS).filter(k => mm[k] && mm[k].rel >= Data.MERMAIDS[k].threshold);
+  }
+  function showSummonMenu(m, done) {
+    clearMenu(m.name + ' · Summon a Mermaid');
+    summonRoster().forEach(k => { const md = Data.MERMAIDS[k]; const ei = Data.ELEMENT_INFO[md.element] || {};
+      cmd(`${ei.i || '🧜'}  ${md.name}`, '', () => act(done, () => doSummon(m, k)), false, 'lim', `${ei.name || md.element} · all foes${(md.element === 'water' || md.element === 'holy') ? ' + heal' : ''}`); });
+    cmd('↩  Back', '', () => showMain(m, done));
+    captureNav();
+  }
+  async function doSummon(m, mkey) {
+    const md = Data.MERMAIDS[mkey], ei = Data.ELEMENT_INFO[md.element] || {}, col = ELEMCOL[md.element] || '#a5b4fc';
+    m.limit = 0; cineActive = true; showLimitBanner('Summon · ' + md.name); flashScreen('rgba(255,255,255,0.55)');
+    msg(`💥 ${m.name} calls upon ${md.name}, ${ei.name || md.element} of the tides!`);
+    const oRad = camera.radius, oTgt = camera.target.clone();
+    const cen = aliveEnemies().reduce((a, e) => a.add(e.node.getAbsolutePosition()), new V3(0, 0, 0)).scale(1 / Math.max(1, aliveEnemies().length)).add(new V3(0, 2, 0));
+    // the mermaid descends over the field, spinning into view
+    const built = Models.mermaid(md.color, md.tail); const node = built.node; node.scaling.setAll(1.7); node.position.set(-2, 12, -1); node.rotation.y = -0.5;
+    await tween(k => { node.position.y = 12 - k * 7.5; node.rotation.y = -0.5 + (1 - k) * Math.PI * 2; camera.radius = oRad + (13 - oRad) * k; camera.setTarget(V3.Lerp(oTgt, new V3(-1, 3, -0.5), k)); }, 620);
+    if (window.SFX) SFX.play(md.element === 'fire' ? 'fire' : md.element === 'water' ? 'water' : 'magic');
+    shake(0.7); await wait(220);
+    // whip to the foes and unleash her element
+    await tween(k => { camera.setTarget(V3.Lerp(new V3(-1, 3, -0.5), cen, k)); }, 200);
+    const foes = aliveEnemies(); const total = 210 + Math.round((m.spec || 30) * 2.4); // scales with Marina's Special
+    flashScreen('rgba(255,255,255,0.4)'); shake(1.8); hitStop(0.18, 2.4);
+    foes.forEach((e, i) => { elemImpact(e.node, md.element, col); const dmg = Math.round((total / Math.max(1, foes.length)) * (0.85 + Math.random() * 0.3)); damageEnemy(e, dmg, col, md.element, 'mag'); if (e.hp <= 0) killEnemy(e); });
+    if (md.element === 'water' || md.element === 'holy') { party.forEach(p => { if (p.alive) healMember(p, 90); }); } // the gentle tides also mend
+    await wait(520);
+    // she vanishes back into the deep
+    await tween(k => { node.position.y = 4.5 + k * 9; node.scaling.setAll(1.7 * (1 - k * 0.5)); }, 380);
+    try { node.dispose(); } catch (e) {}
+    await tween(k => { camera.radius = camera.radius + (oRad - camera.radius) * k; camera.setTarget(V3.Lerp(cen, oTgt, k)); }, 260);
     camera.radius = oRad; camera.setTarget(oTgt); cineActive = false; renderEnemies(false);
   }
   function showMagic(m, done) { clearMenu(m.name + ' · Magic');
