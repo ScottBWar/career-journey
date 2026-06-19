@@ -204,9 +204,28 @@ window.Data = (function () {
         { id: 'qj_bcap', branch: 'b', name: 'For Dulcinea!', desc: 'Attack Up + Haste over all allies', cost: 3, req: 'qj_b2', kind: 'ability', ability: ab('For Dulcinea!', { mp: 26, min: 0, max: 0, target: 'allparty', fx: 'beam', status: ['atkup', 'haste'], turns: 4 }) },
       ],
     },
+    { // Beetlejuice — Lydia Deetz, a goth girl with pure dark magic (rescued in the Neitherworld trial)
+      key: 'lydia', name: 'Lydia', role: 'Goth Conjurer', model: 'mage', temporary: true,
+      base: { hp: 116, mp: 66, atkMin: 9, atkMax: 15, crit: 0.08 }, growth: { hp: 9, mp: 6, atk: 2 },
+      baseAbilities: [ ab('Shadow Bolt', { mp: 8, min: 32, max: 46, target: 'enemy', fx: 'beam', el: 'dark' }), ab('Gloom', { mp: 16, min: 22, max: 34, target: 'all', fx: 'beam', el: 'dark' }) ],
+      tree: [
+        { id: 'ly_mp', name: 'Deeper Veil', desc: '+18 Max MP', cost: 1, kind: 'stat', stat: { mp: 18 } },
+        { id: 'ly_cr', name: 'Morbid Focus', desc: '+10% Crit', cost: 1, req: 'ly_mp', kind: 'stat', stat: { crit: 0.10 } },
+        { id: 'ly_a1', branch: 'a', name: 'Soul Siphon', desc: 'PATH: Necromancer — a draining dark bolt', cost: 1, req: 'ly_cr', kind: 'ability', ability: ab('Soul Siphon', { mp: 12, min: 48, max: 64, target: 'enemy', fx: 'beam', el: 'dark' }) },
+        { id: 'ly_a2', branch: 'a', name: 'Gravewrought', desc: '+24 Max MP', cost: 2, req: 'ly_a1', kind: 'stat', stat: { mp: 24 } },
+        { id: 'ly_acap', branch: 'a', name: 'Annihilation', desc: 'Erase a foe in absolute dark', cost: 3, req: 'ly_a2', kind: 'ability', ability: ab('Annihilation', { mp: 28, min: 64, max: 88, target: 'enemy', fx: 'beam', el: 'dark' }) },
+        { id: 'ly_b1', branch: 'b', name: 'Hex', desc: 'PATH: Medium — dark hit that Weakens all foes', cost: 1, req: 'ly_cr', kind: 'ability', ability: ab('Hex', { mp: 16, min: 24, max: 34, target: 'all', fx: 'beam', el: 'dark', status: 'weaken', turns: 3 }) },
+        { id: 'ly_b2', branch: 'b', name: 'Sepulchral Might', desc: '+30 Max HP', cost: 2, req: 'ly_b1', kind: 'stat', stat: { hp: 30 } },
+        { id: 'ly_bcap', branch: 'b', name: 'Eternal Night', desc: 'Drown all foes in dark + Slow', cost: 3, req: 'ly_b2', kind: 'ability', ability: ab('Eternal Night', { mp: 30, min: 44, max: 60, target: 'all', fx: 'beam', el: 'dark', status: 'slow', turns: 3 }) },
+      ],
+    },
   ];
 
   const ENEMIES = {
+    graveworm:   { name: 'Graveling Worm', model: 'hydra',   hp: 300, xp: 120, gold: 120, baseY: 0,   boss: true, scale: 1.2, moves: [ { name: 'burrows and bites', min: 22, max: 32 }, { name: 'spits grave-sand', min: 18, max: 26, all: true } ], drops: [] },
+    poltergeist: { name: 'Poltergeist',    model: 'wraith',  hp: 280, xp: 120, gold: 120, baseY: 0.3, boss: true, scale: 1.2, moves: [ { name: 'flings the furniture', min: 20, max: 30 }, { name: 'wails through the walls', min: 16, max: 24, all: true, status: 'weaken', turns: 2 } ], drops: [] },
+    sandworm:    { name: 'The Sandworm',   model: 'hydra',   hp: 520, xp: 0,   gold: 0,   baseY: 0,   boss: true, scale: 1.7, moves: [ { name: 'erupts from the floor', min: 30, max: 44 }, { name: 'swallows the ground whole', min: 24, max: 34, all: true }, { name: 'coils and constricts', min: 34, max: 48 } ], drops: [] },
+    beetlejuice: { name: 'Betelgeuse',     model: 'drifter', hp: 700, xp: 0,   gold: 0,   baseY: 0.2, boss: true, scale: 1.3, moves: [ { name: 'cackles and conjures', min: 30, max: 42 }, { name: 'unleashes a striped storm', min: 22, max: 32, all: true }, { name: 'twists reality', min: 34, max: 46, status: 'slow', turns: 3 }, { name: 'summons biting snakes', min: 26, max: 36, all: true, status: 'weaken', turns: 3 } ], drops: [] },
     shark:  { name: 'Maneater Shark',   model: 'shark',  hp: 88,  xp: 24, gold: 18, baseY: 0,   moves: [ { name: 'sinks its teeth in', min: 11, max: 17 }, { name: 'whips its tail', min: 14, max: 21 } ], drops: [ { mat: 'fang', chance: 0.7 }, { mat: 'fin', chance: 0.4 } ] },
     crab:   { name: 'Giant Hermit Crab', model: 'crab',  hp: 118, xp: 28, gold: 22, baseY: 0,   moves: [ { name: 'snaps a giant claw', min: 13, max: 19 }, { name: 'bashes with its shell', min: 16, max: 23 } ], drops: [ { mat: 'shellfrag', chance: 0.75 }, { mat: 'brine', chance: 0.2 } ] },
     jelly:  { name: "Man-o'-War Jelly",  model: 'jelly', hp: 60,  xp: 20, gold: 13, baseY: 0.2, moves: [ { name: 'stings sharply', min: 9, max: 15 }, { name: 'discharges a shock', min: 9, max: 14, all: true } ], drops: [ { mat: 'goo', chance: 0.85 } ] },
@@ -392,6 +411,11 @@ window.Data = (function () {
   // ---------------- WEAPONS (character-specific, each has shell slots) ----------------
   // first entry per character is the starting weapon (price 0).
   const WEAPONS = {
+    lydia: [
+      { key: 'spirit_planchette',    name: 'Spirit Planchette',    atk: 0,  slots: 1, price: 0,   desc: 'A trusty talking board.' },
+      { key: 'raven_wand',           name: 'Raven Wand',           atk: 6,  slots: 2, price: 240, desc: '+6 ATK · 2 shell slots' },
+      { key: 'netherworld_grimoire', name: 'Netherworld Grimoire', atk: 14, slots: 3, price: 640, desc: '+14 ATK · 3 shell slots' },
+    ],
     pirate: [
       { key: 'flintlock_cutlass', name: 'Flintlock Cutlass', atk: 0, slots: 1, price: 0, desc: 'A trusty curved blade.' },
       { key: 'twin_sabers',       name: 'Twin Sabers',       atk: 8, slots: 2, price: 220, desc: '+8 ATK · 2 shell slots' },
@@ -553,6 +577,10 @@ window.Data = (function () {
   const SHOP_ACCESSORIES = ['coral_bangle', 'seaglass_ring', 'tortoise_charm', 'tiger_fang', 'venom_ward', 'aegis_pearl'];
   // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
   const AFFINITIES = {
+    graveworm: { weak: ['water'], resist: ['earth'] },
+    poltergeist: { weak: ['holy', 'fire'], resist: ['physical', 'dark'] },
+    sandworm: { weak: ['water', 'holy'], resist: ['earth'] },
+    beetlejuice: { weak: ['holy'], absorb: ['dark'] },
     ruffy_duel: { resist: ['physical'] }, // a rubber-man shrugs off blunt force
     selachoth_omega: { resist: ['physical', 'water'] }, // its weakness is the rotating light/dark tell, not a fixed element
     sentinel: { weak: ['water'], resist: ['physical'] },
@@ -610,6 +638,7 @@ window.Data = (function () {
 
   // ---------------- LIMIT BREAKS (one per hero; uses the limit gauge) ----------------
   const LIMITS = {
+    lydia:     { name: 'Say It Thrice',   target: 'all',      fx: 'beam',  el: 'dark',    min: 70, max: 96, flavor: 'says the name three times — the dead answer!' },
     pirate:    { name: 'Full Broadside',  target: 'all',      fx: 'fire',  el: 'fire',    min: 58, max: 82, flavor: 'unloads every cannon at once!' },
     swordsman: { name: 'Omnislash',       target: 'all',      fx: 'beam',  el: 'thunder', min: 68, max: 92, flavor: 'becomes a blur of steel!' },
     healer:    { name: "Ocean's Grace",   target: 'allparty', fx: 'heal',  heal: true, revive: true, min: 200, max: 200, flavor: 'calls the tide to mend all wounds!' },
@@ -1551,6 +1580,7 @@ window.Data = (function () {
   // g* are per-level growth. Archetypes: mages high SPEC, knights high DEF, rogues high SPD.
   const COMBAT_STATS = {
     pirate:   { def: 26, spec: 14, spd: 11, gdef: 2.0, gspec: 1.0, gspd: 0.30 },
+    lydia:    { def: 12, spec: 50, spd: 10, gdef: 1.0, gspec: 3.6, gspd: 0.28 },
     swordsman:{ def: 32, spec: 16, spd: 9,  gdef: 2.5, gspec: 1.2, gspd: 0.25 },
     healer:   { def: 18, spec: 40, spd: 10, gdef: 1.5, gspec: 3.0, gspd: 0.30 },
     mage:     { def: 12, spec: 48, spd: 9,  gdef: 1.0, gspec: 3.6, gspd: 0.25 },
@@ -1585,12 +1615,12 @@ window.Data = (function () {
       { id: 'legends', act: 'II', actName: 'Legends of the Wider Sea', title: 'Break the cursed legends',
         goal: 'Sail the wider world; end the curse on each legend-isle and recruit its stranded hero.',
         thread: 'Past the Abyss the world turns strange — a bleeding castle, a wishing cave, a grieving forest, a frozen station that wears men\'s faces. Each cursed story strands a hero who\'ll sail with you if you end their nightmare. Take them in any order, take as many as you like — but notice how every legend has curdled the same way. Something is wearing the world\'s old stories like masks.' },
-      { id: 'omega', act: 'III', actName: 'The Omega Tide', title: 'Confront Selachoth',
-        goal: 'Track the Omega Tide to the final trial and end it.',
-        thread: 'It has a name now: Selachoth, the Omega Tide — a shark-god swallowing the sea\'s elements whole. The fading mermaids, the Kraken, the curdled legends were all its hunger spreading outward. Sail to the final trial and give the sea back its stories.' },
-      { id: 'mastery', act: 'III', actName: 'The Omega Tide', title: 'The seas are yours',
+      { id: 'omega', act: 'III', actName: 'The Neitherworld', title: 'Brave the Neitherworld',
+        goal: 'Once enough heroes stand with you, split into TWO crews and brave the final trial — two branches, then Beetlejuice astride the Sandworm.',
+        thread: 'Past the Kraken a striped door waits at the spire — the Neitherworld, where the trickster Beetlejuice rides a Sandworm and a goth girl named Lydia is caged with her wailing parents. The gate opens only for a captain who can field two full crews, so you must first free enough heroes from the cursed isles. One crew braves the first branch, the next the second — then together you end him and set Lydia free (she joins your roster).' },
+      { id: 'mastery', act: 'III', actName: 'The Neitherworld', title: 'The seas are yours',
         goal: 'Charm every mermaid and complete the bestiary for total mastery.',
-        thread: 'Selachoth is sunk and the tide runs clean. What remains is legend-work: every mermaid charmed, every creature logged, the duelists of the arena and the lone blade of Castaway Cove answered. Sail for the joy of it now, Captain.' },
+        thread: 'The Sandworm is stilled and the tide runs clean. What remains is legend-work: every mermaid charmed, every creature logged, the duelists of the arena and the lone blade of Castaway Cove answered. Sail for the joy of it now, Captain.' },
     ],
     side: [
       { title: '⚔️ The Arena (Paegina)', thread: 'A no-healing gauntlet of Greek myth — Medusa, Minotaur, Hydra and worse. Pure proving-ground; clear leagues for coin and glory.' },

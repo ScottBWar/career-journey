@@ -552,6 +552,45 @@ window.Game = (function () {
     draw(); el('allyPick').classList.add('show');
   };
 
+  // pick TWO crews (3–4 each) from the recruited roster — for the Neitherworld final trial
+  Game.chooseTwoParties = function (cb) {
+    const st = Game.state;
+    const avail = st.party.filter(p => p.recruited).map(p => p.key);
+    pauseExplore(); Game.allyPickOpen = true;
+    const body = el('allyPickBody'); const assign = {};
+    const countA = () => avail.filter(k => assign[k] === 'A').length;
+    const countB = () => avail.filter(k => assign[k] === 'B').length;
+    const card = (key) => {
+      const p = st.party.find(x => x.key === key); const d = Progress.derived(p, st);
+      const role = (Data.PARTY.find(x => x.key === key) || {}).role || '';
+      const c = document.createElement('button'); c.className = 'ally-card' + (assign[key] ? ' on' : '');
+      c.innerHTML = `<div class="ally-port">${(window.Portraits && Portraits.has(key)) ? Portraits.img(key) : ''}</div>` +
+        `<div class="ally-name">${d.name}</div><div class="ally-role">${role}</div><div class="ally-lvl">Lv ${p.level}</div>` +
+        (assign[key] ? `<span class="ally-pick-num">${assign[key]}</span>` : '');
+      c.onclick = () => {
+        const cur = assign[key];
+        if (cur === 'A') { if (countB() < 4) assign[key] = 'B'; else delete assign[key]; }
+        else if (cur === 'B') { delete assign[key]; }
+        else { if (countA() < 4) assign[key] = 'A'; else if (countB() < 4) assign[key] = 'B'; }
+        if (window.SFX) SFX.play('select'); draw();
+      };
+      return c;
+    };
+    function draw() {
+      body.innerHTML = ''; const a = countA(), b = countB();
+      const h = document.createElement('div'); h.innerHTML = `<h2>🕯️ Two Crews for the Neitherworld</h2><div class="sk-gold">Tap a hero to assign them — first tap → <b>Crew A</b>, again → <b>Crew B</b>, again to clear. Each crew needs 3–4. Crew A braves the first branch, Crew B the second — then both face Beetlejuice.</div><div class="sk-gold">Crew A: ${a}/4 · Crew B: ${b}/4</div>`; body.appendChild(h);
+      const grid = document.createElement('div'); grid.className = 'ally-grid';
+      avail.forEach(k => grid.appendChild(card(k))); body.appendChild(grid);
+      const foot = document.createElement('div'); foot.style.cssText = 'display:flex; justify-content:flex-end; margin-top:0.7rem;';
+      const ok = a >= 3 && a <= 4 && b >= 3 && b <= 4;
+      const go = document.createElement('button'); go.className = 'pill' + (ok ? '' : ' ghost'); go.disabled = !ok;
+      go.textContent = ok ? '🚪 Into the Neitherworld' : 'Assign two crews of 3–4';
+      go.onclick = () => { if (!ok) return; Game.allyPickOpen = false; el('allyPick').classList.remove('show'); cb(avail.filter(k => assign[k] === 'A'), avail.filter(k => assign[k] === 'B')); };
+      foot.appendChild(go); body.appendChild(foot);
+    }
+    draw(); el('allyPick').classList.add('show');
+  };
+
   // ---------- toast ----------
   let toastTimer = null;
   Game.toast = function (text) { const tEl = el('toast'); tEl.textContent = text; tEl.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => tEl.classList.remove('show'), 3200); };
@@ -563,8 +602,8 @@ window.Game = (function () {
     el('end').classList.add('show'); Music.play('victory', 'island');
   };
   Game.finalEnding = function () {
-    el('endTitle').textContent = 'The Tide Turns';
-    el('endText').innerHTML = 'Selachoth dissolves into seafoam, and the grey horizon blushes gold. Saltmere is saved — and the legend of the three who turned the tide will be sung on every shore.<br><br><b>Thanks for playing!</b> You can keep exploring, or return to the site.';
+    el('endTitle').textContent = 'The Neitherworld Closes';
+    el('endText').innerHTML = 'The Sandworm sinks back into the sand and Beetlejuice is dragged howling into the dark — Lydia closes the gate behind him. The two crews you forged from a world of broken legends sail home together under a clean horizon.<br><br><b>Thanks for playing!</b> You can keep exploring, or return to the site.';
     el('end').classList.add('show'); Music.play('victory', 'island');
   };
   el('endContinue') && (el('endContinue').onclick = () => el('end').classList.remove('show'));

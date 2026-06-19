@@ -17,10 +17,10 @@ window.Battle = (function () {
   let actT = 0, actAlpha = 0, actRad = 0; // dynamic "action camera" — swings angle + punches in during a move, then eases back
 
   const FX = { fire:['#ffb347','#ff5e3a'], water:['#5eead4','#3b82f6'], beam:['#a5b4fc','#e0e7ff'], heal:['#6ee7b7','#bbf7d0'], mana:['#60a5fa','#bfdbfe'], hit:['#ff6b6b','#ffd1d1'] };
-  const PSPD = { pirate: 11, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12, simon: 11, aladdin: 14, violca: 13, mac: 9, sane: 14, marvyn: 8, quijano: 9 };
+  const PSPD = { pirate: 11, lydia: 10, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12, simon: 11, aladdin: 14, violca: 13, mac: 9, sane: 14, marvyn: 8, quijano: 9 };
   // enemies whose model is built facing +X (snout/beak/head along +x) rather than the usual +Z
   const FRONT_X = { shark: 1, octo: 1, eel: 1, leviathan: 1, angler: 1, gull: 1, kraken: 1, boarspirit: 1, mutton: 1 };
-  const ESPD = { shark: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8, eel: 13, urchin: 6, bat: 15, ghoul: 7, wraith: 11, vampire: 12, drifter: 14, cobra: 12, scarab: 7, genie: 10, wyvern: 13, skydragon: 11, harpy: 15, satyr: 11, cyclops: 5, minotaur: 9, medusa: 11, hydra: 9, thething: 11, forestgod: 9, vogon: 6, windmill: 5, thingspawn: 8, kodama: 12, boarspirit: 11, vogonclerk: 6, sentry: 13, mutton: 8, windvane: 6, ruffy_duel: 12, selachoth_omega: 13, sentinel: 9, guardbot: 12 };
+  const ESPD = { shark: 11, graveworm: 8, poltergeist: 12, sandworm: 7, beetlejuice: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8, eel: 13, urchin: 6, bat: 15, ghoul: 7, wraith: 11, vampire: 12, drifter: 14, cobra: 12, scarab: 7, genie: 10, wyvern: 13, skydragon: 11, harpy: 15, satyr: 11, cyclops: 5, minotaur: 9, medusa: 11, hydra: 9, thething: 11, forestgod: 9, vogon: 6, windmill: 5, thingspawn: 8, kodama: 12, boarspirit: 11, vogonclerk: 6, sentry: 13, mutton: 8, windvane: 6, ruffy_duel: 12, selachoth_omega: 13, sentinel: 9, guardbot: 12 };
   const ELEMCOL = { fire: '#ff7b3a', water: '#5eead4', thunder: '#fde047', earth: '#c2a062', dark: '#b06aff', holy: '#fff0a0', physical: '#dfe7ef' };
   const fxKey = el => ({ fire: 'fire', water: 'water' })[el] || 'beam';
 

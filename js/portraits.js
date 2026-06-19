@@ -6,6 +6,7 @@ window.Portraits = (function () {
   const cache = {};
   const SPEC = {
     pirate:    { type: 'pirate',    skin: '#d9a06b', hair: '#7a3b12', bg: '#7a1f1f' },
+    lydia:     { type: 'archer',    skin: '#e6dde8', hair: '#15101c', eye: '#c0395a', bg: '#241830' },
     swordsman: { type: 'soldier',   skin: '#cf9a78', hair: '#e7d27a', bg: '#2c3a52' },
     healer:    { type: 'priestess', skin: '#d9a06b', hair: '#37c0e0', bg: '#2fae9a' },
     mage:      { type: 'mage',      skin: '#caa37a', hair: '#2a2e52', eye: '#ffe066', bg: '#3a3f6b' },

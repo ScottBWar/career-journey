@@ -417,6 +417,41 @@ window.World = (function () {
       else { player.position.z -= 4; Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
     });
   }
+  // ACT III FINAL TRIAL — the Neitherworld. Two crews brave two branches one after the
+  // other, then converge on Beetlejuice riding the Sandworm. Gated on having enough
+  // recruited heroes to field two parties of 3–4.
+  function neitherworldTrial() {
+    const st = Game.state;
+    const legend = ['simon', 'aladdin', 'violca', 'mac', 'sane', 'quijano'].filter(k => st.party.find(p => p.key === k && p.recruited)).length;
+    const hasLydia = !!st.party.find(p => p.key === 'lydia' && p.recruited);
+    const roster = st.party.filter(p => p.recruited).length + (hasLydia ? 0 : 1); // Lydia joins on entry
+    if (legend < 3 || roster < 6) {
+      Game.toast("The Neitherworld gate won't open — you need two full crews. Free more heroes from the cursed isles first.");
+      return;
+    }
+    if (!hasLydia) { Progress.recruit(st, 'lydia', 4); Progress.save(st); }
+    Game.confirm("Beyond the striped door coils the Neitherworld — Lydia's parents wail behind its bars and a Sandworm churns the dark. Send TWO crews, one down each branch, then face Beetlejuice. Assemble them?", () => {
+      Game.chooseTwoParties((A, B) => {
+        const restore = st.active.slice();
+        const setActive = team => { team.forEach(k => Progress.recruit(st, k, 4)); st.active = team.slice(0, 4); Progress.fullHeal(st); Progress.save(st); };
+        const bail = () => { st.active = restore; Progress.save(st); paused = false; locked = false; Game.resumeIsland(); player.position.z -= 4; };
+        const runFinal = () => {
+          setActive(A); locked = true; paused = true; Music.play('boss');
+          Game.startBattle(['beetlejuice', 'sandworm'], { boss: true, fullLimit: true }, (res) => {
+            if (!res.won) return bail();
+            st.active = restore; st.prog.finalWin = true; Progress.save(st);
+            paused = false; locked = false; Game.resumeIsland(); Game.finalEnding();
+          });
+        };
+        const branchB = () => {
+          setActive(B); locked = true; paused = true; Music.play('boss');
+          Game.startBattle(['poltergeist'], { boss: true }, (res) => { if (!res.won) return bail(); Game.toast('The haunted branch is cleared. The crews regroup before the Sandworm...'); runFinal(); });
+        };
+        setActive(A); locked = true; paused = true; Music.play('boss');
+        Game.startBattle(['graveworm'], { boss: true }, (res) => { if (!res.won) return bail(); Game.toast('The sand-tunnel branch is cleared. Send your second crew down the haunted hall...'); branchB(); });
+      });
+    });
+  }
   function ambush() {
     locked = true; paused = true; Music.play('boss');
     Game.toast('⚠ SOMETHING ERUPTS FROM THE SURF...');
@@ -444,7 +479,7 @@ window.World = (function () {
       });
     }
     if (g.kind === 'boss') {
-      if (Game.state.prog.finalWin) return Game.toast('Selachoth is no more. The tide is yours.');
+      if (Game.state.prog.finalWin) return Game.toast('Beetlejuice is banished and the Sandworm stilled. The Neitherworld is quiet.');
       if (!Game.state.prog.krakenDown) {
         Game.confirm('Enter the Maw and challenge the KRAKEN, guardian of the spire?', () => fightBoss(['kraken'], {}, () => {
           Game.state.prog.krakenDown = true; Progress.save(Game.state);
@@ -455,23 +490,7 @@ window.World = (function () {
           Game.startCutscene('krakenFall', () => Game.startCutscene('mermaidCouncil', afterCouncil));
         }));
       } else {
-        Game.startCutscene('selachothPre', () => {
-          // never met Ruffy at sea → the classic solo fight, no two-party finale
-          if (!Game.state.flags.ruffyMet) {
-            Progress.fullHeal(Game.state); Progress.save(Game.state);
-            fightBoss(['selachoth'], { fullLimit: true }, () => { Game.state.prog.finalWin = true; Progress.save(Game.state); Game.startCutscene('selachothFall', () => Game.finalEnding()); });
-            return;
-          }
-          // two-party finale: main party breaks Selachoth's shell, then Ruffy's crew finishes OMEGA
-          Game.startCutscene('alliesArrive', () => {
-            Game.chooseEndgameAllies((team) => {
-              Progress.fullHeal(Game.state); Progress.save(Game.state);
-              fightBoss(['selachoth'], { fullLimit: true }, () => {
-                Game.startCutscene('omegaRise', () => finalStage2(team));
-              });
-            });
-          });
-        });
+        neitherworldTrial();   // Act III final trial: two crews, two branches, then Beetlejuice + Sandworm
       }
     }
   }
