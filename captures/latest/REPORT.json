@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-06-19T15:54:00.165Z",
+  "runAt": "2026-06-19T16:13:00.089Z",
   "states": [
     {
       "name": "01_overworld_tidehaven",
@@ -222,12 +222,18 @@
       "drove": true,
       "newErrors": 0,
       "screenshot": "37_summon_mermaid.png"
+    },
+    {
+      "name": "38_portraits",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "38_portraits.png"
     }
   ],
   "consoleErrors": [],
   "pageErrors": [],
   "snapshot": {
-    "gold": 86,
+    "gold": 94,
     "pearls": 0,
     "active": [
       "pirate",
