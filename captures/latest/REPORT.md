@@ -1,9 +1,9 @@
-# Capture report — 2026-06-19T11:09:40.051Z
+# Capture report — 2026-06-19T11:50:01.174Z
 
 ## JS errors: 0
 _none — no runtime errors caught_
 
-## States captured (17)
+## States captured (29)
 - ✅ `01_overworld_tidehaven.png`
 - ✅ `02_overworld_paegina.png`
 - ✅ `03_overworld_duskmoor.png`
@@ -21,11 +21,23 @@ _none — no runtime errors caught_
 - ✅ `15_menu_gear.png`
 - ✅ `16_menu_skills.png`
 - ✅ `17_coliseum.png`
+- ✅ `18_overworld_pots.png`
+- ✅ `19_overworld_swing.png`
+- ✅ `20_dungeon_traps.png`
+- ✅ `21_dungeon_alcove.png`
+- ✅ `22_gallery_party1.png`
+- ✅ `23_gallery_party2.png`
+- ✅ `24_gallery_party3.png`
+- ✅ `25_gallery_mobs.png`
+- ✅ `26_gallery_bosses.png`
+- ✅ `27_gallery_bosses2.png`
+- ✅ `28_gallery_dunmobs.png`
+- ✅ `29_battle_ruffy.png`
 
 ## Game-state snapshot
 ```json
 {
-  "gold": 80,
+  "gold": 91,
   "pearls": 0,
   "active": [
     "pirate",
@@ -38,7 +50,6 @@ _none — no runtime errors caught_
     "swordsman:1",
     "healer:1",
     "mage:1",
-    "blader:1",
     "dragoon:1",
     "ruffy:1",
     "simon:1",

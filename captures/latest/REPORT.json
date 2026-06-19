@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-06-19T11:09:40.051Z",
+  "runAt": "2026-06-19T11:50:01.174Z",
   "states": [
     {
       "name": "01_overworld_tidehaven",
@@ -102,12 +102,84 @@
       "drove": true,
       "newErrors": 0,
       "screenshot": "17_coliseum.png"
+    },
+    {
+      "name": "18_overworld_pots",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "18_overworld_pots.png"
+    },
+    {
+      "name": "19_overworld_swing",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "19_overworld_swing.png"
+    },
+    {
+      "name": "20_dungeon_traps",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "20_dungeon_traps.png"
+    },
+    {
+      "name": "21_dungeon_alcove",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "21_dungeon_alcove.png"
+    },
+    {
+      "name": "22_gallery_party1",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "22_gallery_party1.png"
+    },
+    {
+      "name": "23_gallery_party2",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "23_gallery_party2.png"
+    },
+    {
+      "name": "24_gallery_party3",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "24_gallery_party3.png"
+    },
+    {
+      "name": "25_gallery_mobs",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "25_gallery_mobs.png"
+    },
+    {
+      "name": "26_gallery_bosses",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "26_gallery_bosses.png"
+    },
+    {
+      "name": "27_gallery_bosses2",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "27_gallery_bosses2.png"
+    },
+    {
+      "name": "28_gallery_dunmobs",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "28_gallery_dunmobs.png"
+    },
+    {
+      "name": "29_battle_ruffy",
+      "drove": true,
+      "newErrors": 0,
+      "screenshot": "29_battle_ruffy.png"
     }
   ],
   "consoleErrors": [],
   "pageErrors": [],
   "snapshot": {
-    "gold": 80,
+    "gold": 91,
     "pearls": 0,
     "active": [
       "pirate",
@@ -120,7 +192,6 @@
       "swordsman:1",
       "healer:1",
       "mage:1",
-      "blader:1",
       "dragoon:1",
       "ruffy:1",
       "simon:1",
