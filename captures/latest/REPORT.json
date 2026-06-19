@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-06-19T14:27:42.928Z",
+  "runAt": "2026-06-19T14:31:39.211Z",
   "states": [
     {
       "name": "01_overworld_tidehaven",
@@ -170,46 +170,46 @@
       "screenshot": "28_gallery_dunmobs.png"
     },
     {
-      "name": "29_battle_ruffy",
+      "name": "29_gallery_omega",
       "drove": true,
       "newErrors": 0,
-      "screenshot": "29_battle_ruffy.png"
+      "screenshot": "29_gallery_omega.png"
     },
     {
-      "name": "30_battle_omega",
+      "name": "30_gallery_mermaids",
       "drove": true,
       "newErrors": 0,
-      "screenshot": "30_battle_omega.png"
+      "screenshot": "30_gallery_mermaids.png"
     },
     {
-      "name": "31_gallery_omega",
+      "name": "31_battle_ruffy",
       "drove": true,
       "newErrors": 0,
-      "screenshot": "31_gallery_omega.png"
+      "screenshot": "31_battle_ruffy.png"
     },
     {
-      "name": "32_battle_sentinel",
+      "name": "32_battle_omega",
       "drove": true,
       "newErrors": 0,
-      "screenshot": "32_battle_sentinel.png"
+      "screenshot": "32_battle_omega.png"
     },
     {
-      "name": "33_cutscene_reactor",
+      "name": "33_battle_sentinel",
       "drove": true,
       "newErrors": 0,
-      "screenshot": "33_cutscene_reactor.png"
+      "screenshot": "33_battle_sentinel.png"
     },
     {
-      "name": "34_gallery_mermaids",
+      "name": "34_cutscene_reactor",
       "drove": true,
       "newErrors": 0,
-      "screenshot": "34_gallery_mermaids.png"
+      "screenshot": "34_cutscene_reactor.png"
     }
   ],
   "consoleErrors": [],
   "pageErrors": [],
   "snapshot": {
-    "gold": 97,
+    "gold": 92,
     "pearls": 0,
     "active": [
       "pirate",

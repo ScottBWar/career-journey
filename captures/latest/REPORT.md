@@ -1,4 +1,4 @@
-# Capture report — 2026-06-19T14:27:42.928Z
+# Capture report — 2026-06-19T14:31:39.211Z
 
 ## JS errors: 0
 _none — no runtime errors caught_
@@ -32,17 +32,17 @@ _none — no runtime errors caught_
 - ✅ `26_gallery_bosses.png`
 - ✅ `27_gallery_bosses2.png`
 - ✅ `28_gallery_dunmobs.png`
-- ✅ `29_battle_ruffy.png`
-- ✅ `30_battle_omega.png`
-- ✅ `31_gallery_omega.png`
-- ✅ `32_battle_sentinel.png`
-- ✅ `33_cutscene_reactor.png`
-- ✅ `34_gallery_mermaids.png`
+- ✅ `29_gallery_omega.png`
+- ✅ `30_gallery_mermaids.png`
+- ✅ `31_battle_ruffy.png`
+- ✅ `32_battle_omega.png`
+- ✅ `33_battle_sentinel.png`
+- ✅ `34_cutscene_reactor.png`
 
 ## Game-state snapshot
 ```json
 {
-  "gold": 97,
+  "gold": 92,
   "pearls": 0,
   "active": [
     "pirate",
