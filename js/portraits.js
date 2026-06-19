@@ -248,7 +248,7 @@ window.Portraits = (function () {
 
   function draw(key, mood) {
     const p = SPEC[key]; if (!p) return null;
-    if (HUMANOID[p.type]) { try { return pixelFace(p, mood); } catch (e) { /* fall through to pixel-grid renderer */ } }
+    // (8-bit pixel portraits for everyone — the hi-res pixelFace path is disabled by request)
     const cv = document.createElement('canvas'); cv.width = cv.height = S * CELL;
     const c = cv.getContext('2d');
     const px = (x, y, w, h, col) => { if (!col) return; c.fillStyle = col; c.fillRect(x * CELL, y * CELL, w * CELL, h * CELL); };

@@ -1176,7 +1176,7 @@ window.Models = (function () {
     for (let i = 0; i < 6; i++) { const ang = i / 6 * 6.28; at(MB.CreateCylinder('t' + i, { height: 0.22, diameterTop: 0, diameterBottom: 0.08, tessellation: 4 }, scene), r, a, Math.cos(ang) * 0.28, py - 0.1 + Math.sin(ang) * 0.25, 0.25).rotation.x = Math.PI / 2; }
     return { node: r, idle(t) { r.rotation.z = Math.sin(t * 2.2) * 0.18; r.position.y = (r._baseY || 0) + Math.abs(Math.sin(t * 1.6)) * 0.2; } };
   }
-  function shade() { // mob — a sheeted Neitherworld specter with glowing hollows
+  function specter() { // mob — a sheeted Neitherworld specter with glowing hollows (enemy key 'shade')
     const r = new BABYLON.TransformNode('eShade', scene);
     const sheet = M('shS', '#d8d8e0', { spec: 0.1, alpha: 0.94 }), eye = M('shE', '#9be7ff', { emissive: '#9be7ff' });
     at(MB.CreateSphere('top', { diameter: 1.1, slice: 0.6 }, scene), r, sheet, 0, 2.0, 0);
@@ -1195,7 +1195,7 @@ window.Models = (function () {
     return { node: r, idle(t) { r.rotation.y = Math.sin(t * 0.9) * 0.12; r.scaling.y = 1 + Math.sin(t * 1.4) * 0.06; } };
   }
 
-  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane, omega, beetlejuice, sandling, shade, gravehand, ruffy_duel: () => rival() };
+  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane, omega, beetlejuice, sandling, shade: specter, gravehand, ruffy_duel: () => rival() };
 
   // ---------------- ALADDIN (street-rat ally) ----------------
   function aladdin(weaponKey) {
