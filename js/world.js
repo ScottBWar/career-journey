@@ -391,6 +391,20 @@ window.World = (function () {
       if (res.won) onWin(); else { player.position.z -= 4; Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
     });
   }
+  // second wave of the finale: swap to Ruffy's strike team and fight OMEGA, restoring
+  // the lineup afterwards whether you win or lose.
+  function finalStage2(team) {
+    const restore = (team && team.length) ? Game.state.active.slice() : null;
+    if (restore) { team.forEach(k => Progress.recruit(Game.state, k, 4)); Game.state.active = team.slice(0, 4); }
+    Progress.fullHeal(Game.state); Progress.save(Game.state);
+    locked = true; paused = true; Music.play('boss');
+    Game.startBattle(['selachoth_omega'], { boss: true, fullLimit: true }, (res) => {
+      if (restore) { Game.state.active = restore; Progress.save(Game.state); }
+      paused = false; locked = false; Game.resumeIsland();
+      if (res.won) { Game.state.prog.finalWin = true; Progress.save(Game.state); Game.startCutscene('omegaFall', () => Game.finalEnding()); }
+      else { player.position.z -= 4; Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
+    });
+  }
   function ambush() {
     locked = true; paused = true; Music.play('boss');
     Game.toast('⚠ SOMETHING ERUPTS FROM THE SURF...');
@@ -430,10 +444,21 @@ window.World = (function () {
         }));
       } else {
         Game.startCutscene('selachothPre', () => {
-          const goFight = () => fightBoss(['selachoth'], { fullLimit: true }, () => { Game.state.prog.finalWin = true; Progress.save(Game.state); Game.startCutscene('selachothFall', () => Game.finalEnding()); });
-          if (!Game.state.prog.ruffyGone) {
-            Game.startCutscene('ruffySacrifice', () => { Game.state.prog.ruffyGone = true; Progress.dismiss(Game.state, 'ruffy'); Progress.fullHeal(Game.state); Progress.save(Game.state); goFight(); });
-          } else goFight();
+          // never met Ruffy at sea → the classic solo fight, no two-party finale
+          if (!Game.state.flags.ruffyMet) {
+            Progress.fullHeal(Game.state); Progress.save(Game.state);
+            fightBoss(['selachoth'], { fullLimit: true }, () => { Game.state.prog.finalWin = true; Progress.save(Game.state); Game.startCutscene('selachothFall', () => Game.finalEnding()); });
+            return;
+          }
+          // two-party finale: main party breaks Selachoth's shell, then Ruffy's crew finishes OMEGA
+          Game.startCutscene('alliesArrive', () => {
+            Game.chooseEndgameAllies((team) => {
+              Progress.fullHeal(Game.state); Progress.save(Game.state);
+              fightBoss(['selachoth'], { fullLimit: true }, () => {
+                Game.startCutscene('omegaRise', () => finalStage2(team));
+              });
+            });
+          });
         });
       }
     }

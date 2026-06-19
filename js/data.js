@@ -328,6 +328,15 @@ window.Data = (function () {
       { name: 'calls down a crushing Deluge', min: 30, max: 42 },
       { name: 'descends — One-Finned Requiem', min: 42, max: 56 },
     ] },
+    // OMEGA — the true form Selachoth sheds into for the second half of the final battle.
+    // Rotates light/dark like its mortal shell, but vaster and stranger.
+    selachoth_omega: { name: 'OMEGA — The Drowned Angel', model: 'omega', hp: 900, xp: 0, gold: 0, baseY: 0.4, boss: true, scale: 1.5, rotate: ['holy', 'dark'], moves: [
+      { name: 'unfolds its wings — Cataclysm', min: 30, max: 40, all: true },
+      { name: 'fixes you with the Great Eye', min: 42, max: 56 },
+      { name: 'drags a soul toward the deep', min: 36, max: 48, status: 'slow', turns: 3 },
+      { name: 'sings the drowning hymn', min: 26, max: 34, all: true, status: 'weaken', turns: 3 },
+      { name: 'breaks the world — OMEGA RUIN', min: 48, max: 64, all: true },
+    ] },
   };
 
   // shared inventory items (consumables)
@@ -563,6 +572,7 @@ window.Data = (function () {
   // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
   const AFFINITIES = {
     ruffy_duel: { resist: ['physical'] }, // a rubber-man shrugs off blunt force
+    selachoth_omega: { resist: ['physical', 'water'] }, // its weakness is the rotating light/dark tell, not a fixed element
     // themed dungeon mobs
     thingspawn: { weak: ['fire', 'holy'], resist: ['water'] },
     kodama:  { weak: ['fire'], resist: ['earth', 'holy'] },
@@ -1262,6 +1272,25 @@ window.Data = (function () {
       { name: 'Selachoth', text: '...Perhaps. Perhaps I should have... let the morning... in.' },
       { name: 'Marina', text: 'Rest now, old hero. The tide will carry you somewhere gentler than what you became.' },
       { name: 'Narrator', text: 'The One-Finned Angel dissolves into seafoam. The horizon warms. And somewhere, the people of a hundred saved islands raise a cheer for a rubber-limbed king who never wore a crown.' },
+    ],
+    // ---- two-party finale (only if you ever met Ruffy at sea) ----
+    alliesArrive: [
+      { name: 'Narrator', text: 'A horn blasts from below the spire — not the sea\'s wail, but a ship\'s brass. A straw-hat figure vaults the rail and lands grinning between you and the drowned god.' },
+      { name: 'Ruffy', text: 'SHISHISHI! Told ya rivals keep an eye on each other! You really thought you\'d fight the guy who wants to drown the WHOLE SEA without me?' },
+      { name: 'Ruffy', text: 'And I didn\'t come alone. Everybody you ever stuck your neck out for? They heard the king was making his last stand. They ALL wanted in.' },
+      { name: 'Capt. Redbeard', text: 'Then we do this in two waves. My crew breaks the old monster\'s guard. Ruffy — you and yours finish whatever crawls out of the wreck.' },
+      { name: 'Ruffy', text: 'Pick who comes with me, captain. The people we SAVED get to be the ones who save the world. Feels right, yeah?' },
+    ],
+    omegaRise: [
+      { name: 'Selachoth', text: 'No... the warm world will NOT outlast me. I am more than this borrowed shell. I am what the abyss MADE of a hero.' },
+      { name: 'Narrator', text: 'Selachoth\'s body splits like wet paper. Something vast and pale unfolds from within — winged, blind but for one great eye, humming a hymn that tastes of a thousand drownings. OMEGA. The true shape of his despair.' },
+      { name: 'Ruffy', text: '...Okay. THAT is new. OI — everybody! Our turn! Let\'s go be worth the horizon!' },
+    ],
+    omegaFall: [
+      { name: 'Narrator', text: 'OMEGA\'s hymn cracks down the middle. Its wings come apart into motes of cold light — and the thousand-fathom tide hung above the spire simply lets go. It falls as rain. Warm rain.' },
+      { name: 'Ruffy', text: '(grinning, wrecked) See? Told ya. A king gives his people a horizon. Even the grumpy shark-guy gets one.' },
+      { name: 'Lance Strider', text: 'We\'d never have reached it alone. Every shore that stood up with us is standing here right now.' },
+      { name: 'Narrator', text: 'Selachoth — a tired old hero again, nothing more — dissolves into seafoam at last. The morning comes in, and a hundred saved islands raise a cheer that carries clear across the Free Seas.' },
     ],
     simonJoin: [
       { name: 'Narrator', text: 'Duskmoor Isle. No gulls, no surf — only a black castle against a bleeding moon, and the smell of old iron on the wind.' },

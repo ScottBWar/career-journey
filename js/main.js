@@ -427,6 +427,48 @@ window.Game = (function () {
     el('confirmNo').onclick = () => { Game.confirmOpen = false; el('confirm').classList.remove('show'); resumeExplore(); };
   };
 
+  // ---------- endgame ally picker (Ruffy's strike team for the two-party finale) ----------
+  const ALLY_DUN = { simon: 'vampire_keep', aladdin: 'genie_cave', violca: 'dragon_vale', mac: 'frost_station', sane: 'spirit_wood', marvyn: 'crash_site', quijano: 'mill_keep' };
+  Game.chooseEndgameAllies = function (cb) {
+    const st = Game.state;
+    const cleared = k => { const d = ALLY_DUN[k]; return !!(st.dungeons[d] || st.dungeons[d + '_boss']); };
+    const eligible = Object.keys(ALLY_DUN).filter(k => cleared(k) && st.party.find(p => p.key === k));
+    pauseExplore(); Game.allyPickOpen = true;
+    const body = el('allyPickBody'); const picks = [];
+    const card = (key, locked) => {
+      const p = st.party.find(x => x.key === key); const d = Progress.derived(p, st);
+      const role = (Data.PARTY.find(x => x.key === key) || {}).role || '';
+      const c = document.createElement('button'); c.className = 'ally-card' + (locked ? ' locked' : '');
+      c.innerHTML = `<div class="ally-port">${(window.Portraits && Portraits.has(key)) ? Portraits.img(key) : ''}</div>` +
+        `<div class="ally-name">${d.name}</div><div class="ally-role">${role}</div><div class="ally-lvl">Lv ${p.level}</div>` +
+        (locked ? '<span class="ally-badge">LEADER</span>' : '');
+      if (!locked) c.onclick = () => { const i = picks.indexOf(key); if (i >= 0) picks.splice(i, 1); else { if (picks.length >= 3) return; picks.push(key); } draw(); };
+      return c;
+    };
+    function draw() {
+      body.innerHTML = '';
+      const h = document.createElement('div'); h.innerHTML = `<h2>⚓ Ruffy's Strike Team</h2><div class="sk-gold">Choose up to 3 champions you saved — they take the second wave. Ruffy always leads.</div>`; body.appendChild(h);
+      const grid = document.createElement('div'); grid.className = 'ally-grid';
+      grid.appendChild(card('ruffy', true));
+      if (eligible.length === 0) {
+        const note = document.createElement('div'); note.style.cssText = 'grid-column:1/-1; color:rgba(255,255,255,0.62); padding:0.7rem; line-height:1.5;';
+        note.textContent = 'You never finished a temporary-ally dungeon — so Ruffy stands with you alone. Just the two crews against the end of the world. He likes those odds.';
+        grid.appendChild(note);
+      } else eligible.forEach(k => {
+        const c = card(k, false); const i = picks.indexOf(k);
+        if (i >= 0) { c.classList.add('on'); const n = document.createElement('span'); n.className = 'ally-pick-num'; n.textContent = String(i + 1); c.appendChild(n); }
+        else if (picks.length >= 3) c.classList.add('dim');
+        grid.appendChild(c);
+      });
+      body.appendChild(grid);
+      const foot = document.createElement('div'); foot.style.cssText = 'display:flex; justify-content:flex-end; margin-top:0.7rem;';
+      const go = document.createElement('button'); go.className = 'pill'; go.textContent = picks.length ? `To the final battle (Ruffy + ${picks.length})` : 'To the final battle (Ruffy alone)';
+      go.onclick = () => { Game.allyPickOpen = false; el('allyPick').classList.remove('show'); cb(['ruffy'].concat(picks)); };
+      foot.appendChild(go); body.appendChild(foot);
+    }
+    draw(); el('allyPick').classList.add('show');
+  };
+
   // ---------- toast ----------
   let toastTimer = null;
   Game.toast = function (text) { const tEl = el('toast'); tEl.textContent = text; tEl.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => tEl.classList.remove('show'), 3200); };
@@ -476,7 +518,7 @@ window.Game = (function () {
     el('pQuit').onclick = () => Game.confirm('Save and quit to the title screen?', quitToTitle);
     el('worldPrompt').onclick = () => { if (Game.active) Game.active.interact && Game.active.interact(); };
   }
-  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.datingOpen || Game.shopOpen || Game.confirmOpen || Game.pauseOpen || Game.bestiaryOpen || Game.legendOpen || el('shellHunt').classList.contains('show') || el('observatory').classList.contains('show') || el('arcade').classList.contains('show') || el('coliseum').classList.contains('show') || el('end').classList.contains('show'); }
+  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.datingOpen || Game.shopOpen || Game.confirmOpen || Game.allyPickOpen || Game.pauseOpen || Game.bestiaryOpen || Game.legendOpen || el('shellHunt').classList.contains('show') || el('observatory').classList.contains('show') || el('arcade').classList.contains('show') || el('coliseum').classList.contains('show') || el('end').classList.contains('show'); }
   Game.blocking = function () { return Game.dialogueOpen || anyModal(); };
   function route(code) {
     if (el('introSeq').classList.contains('show')) { if (Game._introFinish) Game._introFinish(); return; }

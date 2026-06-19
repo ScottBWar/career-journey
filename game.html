@@ -334,6 +334,21 @@
     .rc-role { font-size: 0.72rem; color: rgba(255,255,255,0.6); margin: 0.2rem 0 0.4rem; }
     .rc-weap { font-size: 0.74rem; color: #93c5fd; margin-top: 0.3rem; }
 
+    /* endgame ally picker — tall "champion" cards with a full portrait */
+    .ally-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.9rem; margin: 1rem 0; }
+    .ally-card { position: relative; text-align: center; font: inherit; color: #fff; background: linear-gradient(180deg, rgba(30,34,64,0.9), rgba(12,14,30,0.9)); border: 2px solid rgba(255,255,255,0.16); border-radius: 14px; padding: 0.8rem 0.6rem 0.9rem; cursor: pointer; transition: border-color 0.15s, transform 0.1s, box-shadow 0.2s; }
+    .ally-card:hover { transform: translateY(-3px); }
+    .ally-card.on { border-color: #fcd34d; box-shadow: 0 0 0 2px #fcd34d, 0 10px 30px rgba(252,211,77,0.35); }
+    .ally-card.locked { border-color: #6ee7b7; box-shadow: 0 0 0 2px rgba(110,231,183,0.6); cursor: default; }
+    .ally-card.dim { opacity: 0.4; }
+    .ally-port { width: 100%; aspect-ratio: 3/4; border-radius: 10px; overflow: hidden; background: radial-gradient(circle at 50% 35%, rgba(255,255,255,0.12), rgba(0,0,0,0.3)); display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; }
+    .ally-port canvas, .ally-port img { width: 100%; height: 100%; object-fit: cover; image-rendering: auto; }
+    .ally-name { font-weight: 700; font-size: 0.95rem; }
+    .ally-role { font-size: 0.68rem; color: rgba(255,255,255,0.6); }
+    .ally-lvl { font-size: 0.72rem; color: #93c5fd; margin-top: 0.15rem; }
+    .ally-pick-num { position: absolute; top: 6px; right: 8px; width: 26px; height: 26px; border-radius: 50%; background: #fcd34d; color: #1a1206; font-weight: 800; font-size: 0.9rem; line-height: 26px; }
+    .ally-badge { position: absolute; top: 6px; left: 8px; font-size: 0.6rem; letter-spacing: 0.08em; background: rgba(110,231,183,0.9); color: #06281c; padding: 2px 6px; border-radius: 6px; font-weight: 700; }
+
     /* portraits */
     .portrait { image-rendering: pixelated; image-rendering: crisp-edges; width: 38px; height: 38px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25); display: block; }
     .pm-head { display: flex; gap: 0.5rem; align-items: center; }
@@ -583,6 +598,9 @@
 
   <!-- PARTY -->
   <div class="overlay" id="partyScr"><div class="panel" id="partyBody" style="padding:1.2rem;"></div></div>
+
+  <!-- ENDGAME ALLY PICKER (Ruffy's strike team for the two-party finale) -->
+  <div class="overlay" id="allyPick"><div class="panel" id="allyPickBody" style="padding:1.2rem; max-width: 880px;"></div></div>
 
   <!-- PAUSE -->
   <div class="overlay" id="pause"><div class="box panel pausebox">

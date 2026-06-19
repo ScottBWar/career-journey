@@ -995,7 +995,46 @@ window.Models = (function () {
     return { node: r, idle(t) { hub.rotation.z = t * 2; stoneEye.scaling.y = 1 + Math.sin(t * 5) * 0.2; } };
   }
 
-  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane, ruffy_duel: () => rival() };
+  // OMEGA — Selachoth's true, shed form: a pale biomechanical angel-horror risen from the
+  // drowned abyss (a Jenova-style final). Floating core, single great eye, ragged wings, broken halo.
+  function omega() {
+    const r = new BABYLON.TransformNode('eOmega', scene);
+    const flesh = M('omF', '#d8ccc0', { spec: 0.4, specPower: 50, emissive: '#2a2230' }), flesh2 = M('omF2', '#b0a4b8'),
+          biomech = M('omB', '#6a6478', { spec: 0.6 }), glow = M('omG', '#7fe9ff', { emissive: '#39c8ff' }),
+          veil = M('omV', '#c46aff', { emissive: '#7a2ad0' }), eyeW = M('omEW', '#eaf6ff', { emissive: '#9fe0ff' }), eyeP = M('omEP', '#10121a');
+    // elongated angelic torso/core
+    at(MB.CreateSphere('core', { diameterX: 1.8, diameterY: 3.2, diameterZ: 1.6, segments: 16 }, scene), r, flesh, 0, 3.4, 0);
+    at(MB.CreateCylinder('neck', { height: 1.2, diameterTop: 0.6, diameterBottom: 1.0, tessellation: 12 }, scene), r, flesh2, 0, 5.0, 0);
+    // the single great eye where a face should be
+    at(MB.CreateSphere('eyeW', { diameter: 1.1 }, scene), r, eyeW, 0, 5.4, 0.55);
+    at(MB.CreateSphere('eyeP', { diameter: 0.5 }, scene), r, eyeP, 0, 5.4, 0.95);
+    at(MB.CreateSphere('eyeG', { diameter: 1.6 }, scene), r, M('omEG', '#9fe0ff', { emissive: '#9fe0ff', alpha: 0.18 }), 0, 5.4, 0.55).material.alphaMode = BABYLON.Engine.ALPHA_ADD;
+    // a broken halo
+    const halo = at(MB.CreateTorus('halo', { diameter: 2.4, thickness: 0.12, tessellation: 24, arc: 0.78 }, scene), r, glow, 0, 6.2, -0.1); halo.rotation.x = Math.PI / 2.2;
+    // bio-tubes wrapping the torso
+    [-1, 1].forEach(s => { const t = at(MB.CreateCylinder('tube', { height: 3.0, diameter: 0.28, tessellation: 8 }, scene), r, biomech, s * 0.9, 3.4, 0.2); t.rotation.z = s * 0.16; });
+    // great ragged wings (asymmetric — one feathered, one bladed/bone)
+    const wings = [];
+    [-1, 1].forEach(s => {
+      const wp = new BABYLON.TransformNode('wp' + s, scene); wp.parent = r; wp.position.set(s * 0.8, 4.4, -0.5);
+      for (let i = 0; i < 5; i++) { const fe = at(MB.CreateCylinder('fea', { height: 3.2 - i * 0.3, diameterTop: 0, diameterBottom: 0.5, tessellation: 4 }, scene), wp, s < 0 ? flesh2 : biomech, s * (0.6 + i * 0.5), 0.4 + i * 0.2, -0.3); fe.rotation.z = s * (0.5 + i * 0.28); fe.scaling.z = 0.3; }
+      wings.push(wp);
+    });
+    // trailing tendrils from below the core
+    const tend = [];
+    for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; const piv = new BABYLON.TransformNode('tp' + i, scene); piv.parent = r; piv.position.set(Math.cos(a) * 0.7, 2.0, Math.sin(a) * 0.6);
+      at(MB.CreateCylinder('ten', { height: 2.4, diameterTop: 0.04, diameterBottom: 0.22, tessellation: 5 }, scene), piv, i % 2 ? veil : flesh2, 0, -1.1, 0); tend.push({ piv, a, i }); }
+    // motes of light orbiting the form
+    for (let i = 0; i < 10; i++) { const a = i * 2.39; at(MB.CreateSphere('mote', { diameter: 0.18 }, scene), r, glow, Math.cos(a) * 2.0, 3.0 + (i % 5) * 0.6, Math.sin(a) * 1.6); }
+    return { node: r, idle(t) {
+      r.position.y = (r._baseY || 0) + Math.sin(t * 0.8) * 0.25;
+      halo.rotation.z = t * 0.5;
+      wings.forEach((w, i) => { w.rotation.x = Math.sin(t * 1.1 + i * Math.PI) * 0.18; });
+      tend.forEach(o => { o.piv.rotation.x = Math.sin(t * 1.6 + o.i) * 0.3; o.piv.rotation.z = Math.cos(t * 1.3 + o.i) * 0.25; });
+    } };
+  }
+
+  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane, omega, ruffy_duel: () => rival() };
 
   // ---------------- ALADDIN (street-rat ally) ----------------
   function aladdin(weaponKey) {
