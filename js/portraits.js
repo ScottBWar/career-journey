@@ -245,42 +245,8 @@ window.Portraits = (function () {
     return cv.toDataURL();
   }
 
-  // ---- TEMPLATE RECOLOR: real extracted Stardew faces, recoloured per character ----
-  // Female / long-haired cast use the Haley base (gorgeous flowing hair). Role-tagged
-  // cells let us remap skin/hair/eye/dress ramps while keeping the artist's pixels.
-  const TEMPLATE = { healer: 'haley', violca: 'haley', sane: 'haley', ember: 'haley', nerida: 'haley', volta: 'haley', gaia: 'haley', nyx: 'haley', lumina: 'haley' };
-  const SKF = [0.62, 0.82, 1.0, 1.12], HRF = [0.6, 0.85, 1.08, 1.45], EYF = [0.7, 1.05, 1.45], DRF = [0.5, 0.82, 1.05, 1.4];
-  const B36 = '0123456789abcdefghijklmnopqrstuvwxyz';
-  function templateFace(tplName, p) {
-    const T = window.PORTRAIT_TPL && window.PORTRAIT_TPL[tplName]; if (!T) return null;
-    const N = 64, PX = 4, W = N * PX, pal = T.pal, rows = T.rows;
-    const sk = p.skin || '#e8c0a0', hr = p.hair || '#caa86a', ey = p.eye || '#6cb0e0', dr = shadeHex(p.bg || '#445566', 2.0), bg = p.bg || '#223';
-    const colorOf = (role, ch) => {
-      if (role === 'o') return pal[B36.indexOf(ch)] || '#000';
-      const v = ch.charCodeAt(0) - 48;
-      if (role === 'k') return toneHex(sk, SKF[v]); if (role === 'h') return toneHex(hr, HRF[v]);
-      if (role === 'e') return toneHex(ey, EYF[v]); if (role === 'd') return toneHex(dr, DRF[v]); return '#000';
-    };
-    const lc = document.createElement('canvas'); lc.width = lc.height = N; const c = lc.getContext('2d');
-    const img = c.createImageData(N, N), dd = img.data;
-    for (let y = 0; y < N; y++) {
-      const grad = shadeHex(bg, 1.28 - (y / N) * 0.82), gn = parseInt(grad.slice(1), 16);  // backdrop gradient
-      const rr = rows[y];
-      for (let x = 0; x < N; x++) {
-        const cell = rr.substr(x * 2, 2), i = (y * N + x) * 4; let n;
-        if (cell === '..') n = gn; else { const hx = colorOf(cell[0], cell[1]); n = parseInt(hx.slice(1), 16); }
-        dd[i] = (n >> 16) & 255; dd[i + 1] = (n >> 8) & 255; dd[i + 2] = n & 255; dd[i + 3] = 255;
-      }
-    }
-    c.putImageData(img, 0, 0);
-    const cv = document.createElement('canvas'); cv.width = cv.height = W; const oc = cv.getContext('2d');
-    oc.imageSmoothingEnabled = false; oc.drawImage(lc, 0, 0, N, N, 0, 0, W, W);
-    return cv.toDataURL();
-  }
-
   function draw(key, mood) {
     const p = SPEC[key]; if (!p) return null;
-    if (TEMPLATE[key] && window.PORTRAIT_TPL) { try { const u = templateFace(TEMPLATE[key], p); if (u) return u; } catch (e) { /* fall through */ } }
     if (HUMANOID[p.type]) { try { return pixelFace(p, mood); } catch (e) { /* fall through to pixel-grid renderer */ } }
     const cv = document.createElement('canvas'); cv.width = cv.height = S * CELL;
     const c = cv.getContext('2d');
