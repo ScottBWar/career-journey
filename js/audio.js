@@ -187,11 +187,14 @@
       harm: [_,_,_,_, 60,_,_,_, _,_,_,_, 52,_,_,_,  _,_,_,_, 59,_,_,_, _,_,_,_, 56,_,_,_], harmPeak: 0.055 },
 
     // intimate, sensual
-    date: { bpm: 70, drums: 'soft', swing: 0.22, padWave: 'sine', leadWave: 'sine', cut: 1500, choir: true,
-      bars: [[57,60,64,67],[53,57,60,64],[55,59,62,65],[52,55,59,62]],
-      keys: [_,_,K,_, _,_,_,_, _,_,K,_, _,_,K,_], keyLen: 3.4, keyPeak: 0.07,
-      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.26,
-      mel: [_,_,_,_, 71,_,_,_, 72,_,_,_, _,_,69,_,  _,_,_,_, 67,_,_,_, 69,_,_,_, _,_,_,_], leadPeak: 0.07 },
+    // upbeat & kawaii — bright bouncy major-key twinkle for the mermaid dates
+    date: { bpm: 110, drums: 'triphop', swing: 0.12, padWave: 'triangle', leadWave: 'square', cut: 2300,
+      bars: [[60,64,67,72],[57,60,64,69],[53,57,60,65],[55,59,62,67]],
+      keys: [K,_,K,_, K,_,K,_, K,_,K,_, K,_,K,K], keyLen: 0.9, keyPeak: 0.07,
+      bassP: [0,_,0,_, 0,_,7,_, 0,_,0,_, 7,_,7,_], bassPeak: 0.3, bassLen: 1.1,
+      leadADSR: { a: 0.01, d: 0.1, s: 0.3, r: 0.3 }, leadDur: 0.45, leadPeak: 0.08,
+      mel: [79,_,76,_, 79,_,84,_, 81,_,79,_, 76,_,_,_,  77,_,76,_, 77,_,81,_, 79,_,77,_, 76,_,74,_,
+            72,_,76,_, 79,_,83,_, 81,_,79,_, 76,_,_,_,  74,_,77,_, 79,_,74,_, 72,_,_,_, _,_,_,_] },
 
     // the Coliseum of Paegina — trip-hop bed under a plucked, Phrygian lyre
     paegina: { bpm: 88, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 1900,

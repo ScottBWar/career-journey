@@ -5,7 +5,23 @@
 // =====================================================================
 window.Dating = (function () {
   const el = id => document.getElementById(id);
-  let key, m, st, onClose, mood = 'neutral';
+  let key, m, st, onClose, mood = 'neutral', bodyImg = null;
+
+  // render the full 3D mermaid body to a transparent image once, so the date screen shows
+  // her whole figure (not just a head portrait). Falls back to the portrait if it fails.
+  function renderBody(mer) {
+    try {
+      const eng = Game.engine; const scene = new BABYLON.Scene(eng); scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+      Models.use(scene);
+      new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0.2, 1, 0.35), scene).intensity = 1.05;
+      const sun = new BABYLON.DirectionalLight('s', new BABYLON.Vector3(-0.35, -1, 0.45), scene); sun.intensity = 1.25; sun.specular = new BABYLON.Color3(1, 1, 1);
+      const built = Models.mermaid(mer.color, mer.tail); built.node.rotation.y = 0.18;
+      const cam = new BABYLON.UniversalCamera('c', new BABYLON.Vector3(0, 1.45, 7), scene); cam.setTarget(new BABYLON.Vector3(0, 1.35, 0)); cam.fov = 0.62;
+      BABYLON.Tools.CreateScreenshotUsingRenderTarget(eng, cam, { width: 540, height: 820 }, (data) => {
+        bodyImg = data; const img = el('dateBody'); if (img) img.src = data; try { scene.dispose(); } catch (e) {}
+      });
+    } catch (e) { bodyImg = null; }
+  }
 
   function hearts(rel, max) { const filled = Math.round(rel / max * 5); let s = ''; for (let i = 0; i < 5; i++) s += i < filled ? '❤' : '🤍'; return s; }
 
@@ -16,12 +32,12 @@ window.Dating = (function () {
     el('date').className = 'overlay show scene-' + m.element; // element-themed scene background
     if (window.SFX) SFX.play('confirm');
     if (window.Music) Music.play('date');
-    render();
+    bodyImg = null; render(); renderBody(m); // kick off the full-body render; frame() shows it once ready
   }
 
   function frame(bodyHtml, options) {
     const elInfo = Data.ELEMENT_INFO[m.element];
-    el('date').innerHTML = `<div class="date-char"><img src="${Portraits.url(key, mood)}" alt=""></div>
+    el('date').innerHTML = `<div class="date-char"><img id="dateBody" src="${bodyImg || Portraits.url(key, mood)}" alt=""></div>
       <div class="box panel date-box">
       <div class="date-head">${Portraits.img(key, 'date-port', mood)}
         <div class="date-meta"><div class="date-name">${m.name} <span class="date-el" style="color:${elInfo.c}">${elInfo.i} ${elInfo.name}</span></div>

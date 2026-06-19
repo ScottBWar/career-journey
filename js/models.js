@@ -65,10 +65,13 @@ window.Models = (function () {
     const guardM = M('wGuard', spec.guard, { emissive: glow ? spec.guard : '#3a2e08' });
     const grip = M('wGrip', '#2a2018');
     switch (spec.style) {
-      case 'sword':
-        at(MB.CreateBox('bl', { width: 0.09, height: 1.3 * g, depth: 0.16 }, scene), wn, blade(col), 0, 0.55 * g, 0);
-        at(MB.CreateBox('gd', { width: 0.34, height: 0.1, depth: 0.22 }, scene), wn, guardM, 0, -0.05, 0);
-        at(MB.CreateCylinder('gr', { height: 0.3, diameter: 0.09 }, scene), wn, grip, 0, -0.25, 0); break;
+      case 'sword': { // a curved CUTLASS with a sweeping knuckle-bow guard
+        const bl = at(MB.CreateBox('bl', { width: 0.1, height: 1.05 * g, depth: 0.22 }, scene), wn, blade(col), 0.05, 0.52 * g, 0); bl.rotation.z = -0.13;
+        const tip = at(MB.CreateBox('tip', { width: 0.1, height: 0.55 * g, depth: 0.17 }, scene), wn, blade(col), 0.2, 1.02 * g, 0); tip.rotation.z = -0.38; // upswept curved tip
+        at(MB.CreateBox('gd', { width: 0.38, height: 0.1, depth: 0.24 }, scene), wn, guardM, 0, -0.05, 0); // crossguard
+        const bow = at(MB.CreateTorus('bow', { diameter: 0.46, thickness: 0.05, tessellation: 16, arc: 0.55 }, scene), wn, guardM, 0.02, -0.2, 0.16); bow.rotation.x = Math.PI / 2; bow.rotation.z = -0.5; // knuckle bow
+        at(MB.CreateCylinder('gr', { height: 0.32, diameter: 0.09 }, scene), wn, grip, 0, -0.24, 0);
+        at(MB.CreateSphere('pommel', { diameter: 0.13 }, scene), wn, guardM, 0, -0.42, 0); break; }
       case 'scimitar': {
         const b = at(MB.CreateBox('bl', { width: 0.1, height: 1.2 * g, depth: 0.14 }, scene), wn, blade(col), 0.06, 0.55 * g, 0); b.rotation.z = 0.16;
         at(MB.CreateBox('gd', { width: 0.32, height: 0.1, depth: 0.2 }, scene), wn, guardM, 0, -0.05, 0); break; }
