@@ -1543,7 +1543,26 @@ window.Data = (function () {
     return keys;
   }
 
-  return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, SHOP_STOCK_BY_TOWN, MATERIALS, RECIPES, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY, COSMOS,
+  // Gen-1-style combat stats per character (Attack lives in the weapon/fight range).
+  // def = physical mitigation, spec = magic power AND magic defense, spd = turn order.
+  // g* are per-level growth. Archetypes: mages high SPEC, knights high DEF, rogues high SPD.
+  const COMBAT_STATS = {
+    pirate:   { def: 26, spec: 14, spd: 11, gdef: 2.0, gspec: 1.0, gspd: 0.30 },
+    swordsman:{ def: 32, spec: 16, spd: 9,  gdef: 2.5, gspec: 1.2, gspd: 0.25 },
+    healer:   { def: 18, spec: 40, spd: 10, gdef: 1.5, gspec: 3.0, gspd: 0.30 },
+    mage:     { def: 12, spec: 48, spd: 9,  gdef: 1.0, gspec: 3.6, gspd: 0.25 },
+    dragoon:  { def: 34, spec: 14, spd: 8,  gdef: 2.5, gspec: 1.0, gspd: 0.20 },
+    ruffy:    { def: 24, spec: 12, spd: 13, gdef: 2.0, gspec: 0.8, gspd: 0.40 },
+    simon:    { def: 26, spec: 24, spd: 11, gdef: 2.0, gspec: 2.0, gspd: 0.30 },
+    aladdin:  { def: 18, spec: 22, spd: 15, gdef: 1.5, gspec: 1.8, gspd: 0.50 },
+    violca:   { def: 22, spec: 26, spd: 13, gdef: 1.8, gspec: 2.0, gspd: 0.40 },
+    mac:      { def: 30, spec: 16, spd: 9,  gdef: 2.5, gspec: 1.2, gspd: 0.25 },
+    sane:     { def: 24, spec: 22, spd: 14, gdef: 2.0, gspec: 1.8, gspd: 0.45 },
+    marvyn:   { def: 34, spec: 36, spd: 8,  gdef: 2.5, gspec: 2.5, gspd: 0.20 },
+    quijano:  { def: 40, spec: 14, spd: 9,  gdef: 3.0, gspec: 1.0, gspd: 0.20 },
+  };
+
+  return { PARTY, ENEMIES, ITEM_DEFS, COMBAT_STATS, SHOP_STOCK, SHOP_STOCK_BY_TOWN, MATERIALS, RECIPES, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY, COSMOS,
            ELEMENT_INFO, elementOf, affMult, AFFINITIES, STATUS, ACCESSORIES, SHOP_ACCESSORIES, COLISEUM, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT, MERMAIDS, AMBUSH,
            xpForLevel, MAX_LEVEL, randomEncounter };
 })();

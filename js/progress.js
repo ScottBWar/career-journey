@@ -64,6 +64,11 @@ window.Progress = (function () {
     let maxmp = d.base.mp + d.growth.mp * (lvl - 1);
     let atkBonus = d.growth.atk * (lvl - 1);
     let crit = d.base.crit;
+    // Gen-1-style stats: DEF (physical mitigation), SPEC (magic power + magic defense), SPD (turn order)
+    const cs = (Data.COMBAT_STATS && Data.COMBAT_STATS[memberState.key]) || { def: 22, spec: 20, spd: 10, gdef: 2, gspec: 1.5, gspd: 0.3 };
+    let defStat = cs.def + (cs.gdef || 0) * (lvl - 1);
+    let specStat = cs.spec + (cs.gspec || 0) * (lvl - 1);
+    let spdStat = cs.spd + (cs.gspd || 0) * (lvl - 1);
     const abilities = d.baseAbilities.slice();
 
     d.tree.forEach(node => {
@@ -73,6 +78,9 @@ window.Progress = (function () {
         if (node.stat.mp) maxmp += node.stat.mp;
         if (node.stat.atk) atkBonus += node.stat.atk;
         if (node.stat.crit) crit += node.stat.crit;
+        if (node.stat.def) defStat += node.stat.def;
+        if (node.stat.spec) specStat += node.stat.spec;
+        if (node.stat.spd) spdStat += node.stat.spd;
       } else if (node.kind === 'ability') {
         abilities.push(node.ability);
       }
@@ -87,7 +95,7 @@ window.Progress = (function () {
       const acc = eq.accessory && Data.ACCESSORIES[eq.accessory];
       if (acc) {
         accName = acc.name;
-        if (acc.stat) { if (acc.stat.hp) maxhp += acc.stat.hp; if (acc.stat.mp) maxmp += acc.stat.mp; if (acc.stat.atk) atkBonus += acc.stat.atk; if (acc.stat.crit) crit += acc.stat.crit; }
+        if (acc.stat) { if (acc.stat.hp) maxhp += acc.stat.hp; if (acc.stat.mp) maxmp += acc.stat.mp; if (acc.stat.atk) atkBonus += acc.stat.atk; if (acc.stat.crit) crit += acc.stat.crit; if (acc.stat.def) defStat += acc.stat.def; if (acc.stat.spec) specStat += acc.stat.spec; if (acc.stat.spd) spdStat += acc.stat.spd; }
         if (acc.dr) dr += acc.dr;
         if (acc.immune) acc.immune.forEach(s => { if (!immune.includes(s)) immune.push(s); });
       }
@@ -99,6 +107,7 @@ window.Progress = (function () {
           const amt = sh.perLevel * inst.level;
           if (sh.stat === 'hp') maxhp += amt; else if (sh.stat === 'mp') maxmp += amt;
           else if (sh.stat === 'atk') atkBonus += amt; else if (sh.stat === 'crit') crit += amt;
+          else if (sh.stat === 'def') defStat += amt; else if (sh.stat === 'spec') specStat += amt; else if (sh.stat === 'spd') spdStat += amt;
         } else if (sh.kind === 'magic') { const a = Data.shellAbility(inst.key, inst.level); if (a) abilities.push(a); }
       };
       (eq.wslots || eq.slots || []).forEach(applyShell);   // eq.slots = legacy fallback
@@ -109,6 +118,8 @@ window.Progress = (function () {
     return {
       name: d.name, role: d.role, model: d.model, weaponName, accName, enchant, dr, immune,
       maxhp, maxmp,
+      def: Math.round(defStat), spec: Math.round(specStat), spd: Math.round(spdStat),
+      atk: Math.round((d.base.atkMin + d.base.atkMax) / 2 + atkBonus),
       fight: { min: d.base.atkMin + atkBonus, max: d.base.atkMax + atkBonus, crit, big: !!d.base.big, el: enchant || 'physical' },
       abilities,
     };
@@ -288,7 +299,7 @@ window.Progress = (function () {
       const need = p.level < Data.MAX_LEVEL ? Data.xpForLevel(p.level) : 0;
       block.innerHTML = `<div class="sk-bhead"><div><span class="sk-name">${d.name}</span> <span class="sk-role">${d.role}</span></div>
         <div class="sk-sp">Lv ${p.level} · <b>${p.sp} SP</b></div></div>
-        <div class="sk-bstats">HP ${d.maxhp} · MP ${d.maxmp} · ATK ${d.fight.min}-${d.fight.max} · Crit ${Math.round(d.fight.crit*100)}% · ${need ? `XP ${p.xp}/${need}` : 'MAX'}</div>`;
+        <div class="sk-bstats">HP ${d.maxhp} · MP ${d.maxmp} · ATK ${d.fight.min}-${d.fight.max} · DEF ${d.def} · SPC ${d.spec} · SPD ${d.spd} · Crit ${Math.round(d.fight.crit*100)}% · ${need ? `XP ${p.xp}/${need}` : 'MAX'}</div>`;
 
       // layout by tier
       const memo = {}; const tiers = {};
@@ -350,7 +361,7 @@ window.Progress = (function () {
     const stats = document.createElement('div'); stats.className = 'gear-stats';
     const abilNames = d.abilities.map(a => a.name).join(', ');
     const extra = (d.dr ? ` · DR ${Math.round(d.dr*100)}%` : '') + (d.immune && d.immune.length ? ` · immune ${d.immune.map(s => (Data.STATUS[s]||{}).name || s).join(', ')}` : '');
-    stats.innerHTML = `<div class="sk-stats">HP ${d.maxhp} · MP ${d.maxmp} · ATK ${d.fight.min}-${d.fight.max} · Crit ${Math.round(d.fight.crit*100)}%${extra}</div>
+    stats.innerHTML = `<div class="sk-stats">HP ${d.maxhp} · MP ${d.maxmp} · ATK ${d.fight.min}-${d.fight.max} · DEF ${d.def} · SPC ${d.spec} · SPD ${d.spd} · Crit ${Math.round(d.fight.crit*100)}%${extra}</div>
       <div class="gear-abil"><b>Abilities:</b> ${abilNames || '—'}</div>`;
     body.appendChild(stats);
 
@@ -436,7 +447,7 @@ window.Progress = (function () {
       const col = document.createElement('button'); col.className = 'roster-card' + (isActive ? ' on' : '');
       col.innerHTML = `<div class="rc-top"><span class="rc-name">${d.name}</span><span class="rc-tag">${isActive ? 'IN PARTY' : 'Bench'}</span></div>
         <div class="rc-role">${d.role} · Lv ${p.level}</div>
-        <div class="sk-stats">HP ${d.maxhp} · MP ${d.maxmp} · ATK ${d.fight.min}-${d.fight.max}</div>
+        <div class="sk-stats">HP ${d.maxhp} · MP ${d.maxmp} · ATK ${d.fight.min}-${d.fight.max} · DEF ${d.def} · SPC ${d.spec} · SPD ${d.spd}</div>
         <div class="rc-weap">⚔ ${d.weaponName || '—'}</div>`;
       col.onclick = () => { toggleActive(state, p.key); renderRoster(state, container, onClose); };
       grid.appendChild(col);

@@ -63,6 +63,7 @@ window.Battle = (function () {
       const mp = clamp(ms.mpCur == null ? d.maxmp : ms.mpCur, 0, d.maxmp);
       party.push({ side:'party', ref: ms, key: ms.key, name: d.name, role: d.role, node: built.node, arm: built.arm, staffPiv: built.staffPiv,
         maxhp: d.maxhp, hp, maxmp: d.maxmp, mp, home, baseY: 0, phase: i*1.3, alive: hp > 0, _busy: false, limit: (opts && opts.fullLimit) ? 100 : 25,
+        def: d.def || 22, spec: d.spec || 20, spd: d.spd || 10, atk: d.atk || 20,
         idle: built.idle, fight: d.fight, abilities: d.abilities, dr: d.dr || 0, immune: d.immune || [], st: {} });
     });
 
@@ -81,6 +82,7 @@ window.Battle = (function () {
       if (Progress.recordSeen) Progress.recordSeen(Game.state, key);
       const suffix = placed.filter(k => k === key).length > 1 ? ' ' + 'ABC'[seen[key]-1] : '';
       const e = { side:'enemy', keyRaw: key, name: def.name + suffix, node: built.node, baseY: def.baseY, maxhp: def.hp, hp: def.hp,
+        def: def.def != null ? def.def : Math.round(def.hp * 0.05), spec: def.spec != null ? def.spec : Math.round(def.hp * 0.045),
         home, phase: i*1.7 + 0.5, alive: true, _busy: false, idle: built.idle, moves: def.moves, xp: def.xp, gold: def.gold, drops: def.drops, st: {} };
       // rotating-weakness bosses get a current weakness + a subtle elemental aura
       if (def.rotate && def.rotate.length) {
@@ -96,7 +98,7 @@ window.Battle = (function () {
     actors = party.concat(enemies);
     // CTB turn timing: lower ct acts sooner; faster speed = more frequent turns
     const fs = opts && opts.firstStrike;
-    party.forEach(p => { p.spd = PSPD[p.key] || 10; p.ct = fs ? 0 : 100 / p.spd; });
+    party.forEach(p => { p.spd = p.spd || PSPD[p.key] || 10; p.ct = fs ? 0 : 100 / p.spd; });
     enemies.forEach(e => { e.spd = ESPD[e.keyRaw] || 8; e.ct = fs ? 320 / e.spd : 100 / e.spd; });
 
     shakeAmt = 0;
@@ -311,7 +313,7 @@ window.Battle = (function () {
     }
     return Data.affMult(e.keyRaw, element);
   }
-  function damageEnemy(e, dmg, color = '#ffffff', element = 'physical') {
+  function damageEnemy(e, dmg, color = '#ffffff', element = 'physical', kind = 'phys') {
     const mult = enemyAffMult(e, element);
     if (mult < 0) { // absorb → enemy heals
       const heal = Math.round(dmg * 0.6); e.hp = Math.min(e.maxhp, e.hp + heal);
@@ -319,6 +321,9 @@ window.Battle = (function () {
     }
     if (mult === 0) { floatDamage(e.node, 'Null', '#9aa6b4', 2.6); return; }
     dmg = Math.round(dmg * mult);
+    // Gen-1 mitigation: physical reduced by DEF, magic reduced (lightly) by SPEC
+    if (kind === 'mag') dmg = Math.max(1, Math.round(dmg * (110 / (110 + (e.spec || 0)))));
+    else dmg = Math.max(1, Math.round(dmg * (90 / (90 + (e.def || 0)))));
     if (hasSt(e, 'weaken')) dmg = Math.round(dmg * Data.STATUS.weaken.dmg);
     if (window.SFX) SFX.play(mult > 1 ? 'crit' : 'hit');
     e.hp = Math.max(0, e.hp - dmg); hitFlash(e.node, mult > 1 ? '#fff0a0' : '#ff6060'); burst(worldOf(e.node, 0.6), ...FX.hit, mult > 1 ? 120 : 80, mult > 1 ? 12 : 9);
@@ -448,13 +453,18 @@ window.Battle = (function () {
   // element-specific impact — a gout of flame looks like a gout of flame, etc.
   function elemImpact(node, elem, col) {
     if (window.SFX) SFX.play({ fire: 'fire', water: 'water', earth: 'earth', holy: 'holy', dark: 'dark' }[elem] || 'hit');
-    if (elem === 'fire') { particles(worldOf(node, -0.3), { count: 220, c1: '#ffe066', c2: '#ff3a1a', minSize: 0.4, maxSize: 1.2, life0: 0.25, life1: 0.7, rate: 700, dir1: new V3(-0.7, 5, -0.7), dir2: new V3(0.7, 9, 0.7), pow0: 2, pow1: 5, gravity: new V3(0, -2.5, 0), spread: 0.6, dur: 300 }); flashScreen('rgba(255,120,40,0.18)'); shake(0.8); }
-    else if (elem === 'water') { particles(worldOf(node, 2.0), { count: 200, c1: '#bff0ff', c2: '#2f7fff', minSize: 0.25, maxSize: 0.8, life0: 0.2, life1: 0.6, rate: 600, dir1: new V3(-2, -7, -2), dir2: new V3(2, -2, 2), pow0: 3, pow1: 7, gravity: new V3(0, -10, 0), spread: 0.8, dur: 280 }); shake(0.6); }
-    else if (elem === 'earth') { particles(worldOf(node, -0.3), { count: 110, c1: '#d8b878', c2: '#5a3a1e', minSize: 0.35, maxSize: 0.9, life0: 0.3, life1: 0.7, rate: 500, dir1: new V3(-3, 4, -3), dir2: new V3(3, 9, 3), pow0: 2, pow1: 5, gravity: new V3(0, -14, 0), spread: 0.5, dur: 220 }); shake(1.0); }
-    else if (elem === 'holy') { const cyl = MB.CreateCylinder('holyP', { height: 16, diameter: 2.4 }, scene); cyl.material = M('holyPM', '#fff0a0', { emissive: '#fff0a0' }); cyl.material.alpha = 0.4; cyl.position = worldOf(node, 7); particles(worldOf(node, 5), { count: 160, c1: '#fff6c2', c2: '#ffe08a', minSize: 0.2, maxSize: 0.7, life0: 0.3, life1: 0.9, rate: 500, dir1: new V3(-0.5, -7, -0.5), dir2: new V3(0.5, -2, 0.5), pow0: 2, pow1: 5, gravity: new V3(0, -1, 0), spread: 0.9, dur: 320 }); flashScreen('rgba(255,240,170,0.22)'); shake(0.9); setTimeout(() => cyl.dispose(), 220); }
-    else if (elem === 'dark') { particles(worldOf(node, 1.6), { count: 180, c1: '#c08aff', c2: '#3a0a52', minSize: 0.3, maxSize: 0.9, life0: 0.2, life1: 0.55, rate: 700, dir1: new V3(-3, -3, -3), dir2: new V3(3, 1, 3), pow0: 1, pow1: 3, gravity: new V3(0, 2.5, 0), spread: 1.2, dur: 260 }); flashScreen('rgba(120,40,200,0.18)'); shake(0.8); }
-    else { burst(worldOf(node, 0.4), col, '#ffffff', 100, 11); shake(0.6); }
-    hitFlash(node, col, 220);
+    // a bright ring shockwave on every spell impact — sells the "boom"
+    const ring = MB.CreateTorus('spellRing', { diameter: 1.2, thickness: 0.18, tessellation: 24 }, scene);
+    ring.material = M('ringM', col, { emissive: col }); ring.material.alpha = 0.85; ring.material.alphaMode = BABYLON.Engine.ALPHA_ADD; ring.rotation.x = Math.PI / 2; ring.position = worldOf(node, 0.2); ring.isPickable = false;
+    tween(k => { ring.scaling.setAll(1 + k * 6); ring.material.alpha = 0.85 * (1 - k); }, 360).then(() => ring.dispose());
+    if (elem === 'fire') { particles(worldOf(node, -0.3), { count: 340, c1: '#ffe066', c2: '#ff3a1a', minSize: 0.4, maxSize: 1.5, life0: 0.25, life1: 0.8, rate: 1100, dir1: new V3(-0.9, 5, -0.9), dir2: new V3(0.9, 11, 0.9), pow0: 2, pow1: 6, gravity: new V3(0, -2.5, 0), spread: 0.6, dur: 320 }); flashScreen('rgba(255,120,40,0.3)'); shake(1.1); hitStop(0.08, 1.0); }
+    else if (elem === 'water') { particles(worldOf(node, 2.2), { count: 320, c1: '#bff0ff', c2: '#2f7fff', minSize: 0.25, maxSize: 1.0, life0: 0.2, life1: 0.7, rate: 1000, dir1: new V3(-2.5, -8, -2.5), dir2: new V3(2.5, -2, 2.5), pow0: 3, pow1: 8, gravity: new V3(0, -10, 0), spread: 0.8, dur: 300 }); flashScreen('rgba(80,160,255,0.22)'); shake(0.9); hitStop(0.07, 0.9); }
+    else if (elem === 'thunder') { particles(worldOf(node, 1.0), { count: 240, c1: '#fff6a0', c2: '#9fd0ff', minSize: 0.2, maxSize: 0.7, life0: 0.1, life1: 0.4, rate: 1200, dir1: new V3(-4, -2, -4), dir2: new V3(4, 6, 4), pow0: 3, pow1: 9, gravity: new V3(0, 0, 0), spread: 1.0, dur: 220 }); flashScreen('rgba(220,240,255,0.34)'); shake(1.2); hitStop(0.09, 1.1); }
+    else if (elem === 'earth') { particles(worldOf(node, -0.3), { count: 200, c1: '#d8b878', c2: '#5a3a1e', minSize: 0.4, maxSize: 1.2, life0: 0.3, life1: 0.8, rate: 800, dir1: new V3(-3.5, 4, -3.5), dir2: new V3(3.5, 11, 3.5), pow0: 2, pow1: 6, gravity: new V3(0, -14, 0), spread: 0.5, dur: 260 }); flashScreen('rgba(150,110,60,0.2)'); shake(1.3); hitStop(0.1, 1.0); }
+    else if (elem === 'holy') { const cyl = MB.CreateCylinder('holyP', { height: 20, diameter: 3.0 }, scene); cyl.material = M('holyPM', '#fff0a0', { emissive: '#fff0a0' }); cyl.material.alpha = 0.5; cyl.material.alphaMode = BABYLON.Engine.ALPHA_ADD; cyl.position = worldOf(node, 8); cyl.isPickable = false; particles(worldOf(node, 6), { count: 280, c1: '#fff6c2', c2: '#ffe08a', minSize: 0.2, maxSize: 0.9, life0: 0.3, life1: 1.0, rate: 900, dir1: new V3(-0.6, -9, -0.6), dir2: new V3(0.6, -2, 0.6), pow0: 2, pow1: 6, gravity: new V3(0, -1, 0), spread: 0.9, dur: 360 }); flashScreen('rgba(255,240,170,0.36)'); shake(1.1); hitStop(0.1, 1.2); setTimeout(() => cyl.dispose(), 300); }
+    else if (elem === 'dark') { particles(worldOf(node, 1.6), { count: 300, c1: '#c08aff', c2: '#3a0a52', minSize: 0.3, maxSize: 1.1, life0: 0.2, life1: 0.65, rate: 1100, dir1: new V3(-3.5, -3, -3.5), dir2: new V3(3.5, 2, 3.5), pow0: 1, pow1: 4, gravity: new V3(0, 2.5, 0), spread: 1.2, dur: 300 }); flashScreen('rgba(120,40,200,0.3)'); shake(1.0); hitStop(0.09, 1.0); }
+    else { burst(worldOf(node, 0.4), col, '#ffffff', 160, 13); shake(0.8); hitStop(0.06, 0.7); }
+    hitFlash(node, col, 240);
   }
   function spellHit(e, elem, col) {
     if (elem === 'thunder') { if (window.SFX) SFX.play('thunder'); lightningStrike(e.node, col); }
@@ -477,7 +487,7 @@ window.Battle = (function () {
       if (hasSt(m, 'atkup')) dmg = Math.round(dmg * Data.STATUS.atkup.atk);
       burst(worldOf(target.node, 0.4), ...FX[fxKey(elem)], crit ? 70 : 45, crit ? 8 : 6);
       if (crit && window.SFX) SFX.play('crit');
-      damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff', elem);
+      damageEnemy(target, dmg, crit ? '#fcd34d' : '#ffffff', elem, 'phys');
       if (crit) msg('Critical hit! ' + dmg + ' damage!');
     });
     gainLimit(m, 18);
@@ -490,9 +500,13 @@ window.Battle = (function () {
     // cast wind-up + charge glow
     if (m.staffPiv) rotTo(m.staffPiv, 'z', 0, -0.6, 150).then(() => rotTo(m.staffPiv, 'z', -0.6, 0, 260));
     else if (m.arm) rotTo(m.arm, 'x', m.arm.rotation.x, -1.0, 150).then(() => rotTo(m.arm, 'x', -1.0, m.arm.rotation.x, 260));
-    burst(worldOf(m.node, 0.7), col, '#ffffff', 45, 5, -2); await wait(180);
+    // gathering-power charge: motes spiral up + a swelling core glow at the caster
+    burst(worldOf(m.node, 0.7), col, '#ffffff', 110, 7, -2);
+    const orb = MB.CreateSphere('castOrb', { diameter: 0.5 }, scene); orb.material = M('castOrbM', col, { emissive: col }); orb.material.alpha = 0.9; orb.material.alphaMode = BABYLON.Engine.ALPHA_ADD; orb.position = worldOf(m.node, 1.4); orb.isPickable = false;
+    tween(k => { orb.scaling.setAll(0.4 + k * 1.6); orb.material.alpha = 0.9 * (1 - k * 0.3); }, 220).then(() => orb.dispose());
+    await wait(220);
     const hasDmg = (s.min || 0) > 0 || (s.max || 0) > 0;
-    if (s.heal) { msg(`${m.name} casts ${s.name}!`); for (const p of targets) { healMember(p, rnd(s.min, s.max)); if (s.status) applyStatusList(p, s.status, s.turns); burst(worldOf(p.node, 1.4), '#6ee7b7', '#ffffff', 50, 4, -3); } await wait(560); gainLimit(m, 14); return; }
+    if (s.heal) { msg(`${m.name} casts ${s.name}!`); for (const p of targets) { healMember(p, Math.round(rnd(s.min, s.max) * (0.85 + (m.spec || 20) / 110))); if (s.status) applyStatusList(p, s.status, s.turns); burst(worldOf(p.node, 1.4), '#6ee7b7', '#ffffff', 50, 4, -3); } await wait(560); gainLimit(m, 14); return; }
     // ally buff / support (no damage)
     if ((s.target === 'ally' || s.target === 'allparty') && s.status && !hasDmg) { msg(`${m.name} casts ${s.name}!`); for (const p of targets) { applyStatusList(p, s.status, s.turns); } await wait(560); gainLimit(m, 14); return; }
     msg(`${m.name} unleashes ${s.name}!`);
@@ -500,7 +514,7 @@ window.Battle = (function () {
     for (const e of targets) {
       if (single && hasDmg && (s.proj || elem === 'fire' || elem === 'water')) await projectile(worldOf(m.node, -0.1), worldOf(e.node, -0.1), col);
       spellHit(e, elem, col);
-      if (hasDmg) { let dmg = rnd(s.min, s.max); if (hasSt(m, 'atkup')) dmg = Math.round(dmg * Data.STATUS.atkup.atk); damageEnemy(e, dmg, col, elem); }
+      if (hasDmg) { let dmg = Math.round(rnd(s.min, s.max) * 1.5 * (0.75 + (m.spec || 20) / 80)); if (hasSt(m, 'atkup')) dmg = Math.round(dmg * Data.STATUS.atkup.atk); damageEnemy(e, dmg, col, elem, 'mag'); }
       if (s.status) applyStatusList(e, s.status, s.turns);
       await wait(single ? 160 : 110);
     }
@@ -521,8 +535,8 @@ window.Battle = (function () {
     else if (it.kind === 'fullrevive') { const p = targets[0]; reviveMember(p, true); msg(`${p.name} surges back to life!`); renderParty(false); await wait(650); }
     else if (it.kind === 'cure') { const p = targets[0]; msg(`${m.name} uses ${it.name}.`); if (window.SFX) SFX.play('heal'); cureStatus(p, it.cures); renderParty(false); await wait(500); }
     else if (it.kind === 'buff') { const p = targets[0]; msg(`${m.name} uses ${it.name}!`); applyStatusList(p, it.status, it.turns); renderParty(false); await wait(550); }
-    else if (it.kind === 'damageall') { msg(`${m.name} hurls a ${it.name}!`); for (const e of aliveEnemies()) { elemImpact(e.node, it.el, col); damageEnemy(e, rnd(it.min, it.max), col, it.el); } await wait(550); }
-    else { msg(`${m.name} hurls a ${it.name}!`); const ball = MB.CreateSphere('b', { diameter: 0.4 }, scene); ball.material = M('bMat', col, { emissive: col }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(targets[0].node, -0.2), 340); ball.dispose(); elemImpact(targets[0].node, it.el, col); damageEnemy(targets[0], rnd(it.min, it.max), col, it.el); await wait(450); }
+    else if (it.kind === 'damageall') { msg(`${m.name} hurls a ${it.name}!`); for (const e of aliveEnemies()) { elemImpact(e.node, it.el, col); damageEnemy(e, rnd(it.min, it.max), col, it.el, 'mag'); } await wait(550); }
+    else { msg(`${m.name} hurls a ${it.name}!`); const ball = MB.CreateSphere('b', { diameter: 0.4 }, scene); ball.material = M('bMat', col, { emissive: col }); ball.position = worldOf(m.node, -0.2); await moveTo(ball, worldOf(targets[0].node, -0.2), 340); ball.dispose(); elemImpact(targets[0].node, it.el, col); damageEnemy(targets[0], rnd(it.min, it.max), col, it.el, 'mag'); await wait(450); }
   }
 
   // shift a rotating boss to its next elemental weakness (subtle aura + telegraph)
@@ -542,11 +556,17 @@ window.Battle = (function () {
     const move = e.moves[rnd(0, e.moves.length - 1)]; const home = e.home.clone(); e._busy = true;
     if (move.heal) { const h = Math.round(e.maxhp * 0.12); e.hp = Math.min(e.maxhp, e.hp + h); msg(`${e.name} ${move.name}!`); burst(worldOf(e.node, 0.6), '#6ee7b7', '#bbf7d0', 50, 5, -2); floatDamage(e.node, '+' + h, '#6ee7b7', 2.6); scalePunch(e.node, 1.08); renderEnemies(false); e._busy = false; await wait(500); return; }
     const boost = hasSt(e, 'atkup') ? Data.STATUS.atkup.atk : 1;
-    if (move.all) { msg(`${e.name} ${move.name}!`); await moveTo(e.node, home.add(new V3(-1.2,0.4,0)), 220); for (const p of targetsAlive) { let dmg = Math.round(rnd(move.min, move.max) * boost); if (p._defend) dmg = Math.round(dmg*0.5); applyToMember(p, dmg); if (move.status) inflict(p, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); } await wait(200); await moveTo(e.node, home, 320); }
-    else { const target = targetsAlive[rnd(0, targetsAlive.length - 1)]; msg(`${e.name} ${move.name} at ${target.name}!`); const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY; await moveTo(e.node, dest, 240); let dmg = Math.round(rnd(move.min, move.max) * boost); if (target._defend) dmg = Math.round(dmg*0.5); applyToMember(target, dmg); if (move.status) inflict(target, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); await wait(160); await moveTo(e.node, home, 340); }
+    const mkind = (move.el && move.el !== 'physical') ? 'mag' : 'phys';
+    if (move.all) { msg(`${e.name} ${move.name}!`); await moveTo(e.node, home.add(new V3(-1.2,0.4,0)), 220); for (const p of targetsAlive) { let dmg = Math.round(rnd(move.min, move.max) * boost); if (p._defend) dmg = Math.round(dmg*0.5); applyToMember(p, dmg, mkind); if (move.status) inflict(p, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); } await wait(200); await moveTo(e.node, home, 320); }
+    else { const target = targetsAlive[rnd(0, targetsAlive.length - 1)]; msg(`${e.name} ${move.name} at ${target.name}!`); const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY; await moveTo(e.node, dest, 240); let dmg = Math.round(rnd(move.min, move.max) * boost); if (target._defend) dmg = Math.round(dmg*0.5); applyToMember(target, dmg, mkind); if (move.status) inflict(target, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); await wait(160); await moveTo(e.node, home, 340); }
     e.node.position.copyFrom(home); e._busy = false; await wait(200);
   }
-  function applyToMember(p, dmg) { if (hasSt(p, 'weaken')) dmg = Math.round(dmg * Data.STATUS.weaken.dmg); if (p.dr) dmg = Math.round(dmg * (1 - p.dr)); p.hp = Math.max(0, p.hp - dmg); p.limit = clamp(p.limit + Math.round(dmg / p.maxhp * 90) + 14, 0, 100); hitFlash(p.node, '#ff5050'); burst(worldOf(p.node, 0.0), ...FX.hit, 70, 8); floatDamage(p.node, String(dmg), '#ff8a8a', 2.4); shake(0.7); scalePunch(p.node, 1.14); hitStop(0.05, 0.5); if (p.hp <= 0 && p.alive) koMember(p); renderParty(false); }
+  function applyToMember(p, dmg, kind) {
+    if (hasSt(p, 'weaken')) dmg = Math.round(dmg * Data.STATUS.weaken.dmg);
+    // Gen-1 mitigation: DEF blunts physical, SPEC blunts magic
+    if (kind === 'mag') dmg = Math.max(1, Math.round(dmg * (85 / (85 + (p.spec || 0)))));
+    else dmg = Math.max(1, Math.round(dmg * (85 / (85 + (p.def || 0)))));
+    if (p.dr) dmg = Math.round(dmg * (1 - p.dr)); p.hp = Math.max(0, p.hp - dmg); p.limit = clamp(p.limit + Math.round(dmg / p.maxhp * 90) + 14, 0, 100); hitFlash(p.node, '#ff5050'); burst(worldOf(p.node, 0.0), ...FX.hit, 70, 8); floatDamage(p.node, String(dmg), '#ff8a8a', 2.4); shake(0.7); scalePunch(p.node, 1.14); hitStop(0.05, 0.5); if (p.hp <= 0 && p.alive) koMember(p); renderParty(false); }
   async function koMember(p) { if (window.SFX) SFX.play('ko'); p.alive = false; tween(k => { p.node.rotation.x = k*1.4; p.node.position.y = p.baseY - k*0.4; }, 500); }
 
   // ----- CTB turn order -----
