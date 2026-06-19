@@ -89,7 +89,7 @@ window.Render = (function () {
   const INK = new BABYLON.Color3(0.04, 0.05, 0.09);
   const NO_OUTLINE = /water|ocean|sand|grass|floor|sea|skybox|isle|beach|plaza|sunE|jetty|stage|^gg$|halo|glow|aura|flare|^fx$|mote|spot|torch|crackle|slash|impact|bit\b|holyP|wglow|orbGlow/i;
   function outlineMeshes(scene) {
-    const w = high() ? 0.03 : 0.02;
+    const w = high() ? 0.1 : 0.07;   // world units — needs to be bold to read at the far gameplay cameras
     scene.meshes.forEach(m => {
       if (!m || !m.material || !m.name || m._outlined) return;
       if (NO_OUTLINE.test(m.name)) return;
@@ -114,5 +114,5 @@ window.Render = (function () {
   function setQuality(q) { quality = q; try { localStorage.setItem('bb_quality', q); } catch (e) {} }
   function toggle() { setQuality(high() ? 'low' : 'high'); return quality; }
 
-  return { setup, sky, setQuality, toggle, isHigh: high, quality: () => quality };
+  return { setup, sky, outline: outlineMeshes, setQuality, toggle, isHigh: high, quality: () => quality };
 })();
