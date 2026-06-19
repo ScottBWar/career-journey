@@ -53,6 +53,41 @@ window.Town = (function () {
     }
   }
 
+  // a building whose silhouette matches the island's vibe (door always faces +z)
+  function buildExterior(theme, b, bx, bz) {
+    const r = new BABYLON.TransformNode('bld', scene); r.position.set(bx, 0, bz);
+    const put = (mesh, m, x, y, z) => { mesh.material = m; mesh.parent = r; mesh.position.set(x, y, z); return mesh; };
+    const door = (col) => put(MB.CreateBox('door', { width: 1.1, height: 1.95, depth: 0.12 }, scene), M('dr', col || '#4a2e16'), 0, 0.97, 2.52);
+    const win = (x, y) => put(MB.CreateBox('win', { width: 0.7, height: 0.7, depth: 0.1 }, scene), M('wn', '#9be7ff', { emissive: '#3a6a80' }), x, y, 2.52);
+    if (theme === 'desert' || theme === 'bazaar') {
+      put(MB.CreateBox('w', { width: 5, height: 3.4, depth: 5 }, scene), M('w', theme === 'bazaar' ? '#d8b878' : '#dcc28a'), 0, 1.7, 0);
+      put(MB.CreateBox('roof', { width: 5.3, height: 0.4, depth: 5.3 }, scene), M('rf', '#c9a86a'), 0, 3.5, 0);
+      put(MB.CreateBox('para', { width: 5.3, height: 0.7, depth: 0.3 }, scene), M('pp', '#c9a86a'), 0, 3.9, 2.6);
+      door('#5a3a1e'); win(-1.5, 1.95); win(1.5, 1.95);
+      if (theme === 'bazaar') { put(MB.CreateSphere('dome', { diameter: 3.0, slice: 0.5 }, scene), M('dm', '#caa030', { emissive: '#3a2e08' }), 0, 3.6, 0); const aw = put(MB.CreateBox('awn', { width: 2.4, height: 0.1, depth: 1.4 }, scene), M('aw', '#c0392c'), 0, 2.4, 3.0); aw.rotation.x = 0.3; }
+    } else if (theme === 'greek') {
+      put(MB.CreateBox('w', { width: 4.6, height: 3.0, depth: 4.4 }, scene), M('w', '#efe7d2'), 0, 1.7, -0.1);
+      [-1.7, -0.57, 0.57, 1.7].forEach(x => put(MB.CreateCylinder('col', { height: 3.5, diameterTop: 0.42, diameterBottom: 0.5, tessellation: 12 }, scene), M('col', '#f4eee0'), x, 1.75, 2.4));
+      put(MB.CreateBox('entab', { width: 5.2, height: 0.5, depth: 5.0 }, scene), M('en', '#e8e0cc'), 0, 3.6, 0);
+      const ped = put(MB.CreateCylinder('ped', { height: 5.2, diameterTop: 0, diameterBottom: 1.7, tessellation: 3 }, scene), M('pd', '#efe7d2'), 0, 4.2, 0.6); ped.rotation.z = Math.PI / 2; ped.rotation.y = Math.PI / 2;
+      put(MB.CreateBox('step', { width: 5.4, height: 0.3, depth: 1.0 }, scene), M('st', '#e0d8c0'), 0, 0.15, 2.9);
+      door('#6a5a3a');
+    } else if (theme === 'aerie') {
+      put(MB.CreateBox('w', { width: 4.8, height: 4.6, depth: 4.8 }, scene), M('w', '#8a92a0'), 0, 2.3, 0);
+      for (let i = -2; i <= 2; i++) put(MB.CreateBox('cr', { width: 0.7, height: 0.7, depth: 0.7 }, scene), M('cr', '#7a828e'), i * 1.05, 4.8, 2.0);
+      door('#3a3a44'); put(MB.CreateBox('ban', { width: 0.1, height: 1.7, depth: 0.95 }, scene), M('bn', '#6a2a3a'), 1.7, 2.7, 2.5);
+    } else if (theme === 'mall') {
+      put(MB.CreateBox('w', { width: 5, height: 3.3, depth: 5 }, scene), M('w', '#c4bcd6'), 0, 1.65, 0);
+      put(MB.CreateBox('glass', { width: 4.2, height: 2.2, depth: 0.1 }, scene), M('gl', '#7fd0ff', { emissive: '#2a5a7a' }), 0, 1.5, 2.52);
+      put(MB.CreateBox('trim', { width: 5.3, height: 0.22, depth: 5.3 }, scene), M('tr', '#ff5e9a', { emissive: '#ff2a7a' }), 0, 3.4, 0);
+      door('#3a3f6b');
+    } else { // coast / default — the pitched-roof cottage
+      const h = Models.house({ wall: b.wall || (b.kind === 'inn' ? '#e8d5b0' : '#e0d2b0'), roof: b.roof || (b.kind === 'inn' ? '#3a7a5a' : b.kind === 'shop' ? '#7a5aa0' : '#a0492f'), w: 5, d: 5 });
+      h.node.parent = r; h.node.position.set(0, 0, 0);
+    }
+    return r;
+  }
+
   function build(townKey) {
     key = townKey; def = Data.TOWNS[townKey];
     engine = Game.engine;
@@ -73,14 +108,22 @@ window.Town = (function () {
     // surrounding sea hint
     const sea = MB.CreateGround('sea', { width: 240, height: 240 }, scene); sea.material = M('sea', '#1e6f96'); sea.position.set(0, -0.4, -56);
 
-    // buildings — positions spread out (SP) so nothing is jammed together
+    // buildings — themed exteriors per island, all enterable; shop/inn keepers wait INSIDE
+    const usedNpc = new Set();
     def.buildings.forEach((b, bi) => {
       const bx = b.x * SP, bz = b.z * SP;
-      let built;
-      if (b.kind === 'inn') { built = Models.house({ wall: '#e8d5b0', roof: '#3a7a5a', w: 5, d: 5 }); placeSign(bx, bz + 3.0, 'INN'); }
-      else if (b.kind === 'shop') { built = Models.house({ wall: '#e0d0aa', roof: '#7a5aa0', w: 5, d: 5 }); placeSign(bx, bz + 3.0, (b.label || 'SHOP').toUpperCase()); }
-      else { built = Models.house(b); doors.push({ x: bx, z: bz + 3.0, idx: bi }); } // plain houses are enterable
-      built.node.position.set(bx, 0, bz);
+      buildExterior(theme, b, bx, bz);
+      if (b.kind === 'inn') placeSign(bx, bz + 3.2, 'INN');
+      else if (b.kind === 'shop') placeSign(bx, bz + 3.2, (b.label || 'SHOP').toUpperCase());
+      // a shop/inn finds its nearest unclaimed keeper to stand behind the counter inside
+      let keeper = null;
+      if (b.kind === 'shop' || b.kind === 'inn') {
+        let best = -1, bd = 1e9;
+        def.npcs.forEach((n, ni) => { if (usedNpc.has(ni) || n.service !== b.kind) return; const dx = n.x * SP - bx, dz = n.z * SP - bz, d = dx * dx + dz * dz; if (d < bd) { bd = d; best = ni; } });
+        if (best >= 0) { usedNpc.add(best); keeper = def.npcs[best]; }
+        else keeper = b.kind === 'inn' ? { name: 'Innkeeper', service: 'inn', color: '#a05a3a', lines: ['Rest here to fully restore your party.'] } : { name: 'Shopkeeper', service: 'shop', color: '#7a5aa0', lines: ['Browse my wares, traveler.'] };
+      }
+      doors.push({ x: bx, z: bz + 3.2, idx: bi, kind: b.kind, label: b.label, keeper });
     });
 
     // exit marker (south)
@@ -88,8 +131,9 @@ window.Town = (function () {
     const exitPortal = Models.portal('#8fd3f4'); exitPortal.node.position.copyFrom(exitPos); exitPortal.node._baseY = 0; idlers.push(exitPortal);
     const exitSign = Models.sign('Leave Town'); exitSign.node.position.set(exitPos.x, 0, exitPos.z - 1.8);
 
-    // NPCs — spread to match the buildings
+    // NPCs that aren't shop/inn keepers (flavour folk + special services) stand outside
     def.npcs.forEach((n, i) => {
+      if (usedNpc.has(i)) return;
       const nx = n.x * SP, nz = n.z * SP;
       const m = Models.npc(n.color, n.hair); m.node.position.set(nx, 0, nz); m.node._baseY = 0; m.node._ph = i; m.node.rotation.y = Math.PI;
       idlers.push(m);
@@ -137,7 +181,7 @@ window.Town = (function () {
 
     const prompt = document.getElementById('worldPrompt');
     if (nearNPC) { prompt.textContent = `[F / Tap] Talk to ${nearNPC.data.name}`; prompt.classList.add('show'); }
-    else if (nearDoor) { prompt.textContent = '[F / Tap] Enter the house'; prompt.classList.add('show'); }
+    else if (nearDoor) { const k = nearDoor.kind; prompt.textContent = '[F / Tap] Enter ' + (k === 'shop' ? 'the ' + (nearDoor.label || 'Shop') : k === 'inn' ? 'the Inn' : 'the house'); prompt.classList.add('show'); }
     else if (nearExit) { prompt.textContent = inHouse ? '[F / Tap] Step outside' : '[F / Tap] Leave town'; prompt.classList.add('show'); }
     else prompt.classList.remove('show');
 
@@ -164,33 +208,46 @@ window.Town = (function () {
   function buildInterior(door) {
     if (scene) scene.dispose();
     npcs = []; idlers = []; nearNPC = null; nearDoor = null; nearExit = false; t = 0; inHouse = true;
+    const shop = door.keeper && door.keeper.service === 'shop', inn = door.keeper && door.keeper.service === 'inn';
     scene = new BABYLON.Scene(engine); scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
     Models.use(scene);
     new BABYLON.HemisphericLight('hi', new V3(0.2, 1, 0.1), scene).intensity = 0.7;
     const lamp = new BABYLON.PointLight('lamp', new V3(0, 4, 0), scene); lamp.intensity = 0.6; lamp.diffuse = new Color3(1, 0.85, 0.6);
-    // room: floor + four low walls + a south doorway gap
-    const floor = MB.CreateGround('fl', { width: 15, height: 13 }, scene); floor.material = M('fl', '#8a6a44');
-    const wallM = M('wall', '#c8b49a');
+    // room
+    const floor = MB.CreateGround('fl', { width: 15, height: 13 }, scene); floor.material = M('fl', shop ? '#6a5236' : inn ? '#7a5a3a' : '#8a6a44');
+    const wallM = M('wall', shop ? '#b0a488' : inn ? '#caa078' : '#c8b49a');
     const wall = (w, h, d, x, y, z) => { const b = MB.CreateBox('w', { width: w, height: h, depth: d }, scene); b.material = wallM; b.position.set(x, y, z); };
     wall(15, 4, 0.4, 0, 2, -6.5); wall(0.4, 4, 13, -7.3, 2, 0); wall(0.4, 4, 13, 7.3, 2, 0);
-    wall(5, 4, 0.4, -5, 2, 6.5); wall(5, 4, 0.4, 5, 2, 6.5); // front wall with a central doorway gap
-    at(MB.CreateGround('rug', { width: 5, height: 4 }, scene), null, M('rug', '#7a2a3a'), 0, 0.02, 0);
-    // furniture
+    wall(5, 4, 0.4, -5, 2, 6.5); wall(5, 4, 0.4, 5, 2, 6.5);
     const wood = M('wood', '#5a3a1e');
-    at(MB.CreateBox('table', { width: 2.2, height: 0.3, depth: 1.2 }, scene), null, wood, -2, 1.2, -2);
-    [[-2.9,-2.5],[-2.9,-1.5],[-1.1,-2.5],[-1.1,-1.5]].forEach(p => at(MB.CreateCylinder('leg', { height: 1.2, diameter: 0.16 }, scene), null, wood, p[0], 0.6, p[1]));
-    at(MB.CreateBox('bed', { width: 2.0, height: 0.6, depth: 3.2 }, scene), null, M('bed', '#3a5a8a'), 4.5, 0.4, -3);
-    at(MB.CreateBox('pillow', { width: 1.6, height: 0.3, depth: 0.9 }, scene), null, M('pillow', '#e8e0d0'), 4.5, 0.8, -4);
-    const hearth = at(MB.CreateBox('hearth', { width: 2.4, height: 1.4, depth: 0.8 }, scene), null, M('hearth', '#6a6a72'), 0, 0.7, -6);
-    const fire = at(MB.CreateSphere('fire', { diameter: 0.7 }, scene), null, M('fire', '#ff7b3a', { emissive: '#ff7b3a' }), 0, 0.7, -5.8); idlers.push({ idle(tt) { fire.scaling.setAll(1 + Math.sin(tt * 8) * 0.18); } });
-    // resident
-    const folk = HOME_FOLK[(door.idx + key.length) % HOME_FOLK.length];
-    const m = Models.npc('#b07a4a', '#3a2418'); m.node.position.set(-2, 0, 1.5); m.node._baseY = 0; m.node.rotation.y = Math.PI; idlers.push(m);
-    npcs.push({ data: folk, node: m.node, pos: new V3(-2, 0, 1.5) });
+    let occName = '#b07a4a', occHair = '#3a2418', occPos = new V3(-2, 0, 1.5), occData;
+    if (shop) {
+      // a counter to stand behind + a wall of stocked shelves
+      at(MB.CreateBox('counter', { width: 6.0, height: 1.1, depth: 1.0 }, scene), null, wood, 0, 0.55, -1.0);
+      at(MB.CreateBox('ctop', { width: 6.2, height: 0.16, depth: 1.2 }, scene), null, M('ctop', '#7a5230'), 0, 1.15, -1.0);
+      for (let s = 0; s < 3; s++) at(MB.CreateBox('shelf', { width: 9, height: 0.16, depth: 0.7 }, scene), null, wood, 0, 1.2 + s * 1.0, -6.1);
+      const wares = ['#e05a5a', '#5e8bff', '#5eff8b', '#ffd24a', '#b06aff'];
+      for (let s = 0; s < 3; s++) for (let i = 0; i < 9; i++) at(MB.CreateCylinder('jar', { height: 0.5, diameter: 0.28 }, scene), null, M('jar', wares[(i + s) % wares.length], { emissive: '#1a1a1a' }), -4 + i, 1.55 + s * 1.0, -6.0);
+      occPos = new V3(0, 0, -2.6); occData = door.keeper;
+    } else if (inn) {
+      [-1, 1].forEach(s => { at(MB.CreateBox('bed', { width: 1.8, height: 0.6, depth: 3.0 }, scene), null, M('bed', '#3a5a8a'), s * 4.6, 0.4, -3); at(MB.CreateBox('pillow', { width: 1.5, height: 0.3, depth: 0.8 }, scene), null, M('pl', '#e8e0d0'), s * 4.6, 0.8, -4); });
+      const fire = at(MB.CreateSphere('fire', { diameter: 0.7 }, scene), null, M('fire', '#ff7b3a', { emissive: '#ff7b3a' }), 0, 0.8, -6); idlers.push({ idle(tt) { fire.scaling.setAll(1 + Math.sin(tt * 8) * 0.18); } });
+      at(MB.CreateBox('hearth', { width: 2.4, height: 1.4, depth: 0.8 }, scene), null, M('hearth', '#6a6a72'), 0, 0.7, -6.3);
+      occPos = new V3(-1.5, 0, 0.5); occData = door.keeper;
+    } else {
+      at(MB.CreateGround('rug', { width: 5, height: 4 }, scene), null, M('rug', '#7a2a3a'), 0, 0.02, 0);
+      at(MB.CreateBox('table', { width: 2.2, height: 0.3, depth: 1.2 }, scene), null, wood, -2, 1.2, -2);
+      at(MB.CreateBox('bed', { width: 2.0, height: 0.6, depth: 3.2 }, scene), null, M('bed', '#3a5a8a'), 4.5, 0.4, -3);
+      const fire = at(MB.CreateSphere('fire', { diameter: 0.7 }, scene), null, M('fire', '#ff7b3a', { emissive: '#ff7b3a' }), 0, 0.7, -5.8); idlers.push({ idle(tt) { fire.scaling.setAll(1 + Math.sin(tt * 8) * 0.18); } });
+      at(MB.CreateBox('hearth', { width: 2.4, height: 1.4, depth: 0.8 }, scene), null, M('hearth', '#6a6a72'), 0, 0.7, -6);
+      occData = HOME_FOLK[(door.idx + key.length) % HOME_FOLK.length];
+    }
+    const occ = Models.npc((occData && occData.color) || occName, (occData && occData.hair) || occHair); occ.node.position.copyFrom(occPos); occ.node._baseY = 0; occ.node.rotation.y = Math.PI; idlers.push(occ);
+    npcs.push({ data: occData, node: occ.node, pos: occPos.clone() });
     // exit (south doorway)
     exitPos = new V3(0, 0, 6.2);
     const ex = Models.portal('#8fd3f4'); ex.node.position.set(0, 0, 6.2); ex.node._baseY = 0; idlers.push(ex);
-    const exs = Models.sign('Step Outside'); exs.node.position.set(0, 0, 5.0);
+    Models.sign('Step Outside').node.position.set(0, 0, 5.0);
     // player
     const leaderKey = Game.state.active[0] || 'pirate'; const lm = Progress.def(leaderKey).model;
     const hero = Models[lm] ? Models[lm]((Game.state.equip[leaderKey] || {}).weapon) : Models.hero(); player = hero.node;
