@@ -62,7 +62,7 @@ window.Game = (function () {
           intoWorld();
           // Ruffy is NOT in the crew yet — he chases you down at sea later and duels his way in.
           Game.toast('WASD move · Q/E rotate camera · F interact · Space swing for a first strike!');
-        });
+        }, { set: 'cliff_dawn', music: 'adventure' });
       });
     } else {
       intoWorld();
@@ -179,8 +179,8 @@ window.Game = (function () {
     show();
   }
   // character-driven story beats play as a staged cinematic; narrator/riddle-only beats use the box
-  Game.cutscene = function (beats, onDone) {
-    if (window.Cutscene && beats.some(b => Game.cutsceneActorKey(b.name))) Cutscene.play(beats, onDone);
+  Game.cutscene = function (beats, onDone, opts) {
+    if (window.Cutscene && beats.some(b => Game.cutsceneActorKey(b.name))) Cutscene.play(beats, onDone, opts);
     else lightweightCutscene(beats, onDone);
   };
   Game.startCutscene = function (key, onDone) { Game.cutscene(Data.STORY[key], onDone); };

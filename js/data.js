@@ -1188,8 +1188,11 @@ window.Data = (function () {
       { name: 'Narrator', text: 'SELACHOTH. The One-Finned Angel. Once the greatest hero the Free Seas ever produced — now half-man, half-shark, and wholly convinced that a warm world of the living is a mistake the ocean must correct.' },
       { name: 'Lance Strider', text: 'He was my mentor. I watched the sea take him piece by piece, and I told myself a hero couldn\'t fall. I was wrong. So I\'ll be the one to put him down.' },
       { name: 'Marina', text: 'And I am sworn to the tides themselves. They weep under his hand. I\'ll not let the deep be turned into a tomb.' },
-      { name: 'Capt. Redbeard', text: 'Bah — speeches. I just want my coast back, and my grog dry. Whatever crew we cobble together, we sail at dawn.' },
-      { name: 'Narrator', text: 'But the road east is long, and you will not walk it alone. Some who join you chase glory, some chase ghosts — and one chases a dream so bright it will cost him everything.' },
+      { name: 'Capt. Redbeard', text: 'Bah — speeches. I just want my coast back, and my grog dry. And would you LOOK at that — there she is, fitted and floating, waiting on the tide.' },
+      { name: 'Marina', text: 'The sun\'s breaking over the water. If we\'re ever going to do this... it\'s now.' },
+      { name: 'Lance Strider', text: 'Then no more waiting. Every drowned isle east of here is a clock, and it\'s already ticking.' },
+      { name: 'Capt. Redbeard', text: 'HAH! Look at us — three fools on a cliff with one ship and a death wish. I\'ve started worse crews with worse odds. WE\'RE READY. Hoist the colours — we\'re going on an ADVENTURE!' },
+      { name: 'Narrator', text: 'The road east is long, and you will not walk it alone. Some who join you chase glory, some chase ghosts — and one chases a dream so bright it will cost him everything. But that is all still ahead. For now: a cliff, a dawn, a ship. Cast off.' },
     ],
     ruffyChase: [
       { name: 'Narrator', text: 'A small, ragged ship comes barreling across the waves behind you — flying a straw-hat flag and far too much sail. It does not slow down. It does not, in fact, appear to have brakes.' },

@@ -36,7 +36,7 @@ const STATES = [
   { name: '11_battle_boss_kraken',  drive: `Game.startBattle(['kraken'], { boss: true })`,           wait: 1900 },
   { name: '12_battle_greek_medusa', drive: `Game.startBattle(['medusa'], { boss: true, music: 'paegina' })`, wait: 1900 },
   { name: '13_cutscene_council',    drive: `Game.toIsland('tidehaven', false); Game.startCutscene('mermaidCouncil')`, wait: 1500 },
-  { name: '14_cutscene_opening',    drive: `Game.startCutscene('opening')`,      wait: 1500 },
+  { name: '14_cutscene_opening',    drive: `Cutscene.play(Data.STORY.opening, null, { set: 'cliff_dawn', music: 'adventure' })`, wait: 1600 },
   { name: '15_menu_gear',           drive: `Game.toIsland('tidehaven', false); Game.openGear()`,     wait: 900 },
   { name: '16_menu_skills',         drive: `Game.toIsland('tidehaven', false); Game.openSkills()`, wait: 900 },
   { name: '17_coliseum',            drive: `Game.toIsland('paegina', false); Game.openColiseum()`,   wait: 1000 },
