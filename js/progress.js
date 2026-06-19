@@ -226,9 +226,12 @@ window.Progress = (function () {
     // ensure every roster member exists (new characters added in updates)
     if (state.prog && state.prog.ruffyGone == null) state.prog.ruffyGone = false;
     if (!state.party) state.party = [];
+    // drop any party members whose def was removed from the game (e.g. retired characters)
+    state.party = state.party.filter(p => Data.PARTY.find(d => d.key === p.key));
     Data.PARTY.forEach(def => { if (!state.party.find(p => p.key === def.key)) state.party.push({ key: def.key, level: 1, xp: 0, sp: 0, learned: {}, hpCur: null, mpCur: null, recruited: !def.temporary }); });
     state.party.forEach(p => { if (p.recruited === undefined) { const d = Data.PARTY.find(x => x.key === p.key); p.recruited = d ? !d.temporary : true; } });
-    if (!state.active || state.active.length !== 3) state.active = ['pirate', 'swordsman', 'healer'];
+    if (state.active) state.active = state.active.filter(k => Data.PARTY.find(d => d.key === k)); // drop retired members from the lineup
+    if (!state.active || state.active.length < 1) state.active = ['pirate', 'swordsman', 'healer'];
     if (!state.islands) state.islands = { tidehaven: { cleared: {} }, dunes: { cleared: {} }, spire: { cleared: {} } };
     ['tidehaven', 'dunes', 'spire', 'mall', 'duskmoor', 'mirage', 'aerie', 'paegina', 'whiteout', 'wildwood', 'improbable', 'lamancha'].forEach(k => { if (!state.islands[k]) state.islands[k] = { cleared: {} }; });
     if (!state.coliseum) state.coliseum = {};
@@ -326,8 +329,9 @@ window.Progress = (function () {
   function renderGear(state, container, onClose) {
     const prevWrap = container.querySelector('.sk-wrap'); const savedScroll = prevWrap ? prevWrap.scrollTop : 0;
     container.innerHTML = '';
-    const roster = state.party.filter(p => p.recruited !== false);
-    if (!roster.find(p => p.key === gearSel)) gearSel = roster[0] ? roster[0].key : 'pirate'; // don't point at a member who left
+    // only the characters currently in your active party — you gear up who actually fights
+    const roster = activeMembers(state);
+    if (!roster.find(p => p.key === gearSel)) gearSel = roster[0] ? roster[0].key : 'pirate'; // don't point at a benched/departed member
     const wrap = document.createElement('div'); wrap.className = 'sk-wrap';
     const head = document.createElement('div'); head.className = 'sk-head';
     head.innerHTML = `<h2>Gear &amp; Seashells</h2><div class="sk-gold">⛃ ${state.gold} gold</div>`;

@@ -86,24 +86,6 @@ window.Data = (function () {
       ],
     },
     {
-      key: 'blader', name: 'Ridge', role: 'Wanderer', model: 'blader',
-      base: { hp: 140, mp: 18, atkMin: 20, atkMax: 30, crit: 0.15 },
-      growth: { hp: 15, mp: 2, atk: 4 },
-      baseAbilities: [ ab('Cyclone', { mp: 10, min: 20, max: 30, target: 'all', fx: 'beam' }) ],
-      tree: [
-        { id: 'b_atk', name: 'Keen Edge', desc: '+5 Attack', cost: 1, kind: 'stat', stat: { atk: 5 } },
-        { id: 'b_hp', name: 'Endurance', desc: '+28 Max HP', cost: 1, req: 'b_atk', kind: 'stat', stat: { hp: 28 } },
-        // ⟜ PATH: Duelist — speed, crits, a radiant finisher
-        { id: 'b_a1', branch: 'a', name: 'Quickblade', desc: 'PATH: Duelist — +16% Crit', cost: 1, req: 'b_hp', kind: 'stat', stat: { crit: 0.16 } },
-        { id: 'b_a2', branch: 'a', name: 'Lightning', desc: 'Fast bolt strike on one foe', cost: 2, req: 'b_a1', kind: 'ability', ability: ab('Lightning', { mp: 10, min: 38, max: 52, target: 'enemy', fx: 'beam' }) },
-        { id: 'b_acap', branch: 'a', name: 'Luminaire', desc: 'Radiant burst on all foes', cost: 3, req: 'b_a2', kind: 'ability', ability: ab('Luminaire', { mp: 22, min: 40, max: 56, target: 'all', fx: 'beam', el: 'holy' }) },
-        // ⟜ PATH: Elemental Blade — channel the elements through steel
-        { id: 'b_b1', branch: 'b', name: 'Flametongue', desc: 'PATH: Elemental — fire slash on a foe', cost: 1, req: 'b_hp', kind: 'ability', ability: ab('Flametongue', { mp: 10, min: 34, max: 48, target: 'enemy', fx: 'fire', el: 'fire' }) },
-        { id: 'b_b2', branch: 'b', name: 'Frostbite', desc: 'Water slash that Slows a foe', cost: 2, req: 'b_b1', kind: 'ability', ability: ab('Frostbite', { mp: 14, min: 32, max: 44, target: 'enemy', fx: 'water', el: 'water', status: 'slow', turns: 3 }) },
-        { id: 'b_bcap', branch: 'b', name: 'Rainbow Edge', desc: 'Every element at once, all foes', cost: 3, req: 'b_b2', kind: 'ability', ability: ab('Rainbow Edge', { mp: 24, min: 38, max: 54, target: 'all', fx: 'beam', el: 'holy' }) },
-      ],
-    },
-    {
       key: 'dragoon', name: 'Quint', role: 'Harpooner', model: 'dragoon',
       base: { hp: 165, mp: 20, atkMin: 22, atkMax: 32, crit: 0.12, big: true },
       growth: { hp: 17, mp: 3, atk: 4 },
