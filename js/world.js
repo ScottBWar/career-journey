@@ -27,7 +27,26 @@ window.World = (function () {
     const sand = MB.CreateDisc('sand', { radius: def.size * 0.6, tessellation: 48 }, scene); sand.rotation.x = Math.PI/2; sand.position.y = -0.04; sand.material = M('sand', def.sand);
     const grass = MB.CreateDisc('grass', { radius: def.size * 0.54, tessellation: 48 }, scene); grass.rotation.x = Math.PI/2; grass.material = M('grass', def.ground);
 
-    const place = (b, n, rad) => { for (let i = 0; i < n; i++) { const a = Math.random()*Math.PI*2, r = 5 + Math.random()*(rad-5); const o = b(); o.node.position.set(Math.cos(a)*r, 0, Math.sin(a)*r); o.node.scaling.setAll(0.8 + Math.random()*0.6); if (o.idle) idlers.push(o); } };
+    // keep-out zones so scenery never sits on top of an interactable (town, mermaids, dock, etc.)
+    const keepOut = []; const ko = (o, r) => { if (o && o.x != null) keepOut.push({ x: o.x, z: o.z, r: r }); };
+    ko(def.spawn, 5); ko(def.dock, 6); ko(def.town, 9); ko(def.dungeon, 7); ko(def.shells, 6.5);
+    ko(def.boss, 9); ko(def.bonfire, 6); ko(def.superboss, 7); ko(def.coliseum, 10); ko(def.grove, 7);
+    (def.mermaids || []).forEach(m => ko(m, 7)); (def.encounters || []).forEach(e => ko(e, 5));
+    const placedPts = [];
+    const place = (b, n, rad) => {
+      for (let i = 0; i < n; i++) {
+        let x = 0, z = 0, ok = false;
+        for (let tries = 0; tries < 20 && !ok; tries++) {
+          const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (rad - 6);
+          x = Math.cos(a) * r; z = Math.sin(a) * r; ok = true;
+          for (const k of keepOut) { const dx = x - k.x, dz = z - k.z; if (dx*dx + dz*dz < k.r*k.r) { ok = false; break; } }
+          if (ok) for (const p of placedPts) { const dx = x - p.x, dz = z - p.z; if (dx*dx + dz*dz < 13) { ok = false; break; } } // ~3.6 units apart, no clumping
+        }
+        if (!ok) continue;
+        placedPts.push({ x: x, z: z });
+        const o = b(); o.node.position.set(x, 0, z); o.node.scaling.setAll(0.8 + Math.random() * 0.6); if (o.idle) idlers.push(o);
+      }
+    };
     place(() => Models.tree(), def.decor.trees, def.size*0.45);
     place(() => Models.palm(), def.decor.palms, def.size*0.5);
     place(() => Models.rock(), def.decor.rocks, def.size*0.5);
