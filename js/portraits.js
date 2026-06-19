@@ -81,8 +81,8 @@ window.Portraits = (function () {
   // gendered mouths, per-type accessories + source-character flourishes.
   function pixelFace(p, mood) {
     const N = 64, PX = 4, W = N * PX;
-    const cv = document.createElement('canvas'); cv.width = cv.height = W; const c = cv.getContext('2d');
-    const fill = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(Math.round(x) * PX, Math.round(y) * PX, Math.round(w) * PX, Math.round(h) * PX); };
+    const lc = document.createElement('canvas'); lc.width = lc.height = N; const c = lc.getContext('2d'); // draw at logical res, AA, then upscale
+    const fill = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
     const dot = (x, y, col) => fill(x, y, 1, 1, col);
     const sd = toneHex, cx = 32, S2 = STYLE[p.type] || {}, type = p.type;
     const sk = p.skin || '#e8c0a0', skMid = sd(sk, 0.92), skS = sd(sk, 0.82), skS2 = sd(sk, 0.66), skH = sd(sk, 1.16), skEdge = sd(sk, 0.5);
@@ -128,15 +128,16 @@ window.Portraits = (function () {
       if (y >= faceBot - 6) fill(cx - 6, y, 11, 1, skMid);             // under-chin shadow
       dot(cx - hw - 1, y, skEdge); dot(cx + hw, y, skEdge);             // soft outline
     }
-    fill(cx - 14, 36, 5, 3, skH);                                       // lit cheekbone highlight
+    fill(cx - 16, 36, 5, 3, skH);                                       // lit cheekbone highlight (near side)
     fill(cx - 20, 33, 2, 5, sk); fill(cx + 18, 33, 2, 5, skS);          // ears
     fill(cx - 6, faceBot - 1, 13, 1, skS); fill(cx - 5, faceBot, 10, 1, skS2); // under-chin shadow
 
     // EYES — large angled almond, iris-dominant, full soft outline (Stardew-style). Villains/vampires get slits.
     const slit = (type === 'villain' || type === 'vampire');
-    const eyY = 28, browCol = sd(hair, 0.8);
+    const eyY = 28, browCol = sd(hair, 0.8), fcx = cx - 2;   // 3/4 turn: features shift toward the near (left) side
     [-1, 1].forEach((s, i) => {
-      const ex = cx + s * 8, ic = eyes[i], icS = sd(ic, 0.55), icH = sd(ic, 1.55);
+      // far (viewer-right) eye sits a touch closer to centre — perspective
+      const ex = fcx + s * (s > 0 ? 7 : 8), ic = eyes[i], icS = sd(ic, 0.55), icH = sd(ic, 1.55);
       if (slit) {
         fill(ex - 5, eyY + 3, 11, 2, sd(sk, 0.5)); fill(ex - 4, eyY + 3, 9, 2, ic);
         fill(ex - 4, eyY + 3, 9, 1, icH); fill(ex - 1, eyY + 3, 2, 2, '#140f18'); dot(ex - 2, eyY + 3, '#ffffff');
@@ -160,20 +161,20 @@ window.Portraits = (function () {
     });
 
     // NOSE — small but defined: lit bridge (left), shadow down the right, soft tip + nostril
-    fill(cx - 1, 37, 1, 4, skH); fill(cx + 1, 37, 1, 5, skS);
-    dot(cx, 42, sd(sk, 0.72)); dot(cx + 1, 42, skS2); dot(cx - 1, 42, skS);
+    fill(fcx - 1, 37, 1, 4, skH); fill(fcx + 1, 37, 1, 5, skS);
+    dot(fcx, 42, sd(sk, 0.72)); dot(fcx + 1, 42, skS2); dot(fcx - 1, 42, skS);
 
     // MOUTH — feminine soft lips vs. a quiet line; ruffy gets a huge toothy grin
     const lip = '#c0697b', lipS = '#9a4a5c', lineC = sd(sk, 0.56), my = 46;
-    if (type === 'rival' && mood !== 'upset') { fill(cx - 6, my, 12, 1, '#6e3424'); fill(cx - 5, my, 10, 1, '#ffffff'); fill(cx - 6, my + 1, 12, 1, '#6e3424'); }
-    else if (mood === 'upset') { fill(cx - 3, my, 6, 1, lineC); dot(cx - 4, my - 1, lineC); dot(cx + 3, my - 1, lineC); }
-    else if (mood === 'happy') { if (fem) { fill(cx - 3, my, 6, 1, lip); fill(cx - 2, my + 1, 4, 1, lipS); } else { fill(cx - 4, my, 8, 1, lineC); dot(cx - 5, my - 1, lineC); dot(cx + 4, my - 1, lineC); } }
-    else if (mood === 'shy') { fill(cx - 2, my, 4, 1, fem ? lip : lineC); }
-    else { if (fem) { fill(cx - 3, my, 6, 1, lip); fill(cx - 2, my + 1, 4, 1, lipS); } else fill(cx - 3, my, 6, 1, lineC); }
-    if (S2.fang) { dot(cx - 3, my + 1, '#ffffff'); dot(cx + 2, my + 1, '#ffffff'); }
+    if (type === 'rival' && mood !== 'upset') { fill(fcx - 6, my, 12, 1, '#6e3424'); fill(fcx - 5, my, 10, 1, '#ffffff'); fill(fcx - 6, my + 1, 12, 1, '#6e3424'); }
+    else if (mood === 'upset') { fill(fcx - 3, my, 6, 1, lineC); dot(fcx - 4, my - 1, lineC); dot(fcx + 3, my - 1, lineC); }
+    else if (mood === 'happy') { if (fem) { fill(fcx - 3, my, 6, 1, lip); fill(fcx - 2, my + 1, 4, 1, lipS); } else { fill(fcx - 4, my, 8, 1, lineC); dot(fcx - 5, my - 1, lineC); dot(fcx + 4, my - 1, lineC); } }
+    else if (mood === 'shy') { fill(fcx - 2, my, 4, 1, fem ? lip : lineC); }
+    else { if (fem) { fill(fcx - 3, my, 6, 1, lip); fill(fcx - 2, my + 1, 4, 1, lipS); } else fill(fcx - 3, my, 6, 1, lineC); }
+    if (S2.fang) { dot(fcx - 3, my + 1, '#ffffff'); dot(fcx + 2, my + 1, '#ffffff'); }
 
     // BLUSH / war-paint / scars
-    if (mood === 'happy' || mood === 'shy' || fem) { fill(cx - 15, 40, 5, 3, 'rgba(255,142,156,0.42)'); fill(cx + 10, 40, 5, 3, 'rgba(255,142,156,0.42)'); }
+    if (mood === 'happy' || mood === 'shy' || fem) { fill(fcx - 15, 40, 5, 3, 'rgba(255,142,156,0.42)'); fill(fcx + 10, 40, 5, 3, 'rgba(255,142,156,0.42)'); }
     if (S2.paint) { fill(cx - 17, 34, 5, 1, '#b0302a'); fill(cx + 12, 34, 5, 1, '#b0302a'); fill(cx - 17, 40, 5, 1, '#b0302a'); fill(cx + 12, 40, 5, 1, '#b0302a'); } // San war stripes
     if (type === 'rival') { fill(cx - 10, 38, 4, 1, '#b05038'); dot(cx - 10, 39, '#b05038'); } // Luffy scar
     if (S2.scar) { fill(cx + 11, 22, 1, 10, '#9a5a4a'); }
@@ -228,6 +229,19 @@ window.Portraits = (function () {
     if (S2.patch) { fill(cx + 5, 30, 7, 6, '#1a1410'); fill(cx - 4, 28, 18, 1, '#1a1410'); }
     if (type === 'genie') { fill(cx - 4, 50, 8, 6, hairS); fill(cx - 2, 56, 4, 2, hairS); fill(cx - 20, 36, 4, 3, '#caa030'); fill(cx + 16, 36, 4, 3, '#caa030'); } // goatee + gold ear-cuffs
 
+    // SELECTIVE EDGE ANTI-ALIASING on the logical image (soften staircase curves like
+    // hand-placed Stardew transition pixels), then a crisp 4x nearest upscale
+    const id = c.getImageData(0, 0, N, N), d = id.data, out = new Uint8ClampedArray(d);
+    const NB = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) {
+      const i = (y * N + x) * 4; let md = 0;
+      for (const [dx, dy] of NB) { const j = ((y + dy) * N + (x + dx)) * 4; const dd = Math.abs(d[i] - d[j]) + Math.abs(d[i + 1] - d[j + 1]) + Math.abs(d[i + 2] - d[j + 2]); if (dd > md) md = dd; }
+      if (md > 110) for (let o = 0; o < 3; o++) { let s = d[i + o] * 3; for (const [dx, dy] of NB) s += d[((y + dy) * N + (x + dx)) * 4 + o]; out[i + o] = s / 7; }
+    }
+    id.data.set(out);
+    const tmp = document.createElement('canvas'); tmp.width = tmp.height = N; tmp.getContext('2d').putImageData(id, 0, 0);
+    const cv = document.createElement('canvas'); cv.width = cv.height = W; const oc = cv.getContext('2d');
+    oc.imageSmoothingEnabled = false; oc.drawImage(tmp, 0, 0, N, N, 0, 0, W, W);
     return cv.toDataURL();
   }
 
