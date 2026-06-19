@@ -88,9 +88,9 @@ window.Portraits = (function () {
     // backdrop — soft vertical gradient as crisp 1px bands
     for (let y = 0; y < N; y++) fill(0, y, N, 1, sd(bg, 1.28 - (y / N) * 0.78));
 
-    // face oval profile (egg shape, widest at cheeks, tapered chin)
-    const faceTop = 13, faceBot = 39, faceMid = 26, maxHW = 10;
-    const hwAt = y => { const span = y < faceMid ? (faceMid - faceTop + 2) : (faceBot - faceMid); const t = (y - faceMid) / span; let hw = Math.sqrt(Math.max(0, 1 - t * t)) * maxHW; if (y > faceMid) hw *= 0.92; return hw; };
+    // face profile — softer oval up top, jaw tapering to a defined chin
+    const faceTop = 13, faceBot = 39, faceMid = 25, maxHW = 9.2;
+    const hwAt = y => { const span = y < faceMid ? (faceMid - faceTop + 3) : (faceBot - faceMid); const t = (y - faceMid) / span; let hw = Math.sqrt(Math.max(0, 1 - t * t)) * maxHW; if (y > faceMid) hw *= (1 - (y - faceMid) / (faceBot - faceMid) * 0.3); return hw; };
 
     // BACK HAIR mass (long flowing styles) — behind the head, framing to shoulders
     const longHair = (S2.hair === 'long' || S2.hair === 'wild' || S2.hair === 'slick') && !S2.hood && !S2.helm;
@@ -105,42 +105,45 @@ window.Portraits = (function () {
     for (let y = 42; y < N; y++) { const hw = 10 + (y - 42) * 2.4; fill(cx - hw, y, hw * 2, 1, cloth); }
     fill(cx - 6, 42, 12, 1, clothH);
 
-    // FACE — base + 3-tone shading
-    for (let y = faceTop; y <= faceBot; y++) { const hw = Math.round(hwAt(y)); if (hw < 1) continue; fill(cx - hw, y, hw * 2, 1, sk); fill(cx + hw - 2, y, 2, 1, y > faceMid ? skS2 : skS); if (y < faceMid) fill(cx - hw, y, 2, 1, skH); }
-    fill(cx - 11, 27, 2, 3, sk); fill(cx + 9, 27, 2, 3, skS);   // ears
-    fill(cx - 5, 37, 10, 1, skS); fill(cx - 3, 38, 6, 1, skS2); // chin/jaw shadow
+    // FACE — base + soft single-side form shading (light from upper-left, NO hard stripe)
+    for (let y = faceTop; y <= faceBot; y++) { const hw = Math.round(hwAt(y)); if (hw < 1) continue; fill(cx - hw, y, hw * 2, 1, sk); fill(cx + hw - 1, y, 1, 1, y > faceMid ? skS2 : skS); if (y > faceMid + 3) fill(cx + hw - 2, y, 1, 1, skS); if (y < faceMid + 1) fill(cx - hw, y, 1, 1, skH); }
+    fill(cx - 10, 25, 2, 3, sk); fill(cx + 8, 25, 2, 3, skS);   // ears
+    fill(cx - 3, faceBot - 1, 6, 1, skS); fill(cx - 2, faceBot, 4, 1, skS2); // soft under-chin shadow
 
-    // EYES — big, lidded, catchlit
-    const eyY = 25;
+    // EYES — large, almond, iris-dominant w/ catchlight; thin lash line (no heavy bar)
+    const eyY = 23, browCol = sd(hair, 0.82), lashCol = '#241620';
     [-1, 1].forEach((s, i) => {
-      const ex = cx + s * 5, ic = eyes[i], icS = sd(ic, 0.62), icH = sd(ic, 1.35);
-      fill(ex - 3, eyY - 1, 6, 1, skS);                 // socket shadow
-      fill(ex - 2, eyY, 4, 4, '#f6f8ff'); fill(ex - 2, eyY + 3, 4, 1, '#d9dde8'); // sclera + lower shadow
-      fill(ex - 1, eyY, 3, 4, ic); fill(ex - 1, eyY + 3, 3, 1, icS); fill(ex - 1, eyY, 3, 1, icH); // iris 3-tone
-      fill(ex, eyY + 1, 1, 2, '#16121c');               // pupil
-      dot(ex - 1, eyY, '#ffffff');                      // catchlight
-      fill(ex - 2, eyY - 1, 5, 1, '#241620');           // thick upper lid
-      dot(ex - 2 + (s < 0 ? 0 : 4), eyY, '#3a2630');     // lid corner
-      if (S2.lashes) { dot(ex + s * 3, eyY - 2, '#241620'); dot(ex + s * 3, eyY, '#241620'); } // outer flick
-      const browY = eyY - 3; fill(ex - 2, browY, 5, 1, hairS);
-      if (S2.sharp) dot(ex + (s < 0 ? 2 : -2), browY + 1, hairS); // angry inner drop
+      const ex = cx + s * 4, ic = eyes[i], icS = sd(ic, 0.58), icH = sd(ic, 1.42);
+      // sclera almond — widest in the middle two rows
+      fill(ex - 2, eyY + 1, 5, 3, '#f6f8ff'); fill(ex - 1, eyY, 3, 1, '#f6f8ff');
+      // iris fills most of the eye (only 1px white shows each side)
+      fill(ex - 1, eyY + 1, 3, 3, ic); fill(ex - 1, eyY + 3, 3, 1, icS); fill(ex - 1, eyY + 1, 3, 1, icH);
+      fill(ex, eyY + 2, 1, 1, '#140f18');               // pupil
+      dot(ex - 1, eyY + 1, '#ffffff');                  // catchlight (upper-inner)
+      // upper lash line — 1px arc with a heavier outer corner
+      fill(ex - 2, eyY, 5, 1, lashCol); dot(ex + s * 2, eyY + 1, lashCol);
+      fill(ex - 1, eyY + 4, 3, 1, sd(sk, 0.82));        // soft lower lid
+      if (S2.lashes) { dot(ex + s * 3, eyY, lashCol); dot(ex + s * 3, eyY - 1, lashCol); } // mascara flick
+      // brow — gentle arch, sits close above
+      fill(ex - 2, eyY - 2, 4, 1, browCol); dot(ex + s * 2, eyY - 2, browCol);
+      if (S2.sharp) { dot(ex + (s < 0 ? 2 : -2), eyY - 1, browCol); }
     });
 
-    // NOSE
-    fill(cx, 30, 1, 2, skS); dot(cx - 1, 31, sd(sk, 1.05));
+    // NOSE — just a soft shadow tucked under, subtle
+    fill(cx, 30, 1, 1, skS); dot(cx - 1, 30, sd(sk, 0.78));
 
-    // MOUTH
-    const lip = '#c25670', lipS = '#9a3a52', my = 34;
-    if (mood === 'upset') { fill(cx - 2, my + 1, 4, 1, lipS); dot(cx - 3, my, lipS); dot(cx + 2, my, lipS); }
-    else if (mood === 'happy') { fill(cx - 3, my, 6, 1, lip); fill(cx - 2, my + 1, 4, 1, lipS); }
-    else if (mood === 'shy') { fill(cx - 1, my, 3, 1, lip); }
-    else { fill(cx - 2, my, 4, 1, lip); fill(cx - 1, my + 1, 2, 1, lipS); }
+    // MOUTH — small & subtle; soft pink lips only for feminine faces, a quiet line otherwise
+    const fem = !!S2.lashes, lip = '#c06a7c', lipS = '#9a4a5c', lineC = sd(sk, 0.6), my = 33;
+    if (mood === 'upset') { fill(cx - 1, my, 3, 1, lineC); dot(cx - 2, my - 1, lineC); dot(cx + 2, my - 1, lineC); }
+    else if (mood === 'happy') { if (fem) { fill(cx - 2, my, 4, 1, lip); fill(cx - 1, my + 1, 2, 1, lipS); } else { fill(cx - 2, my, 4, 1, lineC); dot(cx - 3, my - 1, lineC); dot(cx + 2, my - 1, lineC); } }
+    else if (mood === 'shy') { fill(cx - 1, my, 2, 1, fem ? lip : lineC); }
+    else { if (fem) { fill(cx - 1, my, 3, 1, lip); dot(cx, my + 1, lipS); } else { fill(cx - 1, my, 3, 1, lineC); } }
     if (S2.fang) { dot(cx - 1, my + 1, '#ffffff'); dot(cx + 1, my + 1, '#ffffff'); }
 
     // BLUSH (translucent)
-    if (mood === 'happy' || mood === 'shy' || S2.lashes) { c.fillStyle = 'rgba(255,140,155,0.45)'; c.fillRect((cx - 9) * PX, 31 * PX, 3 * PX, 2 * PX); c.fillRect((cx + 6) * PX, 31 * PX, 3 * PX, 2 * PX); }
-    if (S2.paint) { fill(cx - 9, 24, 3, 1, '#b0302a'); fill(cx + 6, 24, 3, 1, '#b0302a'); }
-    if (S2.scar) { fill(cx + 6, 20, 1, 5, '#9a5a4a'); }
+    if (mood === 'happy' || mood === 'shy' || fem) { c.fillStyle = 'rgba(255,140,155,0.4)'; c.fillRect((cx - 8) * PX, 29 * PX, 3 * PX, 2 * PX); c.fillRect((cx + 5) * PX, 29 * PX, 3 * PX, 2 * PX); }
+    if (S2.paint) { fill(cx - 8, 23, 3, 1, '#b0302a'); fill(cx + 5, 23, 3, 1, '#b0302a'); }
+    if (S2.scar) { fill(cx + 6, 19, 1, 5, '#9a5a4a'); }
 
     // FRONT HAIR / FRINGE (unless covered by hat/hood/helm)
     if (!S2.hood && !S2.helm && !S2.hat) {
@@ -149,7 +152,14 @@ window.Portraits = (function () {
       else if (ht === 'wild') { fill(cx - 12, 13, 24, 6, hair); for (let k = -4; k <= 4; k++) { const bx = cx + k * 3; fill(bx - 1, 11, 2, 4, (k % 2 ? hairS : hair)); } fill(cx - 12, 18, 4, 4, hair); fill(cx + 8, 18, 4, 4, hair); fill(cx - 9, 14, 5, 1, hairH); }
       else if (ht === 'slick') { fill(cx - 11, 13, 22, 5, hair); fill(cx - 2, 17, 4, 3, hair); fill(cx - 9, 14, 6, 1, hairH); }
       else if (ht === 'topknot') { fill(cx - 6, 16, 12, 3, hair); fill(cx - 2, 12, 4, 4, hair); }
-      else { for (let y = 13; y <= 19; y++) { const hw = Math.round(hwAt(y)) + 1; fill(cx - hw, y, hw * 2, 1, hair); } fill(cx - 8, 19, 5, 3, hair); fill(cx + 3, 19, 5, 3, hair); fill(cx - 2, 19, 4, 1, hair); fill(cx - 7, 15, 6, 1, hairH); fill(cx - 6, 16, 3, 1, hairH); }
+      else { // soft parted fringe framing the forehead (short / long)
+        for (let y = 12; y <= 17; y++) { const hw = Math.round(hwAt(y)) + 1; fill(cx - hw, y, hw * 2, 1, hair); }
+        fill(cx - 10, 17, 4, 5, hair); fill(cx + 6, 17, 4, 5, hair);   // temple sweeps down past the brow
+        fill(cx - 5, 17, 4, 3, hair); fill(cx + 1, 17, 4, 3, hair);    // inner fringe, parted at center
+        dot(cx, 13, hairS);                                            // center part
+        fill(cx - 7, 14, 6, 1, hairH); fill(cx - 5, 15, 3, 1, hairH);  // diagonal sheen
+        fill(cx - 9, 18, 1, 3, hairS); fill(cx + 8, 18, 1, 3, hairS);  // edge shadow strands
+      }
     }
 
     // ACCESSORIES
