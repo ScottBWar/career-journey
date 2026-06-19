@@ -37,16 +37,117 @@ window.Portraits = (function () {
     angler:    { type: 'kraken',    skin: '#1a2230', eye: '#aef0ff', bg: '#050d16' },
     // elemental mermaids
     ember:  { type: 'mermaid', skin: '#f0c8a8', hair: '#ff7a4a', eye: '#ffd24a', bg: '#5a1f14' },
-    nerida: { type: 'mermaid', skin: '#dfe6e0', hair: '#3fd0e0', eye: '#9be7ff', bg: '#0e3a4a' },
+    nerida: { type: 'mermaid', skin: '#6a4733', hair: '#3fd0e0', eye: '#9be7ff', bg: '#0e3a4a' },
     volta:  { type: 'mermaid', skin: '#f0d0b0', hair: '#ffe04a', eye: '#fff6a0', bg: '#5a4a0a' },
-    gaia:   { type: 'mermaid', skin: '#e8c8a0', hair: '#6ec06a', eye: '#cfeeb0', bg: '#1f4a18' },
+    gaia:   { type: 'mermaid', skin: '#c08652', hair: '#6ec06a', eye: '#cfeeb0', bg: '#1f4a18' },
     nyx:    { type: 'mermaid', skin: '#cfc0d8', hair: '#b06aff', eye: '#e0b3ff', bg: '#2a1840' },
     lumina: { type: 'mermaid', skin: '#f5e8d0', hair: '#fff3c0', eye: '#fffae0', bg: '#4a4636' },
   };
-  const S = 16, CELL = 14; // higher resolution output (224px) so portraits read crisp + detailed when shown large
+  const S = 16, CELL = 14; // pixel-art fallback (monsters) — 224px output
+
+  function shadeHex(hex, f) { const n = parseInt(hex.slice(1), 16); const cl = v => Math.max(0, Math.min(255, Math.round(v * f))); return '#' + ((1 << 24) + (cl((n >> 16) & 255) << 16) + (cl((n >> 8) & 255) << 8) + cl(n & 255)).toString(16).slice(1); }
+
+  // smooth anime faces for the people of the world; per-type hair + accessory hooks
+  const HUMANOID = { pirate: 1, soldier: 1, priestess: 1, mage: 1, wanderer: 1, harpooner: 1, rival: 1, hunter: 1, streetrat: 1, archer: 1, villain: 1, vampire: 1, drifter: 1, survivor: 1, wolfgirl: 1, knight: 1, genie: 1, mermaid: 1 };
+  const STYLE = {
+    pirate:    { hair: 'short', hat: 'tricorne', beard: 1 },
+    soldier:   { hair: 'spiky' },
+    priestess: { hair: 'long', halo: 1, hetero: 1, lashes: 1 },
+    mage:      { hat: 'wizard', glow: 1, shadow: 1 },
+    wanderer:  { hair: 'spiky', band: '#d83a3a' },
+    harpooner: { hair: 'long', beard: 1, patch: 1 },
+    rival:     { hair: 'short', straw: 1 },
+    hunter:    { hair: 'short', band: '#b03030' },
+    streetrat: { hair: 'short', fez: 1 },
+    archer:    { hair: 'long', lashes: 1 },
+    villain:   { hair: 'long', sharp: 1 },
+    vampire:   { hair: 'slick', fang: 1 },
+    drifter:   { hair: 'wild', scar: 1 },
+    survivor:  { hood: 1, beard: 1 },
+    wolfgirl:  { hair: 'wild', paint: 1, lashes: 1 },
+    knight:    { helm: 1 },
+    genie:     { hair: 'topknot' },
+    mermaid:   { hair: 'long', tiara: 1, flower: 1, lashes: 1 },
+  };
+
+  function vectorFace(p, mood) {
+    const W = 256, sk = p.skin || '#e8c0a0', hair = p.hair || '#3a2a1a', eyec = p.eye || '#6a4a30', bg = p.bg || '#223';
+    const S2 = STYLE[p.type] || {}, sd = shadeHex;
+    const cv = document.createElement('canvas'); cv.width = cv.height = W; const c = cv.getContext('2d');
+    const cx = W / 2;
+    const ell = (x, y, rx, ry, fill) => { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fillStyle = fill; c.fill(); };
+    // backdrop
+    let g = c.createRadialGradient(cx, W * 0.36, W * 0.08, cx, W * 0.55, W * 0.8); g.addColorStop(0, sd(bg, 1.4)); g.addColorStop(1, sd(bg, 0.55)); c.fillStyle = g; c.fillRect(0, 0, W, W);
+    // back hair behind the head
+    if (hair && !S2.hood && !S2.helm) ell(cx, W * 0.54, W * 0.33, W * 0.4, sd(hair, 0.72));
+    // neck + face with vertical skin gradient
+    c.fillStyle = sd(sk, 0.85); c.fillRect(cx - W * 0.09, W * 0.7, W * 0.18, W * 0.2);
+    g = c.createLinearGradient(0, W * 0.2, 0, W * 0.86); g.addColorStop(0, sd(sk, 1.1)); g.addColorStop(1, sd(sk, 0.8));
+    c.save(); c.beginPath(); c.ellipse(cx, W * 0.5, W * 0.25, W * 0.31, 0, 0, 7); c.clip(); c.fillStyle = g; c.fillRect(0, 0, W, W); c.restore();
+    ell(cx - W * 0.25, W * 0.52, W * 0.035, W * 0.06, sd(sk, 0.9)); ell(cx + W * 0.25, W * 0.52, W * 0.035, W * 0.06, sd(sk, 0.9)); // ears
+    // EYES
+    const eyY = W * 0.52, edx = W * 0.115, ew = W * 0.082, eh = W * 0.1;
+    const ecol = S2.hetero ? ['#3a7ad0', '#56a84a'] : [eyec, eyec];
+    if (S2.shadow) { // mage: shadowed face, only glowing eyes
+      c.fillStyle = sd(sk, 0.4); c.save(); c.beginPath(); c.ellipse(cx, W * 0.52, W * 0.25, W * 0.3, 0, 0, 7); c.clip(); c.fillRect(0, W * 0.36, W, W); c.restore();
+      [-1, 1].forEach(s => { const ex = cx + s * edx; const gg = c.createRadialGradient(ex, eyY, 1, ex, eyY, ew * 1.6); gg.addColorStop(0, '#fff'); gg.addColorStop(0.35, eyec); gg.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = gg; ell(ex, eyY, ew * 1.6, eh * 1.4, gg); });
+    } else {
+      [-1, 1].forEach((s, i) => {
+        const ex = cx + s * edx;
+        c.fillStyle = '#fbfdff'; ell(ex, eyY, ew, eh, '#fbfdff');
+        const ig = c.createRadialGradient(ex, eyY + eh * 0.25, 1, ex, eyY, eh); ig.addColorStop(0, sd(ecol[i], 1.35)); ig.addColorStop(1, sd(ecol[i], 0.65));
+        ell(ex, eyY + eh * 0.08, ew * 0.8, eh * 0.86, ig);
+        ell(ex, eyY + eh * 0.14, ew * 0.42, eh * 0.5, '#191520'); // pupil
+        ell(ex - ew * 0.3, eyY - eh * 0.32, ew * 0.32, eh * 0.3, '#ffffff'); // catchlight
+        ell(ex + ew * 0.28, eyY + eh * 0.34, ew * 0.14, eh * 0.14, 'rgba(255,255,255,0.85)');
+        c.strokeStyle = '#1c1018'; c.lineWidth = W * 0.02; c.beginPath(); c.ellipse(ex, eyY - eh * 0.06, ew * 1.05, eh, 0, Math.PI * 1.04, Math.PI * 1.96); c.stroke(); // upper lash
+        if (S2.lashes) { c.beginPath(); c.moveTo(ex + s * ew * 1.0, eyY - eh * 0.5); c.lineTo(ex + s * ew * 1.5, eyY - eh * 0.7); c.stroke(); } // outer flick
+        c.strokeStyle = sd(hair, 0.7); c.lineWidth = W * 0.018; c.beginPath(); c.moveTo(ex - ew, eyY - eh * (S2.sharp ? 1.2 : 1.5)); c.quadraticCurveTo(ex, eyY - eh * (S2.sharp ? 1.9 : 1.85), ex + ew, eyY - eh * 1.35); c.stroke(); // brow
+      });
+    }
+    // nose + mouth + blush
+    c.fillStyle = sd(sk, 0.75); ell(cx, W * 0.63, W * 0.012, W * 0.022, sd(sk, 0.75));
+    c.strokeStyle = '#b05a68'; c.lineWidth = W * 0.016; c.lineCap = 'round'; c.beginPath();
+    const my = W * 0.7;
+    if (mood === 'upset') { c.moveTo(cx - W * 0.05, my + W * 0.012); c.quadraticCurveTo(cx, my - W * 0.018, cx + W * 0.05, my + W * 0.012); }
+    else { c.moveTo(cx - W * 0.055, my); c.quadraticCurveTo(cx, my + W * 0.03, cx + W * 0.055, my); }
+    c.stroke();
+    if (S2.fang) { c.fillStyle = '#fff'; c.beginPath(); c.moveTo(cx - W * 0.03, my + W * 0.005); c.lineTo(cx - W * 0.015, my + W * 0.04); c.lineTo(cx - W * 0.005, my + W * 0.005); c.fill(); }
+    if (mood === 'happy' || mood === 'shy' || S2.lashes) { c.fillStyle = 'rgba(255,140,150,0.38)'; ell(cx - W * 0.155, W * 0.645, W * 0.05, W * 0.028, 'rgba(255,140,150,0.38)'); ell(cx + W * 0.155, W * 0.645, W * 0.05, W * 0.028, 'rgba(255,140,150,0.38)'); }
+    if (S2.paint) { c.fillStyle = '#b0302a'; ell(cx - W * 0.15, W * 0.6, W * 0.03, W * 0.012, '#b0302a'); ell(cx + W * 0.15, W * 0.6, W * 0.03, W * 0.012, '#b0302a'); }
+    if (S2.scar) { c.strokeStyle = '#9a5a4a'; c.lineWidth = W * 0.012; c.beginPath(); c.moveTo(cx + W * 0.1, W * 0.42); c.lineTo(cx + W * 0.16, W * 0.58); c.stroke(); }
+    // FRONT hair / fringe
+    if (!S2.hood && !S2.helm && !S2.hat) {
+      c.fillStyle = hair;
+      if (S2.hair === 'spiky') { for (let i = -3; i <= 3; i++) { c.beginPath(); c.moveTo(cx + i * W * 0.07, W * 0.4); c.lineTo(cx + i * W * 0.07 - W * 0.04, W * 0.22 - Math.abs(i) * W * 0.01); c.lineTo(cx + i * W * 0.07 + W * 0.05, W * 0.41); c.fill(); } }
+      else if (S2.hair === 'wild') { for (let i = -4; i <= 4; i++) { c.beginPath(); c.moveTo(cx + i * W * 0.055, W * 0.42); c.lineTo(cx + i * W * 0.055 + (i % 2 ? 0.06 : -0.05) * W, W * 0.2); c.lineTo(cx + i * W * 0.055 + W * 0.05, W * 0.42); c.fill(); } }
+      else { // soft swept fringe (short/long/slick)
+        c.beginPath(); c.moveTo(cx - W * 0.27, W * 0.42); c.quadraticCurveTo(cx - W * 0.2, W * 0.2, cx + W * 0.02, W * 0.2); c.quadraticCurveTo(cx + W * 0.28, W * 0.2, cx + W * 0.27, W * 0.46);
+        c.quadraticCurveTo(cx + W * 0.12, W * 0.3, cx - W * 0.02, W * 0.36); c.quadraticCurveTo(cx - W * 0.12, W * 0.3, cx - W * 0.27, W * 0.42); c.closePath(); c.fill();
+        c.fillStyle = sd(hair, 1.25); c.beginPath(); c.ellipse(cx - W * 0.08, W * 0.27, W * 0.1, W * 0.04, -0.3, 0, 7); c.fill(); // sheen
+      }
+    }
+    // ACCESSORIES
+    if (S2.hat === 'tricorne') { c.fillStyle = '#1c1c1c'; c.beginPath(); c.moveTo(cx - W * 0.34, W * 0.3); c.quadraticCurveTo(cx, W * 0.12, cx + W * 0.34, W * 0.3); c.quadraticCurveTo(cx, W * 0.26, cx - W * 0.34, W * 0.3); c.fill(); c.fillStyle = '#f2ead9'; ell(cx, W * 0.22, W * 0.035, W * 0.035, '#f2ead9'); }
+    if (S2.hat === 'wizard') { c.fillStyle = sd(bg, 0.6); c.beginPath(); c.moveTo(cx - W * 0.3, W * 0.34); c.lineTo(cx + W * 0.1, W * 0.34); c.lineTo(cx - W * 0.05, W * -0.02); c.closePath(); c.fill(); c.fillStyle = '#e0b34a'; c.fillRect(cx - W * 0.3, W * 0.3, W * 0.45, W * 0.05); }
+    if (S2.straw) { c.fillStyle = '#e0b96a'; ell(cx, W * 0.26, W * 0.32, W * 0.07, '#e0b96a'); c.fillStyle = '#c8a050'; ell(cx, W * 0.21, W * 0.16, W * 0.1, '#c8a050'); c.fillStyle = '#b8342a'; c.fillRect(cx - W * 0.16, W * 0.24, W * 0.32, W * 0.025); }
+    if (S2.band) { c.fillStyle = S2.band; c.fillRect(cx - W * 0.26, W * 0.32, W * 0.52, W * 0.045); }
+    if (S2.fez) { c.fillStyle = '#b03030'; c.fillRect(cx - W * 0.1, W * 0.16, W * 0.2, W * 0.14); c.fillStyle = '#caa030'; ell(cx + W * 0.08, W * 0.16, W * 0.02, W * 0.04, '#caa030'); }
+    if (S2.halo) { c.strokeStyle = '#fff0a0'; c.lineWidth = W * 0.018; c.beginPath(); c.ellipse(cx, W * 0.16, W * 0.16, W * 0.04, 0, 0, 7); c.stroke(); }
+    if (S2.helm) { c.fillStyle = '#c9cdd6'; c.beginPath(); c.ellipse(cx, W * 0.32, W * 0.27, W * 0.2, 0, Math.PI, 0); c.fill(); c.fillStyle = '#caa030'; c.fillRect(cx - W * 0.27, W * 0.3, W * 0.54, W * 0.03); }
+    if (S2.hood) { c.fillStyle = sd(bg, 1.2); c.beginPath(); c.moveTo(cx - W * 0.32, W * 0.6); c.quadraticCurveTo(cx - W * 0.34, W * 0.1, cx, W * 0.1); c.quadraticCurveTo(cx + W * 0.34, W * 0.1, cx + W * 0.32, W * 0.6); c.quadraticCurveTo(cx, W * 0.36, cx - W * 0.32, W * 0.6); c.fill(); c.fillStyle = '#d8d0c0'; ell(cx, W * 0.16, W * 0.26, W * 0.07, '#d8d0c0'); }
+    if (S2.tiara) { c.fillStyle = '#ffe9b0'; c.beginPath(); c.moveTo(cx - W * 0.1, W * 0.24); c.lineTo(cx, W * 0.16); c.lineTo(cx + W * 0.1, W * 0.24); c.fill(); ell(cx, W * 0.22, W * 0.022, W * 0.022, '#fff6e8'); }
+    if (S2.flower) { c.fillStyle = '#ff8ab4'; for (let i = 0; i < 5; i++) { const a = i / 5 * 6.28; ell(cx + W * 0.2 + Math.cos(a) * W * 0.03, W * 0.3 + Math.sin(a) * W * 0.03, W * 0.025, W * 0.025, '#ff8ab4'); } c.fillStyle = '#ffd24a'; ell(cx + W * 0.2, W * 0.3, W * 0.02, W * 0.02, '#ffd24a'); }
+    if (S2.beard) { c.fillStyle = sd(hair, 0.95); c.beginPath(); c.moveTo(cx - W * 0.14, W * 0.66); c.quadraticCurveTo(cx, W * 0.86, cx + W * 0.14, W * 0.66); c.quadraticCurveTo(cx, W * 0.76, cx - W * 0.14, W * 0.66); c.fill(); }
+    if (S2.patch) { c.fillStyle = '#1a1410'; ell(cx + W * 0.12, W * 0.5, W * 0.05, W * 0.045, '#1a1410'); c.strokeStyle = '#1a1410'; c.lineWidth = W * 0.012; c.beginPath(); c.moveTo(cx + W * 0.06, W * 0.44); c.lineTo(cx + W * 0.27, W * 0.46); c.stroke(); }
+    // soft vignette
+    const v = c.createRadialGradient(cx, W * 0.46, W * 0.34, cx, W * 0.5, W * 0.72); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.28)'); c.fillStyle = v; c.fillRect(0, 0, W, W);
+    return cv.toDataURL();
+  }
 
   function draw(key, mood) {
     const p = SPEC[key]; if (!p) return null;
+    if (HUMANOID[p.type]) { try { return vectorFace(p, mood); } catch (e) { /* fall through to pixel */ } }
     const cv = document.createElement('canvas'); cv.width = cv.height = S * CELL;
     const c = cv.getContext('2d');
     const px = (x, y, w, h, col) => { if (!col) return; c.fillStyle = col; c.fillRect(x * CELL, y * CELL, w * CELL, h * CELL); };

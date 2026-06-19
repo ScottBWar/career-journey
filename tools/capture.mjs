@@ -65,6 +65,7 @@ const STATES = [
   { name: '35_dungeon_npc',     drive: `Game.toDungeon('frost_station'); setTimeout(function(){ window.__reset&&window.__reset(); if(window.Dungeon&&Dungeon._debug) Dungeon._debug.warp(-3, 9); }, 700)`, wait: 1700 },
   { name: '36_date_mermaid',    drive: `Game.toIsland('tidehaven', false); Game.openDating('nerida')`, wait: 1800 },
   { name: '37_summon_mermaid',  drive: `Game.state.mermaids.ember = { rel: 99, idx: 0, enchanted: false }; Game.startBattle(['shark'], {}); setTimeout(function(){ if(window.Battle&&Battle._debug) Battle._debug.summon('ember'); }, 1000)`, wait: 2400 },
+  { name: '38_portraits',       drive: `(function(){ var d=document.createElement('div'); d.id='portTest'; d.style.cssText='position:fixed;inset:0;z-index:99;background:#0c0c16;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;padding:24px'; ['pirate','swordsman','healer','ruffy','simon','aladdin','violca','mac','sane','quijano','selachoth','vampire','ember','nerida','gaia','nyx'].forEach(function(k){ d.innerHTML += '<img src="'+Portraits.url(k,'happy')+'" style="width:150px;height:150px;border-radius:10px;border:1px solid #333">'; }); document.body.appendChild(d); })()`, wait: 900 },
 ];
 
 function serve() {
