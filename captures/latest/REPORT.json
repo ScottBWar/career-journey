@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-06-19T16:13:00.089Z",
+  "runAt": "2026-06-19T16:29:03.849Z",
   "states": [
     {
       "name": "01_overworld_tidehaven",
@@ -233,7 +233,7 @@
   "consoleErrors": [],
   "pageErrors": [],
   "snapshot": {
-    "gold": 94,
+    "gold": 89,
     "pearls": 0,
     "active": [
       "pirate",
