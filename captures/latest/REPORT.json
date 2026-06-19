@@ -1,10 +1,10 @@
 {
-  "runAt": "2026-06-19T22:45:48.321Z",
+  "runAt": "2026-06-19T23:01:58.754Z",
   "states": [
     {
       "name": "01_overworld_tidehaven",
-      "drove": false,
-      "newErrors": 1,
+      "drove": true,
+      "newErrors": 0,
       "screenshot": "01_overworld_tidehaven.png"
     },
     {
@@ -57,8 +57,8 @@
     },
     {
       "name": "10_battle_mobs",
-      "drove": false,
-      "newErrors": 1,
+      "drove": true,
+      "newErrors": 0,
       "screenshot": "10_battle_mobs.png"
     },
     {
@@ -75,8 +75,8 @@
     },
     {
       "name": "13_cutscene_council",
-      "drove": false,
-      "newErrors": 1,
+      "drove": true,
+      "newErrors": 0,
       "screenshot": "13_cutscene_council.png"
     },
     {
@@ -87,14 +87,14 @@
     },
     {
       "name": "15_menu_gear",
-      "drove": false,
-      "newErrors": 1,
+      "drove": true,
+      "newErrors": 0,
       "screenshot": "15_menu_gear.png"
     },
     {
       "name": "16_menu_skills",
-      "drove": false,
-      "newErrors": 1,
+      "drove": true,
+      "newErrors": 0,
       "screenshot": "16_menu_skills.png"
     },
     {
@@ -105,14 +105,14 @@
     },
     {
       "name": "18_overworld_pots",
-      "drove": false,
-      "newErrors": 1,
+      "drove": true,
+      "newErrors": 0,
       "screenshot": "18_overworld_pots.png"
     },
     {
       "name": "19_overworld_swing",
-      "drove": false,
-      "newErrors": 1,
+      "drove": true,
+      "newErrors": 0,
       "screenshot": "19_overworld_swing.png"
     },
     {
@@ -213,14 +213,14 @@
     },
     {
       "name": "36_date_mermaid",
-      "drove": false,
-      "newErrors": 1,
+      "drove": true,
+      "newErrors": 0,
       "screenshot": "36_date_mermaid.png"
     },
     {
       "name": "37_summon_mermaid",
       "drove": true,
-      "newErrors": 1,
+      "newErrors": 0,
       "screenshot": "37_summon_mermaid.png"
     },
     {
@@ -231,46 +231,9 @@
     }
   ],
   "consoleErrors": [],
-  "pageErrors": [
-    {
-      "state": "01_overworld_tidehaven",
-      "text": "drive failed: page.evaluate: TypeError: e.substring is not a function\n    at e.fromHexString (https://cdn.babylonjs.com/babylon.js:1:105771)\n    at e.FromHexString (https://cdn.babylonjs.com/babylon.js:1:107180)\n    at M (http://localhost:49187/js/models.js:12:29)\n    at Object.mermaid (http://localhost:49187/js/models.js:507:22)\n    at http://localhost:49187/js/world.js:112:26\n    at Array.forEach (<anonymous>)\n    at build (http://localhost:49187/js/world.js:109:36)\n    at Object.enter (http://localhost:49187/js/world.js:502:31)\n    at Object.toIsland (http://localhost:49187/js/main.js:89:22)\n    at eval (eval at evaluate (:302:30), <anonymous>:1:42)"
-    },
-    {
-      "state": "10_battle_mobs",
-      "text": "drive failed: page.evaluate: TypeError: e.substring is not a function\n    at e.fromHexString (https://cdn.babylonjs.com/babylon.js:1:105771)\n    at e.FromHexString (https://cdn.babylonjs.com/babylon.js:1:107180)\n    at M (http://localhost:49187/js/models.js:12:29)\n    at Object.mermaid (http://localhost:49187/js/models.js:507:22)\n    at http://localhost:49187/js/world.js:112:26\n    at Array.forEach (<anonymous>)\n    at build (http://localhost:49187/js/world.js:109:36)\n    at Object.enter (http://localhost:49187/js/world.js:502:31)\n    at Object.toIsland (http://localhost:49187/js/main.js:89:22)\n    at eval (eval at evaluate (:302:30), <anonymous>:1:42)"
-    },
-    {
-      "state": "13_cutscene_council",
-      "text": "drive failed: page.evaluate: TypeError: e.substring is not a function\n    at e.fromHexString (https://cdn.babylonjs.com/babylon.js:1:105771)\n    at e.FromHexString (https://cdn.babylonjs.com/babylon.js:1:107180)\n    at M (http://localhost:49187/js/models.js:12:29)\n    at Object.mermaid (http://localhost:49187/js/models.js:507:22)\n    at http://localhost:49187/js/world.js:112:26\n    at Array.forEach (<anonymous>)\n    at build (http://localhost:49187/js/world.js:109:36)\n    at Object.enter (http://localhost:49187/js/world.js:502:31)\n    at Object.toIsland (http://localhost:49187/js/main.js:89:22)\n    at eval (eval at evaluate (:302:30), <anonymous>:1:42)"
-    },
-    {
-      "state": "15_menu_gear",
-      "text": "drive failed: page.evaluate: TypeError: e.substring is not a function\n    at e.fromHexString (https://cdn.babylonjs.com/babylon.js:1:105771)\n    at e.FromHexString (https://cdn.babylonjs.com/babylon.js:1:107180)\n    at M (http://localhost:49187/js/models.js:12:29)\n    at Object.mermaid (http://localhost:49187/js/models.js:507:22)\n    at http://localhost:49187/js/world.js:112:26\n    at Array.forEach (<anonymous>)\n    at build (http://localhost:49187/js/world.js:109:36)\n    at Object.enter (http://localhost:49187/js/world.js:502:31)\n    at Object.toIsland (http://localhost:49187/js/main.js:89:22)\n    at eval (eval at evaluate (:302:30), <anonymous>:1:42)"
-    },
-    {
-      "state": "16_menu_skills",
-      "text": "drive failed: page.evaluate: TypeError: e.substring is not a function\n    at e.fromHexString (https://cdn.babylonjs.com/babylon.js:1:105771)\n    at e.FromHexString (https://cdn.babylonjs.com/babylon.js:1:107180)\n    at M (http://localhost:49187/js/models.js:12:29)\n    at Object.mermaid (http://localhost:49187/js/models.js:507:22)\n    at http://localhost:49187/js/world.js:112:26\n    at Array.forEach (<anonymous>)\n    at build (http://localhost:49187/js/world.js:109:36)\n    at Object.enter (http://localhost:49187/js/world.js:502:31)\n    at Object.toIsland (http://localhost:49187/js/main.js:89:22)\n    at eval (eval at evaluate (:302:30), <anonymous>:1:189)"
-    },
-    {
-      "state": "18_overworld_pots",
-      "text": "drive failed: page.evaluate: TypeError: e.substring is not a function\n    at e.fromHexString (https://cdn.babylonjs.com/babylon.js:1:105771)\n    at e.FromHexString (https://cdn.babylonjs.com/babylon.js:1:107180)\n    at M (http://localhost:49187/js/models.js:12:29)\n    at Object.mermaid (http://localhost:49187/js/models.js:507:22)\n    at http://localhost:49187/js/world.js:112:26\n    at Array.forEach (<anonymous>)\n    at build (http://localhost:49187/js/world.js:109:36)\n    at Object.enter (http://localhost:49187/js/world.js:502:31)\n    at Object.toIsland (http://localhost:49187/js/main.js:89:22)\n    at eval (eval at evaluate (:302:30), <anonymous>:1:42)"
-    },
-    {
-      "state": "19_overworld_swing",
-      "text": "drive failed: page.evaluate: TypeError: e.substring is not a function\n    at e.fromHexString (https://cdn.babylonjs.com/babylon.js:1:105771)\n    at e.FromHexString (https://cdn.babylonjs.com/babylon.js:1:107180)\n    at M (http://localhost:49187/js/models.js:12:29)\n    at Object.mermaid (http://localhost:49187/js/models.js:507:22)\n    at http://localhost:49187/js/world.js:112:26\n    at Array.forEach (<anonymous>)\n    at build (http://localhost:49187/js/world.js:109:36)\n    at Object.enter (http://localhost:49187/js/world.js:502:31)\n    at Object.toIsland (http://localhost:49187/js/main.js:89:22)\n    at eval (eval at evaluate (:302:30), <anonymous>:1:42)"
-    },
-    {
-      "state": "36_date_mermaid",
-      "text": "drive failed: page.evaluate: TypeError: e.substring is not a function\n    at e.fromHexString (https://cdn.babylonjs.com/babylon.js:1:105771)\n    at e.FromHexString (https://cdn.babylonjs.com/babylon.js:1:107180)\n    at M (http://localhost:49187/js/models.js:12:29)\n    at Object.mermaid (http://localhost:49187/js/models.js:507:22)\n    at http://localhost:49187/js/world.js:112:26\n    at Array.forEach (<anonymous>)\n    at build (http://localhost:49187/js/world.js:109:36)\n    at Object.enter (http://localhost:49187/js/world.js:502:31)\n    at Object.toIsland (http://localhost:49187/js/main.js:89:22)\n    at eval (eval at evaluate (:302:30), <anonymous>:1:42)"
-    },
-    {
-      "state": "37_summon_mermaid",
-      "text": "Uncaught (in promise) TypeError: e.substring is not a function\n    at e.fromHexString (https://cdn.babylonjs.com/babylon.js:0:105770)\n    at e.FromHexString (https://cdn.babylonjs.com/babylon.js:0:107179)\n    at M (http://localhost:49187/js/models.js:11:28)\n    at mermaid (http://localhost:49187/js/models.js:506:21)\n    at doSummon (http://localhost:49187/js/battle.js:468:25)\n    at summon (http://localhost:49187/js/battle.js:785:107)\n    at eval (:0:206)"
-    }
-  ],
+  "pageErrors": [],
   "snapshot": {
-    "gold": 80,
+    "gold": 88,
     "pearls": 0,
     "active": [
       "pirate",
