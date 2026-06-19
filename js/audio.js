@@ -144,21 +144,27 @@
       bassP: [0,_,_,_, 7,_,_,_, 0,_,_,5, 7,_,_,_], bassPeak: 0.3,
       mel: [_,_,72,_, _,_,71,_, 67,_,_,_, _,_,_,_,  _,_,69,_, 67,_,_,_, 64,_,_,_, _,_,_,_], leadPeak: 0.07 },
 
-    // downtempo but driving — tense trip-hop
-    battle: { bpm: 92, drums: 'heavy', swing: 0.14, padWave: 'sawtooth', leadWave: 'triangle', cut: 1600,
-      bars: [[57,60,64,67],[53,57,60,64],[50,53,57,60],[52,56,59,62]],
-      keys: [K,_,_,K, _,_,K,_, K,_,_,K, _,K,_,_], keyLen: 1.4, keyPeak: 0.07,
-      stabs: [K,_,_,_, _,_,_,_, K,_,_,_, _,_,K,_],
-      bassP: [0,_,0,_, _,_,7,_, 0,_,0,_, _,7,_,_], bassPeak: 0.34, bassLen: 2.2,
-      mel: [69,_,_,_, 72,_,_,_, _,_,67,_, _,_,_,_,  65,_,_,_, 67,_,_,_, 64,_,_,_, _,_,_,_], leadPeak: 0.085 },
+    // downtempo but driving — tense trip-hop battle (8-bar hook with a counter-melody)
+    battle: { bpm: 96, drums: 'heavy', swing: 0.1, padWave: 'sawtooth', leadWave: 'square', cut: 2000,
+      bars: [[57,60,64,67],[53,57,60,64],[60,64,67,72],[55,59,62,67],[57,60,64,67],[53,57,60,64],[52,56,59,64],[55,59,62,67]],
+      keys: [K,_,_,K, _,K,_,_, K,_,_,K, _,K,_,K], keyLen: 1.2, keyPeak: 0.055,
+      stabs: [K,_,_,_, _,_,K,_, _,_,K,_, _,K,_,_],
+      bassP: [0,_,0,7, 12,_,7,_, 0,_,0,7, 5,_,7,_], bassPeak: 0.34, bassLen: 1.3,
+      leadADSR: { a: 0.005, d: 0.14, s: 0.25, r: 0.18 }, leadDur: 1.1, leadPeak: 0.085,
+      mel: [69,_,72,_, 76,74,72,_, 69,_,67,_, 72,_,_,_,  65,_,69,_, 72,71,69,_, 67,_,64,_, 67,69,67,_,
+            64,_,67,_, 72,_,71,_, 69,_,72,76, 74,_,72,_,  71,_,67,_, 69,_,71,72, 74,_,76,_, 72,71,69,_],
+      harm: [_,_,_,_, 64,_,60,_, _,_,_,_, 64,_,_,_,  _,_,_,_, 60,_,57,_, _,_,_,_, 60,_,_,_], harmWave: 'triangle', harmPeak: 0.05 },
 
-    // cinematic dread
-    boss: { bpm: 86, drums: 'heavy', swing: 0.12, padWave: 'sawtooth', leadWave: 'triangle', cut: 1500, choir: true,
-      bars: [[57,60,64,67],[56,59,63,66],[53,56,60,63],[52,56,59,63]],
+    // cinematic dread — bigger, more menacing boss theme (8-bar descent + choir + stabs)
+    boss: { bpm: 88, drums: 'heavy', swing: 0.08, padWave: 'sawtooth', leadWave: 'square', cut: 1900, choir: true,
+      bars: [[57,60,64,67],[56,59,63,66],[53,56,60,63],[52,56,59,63],[57,60,64,67],[55,58,62,65],[53,56,60,63],[52,55,59,62]],
       keys: [K,_,_,_, _,_,K,_, K,_,_,_, _,K,_,_], keyLen: 1.6, keyPeak: 0.07,
-      stabs: [K,_,_,_, _,_,_,_, K,_,_,_, _,_,_,_],
-      bassP: [0,_,_,_, 0,_,_,_, 0,_,_,_, 0,_,7,_], bassPeak: 0.36, bassLen: 2.6,
-      mel: [57,_,_,_, 60,_,_,_, 63,_,_,_, _,_,59,_,  56,_,_,_, 59,_,_,_, 52,_,_,_, _,_,_,_], leadPeak: 0.09 },
+      stabs: [K,_,_,_, K,_,_,_, K,_,_,_, K,_,K,_],
+      bassP: [0,_,_,0, 0,_,_,7, 0,_,_,0, 0,_,7,5], bassPeak: 0.38, bassLen: 1.9,
+      leadADSR: { a: 0.01, d: 0.2, s: 0.4, r: 0.4 }, leadPeak: 0.09,
+      mel: [57,_,_,60, 64,_,63,_, 60,_,59,_, 57,_,_,_,  56,_,_,59, 63,_,62,_, 59,_,56,_, 52,_,_,_,
+            64,_,63,_, 60,_,_,_, 59,_,56,_, 57,_,_,_,  63,_,62,_, 59,_,_,_, 56,_,52,_, 57,_,_,_],
+      harm: [_,_,_,_, 60,_,_,_, _,_,_,_, 52,_,_,_,  _,_,_,_, 59,_,_,_, _,_,_,_, 56,_,_,_], harmPeak: 0.055 },
 
     // intimate, sensual
     date: { bpm: 70, drums: 'soft', swing: 0.22, padWave: 'sine', leadWave: 'sine', cut: 1500, choir: true,
@@ -236,6 +242,8 @@
     // sparse, reverbed lead (loops on its own length); leadADSR lets a track pluck (lyre) instead of sustain
     const note = tk.mel[gstep % tk.mel.length];
     if (note) { const la = tk.leadADSR || { a: 0.02, d: 0.2, s: 0.4, r: 0.45 }; voice(midi(note), t, beat * (tk.leadDur || 2.0), { type: tk.leadWave, peak: tk.leadPeak || 0.08, cutoff: tk.cut + 500, a: la.a, d: la.d, s: la.s, r: la.r }); }
+    // optional counter-melody / harmony line (fuller, more interesting battle themes)
+    if (tk.harm) { const hn = tk.harm[gstep % tk.harm.length]; if (hn) voice(midi(hn), t, beat * 1.5, { type: tk.harmWave || tk.leadWave, peak: tk.harmPeak || 0.05, cutoff: tk.cut + 200, a: 0.02, d: 0.18, s: 0.32, r: 0.4 }); }
     // drums
     drumStep(tk, step, time, beat, sw);
     step++; gstep++; if (step >= STEPS) { step = 0; bar++; if (tk.once && bar >= tk.bars.length) { current = null; setTimeout(() => play(_after), 150); } }

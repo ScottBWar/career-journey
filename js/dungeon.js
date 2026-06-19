@@ -9,6 +9,7 @@ window.Dungeon = (function () {
   let crystals = [], gate, chest, idlers = [], targets = [], paused = false, t = 0, camYaw = 0;
   let step = 0, solvedPuzzle = false, chestLooted = false, nearTarget = null;
   let mobs = [], mobDefeated = {}, bossDefeated = false, busy = false;
+  let zMin = -15, zMax = 17;
   const SPEED = 8;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
@@ -29,12 +30,21 @@ window.Dungeon = (function () {
     const hemi = new BABYLON.HemisphericLight('h', new V3(0.2, 1, 0.2), scene); hemi.intensity = 0.55; hemi.groundColor = new Color3(0.1, 0.1, 0.15);
     const pt = new BABYLON.PointLight('p', new V3(0, 8, 0), scene); pt.intensity = 0.7;
 
-    const floor = MB.CreateGround('floor', { width: 26, height: 34 }, scene); floor.material = M('floor', def.ground); floor.position.z = 1;
+    // hall length scales to its deepest content, so combat dungeons feel like a long descent
+    const zs = [def.spawn.z, def.exit.z, def.gate.z, def.chest.z];
+    if (def.bossMob) zs.push(def.bossMob.z);
+    (def.crystals || []).forEach(c => zs.push(c.z));
+    (def.mobs || []).forEach(m => zs.push(m.z));
+    const near = Math.min.apply(null, zs) - 5, far = Math.max.apply(null, zs) + 5;
+    const depth = far - near, midz = (near + far) / 2;
+    zMin = near + 1.5; zMax = far - 1.5;
+    const floor = MB.CreateGround('floor', { width: 26, height: depth }, scene); floor.material = M('floor', def.ground); floor.position.z = midz;
     // walls
     const wallMat = M('wall', def.wall);
     const wall = (w, h, d, x, y, z) => { const b = MB.CreateBox('w', { width: w, height: h, depth: d }, scene); b.material = wallMat; b.position.set(x, y, z); };
-    wall(26, 5, 1, 0, 2.5, -16); wall(26, 5, 1, 0, 2.5, 18); wall(1, 5, 34, -13, 2.5, 1); wall(1, 5, 34, 13, 2.5, 1);
-    for (let i = 0; i < 4; i++) { const p = Models.pillar(); p.node.position.set(i % 2 ? 9 : -9, 0, -6 + Math.floor(i/2)*12); }
+    wall(26, 5, 1, 0, 2.5, near); wall(26, 5, 1, 0, 2.5, far); wall(1, 5, depth, -13, 2.5, midz); wall(1, 5, depth, 13, 2.5, midz);
+    // pillars + torch glow down the length of the hall
+    for (let z = near + 6; z < far - 2; z += 9) { [-9, 9].forEach(x => { const p = Models.pillar(); p.node.position.set(x, 0, z); const torch = MB.CreateSphere('torch', { diameter: 0.4 }, scene); torch.material = M('torch', '#ff9e4a', { emissive: '#ff7b2a' }); torch.position.set(x, 3.4, z); idlers.push({ idle(tt) { torch.scaling.setAll(1 + Math.sin(tt * 6 + z) * 0.2); } }); }); }
 
     // riddle plaque
     const sign = Models.sign('Riddle ▼'); sign.node.position.set(0, 0, -6);
@@ -134,7 +144,7 @@ window.Dungeon = (function () {
     if (Input.down('KeyS') || Input.down('ArrowDown')) mz -= 1;
     if (Input.down('KeyA') || Input.down('ArrowLeft')) mx -= 1;
     if (Input.down('KeyD') || Input.down('ArrowRight')) mx += 1;
-    if (mx || mz) { const len = Math.hypot(mx, mz); mx /= len; mz /= len; const fX=-Math.sin(camYaw), fZ=Math.cos(camYaw), rX=Math.cos(camYaw), rZ=Math.sin(camYaw); const wx=mx*rX+mz*fX, wz=mx*rZ+mz*fZ; player.position.x = clamp(player.position.x + wx*SPEED*dt, -12, 12); player.position.z = clamp(player.position.z + wz*SPEED*dt, -15, 17); player.rotation.y = Math.atan2(wx, wz); player.position.y = Math.abs(Math.sin(t*10))*0.12; } else player.position.y = 0;
+    if (mx || mz) { const len = Math.hypot(mx, mz); mx /= len; mz /= len; const fX=-Math.sin(camYaw), fZ=Math.cos(camYaw), rX=Math.cos(camYaw), rZ=Math.sin(camYaw); const wx=mx*rX+mz*fX, wz=mx*rZ+mz*fZ; player.position.x = clamp(player.position.x + wx*SPEED*dt, -12, 12); player.position.z = clamp(player.position.z + wz*SPEED*dt, zMin, zMax); player.rotation.y = Math.atan2(wx, wz); player.position.y = Math.abs(Math.sin(t*10))*0.12; } else player.position.y = 0;
 
     idlers.forEach(o => o.idle && o.idle(t));
 

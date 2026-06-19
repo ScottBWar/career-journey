@@ -305,12 +305,30 @@ window.Models = (function () {
   }
   function kraken() {
     const r = new BABYLON.TransformNode('eKraken', scene);
-    const green = M('krGreen', '#2f6b54', { spec: 0.3, emissive: '#0a2018' }), green2 = M('krG2', '#244f3f');
-    at(MB.CreateSphere('head', { diameterX: 2.6, diameterY: 3.0, diameterZ: 2.6, segments: 16 }, scene), r, green, 0, 2.2, 0);
-    [-0.55,0.55].forEach(z => { at(MB.CreateSphere('eyW', { diameter: 0.7 }, scene), r, M('krW', '#ffe08a', { emissive: '#caa030' }), 1.0, 2.6, z); at(MB.CreateSphere('eyB', { diameter: 0.32 }, scene), r, M('krB', '#0a0a0a'), 1.25, 2.6, z); });
+    const green = M('krGreen', '#2f6b54', { spec: 0.4, emissive: '#0a2018' }), green2 = M('krG2', '#244f3f'), green3 = M('krG3', '#163026'),
+          glow = M('krGlow', '#5effc0', { emissive: '#2fffa0' }), beakM = M('krBeak', '#160f08'), teeth = M('krTeeth', '#e8e0d0'),
+          eyeW = M('krW', '#ffe08a', { emissive: '#caa030' }), eyeB = M('krB', '#0a0a0a');
+    // towering bulbous mantle
+    at(MB.CreateSphere('mantle', { diameterX: 3.2, diameterY: 4.0, diameterZ: 3.2, segments: 18 }, scene), r, green, 0, 3.4, -0.2);
+    at(MB.CreateCylinder('mtip', { height: 1.8, diameterTop: 0, diameterBottom: 2.2, tessellation: 14 }, scene), r, green2, 0, 5.6, -0.2);
+    [-1, 1].forEach(s => { const fin = at(MB.CreateCylinder('fin', { height: 1.6, diameterTop: 0, diameterBottom: 1.2, tessellation: 3 }, scene), r, green2, s * 1.7, 4.2, -0.2); fin.rotation.z = s * 1.1; fin.scaling.z = 0.3; }); // mantle fins
+    // bioluminescent spots
+    for (let i = 0; i < 12; i++) { const a = i * 2.39; at(MB.CreateSphere('spot' + i, { diameter: 0.26 }, scene), r, glow, Math.cos(a) * 1.5, 2.6 + (i % 6) * 0.7, Math.sin(a) * 1.5 - 0.2); }
+    // head + menacing glowing eyes with halos
+    at(MB.CreateSphere('head', { diameterX: 2.8, diameterY: 2.4, diameterZ: 2.8, segments: 16 }, scene), r, green, 0.4, 1.9, 0);
+    [-0.75, 0.75].forEach(z => { at(MB.CreateSphere('eyW', { diameter: 0.85 }, scene), r, eyeW, 1.2, 2.4, z); at(MB.CreateSphere('eyB', { diameter: 0.4 }, scene), r, eyeB, 1.5, 2.4, z); const h = at(MB.CreateSphere('eyG', { diameter: 1.3 }, scene), r, M('krEG' + z, '#ffe08a', { emissive: '#ffe08a', alpha: 0.22 }), 1.2, 2.4, z); h.material.alphaMode = BABYLON.Engine.ALPHA_ADD; h.isPickable = false; });
+    // beak ringed with teeth
+    const beak = at(MB.CreateCylinder('beak', { height: 1.3, diameterTop: 0, diameterBottom: 1.0, tessellation: 8 }, scene), r, beakM, 1.7, 1.1, 0); beak.rotation.z = -Math.PI / 2;
+    for (let i = 0; i < 9; i++) { const a = (i / 9) * Math.PI * 2; at(MB.CreateCylinder('bt', { height: 0.42, diameterTop: 0, diameterBottom: 0.16 }, scene), r, teeth, 1.85, 1.1 + Math.cos(a) * 0.42, Math.sin(a) * 0.42).rotation.x = Math.cos(a) > 0 ? Math.PI : 0; }
+    // ten long writhing tentacles with sucker rows
     const arms = [];
-    for (let i = 0; i < 10; i++) { const a = (i/10)*Math.PI*2; const tn = at(MB.CreateCylinder('arm', { height: 2.6, diameterTop: 0.12, diameterBottom: 0.5 }, scene), r, green2, Math.cos(a)*1.0, 1.0, Math.sin(a)*1.0); tn.rotation.x = Math.sin(a)*0.5; tn.rotation.z = -Math.cos(a)*0.5; arms.push(tn); }
-    return { node: r, idle(t) { arms.forEach((tn, i) => tn.rotation.y = Math.sin(t*1.6 + i)*0.25); } };
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2; const piv = new BABYLON.TransformNode('ap' + i, scene); piv.parent = r; piv.position.set(Math.cos(a) * 1.2, 0.9, Math.sin(a) * 1.2 - 0.1);
+      const tn = at(MB.CreateCylinder('arm' + i, { height: 4.2, diameterTop: 0.1, diameterBottom: 0.62, tessellation: 8 }, scene), piv, i % 2 ? green2 : green3, 0, -1.4, 0); tn.rotation.x = Math.sin(a) * 0.7; tn.rotation.z = -Math.cos(a) * 0.7;
+      for (let k = 0; k < 5; k++) at(MB.CreateSphere('su', { diameter: 0.16 }, scene), tn, glow, 0, -1.6 + k * 0.7, 0.26);
+      piv.rotation.x = Math.sin(a) * 0.4; arms.push({ piv, a, i });
+    }
+    return { node: r, idle(t) { arms.forEach(o => { o.piv.rotation.y = Math.sin(t * 1.3 + o.i) * 0.22; o.piv.rotation.x = Math.sin(o.a) * 0.4 + Math.sin(t * 1.1 + o.i) * 0.12; }); r.position.y = (r._baseY || 0) + Math.sin(t * 0.8) * 0.18; } };
   }
 
   // Selachoth — the One-Finned Angel: an elegant silver-haired shark-man
@@ -504,30 +522,44 @@ window.Models = (function () {
     return { node: r, body, idle(t) { body.scaling.y = 1 + Math.sin(t * 6 + (r._ph || 0)) * 0.12; } };
   }
 
-  function leviathan() { // reaper-style deep-sea horror
+  function leviathan() { // reaper-style deep-sea horror — long, segmented, bioluminescent
     const r = new BABYLON.TransformNode('eLeviathan', scene);
     const body = M('lvBody', '#2a4a5a', { spec: 0.3, emissive: '#08161e' }), body2 = M('lvBody2', '#1f3a47'),
-          teeth = M('lvTeeth', '#e8e0d0'), eye = M('lvEye', '#7fffd0', { emissive: '#2fffb0' });
-    for (let i = 0; i < 5; i++) at(MB.CreateSphere('s' + i, { diameterX: 2.2 - i * 0.32, diameterY: 1.6 - i * 0.22, diameterZ: 1.6 - i * 0.22, segments: 12 }, scene), r, i % 2 ? body2 : body, -1.6 - i * 1.2, 1.2 + Math.sin(i * 0.7) * 0.35, 0);
-    at(MB.CreateSphere('head', { diameterX: 2.4, diameterY: 1.9, diameterZ: 1.9, segments: 14 }, scene), r, body, 0.4, 1.3, 0);
-    const jt = at(MB.CreateCylinder('jt', { height: 1.7, diameterTop: 0, diameterBottom: 1.3, tessellation: 8 }, scene), r, body, 1.7, 1.6, 0); jt.rotation.z = -Math.PI / 2;
-    const jb = at(MB.CreateCylinder('jb', { height: 1.7, diameterTop: 0, diameterBottom: 1.3, tessellation: 8 }, scene), r, body2, 1.7, 1.0, 0); jb.rotation.z = -Math.PI / 2;
-    for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; at(MB.CreateCylinder('t', { height: 0.45, diameterTop: 0, diameterBottom: 0.2 }, scene), r, teeth, 1.5, 1.3 + Math.cos(a) * 0.55, Math.sin(a) * 0.55).rotation.x = Math.cos(a) > 0 ? Math.PI : 0; }
-    [-0.55, 0.55].forEach(z => at(MB.CreateSphere('e', { diameter: 0.34 }, scene), r, eye, 0.9, 1.95, z));
-    [-1, 1].forEach(s => { const f = at(MB.CreateCylinder('mand', { height: 2.0, diameterTop: 0, diameterBottom: 0.45, tessellation: 6 }, scene), r, body2, 1.2, 1.3, s * 1.1); f.rotation.x = s * Math.PI / 2; f.rotation.z = -0.6; });
-    return { node: r, idle(t) { r.rotation.z = Math.sin(t * 1.2) * 0.05; r.position.y = (r._baseY || 0) + Math.sin(t * 0.9) * 0.2; } };
+          teeth = M('lvTeeth', '#e8e0d0'), eye = M('lvEye', '#7fffd0', { emissive: '#2fffb0' }), glow = M('lvGlow', '#3fffd0', { emissive: '#1fffb0' }), maw = M('lvMaw', '#2a0a14');
+    // long serpentine body (8 segments) trailing back, with biolum stripe
+    const segs = [];
+    for (let i = 0; i < 8; i++) { const sg = at(MB.CreateSphere('s' + i, { diameterX: 2.4 - i * 0.24, diameterY: 1.8 - i * 0.17, diameterZ: 1.8 - i * 0.17, segments: 12 }, scene), r, i % 2 ? body2 : body, -1.4 - i * 1.25, 1.4 + Math.sin(i * 0.7) * 0.4, 0); at(MB.CreateSphere('bl' + i, { diameter: 0.34 }, scene), r, glow, -1.4 - i * 1.25, 2.2 + Math.sin(i * 0.7) * 0.4, 0); segs.push(sg); }
+    // tail fluke
+    const fl = at(MB.CreateCylinder('fluke', { height: 2.2, diameterTop: 0, diameterBottom: 1.8, tessellation: 3 }, scene), r, body2, -11.0, 1.4, 0); fl.rotation.z = Math.PI / 2; fl.scaling.z = 0.25;
+    // head + gaping double jaws lined with teeth
+    at(MB.CreateSphere('head', { diameterX: 2.8, diameterY: 2.2, diameterZ: 2.2, segments: 16 }, scene), r, body, 0.5, 1.5, 0);
+    const jt = at(MB.CreateCylinder('jt', { height: 2.0, diameterTop: 0, diameterBottom: 1.5, tessellation: 8 }, scene), r, maw, 2.0, 1.9, 0); jt.rotation.z = -Math.PI / 2;
+    const jb = at(MB.CreateCylinder('jb', { height: 2.0, diameterTop: 0, diameterBottom: 1.5, tessellation: 8 }, scene), r, maw, 2.0, 1.1, 0); jb.rotation.z = -Math.PI / 2;
+    for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; at(MB.CreateCylinder('t', { height: 0.55, diameterTop: 0, diameterBottom: 0.22 }, scene), r, teeth, 1.9, 1.5 + Math.cos(a) * 0.7, Math.sin(a) * 0.7).rotation.x = Math.cos(a) > 0 ? Math.PI : 0; }
+    [-0.62, 0.62].forEach(z => { at(MB.CreateSphere('e', { diameter: 0.4 }, scene), r, eye, 1.0, 2.2, z); const h = at(MB.CreateSphere('eg', { diameter: 0.8 }, scene), r, M('lvEG' + z, '#7fffd0', { emissive: '#7fffd0', alpha: 0.2 }), 1.0, 2.2, z); h.material.alphaMode = BABYLON.Engine.ALPHA_ADD; h.isPickable = false; });
+    // four reaper mandible-fins fanning from the head
+    [-1, 1].forEach(s => { [0.4, 1.2].forEach(zo => { const f = at(MB.CreateCylinder('mand', { height: 2.4, diameterTop: 0, diameterBottom: 0.5, tessellation: 6 }, scene), r, body2, 1.0, 1.5, s * zo); f.rotation.x = s * Math.PI / 2; f.rotation.z = -0.5 - zo * 0.2; }); });
+    return { node: r, idle(t) { segs.forEach((s, i) => s.position.y = 1.4 + Math.sin(i * 0.7 + t * 1.6) * 0.4); r.rotation.z = Math.sin(t * 1.0) * 0.05; r.position.y = (r._baseY || 0) + Math.sin(t * 0.8) * 0.22; } };
   }
-  function angler() { // anglerfish abyss horror with a glowing lure
+  function angler() { // anglerfish abyss horror — vast maw, jagged teeth, a blazing lure
     const r = new BABYLON.TransformNode('eAngler', scene);
-    const body = M('agBody', '#1a2230', { spec: 0.2, emissive: '#050d16' }), mouth = M('agMouth', '#3a0a14'),
-          teeth = M('agTeeth', '#e8e0d0'), lure = M('agLure', '#aef0ff', { emissive: '#6fe0ff' });
-    at(MB.CreateSphere('body', { diameterX: 3, diameterY: 2.6, diameterZ: 2.6, segments: 14 }, scene), r, body, 0, 1.7, 0);
-    at(MB.CreateBox('mouth', { width: 1.7, height: 1.0, depth: 2.3 }, scene), r, mouth, 1.3, 1.3, 0);
-    for (let i = 0; i < 6; i++) { at(MB.CreateCylinder('tu', { height: 0.45, diameterTop: 0, diameterBottom: 0.18 }, scene), r, teeth, 1.7, 1.7, -0.8 + i * 0.32).rotation.x = Math.PI; at(MB.CreateCylinder('td', { height: 0.45, diameterTop: 0, diameterBottom: 0.18 }, scene), r, teeth, 1.7, 1.0, -0.8 + i * 0.32); }
-    [-0.55, 0.55].forEach(z => { at(MB.CreateSphere('ew', { diameter: 0.5 }, scene), r, M('agW', '#d8d0b0'), 0.9, 2.2, z); at(MB.CreateSphere('eb', { diameter: 0.26 }, scene), r, M('agB', '#0a0a0a'), 1.1, 2.2, z); });
-    at(MB.CreateCylinder('stalk', { height: 1.7, diameter: 0.1 }, scene), r, body, 1.0, 3.1, 0).rotation.z = -0.4;
-    const bulb = at(MB.CreateSphere('lure', { diameter: 0.55 }, scene), r, lure, 1.9, 3.7, 0);
-    return { node: r, idle(t) { bulb.scaling.setAll(1 + Math.sin(t * 3) * 0.22); } };
+    const body = M('agBody', '#15202e', { spec: 0.2, emissive: '#050d16' }), body2 = M('agBody2', '#0e1722'), mouth = M('agMouth', '#2a0712'),
+          teeth = M('agTeeth', '#e8e0d0'), lure = M('agLure', '#aef0ff', { emissive: '#9fe8ff' }), spot = M('agSpot', '#6fe0ff', { emissive: '#4fd0ff' });
+    at(MB.CreateSphere('body', { diameterX: 3.4, diameterY: 3.0, diameterZ: 3.0, segments: 16 }, scene), r, body, -0.2, 2.0, 0);
+    // biolum freckles
+    for (let i = 0; i < 10; i++) { const a = i * 2.39; at(MB.CreateSphere('sp' + i, { diameter: 0.22 }, scene), r, spot, -0.5 + Math.cos(a) * 1.2, 2.0 + Math.sin(a) * 1.2, 1.2); }
+    // cavernous maw
+    at(MB.CreateBox('mouth', { width: 2.2, height: 1.4, depth: 2.8 }, scene), r, mouth, 1.5, 1.4, 0);
+    for (let i = 0; i < 9; i++) { at(MB.CreateCylinder('tu', { height: 0.6, diameterTop: 0, diameterBottom: 0.22 }, scene), r, teeth, 1.95, 2.1, -1.0 + i * 0.26).rotation.x = Math.PI; at(MB.CreateCylinder('td', { height: 0.6, diameterTop: 0, diameterBottom: 0.22 }, scene), r, teeth, 1.95, 0.75, -1.0 + i * 0.26); }
+    // dead milky eyes with sickly glow
+    [-0.7, 0.7].forEach(z => { at(MB.CreateSphere('ew', { diameter: 0.62 }, scene), r, M('agW', '#d8d0b0'), 0.9, 2.7, z); at(MB.CreateSphere('eb', { diameter: 0.3 }, scene), r, M('agB', '#0a0a0a'), 1.15, 2.7, z); });
+    // pectoral fins
+    [-1, 1].forEach(s => { const f = at(MB.CreateCylinder('fin', { height: 1.6, diameterTop: 0, diameterBottom: 1.0, tessellation: 3 }, scene), r, body2, -0.8, 1.4, s * 1.5); f.rotation.x = s * Math.PI / 2; f.scaling.z = 0.3; });
+    // the lure: long stalk, blazing bulb, light spill
+    const stalk = at(MB.CreateCylinder('stalk', { height: 2.6, diameter: 0.12 }, scene), r, body, 0.8, 3.9, 0); stalk.rotation.z = -0.4;
+    const bulb = at(MB.CreateSphere('lure', { diameter: 0.7 }, scene), r, lure, 2.1, 4.9, 0);
+    const halo = at(MB.CreateSphere('halo', { diameter: 1.8 }, scene), r, M('agHalo', '#aef0ff', { emissive: '#aef0ff', alpha: 0.16 }), 2.1, 4.9, 0); halo.material.alphaMode = BABYLON.Engine.ALPHA_ADD; halo.isPickable = false;
+    return { node: r, idle(t) { const p = 1 + Math.sin(t * 3) * 0.25; bulb.scaling.setAll(p); halo.scaling.setAll(p * 1.1); r.position.y = (r._baseY || 0) + Math.sin(t * 0.7) * 0.16; } };
   }
   // ---- new enemy variety ----
   function eel() { // voltaic eel — long electric ribbon

@@ -76,7 +76,7 @@ window.Battle = (function () {
       let x = boss ? 4.8 : 4.4, z = boss ? 0 : 3.0 - i * 2.6;
       const home = new V3(x, def.baseY, z);
       built.node.position.copyFrom(home); built.node._baseY = def.baseY; built.node.rotation.y = -Math.PI/2.2;
-      if (boss) built.node.scaling.setAll(1.3);
+      if (boss) built.node.scaling.setAll(def.scale || 1.3);
       seen[key] = (seen[key] || 0) + 1;
       if (Progress.recordSeen) Progress.recordSeen(Game.state, key);
       const suffix = placed.filter(k => k === key).length > 1 ? ' ' + 'ABC'[seen[key]-1] : '';
