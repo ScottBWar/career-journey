@@ -1276,5 +1276,8 @@ window.Models = (function () {
   function pillar() { const r = new BABYLON.TransformNode('pillar', scene); at(MB.CreateCylinder('p', { height: 4, diameter: 1.0, tessellation: 8 }, scene), r, M('pil', '#5a5266'), 0, 2, 0); return { node: r }; }
 
   return { use, M, at, weaponSpec, attachWeapon, cosmetic, pirate, swordsman, healer, mage, blader, dragoon, rival, simon, aladdin, violca, mac, sane, marvyn, quijano, mermaid, hero, npc, tree, palm, pine, deadTree, blossom, rock, house, sign, portal, roamer,
-           crystal, chest, pillar, enemy: (key) => ENEMY_BUILDERS[key](), ENEMY_BUILDERS };
+           crystal, chest, pillar,
+           // dispatch by enemy id, falling back to its model (some enemies reuse another's builder), then a generic roamer
+           enemy: (key) => (ENEMY_BUILDERS[key] || ENEMY_BUILDERS[((window.Data && Data.ENEMIES[key]) || {}).model] || roamer)('#b03050'),
+           ENEMY_BUILDERS };
 })();

@@ -50,7 +50,8 @@ D.PARTY.forEach(p => {
 // ---- ENEMIES ----
 Object.keys(D.ENEMIES).forEach(k => {
   const e = D.ENEMIES[k];
-  if (!enemyBuilders.includes(e.model)) err(`ENEMY ${k}: model '${e.model}' not in ENEMY_BUILDERS`);
+  // runtime dispatches by enemy id, falling back to model — validate the same way
+  if (!enemyBuilders.includes(k) && !enemyBuilders.includes(e.model)) err(`ENEMY ${k}: neither id '${k}' nor model '${e.model}' in ENEMY_BUILDERS`);
   if (!espd.includes(k)) warn(`ENEMY ${k}: no ESPD entry — defaults to 8`);
   if (!has(D.AFFINITIES, k)) warn(`ENEMY ${k}: no AFFINITIES entry`);
   (e.drops || []).forEach(d => { if (!has(D.MATERIALS, d.mat)) err(`ENEMY ${k}: drop '${d.mat}' not in MATERIALS`); });
