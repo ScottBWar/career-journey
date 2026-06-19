@@ -252,9 +252,22 @@
       mel: [64,_,_,67, 71,_,67,_, 64,_,62,_, _,_,_,_,  59,_,62,_, 67,_,_,_, 64,_,59,_, 62,_,_,_,
             67,_,71,_, 74,_,71,67, 64,_,67,_, _,_,_,_,  62,_,59,_, 64,_,67,_, 71,_,67,_, 64,62,59,_],
       harm: [_,_,_,_, 59,_,_,_, _,_,_,_, 55,_,_,_], harmPeak: 0.045, harmWave: 'triangle' },
+
+    // ---- boss theme B: frantic, descending-chromatic dread ----
+    boss2: { bpm: 96, drums: 'heavy', swing: 0.06, padWave: 'sawtooth', leadWave: 'square', cut: 1950, choir: true,
+      bars: [[57,60,63,68],[56,59,62,67],[55,58,61,66],[54,57,60,65],[57,60,63,68],[53,56,59,64],[52,55,58,63],[51,54,57,62]],
+      keys: [K,_,_,K, _,K,_,_, K,_,_,K, _,K,_,_], keyLen: 1.2, keyPeak: 0.06,
+      stabs: [K,_,K,_, K,_,K,_, K,_,K,_, K,_,K,_],
+      bassP: [0,_,0,_, 0,_,0,_, 0,_,0,_, 0,_,7,_], bassPeak: 0.38, bassLen: 1.0,
+      leadADSR: { a: 0.005, d: 0.14, s: 0.3, r: 0.2 }, leadPeak: 0.09,
+      mel: [69,_,68,_, 67,_,_,_, 68,_,69,_, 68,_,67,_,  66,_,65,_, 64,_,_,_, 63,_,62,_, 63,_,_,_,
+            72,_,71,_, 68,_,_,_, 69,_,67,_, 68,_,_,_,  66,_,63,_, 64,_,_,_, 62,_,59,_, 57,_,_,_],
+      harm: [_,_,_,_, 60,_,_,_, _,_,_,_, 57,_,_,_], harmPeak: 0.05 },
   };
   let battleIdx = 0; const BATTLE_THEMES = ['battle', 'battle2', 'battle3'];
   function battleTheme() { const tk = BATTLE_THEMES[battleIdx % BATTLE_THEMES.length]; battleIdx++; return tk; }
+  let bossIdx = 0; const BOSS_THEMES = ['boss', 'boss2'];
+  function bossTheme() { const tk = BOSS_THEMES[bossIdx % BOSS_THEMES.length]; bossIdx++; return tk; }
 
   let current = null, sched = null, nextTime = 0, step = 0, bar = 0, gstep = 0, _after = 'island';
   const STEPS = 16;
@@ -315,7 +328,7 @@
   function start() { ensure(); if (ctx.state === 'suspended') ctx.resume(); }
   function toggle() { ensure(); muted = !muted; master.gain.setTargetAtTime(muted ? 0 : 0.85, ctx.currentTime, 0.05); return muted; }
 
-  window.Music = { play, start, toggle, battleTheme, isMuted: () => muted, context: () => { ensure(); return ctx; }, get _after() { return _after; }, set _after(v) { _after = v; } };
+  window.Music = { play, start, toggle, battleTheme, bossTheme, isMuted: () => muted, context: () => { ensure(); return ctx; }, get _after() { return _after; }, set _after(v) { _after = v; } };
 
   // ---------------- SFX ----------------
   function sfxBus() { ensure(); return master; }

@@ -57,8 +57,11 @@ window.Game = (function () {
     if (fresh && !Game.state.flags.seenOpening) {
       playIntro(() => {
         Game.state.flags.seenOpening = true; Progress.save(Game.state);
-        intoWorld();
-        Game.cutscene(Data.STORY.ruffyJoin, () => { Progress.recruit(Game.state, 'ruffy'); Progress.save(Game.state); Game.toast('WASD move · Q/E rotate camera · F interact · Space swing for a first strike!'); });
+        // the crawl sets the scene; now the heroes are introduced in a staged cinematic before we hand over control
+        Game.cutscene(Data.STORY.opening, () => {
+          intoWorld();
+          Game.cutscene(Data.STORY.ruffyJoin, () => { Progress.recruit(Game.state, 'ruffy'); Progress.save(Game.state); Game.toast('WASD move · Q/E rotate camera · F interact · Space swing for a first strike!'); });
+        });
       });
     } else {
       intoWorld();
@@ -102,7 +105,7 @@ window.Game = (function () {
   // ---------- battle bridge ----------
   Game.musicForReturn = () => (Game.mode === 'sea' || Game.mode === 'shipbattle') ? 'sea' : Game.mode === 'town' ? 'town' : Game.mode === 'dungeon' ? 'dungeon' : 'island';
   Game.startBattle = function (keys, opts, onEnd) {
-    Music.play((opts && opts.music) || (opts && opts.boss ? 'boss' : (Music.battleTheme ? Music.battleTheme() : 'battle')));
+    Music.play((opts && opts.music) || (opts && opts.boss ? (Music.bossTheme ? Music.bossTheme() : 'boss') : (Music.battleTheme ? Music.battleTheme() : 'battle')));
     transition(() => { setMode('battle'); const s = Battle.build(keys, opts, onEnd); Game.scene = s; setTimeout(() => { if (Game.scene === s) Battle.startLoop(); }, 350); });
   };
   Game.startShipBattle = function (type, onEnd) {
