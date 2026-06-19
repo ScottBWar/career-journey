@@ -131,7 +131,7 @@ function serve() {
         const stage = MBd.CreateGround('stage', { width: n * sp + 8, height: 16 }, scene); const sm = new B.StandardMaterial('sm', scene); sm.diffuseColor = new B.Color3(0.16, 0.18, 0.23); sm.specularColor = new B.Color3(0.05, 0.05, 0.05); stage.material = sm;
         const cam = new B.UniversalCamera('gcam', new B.Vector3(x0 * 0.18, 4.0, (n * sp) * 0.55 + 8.5), scene); cam.setTarget(new B.Vector3(0, 1.7, 0)); cam.fov = 0.7;
         window.__galleryScene = scene; Game.scene = scene;
-        try { if (window.Render && Render.outline) Render.outline(scene); } catch (e) {}
+        try { if (window.Render) { if (Render.cel) Render.cel(scene); if (Render.outline) Render.outline(scene); } } catch (e) {}
       };
     });
 

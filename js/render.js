@@ -100,6 +100,29 @@ window.Render = (function () {
     });
   }
 
+  // CEL SHADING pass — kills the plastic specular shine, lifts shadows a touch so they
+  // read as flat toon bands, and adds a soft cool rim-light at glancing angles. One
+  // chokepoint, reversible, skips glowing/translucent/unlit materials so FX aren't touched.
+  function celShade(scene) {
+    const RIM = BABYLON.Color3.FromHexString('#bcd0ff');
+    scene.materials.forEach(m => {
+      if (!m || m._cel || !(m instanceof BABYLON.StandardMaterial)) return;
+      if (m.disableLighting) return;                                  // sky / unlit
+      if (m.alpha != null && m.alpha < 0.99) return;                  // translucent FX
+      const e = m.emissiveColor; if (e && (e.r + e.g + e.b) > 0.12) return; // glowing mats (orbs, eyes, auras, weapons)
+      try {
+        m.specularColor = new BABYLON.Color3(0.03, 0.03, 0.04);       // no plastic highlight
+        m.specularPower = 1000;
+        // gentle ambient self-lift so shaded sides stay readable (flat toon look)
+        m.emissiveColor = m.diffuseColor.scale(0.16);
+        // cool rim that catches the silhouette edges
+        const fp = new BABYLON.FresnelParameters(); fp.bias = 0.5; fp.power = 3; fp.leftColor = RIM; fp.rightColor = new BABYLON.Color3(0, 0, 0);
+        m.emissiveFresnelParameters = fp;
+        m._cel = true;
+      } catch (err) {}
+    });
+  }
+
   // apply everything to a freshly-built scene
   function setup(scene, camera, opts) {
     opts = opts || {};
@@ -108,11 +131,12 @@ window.Render = (function () {
     if (high()) { try { ssao(scene, camera); } catch (e) { console.warn('ssao', e); } }
     if (high() && opts.sun) { try { shadows(scene, opts.sun); } catch (e) { console.warn('shadow', e); } }
     if (opts.sun) { try { lensFlare(scene, opts.sun); } catch (e) { console.warn('flare', e); } }
+    try { celShade(scene); } catch (e) { console.warn('cel', e); }
     try { outlineMeshes(scene); } catch (e) { console.warn('outline', e); }
   }
 
   function setQuality(q) { quality = q; try { localStorage.setItem('bb_quality', q); } catch (e) {} }
   function toggle() { setQuality(high() ? 'low' : 'high'); return quality; }
 
-  return { setup, sky, outline: outlineMeshes, setQuality, toggle, isHigh: high, quality: () => quality };
+  return { setup, sky, outline: outlineMeshes, cel: celShade, setQuality, toggle, isHigh: high, quality: () => quality };
 })();
