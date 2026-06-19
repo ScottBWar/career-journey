@@ -40,6 +40,20 @@ const STATES = [
   { name: '15_menu_gear',           drive: `Game.toIsland('tidehaven', false); Game.openGear()`,     wait: 900 },
   { name: '16_menu_skills',         drive: `Game.toIsland('tidehaven', false); Game.openSkills()`, wait: 900 },
   { name: '17_coliseum',            drive: `Game.toIsland('paegina', false); Game.openColiseum()`,   wait: 1000 },
+
+  // --- new-feature framing: walk the player to the content the default cams miss ---
+  { name: '18_overworld_pots',  drive: `Game.toIsland('tidehaven', false); (function(){var p=World._debug.cuttable('pot')||World._debug.cuttable('grass'); if(p)World._debug.warp(p.x, p.z-3, 0);})()`, wait: 900 },
+  { name: '19_overworld_swing', drive: `Game.toIsland('tidehaven', false); (function(){var p=World._debug.cuttable('pot')||World._debug.cuttable('grass'); if(p)World._debug.warp(p.x, p.z-2.2, 0); World._debug.swing();})()`, wait: 140 },
+  { name: '20_dungeon_traps',   drive: `Game.toDungeon('crash_site'); setTimeout(function(){window.__reset&&window.__reset(); var h=Dungeon._debug.hazard()||Dungeon._debug.alcove(); if(h)Dungeon._debug.warp(h.x<0?h.x+4.5:h.x-4.5, h.z);},700)`, wait: 1700 },
+  { name: '21_dungeon_alcove',  drive: `Game.toDungeon('spirit_wood'); setTimeout(function(){window.__reset&&window.__reset(); var a=Dungeon._debug.alcove()||Dungeon._debug.hazard(); if(a)Dungeon._debug.warp(a.x<0?a.x+3.6:a.x-3.6, a.z);},700)`, wait: 1700 },
+
+  // --- model gallery: clean, well-lit, close-up rows so models can be critiqued in detail ---
+  { name: '22_gallery_party1',  drive: `__gallery({party:['pirate','swordsman','blader','dragoon','ruffy']})`,  wait: 600 },
+  { name: '23_gallery_party2',  drive: `__gallery({party:['healer','mage','aladdin','violca','simon']})`,       wait: 600 },
+  { name: '24_gallery_party3',  drive: `__gallery({party:['mac','sane','marvyn','quijano']})`,                  wait: 600 },
+  { name: '25_gallery_mobs',    drive: `__gallery({enemy:['shark','jelly','octo','crab','gull','golem']})`,     wait: 600 },
+  { name: '26_gallery_bosses',  drive: `__gallery({enemy:['kraken','selachoth','medusa','minotaur']})`,         wait: 600 },
+  { name: '27_gallery_bosses2', drive: `__gallery({enemy:['thething','forestgod','vogon','windmill']})`,        wait: 600 },
 ];
 
 function serve() {
@@ -58,7 +72,7 @@ function serve() {
   const server = await serve();
   const port = server.address().port;
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 2 });
 
   // collect every console message + uncaught error, tagged with the current state
   let curState = 'boot'; const consoleErrors = [], pageErrors = [];
@@ -80,6 +94,35 @@ function serve() {
           ['gear', 'skills', 'partyScr', 'shop', 'shipyard', 'coliseum', 'observatory', 'arcade', 'cine', 'pause', 'bestiary', 'legend', 'dialogue', 'date', 'shellHunt'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('show'); });
           Game.gearOpen = Game.skillsOpen = Game.partyOpen = Game.shipyardOpen = Game.shopOpen = Game.pauseOpen = Game.bestiaryOpen = Game.legendOpen = Game.datingOpen = false;
         } catch (e) {}
+      };
+
+      // model gallery — a clean, brightly lit row of models for detailed inspection.
+      // arg: { party:[keys] } or { enemy:[keys] }. Models face the camera on a neutral stage.
+      window.__galleryScene = null;
+      window.__gallery = function (spec) {
+        const B = BABYLON, MBd = B.MeshBuilder;
+        if (window.__galleryScene) { try { window.__galleryScene.dispose(); } catch (e) {} }
+        const scene = new B.Scene(Game.engine);
+        scene.clearColor = new B.Color4(0.10, 0.12, 0.17, 1);
+        Models.use(scene);
+        const hemi = new B.HemisphericLight('h', new B.Vector3(0.2, 1, 0.15), scene); hemi.intensity = 0.85; hemi.groundColor = new B.Color3(0.22, 0.24, 0.3);
+        const sun = new B.DirectionalLight('s', new B.Vector3(-0.4, -1, 0.3), scene); sun.intensity = 1.5; sun.specular = new B.Color3(1, 1, 1);
+        const rim = new B.PointLight('rim', new B.Vector3(0, 5, -7), scene); rim.intensity = 0.6; rim.diffuse = new B.Color3(0.6, 0.72, 1);
+        const items = (spec.party || []).map(k => ({ kind: 'party', key: k })).concat((spec.enemy || []).map(k => ({ kind: 'enemy', key: k })));
+        const n = items.length, sp = 4.6, x0 = -(n - 1) * sp / 2;
+        items.forEach((it, i) => {
+          let m = null;
+          try {
+            if (it.kind === 'enemy') m = Models.enemy(it.key);
+            else { const md = (window.Progress && Progress.def(it.key) && Progress.def(it.key).model) || it.key; m = Models[md] ? Models[md]() : null; }
+          } catch (e) { m = null; }
+          if (!m || !m.node) return;
+          m.node.position.set(x0 + i * sp, 0, 0);
+          m.node.rotation.y = 0; // party fronts face +Z (toward camera below)
+        });
+        const stage = MBd.CreateGround('stage', { width: n * sp + 8, height: 16 }, scene); const sm = new B.StandardMaterial('sm', scene); sm.diffuseColor = new B.Color3(0.16, 0.18, 0.23); sm.specularColor = new B.Color3(0.05, 0.05, 0.05); stage.material = sm;
+        const cam = new B.UniversalCamera('gcam', new B.Vector3(x0 * 0.18, 4.0, (n * sp) * 0.55 + 8.5), scene); cam.setTarget(new B.Vector3(0, 1.7, 0)); cam.fov = 0.7;
+        window.__galleryScene = scene; Game.scene = scene;
       };
     });
 

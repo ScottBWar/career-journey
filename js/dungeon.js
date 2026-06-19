@@ -331,5 +331,12 @@ window.Dungeon = (function () {
   function pause() { paused = true; }
   function resume() { paused = false; }
 
-  return { enter, pause, resume, getScene: () => scene, currentDef: () => def };
+  // debug hooks for the capture harness — warp to spike traps / alcoves to frame them
+  const _debug = {
+    warp(x, z) { if (player) { player.position.x = clamp(x, -12, 12); player.position.z = clamp(z, zMin, zMax); } },
+    hazard() { const h = hazards[0]; return h ? { x: h.x, z: h.z } : null; },
+    alcove() { const a = targets.find(t => t.kind === 'bonus'); return a ? { x: a.pos.x, z: a.pos.z } : null; }
+  };
+
+  return { enter, pause, resume, getScene: () => scene, currentDef: () => def, _debug };
 })();

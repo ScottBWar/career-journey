@@ -7,6 +7,7 @@ window.World = (function () {
   let scene, cam, player, engine, def, key;
   let roamers = [], gates = [], idlers = [], gulls = [], water = null, waterBase = null, paused = false, locked = false, nearGate = null, t = 0, camYaw = 0, playerArm = null, swingT = 0;
   let cuttables = [], debris = [];
+  let swingCat = 'slash', swingDur = 0.32, armBaseZ = 0, armBaseX = 1.0, freeze = 0;
   const SPEED = 9;
 
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
@@ -150,17 +151,19 @@ window.World = (function () {
       idlers.push(ro);
     });
 
-    // cuttable scenery — Zelda-style grass tufts to slice and clay pots to smash
-    const grassCol = def.grassCut || '#6fae4b';
+    // cuttable scenery — Zelda-style grass tufts to slice and clay pots to smash.
+    // bright + tall so they read clearly against the ground from the overworld camera.
+    const grassCol = def.grassCut || '#7ed957';
     const makeGrass = () => {
-      const root = new BABYLON.TransformNode('grasstuft', scene); const mat = M('blade', grassCol, { spec: 0 });
-      for (let i = 0; i < 5; i++) { const b = MB.CreateCylinder('blade', { height: 0.7 + Math.random() * 0.4, diameterBottom: 0.16, diameterTop: 0.0, tessellation: 4 }, scene); b.material = mat; const a = Math.random() * 6.28, rr = Math.random() * 0.22; b.position.set(Math.cos(a) * rr, b.scaling.y * 0.35 + 0.1, Math.sin(a) * rr); b.rotation.x = (Math.random() - 0.5) * 0.4; b.rotation.z = (Math.random() - 0.5) * 0.4; b.parent = root; }
+      const root = new BABYLON.TransformNode('grasstuft', scene); const mat = M('blade', grassCol, { spec: 0, emissive: '#1c3a14' });
+      for (let i = 0; i < 7; i++) { const h = 1.1 + Math.random() * 0.6; const b = MB.CreateCylinder('blade', { height: h, diameterBottom: 0.22, diameterTop: 0.0, tessellation: 4 }, scene); b.material = mat; const a = Math.random() * 6.28, rr = Math.random() * 0.3; b.position.set(Math.cos(a) * rr, h * 0.42, Math.sin(a) * rr); b.rotation.x = (Math.random() - 0.5) * 0.5; b.rotation.z = (Math.random() - 0.5) * 0.5; b.parent = root; }
       return { node: root, color: grassCol };
     };
     const makePot = () => {
-      const root = new BABYLON.TransformNode('pot', scene); const body = MB.CreateCylinder('potbody', { height: 0.85, diameterTop: 0.55, diameterBottom: 0.4, tessellation: 10 }, scene); body.material = M('clay', '#b46a3a'); body.position.y = 0.42; body.parent = root;
-      const rim = MB.CreateTorus('potrim', { diameter: 0.6, thickness: 0.12, tessellation: 10 }, scene); rim.material = M('clayrim', '#8a4e29'); rim.position.y = 0.82; rim.parent = root;
-      return { node: root, color: '#b46a3a' };
+      const root = new BABYLON.TransformNode('pot', scene); const body = MB.CreateCylinder('potbody', { height: 1.15, diameterTop: 0.75, diameterBottom: 0.5, tessellation: 12 }, scene); body.material = M('clay', '#cf7233', { spec: 0.3, emissive: '#3a1a08' }); body.position.y = 0.57; body.parent = root;
+      const rim = MB.CreateTorus('potrim', { diameter: 0.82, thickness: 0.16, tessellation: 12 }, scene); rim.material = M('clayrim', '#9a5424'); rim.position.y = 1.12; rim.parent = root;
+      const band = MB.CreateTorus('potband', { diameter: 0.78, thickness: 0.1, tessellation: 12 }, scene); band.material = M('clayband', '#e0b070'); band.position.y = 0.62; band.parent = root;
+      return { node: root, color: '#cf7233' };
     };
     const scatterCut = (b, n, type) => {
       for (let i = 0; i < n; i++) {
@@ -187,7 +190,13 @@ window.World = (function () {
     const leaderWeapon = (Game.state.equip[leaderKey] || {}).weapon;
     const hero = Models[leaderModel] ? Models[leaderModel](leaderWeapon) : Models.hero(); player = hero.node; playerArm = hero.arm || hero.staffPiv || null;
     Models.cosmetic(player, (Game.state.equip[leaderKey] || {}).accessory);
-    if (playerArm) playerArm.rotation.x = 1.0; // rest the weapon down instead of holding it straight out
+    // pick a swing motion from the equipped weapon's style: slash / bonk / stab / punch / crack
+    const style = (Models.weaponSpec ? Models.weaponSpec(leaderKey, leaderWeapon).style : 'sword');
+    const MOTION = { sword: 'slash', bigsword: 'slash', katana: 'slash', scimitar: 'slash', staff: 'bonk', wand: 'bonk', lance: 'stab', bow: 'stab', fist: 'punch', whip: 'crack' };
+    swingCat = MOTION[style] || 'slash';
+    swingDur = { slash: 0.3, bonk: 0.42, stab: 0.26, punch: 0.2, crack: 0.32 }[swingCat];
+    armBaseX = (swingCat === 'stab') ? 1.4 : 1.0; armBaseZ = playerArm ? playerArm.position.z : 0;
+    if (playerArm) playerArm.rotation.x = armBaseX; // rest the weapon instead of holding it straight out
     player.position.set(Game.state.location.x, 0, Game.state.location.z);
     cam = new BABYLON.UniversalCamera('wcam', new V3(0, 18, -16), scene); cam.fov = 0.8;
 
@@ -199,9 +208,11 @@ window.World = (function () {
   function update() {
     if (paused || (window.Game && Game.blocking && Game.blocking())) return;
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
+    // hit-stop: brief freeze on contact for a satisfying "thunk", then resume
+    if (freeze > 0) { freeze -= dt; cam.position.set(player.position.x + Math.sin(camYaw) * 16, 18, player.position.z - Math.cos(camYaw) * 16); cam.setTarget(player.position.add(new V3(0, 1, 0))); return; }
     if (Input.down('KeyQ')) camYaw -= 1.7 * dt;
     if (Input.down('KeyE')) camYaw += 1.7 * dt;
-    if (swingT > 0 && playerArm) { swingT -= dt; playerArm.rotation.x = -Math.sin(Math.max(0, swingT) / 0.35 * Math.PI) * 1.6; if (swingT <= 0) playerArm.rotation.x = 1.0; }
+    if (swingT > 0 && playerArm) { swingT -= dt; animateSwing(1 - Math.max(0, swingT) / swingDur); if (swingT <= 0) restArm(); }
     // animate cut debris + slash arcs, dispose when spent
     for (let i = debris.length - 1; i >= 0; i--) {
       const d = debris[i]; d.life -= dt;
@@ -273,14 +284,37 @@ window.World = (function () {
     const [Px, Py] = px(player.position.x, player.position.z); c.fillStyle = '#fde047'; c.beginPath(); c.arc(Px, Py, 4, 0, 7); c.fill(); c.strokeStyle = '#000'; c.lineWidth = 1; c.stroke();
   }
 
-  // a quick fading slash-arc that sweeps in front of the player — pure juice
-  function slashArc() {
-    const arc = MB.CreateTorus('slash', { diameter: 2.6, thickness: 0.18, tessellation: 16 }, scene);
-    const m = new BABYLON.StandardMaterial('arcM', scene); m.emissiveColor = new Color3(1, 1, 0.92); m.diffuseColor = new Color3(0, 0, 0); m.alpha = 0.85; arc.material = m;
+  // per-style swing animation, driven by p (0 at windup → 1 at follow-through).
+  // sword SLASHES across, staff BONKS overhead, lance/bow STAB forward, fist jabs, whip cracks.
+  function animateSwing(p) {
+    if (!playerArm) return; const a = playerArm; a.position.z = armBaseZ;
+    switch (swingCat) {
+      case 'slash':  a.rotation.x = 0.15 + Math.sin(p * Math.PI) * 0.35; a.rotation.z = Math.cos(p * Math.PI) * 1.7; a.rotation.y = (p - 0.5) * 0.8; break; // horizontal sweep L→R
+      case 'bonk':   a.rotation.z = 0; a.rotation.y = 0; a.rotation.x = -1.0 + (p * p) * 2.7; break;                                                  // overhead chop down
+      case 'crack':  a.rotation.z = 0; a.rotation.y = 0; a.rotation.x = -0.8 + Math.sqrt(p) * 2.5; break;                                            // whip snap
+      case 'punch':  a.rotation.x = 1.4; a.rotation.z = 0; a.position.z = armBaseZ + Math.sin(p * Math.PI * 2) * 0.45; break;                         // double jab
+      case 'stab':   a.rotation.x = 1.45; a.rotation.z = 0; a.position.z = armBaseZ + Math.sin(p * Math.PI) * 0.7; break;                             // forward thrust
+      default:       a.rotation.x = 0.2 + Math.sin(p * Math.PI) * 1.3;
+    }
+  }
+  function restArm() { if (!playerArm) return; playerArm.rotation.set(armBaseX, 0, 0); playerArm.position.z = armBaseZ; }
+
+  // a quick fading FX shaped to match the swing: a horizontal crescent for slashes,
+  // a vertical arc for bonks, a forward streak for stabs.
+  function swingFX() {
     const fX = Math.sin(player.rotation.y), fZ = Math.cos(player.rotation.y);
-    arc.position.set(player.position.x + fX * 1.1, 0.9, player.position.z + fZ * 1.1);
-    arc.rotation.x = Math.PI / 2; arc.rotation.y = player.rotation.y;
-    debris.push({ node: arc, mat: m, arc: true, life: 0.22, max: 0.22 });
+    let node, m = new BABYLON.StandardMaterial('fxM', scene); m.emissiveColor = new Color3(1, 1, 0.92); m.diffuseColor = new Color3(0, 0, 0); m.alpha = 0.9;
+    if (swingCat === 'stab' || swingCat === 'punch') {
+      node = MB.CreateCylinder('fx', { height: 1.9, diameterTop: 0.05, diameterBottom: 0.5, tessellation: 8 }, scene);
+      node.rotation.x = Math.PI / 2; node.rotation.y = -player.rotation.y; node.position.set(player.position.x + fX * 1.7, 1.0, player.position.z + fZ * 1.7);
+    } else {
+      node = MB.CreateTorus('fx', { diameter: 2.7, thickness: 0.2, tessellation: 18, arc: 0.55 }, scene);
+      node.position.set(player.position.x + fX * 1.2, 1.0, player.position.z + fZ * 1.2);
+      if (swingCat === 'bonk' || swingCat === 'crack') { node.rotation.y = player.rotation.y + Math.PI / 2; node.rotation.z = Math.PI * 0.25; } // vertical arc facing forward
+      else { node.rotation.x = Math.PI / 2; node.rotation.y = player.rotation.y - Math.PI * 0.27; }                                                // flat crescent across the front
+    }
+    node.material = m; node.isPickable = false;
+    debris.push({ node, mat: m, arc: true, life: 0.2, max: 0.2 });
   }
 
   // burst of little fragments that fly out + fall — sells the "it broke" feeling
@@ -293,36 +327,44 @@ window.World = (function () {
       debris.push({ node: b, vx: Math.cos(a) * sp, vz: Math.sin(a) * sp, vy: 2.5 + Math.random() * 2, life: 0.7, max: 0.7, spin: (Math.random() - 0.5) * 12 });
     }
   }
+  // bright impact pop + sparks when the swing lands on an enemy
+  function impactBurst(pos) {
+    const fl = MB.CreateSphere('impact', { diameter: 1.4 }, scene); const m = new BABYLON.StandardMaterial('impM', scene); m.emissiveColor = new Color3(1, 0.95, 0.8); m.diffuseColor = new Color3(0, 0, 0); m.alpha = 0.85; m.alphaMode = BABYLON.Engine.ALPHA_ADD; fl.material = m; fl.isPickable = false; fl.position.copyFrom(pos); fl.position.y = 1.0;
+    debris.push({ node: fl, mat: m, arc: true, life: 0.16, max: 0.16 });
+    spawnDebris(new V3(pos.x, 0.8, pos.z), '#fff0b0', 7);
+  }
 
-  // overworld weapon swing — slice grass, smash pots, and first-strike roamers
+  // overworld weapon swing — slice grass, smash pots, and land a first-strike on roamers with real contact
   function attack() {
-    if (paused || locked) return;
-    swingT = 0.35; if (window.SFX) SFX.play('slash'); slashArc();
+    if (paused || locked || swingT > 0) return;
+    swingT = swingDur; if (window.SFX) SFX.play('slash'); swingFX();
     const fX = Math.sin(player.rotation.y), fZ = Math.cos(player.rotation.y);
+    const inArc = (ox, oz, reach) => { const dx = ox - player.position.x, dz = oz - player.position.z; const dist = Math.hypot(dx, dz); if (dist > reach) return false; return dist <= 0.7 || (dx * fX + dz * fZ) / dist >= 0.3; };
     let smashedPot = false, cutGrass = false;
     for (const c of cuttables) {
-      if (!c.node.isEnabled()) continue;
-      const dx = c.node.position.x - player.position.x, dz = c.node.position.z - player.position.z;
-      const dist = Math.hypot(dx, dz); if (dist > 2.4) continue;
-      // must be roughly in front of the swing (forgiving ~120° cone), or point-blank
-      if (dist > 0.6 && (dx * fX + dz * fZ) / dist < 0.3) continue;
+      if (!c.node.isEnabled() || !inArc(c.node.position.x, c.node.position.z, 2.5)) continue;
       c.node.setEnabled(false);
       spawnDebris(c.node.position, c.color, c.type === 'pot' ? 9 : 6);
       if (c.type === 'pot') {
         smashedPot = true;
         const g = 6 + Math.floor(Math.random() * 11); Game.state.gold += g; Game.toast('⛃ +' + g);
         if (Math.random() < 0.3) { const mk = ['sand', 'shellfrag', 'feather'][Math.floor(Math.random() * 3)]; Progress.addMaterials(Game.state, { [mk]: 1 }); }
-      } else {
-        cutGrass = true;
-        if (Math.random() < 0.2) { const g = 1 + Math.floor(Math.random() * 3); Game.state.gold += g; }
-      }
+      } else { cutGrass = true; if (Math.random() < 0.2) Game.state.gold += 1 + Math.floor(Math.random() * 3); }
     }
     if (smashedPot && window.SFX) SFX.play('smash');
     else if (cutGrass && window.SFX) SFX.play('cut');
     if (smashedPot || cutGrass) { Progress.save(Game.state); Game.updateHUD(); }
-    let best = null, bd = 3.2;
-    for (const r of roamers) { if (!r.node.isEnabled()) continue; const d = V3.Distance(r.node.position, player.position); if (d < bd) { bd = d; best = r; } }
-    if (best) startRoamerBattle(best, true);
+    // contact with a roamer: impact pop + knockback + hit-stop, THEN open battle with first strike
+    let best = null, bd = 3.4;
+    for (const r of roamers) { if (!r.node.isEnabled() || !inArc(r.node.position.x, r.node.position.z, 3.4)) continue; const d = V3.Distance(r.node.position, player.position); if (d < bd) { bd = d; best = r; } }
+    if (best) {
+      if (window.SFX) SFX.play('hit');
+      impactBurst(best.node.position);
+      const kb = best.node.position.subtract(player.position); if (kb.length() < 0.1) kb.set(fX, 0, fZ); kb.normalize();
+      best.node.position.addInPlace(kb.scale(0.8));
+      freeze = 0.1; locked = true; // lock so movement can't cancel the impact
+      setTimeout(() => { locked = false; startRoamerBattle(best, true); }, 150);
+    }
   }
 
   function startRoamerBattle(r, firstStrike) {
@@ -396,5 +438,12 @@ window.World = (function () {
   function pause() { paused = true; }
   function resume() { paused = false; locked = false; }
 
-  return { enter, focus, pause, resume, getScene: () => scene, currentKey: () => key };
+  // debug hooks for the capture harness — teleport to/near cuttables and trigger a swing
+  const _debug = {
+    warp(x, z, faceY) { if (!player) return; player.position.x = x; player.position.z = z; if (faceY != null) player.rotation.y = faceY; Game.state.location.x = x; Game.state.location.z = z; },
+    swing() { attack(); },
+    cuttable(type) { const c = cuttables.find(o => o.node.isEnabled() && (!type || o.type === type)); return c ? { x: c.pos.x, z: c.pos.z } : null; },
+    setCamYaw(y) { camYaw = y; }
+  };
+  return { enter, focus, pause, resume, getScene: () => scene, currentKey: () => key, _debug };
 })();
