@@ -184,7 +184,9 @@ window.Game = (function () {
     if (window.Cutscene && beats.some(b => Game.cutsceneActorKey(b.name))) Cutscene.play(beats, onDone, opts);
     else lightweightCutscene(beats, onDone);
   };
-  Game.startCutscene = function (key, onDone) { Game.cutscene(Data.STORY[key], onDone); };
+  Game.startCutscene = function (key, onDone, opts) { Game.cutscene(Data.STORY[key], onDone, opts); };
+  // each recruitable character meets you to a theme that riffs on their source material
+  Game.CHAR_THEME = { ruffy: 'theme_ruffy', simon: 'theme_simon', aladdin: 'theme_aladdin', violca: 'theme_violca', mac: 'theme_mac', sane: 'theme_sane', marvyn: 'theme_marvyn', quijano: 'theme_quijano' };
 
   // ---------- inn ----------
   function openInn() {

@@ -240,6 +240,64 @@
       mel: [67,_,72,_, 76,_,_,79, 76,_,72,_, 74,_,_,_,  67,_,71,_, 74,_,_,79, 77,_,74,_, 71,_,_,_,
             72,_,76,_, 79,_,_,84, 83,_,79,_, 76,_,_,_,  74,_,77,_, 79,_,84,_, 86,_,_,_, _,_,_,_] },
 
+    // ===== CHARACTER MEET THEMES — each riffs on its source material =====
+    // Ruffy — One Piece "We Are!": fast, brassy, sunlit adventure
+    theme_ruffy: { bpm: 146, drums: 'heavy', swing: 0.05, padWave: 'sawtooth', leadWave: 'square', cut: 2300, choir: true,
+      bars: [[62,66,69,73],[57,61,64,68],[59,62,66,69],[55,59,62,66]],
+      keys: [K,_,K,_, K,_,K,_, K,_,K,_, K,_,K,_], keyLen: 0.6, keyPeak: 0.085,
+      bassP: [0,_,_,_, 0,_,7,_, 0,_,_,_, 0,_,7,_], bassPeak: 0.38, bassLen: 1.3,
+      leadADSR: { a: 0.01, d: 0.12, s: 0.4, r: 0.3 }, leadDur: 0.7, leadPeak: 0.1,
+      mel: [74,_,76,_, 78,_,_,_, 76,_,74,_, 73,_,_,_,  69,_,73,_, 74,_,_,_, 76,_,78,_, 81,_,_,_] },
+    // Simon — Castlevania "Vampire Killer": galloping gothic minor
+    theme_simon: { bpm: 132, drums: 'heavy', swing: 0.02, padWave: 'sawtooth', leadWave: 'square', cut: 2100,
+      bars: [[57,60,64,67],[53,57,60,65],[55,59,62,67],[52,55,59,64]],
+      keys: [K,_,K,K, _,K,_,K, K,_,K,K, _,K,_,K], keyLen: 0.5, keyPeak: 0.075,
+      bassP: [0,_,0,_, 0,_,0,_, 0,_,0,_, 0,_,0,_], bassPeak: 0.36, bassLen: 0.9,
+      leadADSR: { a: 0.01, d: 0.08, s: 0.35, r: 0.25 }, leadDur: 0.5, leadPeak: 0.1,
+      mel: [69,_,71,_, 72,_,71,_, 69,_,68,_, 69,_,_,_,  67,_,69,_, 71,_,69,_, 67,_,65,_, 64,_,_,_] },
+    // Aladdin — "Arabian Nights": swaying, exotic, snake-charmer lead
+    theme_aladdin: { bpm: 100, drums: 'triphop', swing: 0.18, padWave: 'triangle', leadWave: 'triangle', cut: 1800, choir: true,
+      bars: [[52,56,59,63],[53,57,60,65],[52,56,59,63],[48,52,55,60]],
+      keys: [_,_,K,_, K,_,_,K, _,_,K,_, K,_,K,_], keyLen: 1.4, keyPeak: 0.07,
+      bassP: [0,_,_,_, _,_,7,_, 0,_,_,_, 5,_,_,_], bassPeak: 0.3,
+      leadDur: 1.2, leadPeak: 0.085,
+      mel: [59,_,60,_, 59,_,56,_, 53,_,52,_, _,_,_,_,  56,_,59,_, 60,_,63,_, 60,_,59,_, 56,_,_,_] },
+    // Violca — dragon-rider: soaring cinematic minor with choir
+    theme_violca: { bpm: 96, drums: 'heavy', swing: 0.06, padWave: 'sawtooth', leadWave: 'triangle', cut: 2000, choir: true,
+      bars: [[50,53,57,62],[46,50,53,58],[53,57,60,65],[48,52,55,60]],
+      keys: [K,_,_,_, K,_,_,_, K,_,_,_, K,_,_,_], keyLen: 1.8, keyPeak: 0.085,
+      bassP: [0,_,_,_, 0,_,_,_, 0,_,_,_, 0,_,_,_], bassPeak: 0.36, bassLen: 3,
+      leadADSR: { a: 0.04, d: 0.2, s: 0.6, r: 0.6 }, leadDur: 1.6, leadPeak: 0.09,
+      mel: [62,_,_,_, 65,_,_,_, 69,_,67,_, 65,_,_,_,  62,_,_,_, 60,_,_,_, 62,_,65,_, 69,_,_,_] },
+    // Mac — The Thing (Morricone): a cold, sparse, dread heartbeat
+    theme_mac: { bpm: 62, drums: 'sparse', swing: 0.1, padWave: 'sine', leadWave: 'sine', cut: 900,
+      bars: [[45,48,52,55],[45,48,52,55],[44,47,51,54],[45,48,52,55]],
+      keys: [K,_,_,_, _,_,_,_, K,_,_,_, _,_,_,_], keyLen: 4, keyPeak: 0.05,
+      bassP: [0,_,_,0, _,_,_,_, 0,_,_,0, _,_,_,_], bassPeak: 0.34, bassLen: 1.1,
+      leadDur: 2, leadPeak: 0.05,
+      mel: [_,_,_,_, _,_,_,_, 52,_,_,_, _,_,51,_,  _,_,_,_, _,_,_,_, 48,_,_,_, _,_,_,_] },
+    // Sané — Princess Mononoke (Hisaishi): gentle, pastoral, hopeful
+    theme_sane: { bpm: 78, drums: 'soft', swing: 0.16, padWave: 'sine', leadWave: 'sine', cut: 1500, choir: true,
+      bars: [[60,64,67,72],[57,60,64,69],[53,57,60,65],[55,59,62,67]],
+      keys: [K,_,_,_, _,_,K,_, K,_,_,_, _,_,K,_], keyLen: 2.6, keyPeak: 0.06,
+      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.26,
+      leadADSR: { a: 0.06, d: 0.3, s: 0.6, r: 0.8 }, leadDur: 2.2, leadPeak: 0.075,
+      mel: [72,_,_,_, 71,_,69,_, 67,_,_,_, _,_,_,_,  69,_,_,_, 67,_,64,_, 62,_,_,_, _,_,_,_] },
+    // Marvyn — Hitchhiker's Guide: quirky, melancholy lounge jazz
+    theme_marvyn: { bpm: 86, drums: 'triphop', swing: 0.24, padWave: 'triangle', leadWave: 'triangle', cut: 1700, choir: true,
+      bars: [[50,53,57,60],[55,59,62,65],[48,52,55,59],[57,61,64,67]],
+      keys: [_,_,K,_, _,K,_,_, _,_,K,_, _,K,_,_], keyLen: 1.6, keyPeak: 0.065,
+      bassP: [0,_,_,_, 5,_,_,_, 0,_,_,_, 7,_,_,_], bassPeak: 0.3,
+      leadDur: 1, leadPeak: 0.07,
+      mel: [_,_,65,_, 64,_,62,_, _,_,60,_, _,_,_,_,  _,_,59,_, 60,_,62,_, 64,_,_,_, _,_,_,_] },
+    // Quijano — Don Quixote: a proud, slightly absurd Spanish flamenco fanfare
+    theme_quijano: { bpm: 112, drums: 'heavy', swing: 0.08, padWave: 'sawtooth', leadWave: 'square', cut: 1900,
+      bars: [[52,55,59,64],[53,57,60,65],[52,55,59,64],[48,52,55,60]],
+      keys: [K,_,K,K, _,K,K,_, K,_,K,K, _,K,K,_], keyLen: 0.5, keyPeak: 0.07,
+      bassP: [0,_,_,_, 5,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.34, bassLen: 1,
+      leadADSR: { a: 0.01, d: 0.1, s: 0.4, r: 0.3 }, leadDur: 0.8, leadPeak: 0.09,
+      mel: [64,_,_,_, 64,_,63,_, 60,_,_,_, _,_,_,_,  59,_,60,_, 63,_,64,_, 64,_,_,_, _,_,_,_] },
+
     // ---- ASSAULT: the prologue raid theme — fast, urgent, driving (FF7 "Bombing Mission" energy) ----
     assault: { bpm: 148, drums: 'heavy', swing: 0.04, padWave: 'sawtooth', leadWave: 'square', cut: 2300, choir: true,
       bars: [[45,48,52,55],[45,48,52,55],[43,46,50,53],[44,47,51,54], [45,48,52,55],[50,53,57,60],[48,51,55,58],[43,46,50,53]],

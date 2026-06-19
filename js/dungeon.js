@@ -323,7 +323,7 @@ window.Dungeon = (function () {
     if (ally && ally.key && !bossDefeated) {
       Progress.recruit(Game.state, ally.key, 4); Progress.save(Game.state);
       const flag = ally.metFlag || (ally.key + 'Met');
-      if (ally.join && !Game.state.flags[flag]) { Game.state.flags[flag] = true; Progress.save(Game.state); setTimeout(() => Game.startCutscene(ally.join), 400); }
+      if (ally.join && !Game.state.flags[flag]) { Game.state.flags[flag] = true; Progress.save(Game.state); const theme = (Game.CHAR_THEME || {})[ally.key]; setTimeout(() => Game.startCutscene(ally.join, undefined, theme ? { music: theme } : undefined), 400); }
       else setTimeout(showRiddle, 400);
     } else setTimeout(showRiddle, 400);
     return scene;

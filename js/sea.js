@@ -190,18 +190,17 @@ window.Sea = (function () {
   function startRuffyEncounter() {
     locked = true; paused = true;
     Game.startCutscene('ruffyChase', () => {
-      Music.play('battle');
-      Game.startBattle(['ruffy_duel'], { boss: true, music: null }, (res) => {
+      Game.startBattle(['ruffy_duel'], { boss: true, music: 'theme_ruffy' }, (res) => {
         const join = () => {
           Progress.recruit(Game.state, 'ruffy', 4); Game.state.flags.ruffyMet = true; Progress.save(Game.state);
           if (ruffyShip && ruffyShip.node) { ruffyShip.node.dispose(); ruffyShip = null; }
           paused = false; locked = false; Game.resumeSea();
           Game.toast('Ruffy joins the crew!');
         };
-        if (res.won) Game.startCutscene('ruffyJoin', join);
+        if (res.won) Game.startCutscene('ruffyJoin', join, { music: 'theme_ruffy' });
         else { paused = false; locked = false; Game.resumeSea(); } // a loss just sends you back — he'll try again
       });
-    });
+    }, { music: 'theme_ruffy' });
   }
 
   function drawMinimap() {
