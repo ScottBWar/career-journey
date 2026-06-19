@@ -13,6 +13,7 @@ window.Battle = (function () {
 
   let scene, camera, engine, canvas, flare, oceanBase, ocean;
   let party = [], enemies = [], actors = [], over, onEndCb, activeMember, t, shakeAmt = 0, cineActive = false, hitStopT = 0, zoomPunch = 0;
+  let actT = 0, actAlpha = 0, actRad = 0; // dynamic "action camera" — swings angle + punches in during a move, then eases back
 
   const FX = { fire:['#ffb347','#ff5e3a'], water:['#5eead4','#3b82f6'], beam:['#a5b4fc','#e0e7ff'], heal:['#6ee7b7','#bbf7d0'], mana:['#60a5fa','#bfdbfe'], hit:['#ff6b6b','#ffd1d1'] };
   const PSPD = { pirate: 11, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12, simon: 11, aladdin: 14, violca: 13, mac: 9, sane: 14, marvyn: 8, quijano: 9 };
@@ -112,7 +113,13 @@ window.Battle = (function () {
       // HIT-STOP: at the instant of impact, freeze world-time for a few frames so the
       // blow reads as a real connecting hit (shake + zoom still play through the freeze).
       const dt = hitStopT > 0 ? 0 : rdt; if (hitStopT > 0) hitStopT -= rdt; t += dt;
-      if (!cineActive) { camera.alpha = -Math.PI/2 - 0.62 + Math.sin(t*0.2)*0.05; camera.radius = 21 + Math.sin(t*0.16)*0.6 - zoomPunch; } // slow dynamic drift + impact punch-in
+      if (!cineActive) {
+        let aBase = -Math.PI/2 - 0.62 + Math.sin(t*0.2)*0.05;     // lazy idle drift
+        let rBase = 21 + Math.sin(t*0.16)*0.6 - zoomPunch;
+        if (actT > 0) { actT -= rdt; const k = Math.max(0, Math.min(1, actT / 0.55)); aBase += actAlpha * k; rBase += actRad * k; } // action swing eases out
+        camera.alpha += (aBase - camera.alpha) * 0.16;            // smooth follow instead of snapping
+        camera.radius += (rBase - camera.radius) * 0.16;
+      }
       if (zoomPunch > 0.001) zoomPunch *= 0.82; else zoomPunch = 0;
       if (shakeAmt > 0.001) { camera.targetScreenOffset.x = (Math.random()-0.5)*shakeAmt; camera.targetScreenOffset.y = (Math.random()-0.5)*shakeAmt; shakeAmt *= 0.84; } else if (camera.targetScreenOffset.x) { camera.targetScreenOffset.set(0, 0); shakeAmt = 0; }
       for (const a of actors) {
@@ -162,6 +169,8 @@ window.Battle = (function () {
   }
   function shake(a) { shakeAmt = Math.max(shakeAmt, a); }
   function hitStop(sec, zoom) { hitStopT = Math.max(hitStopT, sec); if (zoom) zoomPunch = Math.max(zoomPunch, zoom); }
+  // dynamic battle framing: swing the angle + punch in for a move, easing back (shot/reverse-shot feel)
+  function actionCam(side, sec) { actAlpha = side * 0.42; actRad = -3.5; actT = sec || 0.6; }
   function scalePunch(node, s) { const o = node.scaling.clone(); node.scaling.set(o.x * s, o.y * (2 - s), o.z * s); setTimeout(() => node.scaling.copyFrom(o), 100); }
   const worldOf = (node, dy = 2.4) => node.getAbsolutePosition().add(new V3(0, dy, 0));
   function floatDamage(node, text, color, dy = 2.4, cls = '') {
@@ -485,6 +494,7 @@ window.Battle = (function () {
 
   async function doFight(m, target) {
     msg(`${m.name} strikes ${target.name}!`);
+    actionCam(1, 0.7);
     const elem = m.fight.el || 'physical';
     await dashAttack(m, target, async () => {
       await meleeAnim(m, target);
@@ -499,6 +509,7 @@ window.Battle = (function () {
   }
   async function doDefend(m) { msg(`${m.name} braces for impact.`); m._defend = true; await wait(300); }
   async function doSpell(m, s, targets) {
+    actionCam(1, 0.9);
     const elem = Data.elementOf(s), col = ELEMCOL[elem] || '#a5b4fc';
     if (window.SFX) SFX.play(s.fx === 'fire' ? 'fire' : s.fx === 'water' ? 'water' : s.heal ? 'heal' : 'magic');
     m.mp = Math.max(0, m.mp - s.mp); renderParty(false);
@@ -558,7 +569,7 @@ window.Battle = (function () {
   async function enemyAct(e) {
     if (!e.alive || over) return; const targetsAlive = aliveParty(); if (!targetsAlive.length) return;
     if (e.rotate) { rotateWeakness(e); await wait(360); renderEnemies(false); }
-    const move = e.moves[rnd(0, e.moves.length - 1)]; const home = e.home.clone(); e._busy = true;
+    const move = e.moves[rnd(0, e.moves.length - 1)]; const home = e.home.clone(); e._busy = true; actionCam(-1, 0.6);
     if (move.heal) { const h = Math.round(e.maxhp * 0.12); e.hp = Math.min(e.maxhp, e.hp + h); msg(`${e.name} ${move.name}!`); burst(worldOf(e.node, 0.6), '#6ee7b7', '#bbf7d0', 50, 5, -2); floatDamage(e.node, '+' + h, '#6ee7b7', 2.6); scalePunch(e.node, 1.08); renderEnemies(false); e._busy = false; await wait(500); return; }
     const boost = hasSt(e, 'atkup') ? Data.STATUS.atkup.atk : 1;
     const mkind = (move.el && move.el !== 'physical') ? 'mag' : 'phys';
