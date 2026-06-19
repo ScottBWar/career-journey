@@ -55,12 +55,13 @@ const STATES = [
   { name: '26_gallery_bosses',  drive: `__gallery({enemy:['kraken','selachoth','medusa','minotaur']})`,         wait: 600 },
   { name: '27_gallery_bosses2', drive: `__gallery({enemy:['thething','forestgod','vogon','windmill']})`,        wait: 600 },
   { name: '28_gallery_dunmobs', drive: `__gallery({enemy:['thingspawn','kodama','boarspirit','vogonclerk','sentry','mutton','windvane']})`, wait: 600 },
-  { name: '29_battle_ruffy',    drive: `Game.toSea(); Game.startBattle(['ruffy_duel'], { boss: true })`, wait: 1900 },
-  { name: '30_battle_omega',    drive: `Game.startBattle(['selachoth_omega'], { boss: true })`, wait: 2000 },
-  { name: '31_gallery_omega',   drive: `__gallery({enemy:['selachoth','selachoth_omega']})`, wait: 600 },
-  { name: '32_battle_sentinel', drive: `Game.startBattle(['sentinel'], { boss: true, music: 'assault' })`, wait: 2000 },
-  { name: '33_cutscene_reactor', drive: `Cutscene.play(Data.STORY.reactorRaid, null, { music: 'assault' })`, wait: 1600 },
-  { name: '34_gallery_mermaids', drive: `__gallery({ mermaid:['ember','nerida','volta','gaia','nyx','lumina'] })`, wait: 600 },
+  { name: '29_gallery_omega',   drive: `__gallery({enemy:['selachoth','selachoth_omega']})`, wait: 600 },
+  { name: '30_gallery_mermaids', drive: `__gallery({ mermaid:['ember','nerida','volta','gaia','nyx','lumina'] })`, wait: 600 },
+  // battles LAST — their loops keep re-rendering the HUD, which bleeds over anything after them
+  { name: '31_battle_ruffy',    drive: `Game.toSea(); Game.startBattle(['ruffy_duel'], { boss: true })`, wait: 1900 },
+  { name: '32_battle_omega',    drive: `Game.startBattle(['selachoth_omega'], { boss: true })`, wait: 2000 },
+  { name: '33_battle_sentinel', drive: `Game.startBattle(['sentinel'], { boss: true, music: 'assault' })`, wait: 2000 },
+  { name: '34_cutscene_reactor', drive: `Cutscene.play(Data.STORY.reactorRaid, null, { music: 'assault' })`, wait: 1600 },
 ];
 
 function serve() {
@@ -133,7 +134,6 @@ function serve() {
         window.__galleryScene = scene; Game.scene = scene;
         // bare model-viewer: clear any lingering mode (battle HUD etc.) so it can't bleed over the gallery
         try { document.body.className = ''; ['battleUI', 'bMessage', 'bActive', 'bResult', 'worldHUD', 'minimap'].forEach(id => { const el = document.getElementById(id); if (el) { el.classList.remove('show'); el.style.display = 'none'; } }); } catch (e) {}
-        try { if (window.Render) { if (Render.cel) Render.cel(scene); if (Render.outline) Render.outline(scene); } } catch (e) {}
       };
     });
 

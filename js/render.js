@@ -131,8 +131,8 @@ window.Render = (function () {
     if (high()) { try { ssao(scene, camera); } catch (e) { console.warn('ssao', e); } }
     if (high() && opts.sun) { try { shadows(scene, opts.sun); } catch (e) { console.warn('shadow', e); } }
     if (opts.sun) { try { lensFlare(scene, opts.sun); } catch (e) { console.warn('flare', e); } }
-    try { celShade(scene); } catch (e) { console.warn('cel', e); }
-    try { outlineMeshes(scene); } catch (e) { console.warn('outline', e); }
+    // NOTE: cel-shade + ink-outline passes removed — renderOutline back-faces rendered as
+    // transparent holes on some GPUs (fine in headless capture, broken in real browsers).
   }
 
   function setQuality(q) { quality = q; try { localStorage.setItem('bb_quality', q); } catch (e) {} }
