@@ -883,24 +883,24 @@ window.Data = (function () {
 
   // ---------------- SEA (sail between islands) ----------------
   const SEA = {
-    size: 130, spawn: { x: 0, z: -10 },
+    size: 210, spawn: { x: 0, z: -10 },
     islands: [
-      { key: 'tidehaven', x: -34, z: 8 },
-      { key: 'dunes', x: 30, z: -2 },
-      { key: 'spire', x: 4, z: -42 },
-      { key: 'mall', x: -10, z: 34 },
-      { key: 'duskmoor', x: 44, z: 30 },
-      { key: 'mirage', x: -44, z: -22 },
-      { key: 'aerie', x: 22, z: -28 },
-      { key: 'paegina', x: -28, z: 44 },
+      { key: 'tidehaven', x: -50, z: 12 },
+      { key: 'dunes', x: 46, z: -6 },
+      { key: 'spire', x: 6, z: -66 },
+      { key: 'mall', x: -18, z: 52 },
+      { key: 'duskmoor', x: 70, z: 48 },
+      { key: 'mirage', x: -70, z: -36 },
+      { key: 'aerie', x: 36, z: -46 },
+      { key: 'paegina', x: -44, z: 70 },
     ],
     ships: [
-      { id: 's0', type: 'sloop', x: -10, z: 20 },
-      { id: 's1', type: 'frigate', x: 22, z: 24 },
-      { id: 's2', type: 'ghost', x: -16, z: -28 },
+      { id: 's0', type: 'sloop', x: -12, z: 26 },
+      { id: 's1', type: 'frigate', x: 28, z: 30 },
+      { id: 's2', type: 'ghost', x: -20, z: -36 },
     ],
     // a hidden bottle bobs out here; sail into it to chart the secret cove
-    cove: { x: -52, z: -46 },
+    cove: { x: -88, z: -76 },
   };
 
   // ---------------- DUNGEONS (one per island, with a crystal-order puzzle) ----------------
