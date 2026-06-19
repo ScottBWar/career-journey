@@ -211,6 +211,21 @@ window.Data = (function () {
       { name: 'snaps with bone-crushing jaws', min: 38, max: 52 },
       { name: 'exhales a torrent of dragonfire', min: 30, max: 42, all: true } ], drops: [ { mat: 'abyssscale', chance: 1 }, { mat: 'fang', chance: 1 } ] },
     urchin: { name: 'Spine Urchin',      model: 'urchin', hp: 150, xp: 34, gold: 26, baseY: 0,  moves: [ { name: 'fires a spine volley', min: 14, max: 20 }, { name: 'rolls over the party', min: 12, max: 18, all: true } ], drops: [ { mat: 'shellfrag', chance: 0.6 }, { mat: 'sand', chance: 0.4 } ] },
+    // ---- Paegina (Greek myth) bestiary ----
+    harpy:  { name: 'Shrieking Harpy',   model: 'harpy', hp: 96,  xp: 34, gold: 26, baseY: 1.5, moves: [ { name: 'rakes with talons', min: 14, max: 20 }, { name: 'looses a deafening shriek', min: 11, max: 16, all: true } ], drops: [ { mat: 'feather', chance: 0.8 }, { mat: 'fang', chance: 0.3 } ] },
+    satyr:  { name: 'Wine-Mad Satyr',    model: 'satyr', hp: 110, xp: 36, gold: 30, baseY: 0,   moves: [ { name: 'gores with its horns', min: 15, max: 22 }, { name: 'plays a maddening reel', min: 10, max: 15, all: true, status: 'slow', turns: 3 } ], drops: [ { mat: 'fang', chance: 0.5 }, { mat: 'goo', chance: 0.4 } ] },
+    cyclops:{ name: 'Boulder Cyclops',   model: 'cyclops', hp: 220, xp: 50, gold: 44, baseY: 0,  moves: [ { name: 'swings a club', min: 20, max: 28 }, { name: 'hurls a boulder', min: 22, max: 32 }, { name: 'stomps the earth', min: 14, max: 20, all: true } ], drops: [ { mat: 'sand', chance: 0.7 }, { mat: 'brine', chance: 0.4 } ] },
+    minotaur:{ name: 'Labyrinth Minotaur', model: 'minotaur', hp: 300, xp: 90, gold: 80, baseY: 0, boss: true, moves: [ { name: 'gores with great horns', min: 30, max: 42 }, { name: 'cleaves with its labrys', min: 34, max: 48 }, { name: 'bellows and charges', min: 24, max: 32, all: true } ], drops: [ { mat: 'fang', chance: 1 }, { mat: 'abyssscale', chance: 0.4 } ] },
+    medusa: { name: 'Medusa, the Gorgon', model: 'medusa', hp: 520, xp: 420, gold: 600, baseY: 0, boss: true, moves: [
+      { name: 'lashes with serpent hair', min: 26, max: 38 },
+      { name: 'looses a flight of arrows', min: 24, max: 34 },
+      { name: 'fixes you with a PETRIFYING GAZE', min: 16, max: 24, all: true, status: 'slow', turns: 3 },
+      { name: 'hisses a withering curse', min: 18, max: 26, all: true, status: 'weaken', turns: 3 } ], drops: [ { mat: 'fang', chance: 1 }, { mat: 'abyssscale', chance: 0.6 } ] },
+    hydra:  { name: 'The Lernaean Hydra', model: 'hydra', hp: 880, xp: 700, gold: 1100, baseY: 0.3, boss: true, moves: [
+      { name: 'bites with three heads', min: 30, max: 42 },
+      { name: 'spews venom from every maw', min: 22, max: 30, all: true, status: 'poison', turns: 4 },
+      { name: 'regrows a severed head', min: 0, max: 0, heal: true },
+      { name: 'crashes down in a coil', min: 36, max: 50 } ], drops: [ { mat: 'abyssscale', chance: 1 }, { mat: 'ectoplasm', chance: 0.6 } ] },
     bat:    { name: 'Nightwing Bat',     model: 'bat',   hp: 78,  xp: 30, gold: 20, baseY: 1.6, moves: [ { name: 'bites with a screech', min: 12, max: 18 }, { name: 'drains warm blood', min: 14, max: 20 } ], drops: [ { mat: 'ectoplasm', chance: 0.4 }, { mat: 'feather', chance: 0.3 } ] },
     ghoul:  { name: 'Drowned Ghoul',     model: 'ghoul', hp: 132, xp: 38, gold: 28, baseY: 0,   moves: [ { name: 'rakes with rotted claws', min: 15, max: 22 }, { name: 'exhales grave-rot', min: 12, max: 18, all: true } ], drops: [ { mat: 'ectoplasm', chance: 0.7 }, { mat: 'brine', chance: 0.3 } ] },
     wraith: { name: 'Tide Wraith',       model: 'wraith', hp: 110, xp: 40, gold: 30, baseY: 0.6, moves: [ { name: 'phases through a soul', min: 16, max: 23 }, { name: 'wails a dirge', min: 13, max: 19, all: true } ], drops: [ { mat: 'ectoplasm', chance: 0.8 } ] },
@@ -263,6 +278,8 @@ window.Data = (function () {
     boltbomb: { name: 'Storm Jar',    kind: 'damage', min: 60,  max: 85,  target: 'enemy', fx: 'beam',  el: 'thunder', price: 130, desc: '60-85 Thunder damage to one foe.' },
     holybomb: { name: 'Sunshard',     kind: 'damage', min: 70,  max: 100, target: 'enemy', fx: 'heal',  el: 'holy',    price: 200, desc: '70-100 Holy damage to one foe — searing to the undead.' },
     grenade:  { name: 'Sea-Mine',     kind: 'damageall', min: 40, max: 60, target: 'enemyall', fx: 'fire', el: 'fire',  price: 240, desc: '40-60 Fire damage to ALL foes.' },
+    pistachio:{ name: 'Pistachios',   kind: 'heal',    amount: 45,  target: 'ally',     fx: 'heal', price: 18,  desc: 'A handful of Paegina pistachios — restore 45 HP.' },
+    baklava:  { name: 'Honey Baklava', kind: 'healall', amount: 90, target: 'allyall',  fx: 'heal', price: 260, desc: 'Pistachio-honey pastry — restore 90 HP to ALL allies.' },
   };
   const SHOP_STOCK = ['potion', 'hipotion', 'ether', 'phoenix', 'bomb'];
   // some goods are exclusive to certain town markets, unlocked as you sail east
@@ -272,6 +289,7 @@ window.Data = (function () {
     mall:      ['potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'turboether', 'phoenix', 'megaphoenix', 'elixir', 'adrenaline', 'megapotion', 'grenade', 'holybomb', 'boltbomb', 'frostbomb', 'antidote', 'remedy', 'herodrink', 'hourglass'],
     bazaar:    ['potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'phoenix', 'bomb', 'frostbomb', 'boltbomb', 'antidote', 'remedy', 'herodrink', 'hourglass'],
     aerie:     ['potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'phoenix', 'megapotion', 'boltbomb', 'antidote', 'remedy', 'herodrink', 'hourglass'],
+    argo:      ['pistachio', 'baklava', 'potion', 'hipotion', 'xpotion', 'ether', 'hiether', 'phoenix', 'megaphoenix', 'elixir', 'antidote', 'remedy', 'herodrink', 'hourglass', 'holybomb', 'grenade'],
   };
 
   // ---------------- CRAFTING ----------------
@@ -444,6 +462,7 @@ window.Data = (function () {
     venom_ward:    { key: 'venom_ward',    name: 'Venom Ward',     slots: 2, immune: ['poison'], stat: { hp: 20 }, price: 340, desc: 'Immune to Poison · +20 HP · 2 slots' },
     aegis_pearl:   { key: 'aegis_pearl',   name: 'Aegis Pearl',    slots: 2, dr: 0.18, immune: ['weaken'], price: 680, desc: '18% damage reduction · immune Weaken · 2 slots' },
     guardian_pearl:{ key: 'guardian_pearl', name: 'Guardian Pearl', slots: 3, stat: { hp: 60, mp: 15 }, dr: 0.10, price: 900, desc: '+60 HP, +15 MP, 10% reduction · 3 slots · ultimate' },
+    golden_fleece: { key: 'golden_fleece', name: 'Golden Fleece', slots: 3, stat: { hp: 80, mp: 20, atk: 6 }, dr: 0.15, immune: ['poison', 'weaken'], price: 0, desc: '+80 HP, +20 MP, +6 ATK, 15% reduction, immune Poison & Weaken · 3 slots · the Coliseum champion\'s prize' },
   };
   const SHOP_ACCESSORIES = ['coral_bangle', 'seaglass_ring', 'tortoise_charm', 'tiger_fang', 'venom_ward', 'aegis_pearl'];
   // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
@@ -470,6 +489,12 @@ window.Data = (function () {
     selachoth: { weak: ['thunder', 'holy'], absorb: ['water'] },
     leviathan: { weak: ['thunder'], resist: ['water'] },
     angler: { weak: ['fire', 'holy'], resist: ['dark'] },
+    harpy:  { weak: ['thunder'], resist: ['earth'] },
+    satyr:  { weak: ['holy'], resist: ['earth'] },
+    cyclops:{ weak: ['thunder', 'holy'], resist: ['physical'] },
+    minotaur:{ weak: ['thunder'], resist: ['physical', 'earth'] },
+    medusa: { weak: ['fire'], resist: ['earth', 'physical'], absorb: ['dark'] },
+    hydra:  { weak: ['fire'], resist: ['water', 'physical'] },
   };
   const AMBUSH = ['leviathan', 'angler']; // random deep-sea ambush bosses
   function affMult(enemyKey, element) {
@@ -730,6 +755,32 @@ window.Data = (function () {
       ],
       exit: { x: 0, z: -12 },
     },
+    argo: {
+      name: 'Polis of Paegina', ground: '#e8e0cc', accent: '#4a90c0',
+      buildings: [
+        { kind: 'shop', x: -9, z: -3, label: 'Agora' },
+        { kind: 'shop', x: 9, z: -3, label: 'Bronzesmith' },
+        { kind: 'inn',  x: 0, z: 9, label: 'Taverna' },
+        { kind: 'house', x: -9, z: 8, wall: '#efe7d2', roof: '#3a6a8a' },
+        { kind: 'house', x: 9, z: 8, wall: '#e6dcc4', roof: '#b0552f' },
+        { kind: 'house', x: -4, z: 11, wall: '#efe7d2', roof: '#5a7a8a' },
+      ],
+      npcs: [
+        { name: 'Agora Trader Helena', color: '#3a7aa0', hair: '#2a1808', x: -9, z: -0.5, service: 'shop',
+          lines: ['Welcome to the agora of Paegina, xenos!', 'Potions, ethers, and the famous honey-baklava. Browse, browse.'] },
+        { name: 'Bronzesmith Hephas', color: '#9a5a2a', hair: '#cccccc', x: 9, z: -0.5, service: 'shop',
+          lines: ['Bronze blades and shell-charms, forged in volcano-fire.', 'Even a hero needs good kit before the Coliseum sands.'] },
+        { name: 'Taverna-Keeper Dion', color: '#7a3a6a', hair: '#2a1808', x: 0, z: 6.5, service: 'inn',
+          lines: ['Rest at the taverna — wine, olives, and a soft bed.', 'You\'ll need your strength for the Coliseum.'] },
+        { name: 'Cap\'n Iason', color: '#caa030', hair: '#3a2a14', x: -4, z: 4,
+          lines: ['Ho, traveler! I am IASON, captain of the good ship ARGO.', 'My Argonauts and I sailed the whole drowned world chasing the GOLDEN FLEECE.', 'Turns out the Fleece is the grand prize of the COLISEUM now. The gods have a sense of humor.', 'Best every league — Bronze, Silver, Gold, then the CHAMPION\'S GAUNTLET — and the Fleece is yours.'] },
+        { name: 'Argonaut Orpheus', color: '#5a5ac0', hair: '#caa030', x: 4, z: 4,
+          lines: ['♪ Sing, muse, of heroes who fight for pistachios and glory ♪', 'Mind the Gorgon in the Gold League. Don\'t meet her gaze... or your turns get SLOW as stone.'] },
+        { name: 'Pistachio Farmer Nikos', color: '#5a8a3a', hair: '#2a1808', x: -2, z: 11, service: 'shop',
+          lines: ['Eh! You want pistachios? I grow the BEST pistachios on Paegina!', 'Sun, sea-wind, and a little goat manure — that\'s the secret, don\'t tell anyone.', 'A handful heals a hero right up. Take some for the Coliseum, cheap-cheap!'] },
+      ],
+      exit: { x: 0, z: -12 },
+    },
   };
 
   // ---------------- ISLANDS (each is its own walkable overworld) ----------------
@@ -816,6 +867,18 @@ window.Data = (function () {
       ],
       decor: { trees: 4, palms: 0, rocks: 14 },
     },
+    paegina: {
+      name: 'Paegina', size: 54, ground: '#cdbd86', sand: '#ece2bf', water: '#2f9ec8', sky: { top: '#3a7ab0', horizon: '#f3ead0' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      town: { key: 'argo', x: 13, z: 4, color: '#4a90c0' },
+      coliseum: { x: -11, z: 8, color: '#caa030' },
+      grove: { x: 11, z: -3 },
+      encounters: [
+        { x: 4, z: 9, pool: ['harpy', 'satyr'], min: 2, max: 3 },
+        { x: -6, z: 11, pool: ['cyclops', 'harpy'], min: 1, max: 2 },
+      ],
+      decor: { trees: 7, palms: 4, rocks: 10 },
+    },
   };
 
   // ---------------- SEA (sail between islands) ----------------
@@ -829,6 +892,7 @@ window.Data = (function () {
       { key: 'duskmoor', x: 44, z: 30 },
       { key: 'mirage', x: -44, z: -22 },
       { key: 'aerie', x: 22, z: -28 },
+      { key: 'paegina', x: -28, z: 44 },
     ],
     ships: [
       { id: 's0', type: 'sloop', x: -10, z: 20 },
@@ -919,6 +983,25 @@ window.Data = (function () {
       { name: 'The Wandering Tear', color: '#9be7ff', r: 300, size: 6, speed: 0.19, element: null, lore: 'A comet on a thousand-year orbit. It last crossed the sky the night Selachoth fell into the deep. Some fear what its return will wake; some hope it carries the drowned home.' },
     ],
   };
+
+  // ---------------- COLISEUM (Paegina endgame: wave survival + boss rush) ----------------
+  // each league is a sequence of waves; a wave is a list of enemy keys (boss:true
+  // when a single mythic foe). Clear all waves for the reward. HP/MP carry between
+  // waves — no healing — so it's a true gauntlet. Higher leagues unlock in order.
+  const COLISEUM = [
+    { key: 'bronze', name: 'Bronze League', need: null, blurb: 'Three rounds against the isle\'s lesser beasts.',
+      waves: [ ['harpy', 'harpy'], ['satyr', 'cobra'], ['cyclops', 'harpy'] ],
+      reward: { gold: 350, items: { pistachio: 5 } } },
+    { key: 'silver', name: 'Silver League', need: 'bronze', blurb: 'Four harder rounds. The crowd wants blood.',
+      waves: [ ['harpy', 'satyr', 'cobra'], ['cyclops', 'scarab'], ['minotaur'], ['cyclops', 'harpy', 'harpy'] ],
+      reward: { gold: 700, pearls: 30, accessory: 'tiger_fang' } },
+    { key: 'gold', name: 'Gold League', need: 'silver', blurb: 'Five rounds, capped by the Gorgon herself.',
+      waves: [ ['satyr', 'satyr', 'cobra'], ['cyclops', 'cyclops'], ['minotaur', 'harpy'], ['golem', 'scarab', 'wraith'], ['medusa'] ],
+      reward: { gold: 1100, pearls: 50, shell: 'hex_conch' } },
+    { key: 'champion', name: "Champion's Gauntlet", need: 'gold', blurb: 'A boss rush of myth. No mercy. The Fleece awaits the victor.',
+      waves: [ ['minotaur'], ['medusa'], ['hydra'] ],
+      reward: { gold: 2500, pearls: 100, accessory: 'golden_fleece' } },
+  ];
 
   // ---------------- STORY (cutscene beats) ----------------
   // each beat: { name, text }
@@ -1103,6 +1186,6 @@ window.Data = (function () {
   }
 
   return { PARTY, ENEMIES, ITEM_DEFS, SHOP_STOCK, SHOP_STOCK_BY_TOWN, MATERIALS, RECIPES, WEAPONS, SHELLS, SHOP_SHELLS, shellAbility, TOWNS, ISLANDS, SEA, DUNGEONS, STORY, COSMOS,
-           ELEMENT_INFO, elementOf, affMult, AFFINITIES, STATUS, ACCESSORIES, SHOP_ACCESSORIES, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT, MERMAIDS, AMBUSH,
+           ELEMENT_INFO, elementOf, affMult, AFFINITIES, STATUS, ACCESSORIES, SHOP_ACCESSORIES, COLISEUM, LIMITS, weaponIcon, shellIcon, SHIP, SHIP_CUSTOM, SHIP_UPGRADES, ENEMY_SHIPS, SHELL_HUNT, MERMAIDS, AMBUSH,
            xpForLevel, MAX_LEVEL, randomEncounter };
 })();

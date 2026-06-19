@@ -318,6 +318,10 @@ window.Game = (function () {
   function openArcade(game) { pauseExplore(); Arcade.start(game, () => { Music.play(Game.mode === 'town' ? 'town' : 'island'); resumeExplore(); }); }
   Game.openArcade = openArcade;
 
+  // ---------- coliseum (Paegina endgame gauntlet) ----------
+  function openColiseum() { pauseExplore(); Coliseum.open(() => { Game.resumeIsland(); }); }
+  Game.openColiseum = openColiseum;
+
   // ---------- respec (late game: gated behind beating the Kraken) ----------
   function openRespec() {
     if (!Game.state.prog || !Game.state.prog.krakenDown) { Game.toast('Kupo... come back once you\'ve felled the Kraken, hero.'); return; }
@@ -453,13 +457,14 @@ window.Game = (function () {
     el('pQuit').onclick = () => Game.confirm('Save and quit to the title screen?', quitToTitle);
     el('worldPrompt').onclick = () => { if (Game.active) Game.active.interact && Game.active.interact(); };
   }
-  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.datingOpen || Game.shopOpen || Game.confirmOpen || Game.pauseOpen || Game.bestiaryOpen || Game.legendOpen || el('shellHunt').classList.contains('show') || el('observatory').classList.contains('show') || el('arcade').classList.contains('show') || el('end').classList.contains('show'); }
+  function anyModal() { return Game.skillsOpen || Game.gearOpen || Game.partyOpen || Game.shipyardOpen || Game.datingOpen || Game.shopOpen || Game.confirmOpen || Game.pauseOpen || Game.bestiaryOpen || Game.legendOpen || el('shellHunt').classList.contains('show') || el('observatory').classList.contains('show') || el('arcade').classList.contains('show') || el('coliseum').classList.contains('show') || el('end').classList.contains('show'); }
   Game.blocking = function () { return Game.dialogueOpen || anyModal(); };
   function route(code) {
     if (el('introSeq').classList.contains('show')) { if (Game._introFinish) Game._introFinish(); return; }
     if (el('shellHunt').classList.contains('show')) return; // minigame handles its own input
     if (el('observatory').classList.contains('show')) { if (code === 'Escape') el('obsClose') && el('obsClose').click(); return; }
     if (el('arcade').classList.contains('show')) { if (code === 'Escape') { el('arcQuit') && el('arcQuit').click(); el('arcDone') && el('arcDone').click(); } else if (Arcade._key) Arcade._key(code); return; }
+    if (el('coliseum').classList.contains('show')) { if (code === 'Escape') el('colClose') && el('colClose').click(); return; }
     if (Game.datingOpen) return; // dating handles its own buttons
     if (Game.mode === 'battle') { if (code === 'KeyP') { const m = Music.toggle(); el('btnMusic').textContent = m ? '🔇' : '🔊'; } else Battle.onKey(code); return; }
     if (Game.mode === 'shipbattle') { if (window.ShipBattle && ShipBattle.onKey) ShipBattle.onKey(code); return; }

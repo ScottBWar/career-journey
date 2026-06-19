@@ -99,6 +99,20 @@ window.World = (function () {
       gates.push({ kind: 'superboss', key: sb.key, name: 'the Drifter', pos: new V3(sb.x, 0, sb.z), r: 3 });
     }
 
+    // the Coliseum (Paegina endgame gauntlet)
+    if (def.coliseum) {
+      const c = def.coliseum;
+      for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; const col = MB.CreateCylinder('col', { height: 3.2, diameter: 0.5, tessellation: 8 }, scene); col.material = M('colMat', '#e8e0cc'); col.position.set(c.x + Math.cos(a) * 4.5, 1.6, c.z + Math.sin(a) * 4.5); }
+      const p = Models.portal(c.color || '#caa030'); p.node.position.set(c.x, 0, c.z); p.node._baseY = 0; idlers.push(p);
+      const s = Models.sign('Coliseum'); s.node.position.set(c.x, 0, c.z - 2.4);
+      gates.push({ kind: 'coliseum', name: 'the Coliseum', pos: new V3(c.x, 0, c.z), r: 3 });
+    }
+    // pistachio grove (flavour)
+    if (def.grove) {
+      for (let i = 0; i < 7; i++) { const tr = Models.tree(); tr.node.position.set(def.grove.x + (Math.random()*5-2.5), 0, def.grove.z + (Math.random()*5-2.5)); tr.node.scaling.setAll(0.7 + Math.random()*0.3); idlers.push(tr); }
+      const gs = Models.sign('Pistachio Grove'); gs.node.position.set(def.grove.x, 0, def.grove.z - 2.5);
+    }
+
     // roamers
     if (!Game.state.islands[key]) Game.state.islands[key] = { cleared: {} };
     const cleared = Game.state.islands[key].cleared;
@@ -177,6 +191,7 @@ window.World = (function () {
       else if (nearGate.kind === 'boss') label = Game.state.prog.finalWin ? '[F / Tap] The spire is silent' : Game.state.prog.krakenDown ? '[F / Tap] Confront Selachoth' : '[F / Tap] Challenge the Kraken';
       else if (nearGate.kind === 'bonfire') label = '[F / Tap] Rest at the bonfire 🔥';
       else if (nearGate.kind === 'superboss') label = '[F / Tap] Approach the strange figure…';
+      else if (nearGate.kind === 'coliseum') label = '[F / Tap] Enter the Coliseum 🏛️';
       prompt.textContent = label; prompt.classList.add('show');
     } else prompt.classList.remove('show');
 
@@ -239,6 +254,7 @@ window.World = (function () {
     if (g.kind === 'shells') return Game.openShellHunt();
     if (g.kind === 'mermaid') return Game.openDating(g.key);
     if (g.kind === 'bonfire') return Game.startCutscene('coveBonfire', () => { Progress.fullHeal(Game.state); Progress.save(Game.state); Game.toast('Fully rested. The crew is renewed.'); });
+    if (g.kind === 'coliseum') return Game.openColiseum();
     if (g.kind === 'superboss') {
       return Game.confirm('Challenge GILGAMUCK, the Drifter? He is a brutal optional superboss — come prepared.', () => {
         Game.startCutscene('drifterPre', () => fightBoss([g.key], { fullLimit: true }, () => {

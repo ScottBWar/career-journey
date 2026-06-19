@@ -20,6 +20,10 @@ window.Portraits = (function () {
     drifter:   { type: 'drifter',   skin: '#c89a72', hair: '#b8b0a0', eye: '#ff5e5e', bg: '#2c3a52' },
     genie:     { type: 'genie',     skin: '#2f8de0', hair: '#0a1a2a', eye: '#fff6c2', bg: '#0a2a4a' },
     skydragon: { type: 'dragon',    skin: '#5a3a6a', eye: '#ff5e3a', bg: '#160a1e' },
+    medusa:    { type: 'medusa',    skin: '#cdb89a', hair: '#4a9a5a', eye: '#ffd24a', bg: '#1a3a24' },
+    minotaur:  { type: 'minotaur',  skin: '#4a2e1a', eye: '#ff3a1a', bg: '#2a1810' },
+    cyclops:   { type: 'cyclops',   skin: '#b08a5a', eye: '#ffffff', bg: '#3a2a18' },
+    hydra:     { type: 'hydra',     skin: '#2f6b54', eye: '#ffcf3a', bg: '#08201a' },
     kraken:    { type: 'kraken',    skin: '#2f6b54', eye: '#ffe08a', bg: '#0a2018' },
     leviathan: { type: 'kraken',    skin: '#2a4a5a', eye: '#7fffd0', bg: '#08161e' },
     angler:    { type: 'kraken',    skin: '#1a2230', eye: '#aef0ff', bg: '#050d16' },
@@ -46,7 +50,7 @@ window.Portraits = (function () {
 
     const skin = p.skin, sk2 = skin ? shade(skin, 0.82) : null;
     // head base (cols 4..11, rows 4..13) with trimmed corners
-    if (p.type !== 'kraken' && p.type !== 'dragon') {
+    if (p.type !== 'kraken' && p.type !== 'dragon' && p.type !== 'hydra' && p.type !== 'minotaur') {
       px(4, 4, 8, 10, skin); px(4, 4, 1, 1, p.bg); px(11, 4, 1, 1, p.bg); px(4, 13, 1, 1, p.bg); px(11, 13, 1, 1, p.bg);
       px(4, 8, 1, 4, sk2); px(11, 8, 1, 4, sk2); // cheek shade
     }
@@ -153,6 +157,34 @@ window.Portraits = (function () {
         px(5, 7, 2, 2, eye); px(9, 7, 2, 2, eye); px(5, 7, 1, 1, '#fff'); px(9, 7, 1, 1, '#fff'); // slit glowing eyes
         px(5, 6, 2, 1, shade(p.skin, 0.6)); px(9, 6, 2, 1, shade(p.skin, 0.6)); // brow ridges
         px(5, 12, 1, 1, '#fff'); px(7, 13, 1, 1, '#fff'); px(9, 13, 1, 1, '#fff'); px(10, 12, 1, 1, '#fff'); break; // fangs
+      case 'medusa':
+        // human face haloed by writhing green serpents, gold slit eyes
+        for (let i = 0; i < 7; i++) { const hx = 2 + i * 1.7; px(hx | 0, 1 + (i % 2), 1, 2, p.hair); px((hx | 0) - (i % 2), 0, 1, 1, shade(p.hair, 1.3)); }
+        px(3, 2, 10, 2, p.hair);
+        px(6, 8, 1, 2, eye); px(9, 8, 1, 2, eye); px(5, 8, 1, 1, shade(eye, 0.6)); px(10, 8, 1, 1, shade(eye, 0.6));
+        px(6, 11, 4, 1, '#7a4a52'); px(7, 12, 2, 1, '#9a4a5a'); break;
+      case 'minotaur':
+        // bull head: fur, huge horns, snout, burning eyes
+        px(4, 4, 8, 8, p.skin); px(3, 5, 1, 5, p.skin); px(12, 5, 1, 5, p.skin);
+        px(1, 3, 3, 2, '#e8e0d0'); px(12, 3, 3, 2, '#e8e0d0'); px(0, 2, 2, 2, '#e8e0d0'); px(14, 2, 2, 2, '#e8e0d0'); // horns
+        px(5, 11, 6, 3, shade(p.skin, 1.2)); px(6, 13, 4, 1, '#1a1208'); // snout
+        px(6, 12, 1, 1, '#fff'); px(9, 12, 1, 1, '#fff'); // nostrils
+        px(5, 7, 2, 2, eye); px(9, 7, 2, 2, eye); px(5, 7, 1, 1, '#fff'); px(9, 7, 1, 1, '#fff'); break;
+      case 'cyclops':
+        // one huge central eye
+        px(4, 5, 8, 8, p.skin); px(4, 5, 1, 1, p.bg); px(11, 5, 1, 1, p.bg);
+        px(6, 7, 4, 4, '#ffffff'); px(7, 8, 2, 2, '#3a1a0a'); px(7, 8, 1, 1, '#000'); // big eye + pupil
+        px(5, 6, 6, 1, shade(p.skin, 0.6)); // brow
+        px(6, 12, 4, 1, '#6a4a2a'); break;
+      case 'hydra':
+        // three serpent heads on long necks
+        [3, 7, 11].forEach((hx, i) => {
+          px(hx, 13 - i % 2, 2, 3, p.skin); // neck
+          px(hx - 1, 9 - i % 2, 4, 3, p.skin); // head
+          px(hx - 1, 12 - i % 2, 4, 1, '#5a0a14'); // maw
+          px(hx, 10 - i % 2, 1, 1, eye); px(hx + 2, 10 - i % 2, 1, 1, eye);
+        });
+        px(2, 2, 12, 1, shade(p.skin, 1.2)); break;
       case 'harpooner':
         px(2, 3, 2, 11, p.hair); px(12, 3, 2, 11, p.hair); px(4, 2, 8, 2, p.hair); // long weathered hair
         px(4, 11, 8, 3, p.hair); px(4, 10, 8, 1, shade(p.hair, 1.1)); // big beard

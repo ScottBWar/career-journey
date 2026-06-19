@@ -16,7 +16,7 @@ window.Battle = (function () {
 
   const FX = { fire:['#ffb347','#ff5e3a'], water:['#5eead4','#3b82f6'], beam:['#a5b4fc','#e0e7ff'], heal:['#6ee7b7','#bbf7d0'], mana:['#60a5fa','#bfdbfe'], hit:['#ff6b6b','#ffd1d1'] };
   const PSPD = { pirate: 11, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12, simon: 11, aladdin: 14, violca: 13 };
-  const ESPD = { shark: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8, eel: 13, urchin: 6, bat: 15, ghoul: 7, wraith: 11, vampire: 12, drifter: 14, cobra: 12, scarab: 7, genie: 10, wyvern: 13, skydragon: 11 };
+  const ESPD = { shark: 11, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8, eel: 13, urchin: 6, bat: 15, ghoul: 7, wraith: 11, vampire: 12, drifter: 14, cobra: 12, scarab: 7, genie: 10, wyvern: 13, skydragon: 11, harpy: 15, satyr: 11, cyclops: 5, minotaur: 9, medusa: 11, hydra: 9 };
   const ELEMCOL = { fire: '#ff7b3a', water: '#5eead4', thunder: '#fde047', earth: '#c2a062', dark: '#b06aff', holy: '#fff0a0', physical: '#dfe7ef' };
   const fxKey = el => ({ fire: 'fire', water: 'water' })[el] || 'beam';
 
@@ -497,6 +497,7 @@ window.Battle = (function () {
     if (!e.alive || over) return; const targetsAlive = aliveParty(); if (!targetsAlive.length) return;
     if (e.rotate) { rotateWeakness(e); await wait(360); renderEnemies(false); }
     const move = e.moves[rnd(0, e.moves.length - 1)]; const home = e.home.clone(); e._busy = true;
+    if (move.heal) { const h = Math.round(e.maxhp * 0.12); e.hp = Math.min(e.maxhp, e.hp + h); msg(`${e.name} ${move.name}!`); burst(worldOf(e.node, 0.6), '#6ee7b7', '#bbf7d0', 50, 5, -2); floatDamage(e.node, '+' + h, '#6ee7b7', 2.6); scalePunch(e.node, 1.08); renderEnemies(false); e._busy = false; await wait(500); return; }
     const boost = hasSt(e, 'atkup') ? Data.STATUS.atkup.atk : 1;
     if (move.all) { msg(`${e.name} ${move.name}!`); await moveTo(e.node, home.add(new V3(-1.2,0.4,0)), 220); for (const p of targetsAlive) { let dmg = Math.round(rnd(move.min, move.max) * boost); if (p._defend) dmg = Math.round(dmg*0.5); applyToMember(p, dmg); if (move.status) inflict(p, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); } await wait(200); await moveTo(e.node, home, 320); }
     else { const target = targetsAlive[rnd(0, targetsAlive.length - 1)]; msg(`${e.name} ${move.name} at ${target.name}!`); const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY; await moveTo(e.node, dest, 240); let dmg = Math.round(rnd(move.min, move.max) * boost); if (target._defend) dmg = Math.round(dmg*0.5); applyToMember(target, dmg); if (move.status) inflict(target, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); await wait(160); await moveTo(e.node, home, 340); }

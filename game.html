@@ -190,6 +190,21 @@
     .arc-buoys { display: flex; gap: 1rem; justify-content: center; margin: 1.4rem 0; }
     .arc-buoy { width: 84px; height: 84px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.2); background: var(--bc); filter: brightness(0.42); cursor: pointer; transition: filter 0.1s, transform 0.1s; }
     .arc-buoy.lit { filter: brightness(1.4); transform: scale(1.08); box-shadow: 0 0 24px var(--bc); }
+    /* coliseum */
+    .col-panel { max-width: 640px; }
+    .col-mid { text-align: center; max-width: 520px; }
+    .col-leagues { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.8rem; }
+    .col-league { text-align: left; font: inherit; color: #fff; background: rgba(18,20,40,0.7); border: 1px solid rgba(255,255,255,0.16); border-radius: 12px; padding: 0.7rem 0.9rem; cursor: pointer; transition: border-color 0.15s, transform 0.1s, box-shadow 0.2s; }
+    .col-league:not(.locked):hover { border-color: #caa030; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(202,160,48,0.35); }
+    .col-league.locked { opacity: 0.5; cursor: not-allowed; }
+    .col-lg-top { display: flex; justify-content: space-between; align-items: baseline; }
+    .col-lg-top b { color: #ffe9a8; font-size: 1.02rem; }
+    .col-clear { color: #6ee7b7; font-size: 0.74rem; }
+    .col-lg-sub { font-size: 0.82rem; color: rgba(255,255,255,0.72); margin-top: 0.2rem; }
+    .col-lg-waves { font-size: 0.76rem; color: #a7f3d0; margin-top: 0.3rem; }
+    .col-lg-lock { font-size: 0.74rem; color: #c06a7a; margin-top: 0.3rem; }
+    .col-acts { display: flex; gap: 0.6rem; justify-content: center; margin-top: 1rem; }
+    .col-result { font-size: 1rem; line-height: 1.5; margin: 1rem 0; }
 
     /* gear / seashells */
     #gear .sk-wrap { width: min(760px, 96vw); max-height: 90vh; overflow: auto; }
@@ -577,6 +592,9 @@
   <!-- ARCADE -->
   <div class="overlay" id="arcade"></div>
 
+  <!-- COLISEUM -->
+  <div class="overlay" id="coliseum"></div>
+
   <!-- TOAST + ENDING -->
   <div id="toast"></div>
   <div class="overlay" id="end"><div class="box"><h1 id="endTitle"></h1><p id="endText"></p><div class="actions"><button class="pill" id="endContinue">Keep Playing</button><a class="pill ghost" href="coming-soon.html">Back to Site</a></div></div></div>
@@ -597,6 +615,7 @@
   <script src="js/minigame.js"></script>
   <script src="js/observatory.js"></script>
   <script src="js/arcade.js"></script>
+  <script src="js/coliseum.js"></script>
   <script src="js/dating.js"></script>
   <script src="js/main.js"></script>
 </body>
