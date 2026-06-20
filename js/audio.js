@@ -29,9 +29,9 @@
     // music bus → saturation → wobbling tape lowpass → master (warm, dusty, not clean-MIDI)
     musicBus = ctx.createGain(); musicBus.gain.value = 0.9;
     const sat = ctx.createWaveShaper(); sat.curve = makeSatCurve(2.4); sat.oversample = '2x';
-    tapeFilter = ctx.createBiquadFilter(); tapeFilter.type = 'lowpass'; tapeFilter.frequency.value = 3300; tapeFilter.Q.value = 0.5;
+    tapeFilter = ctx.createBiquadFilter(); tapeFilter.type = 'lowpass'; tapeFilter.frequency.value = 5200; tapeFilter.Q.value = 0.5;
     musicBus.connect(sat); sat.connect(tapeFilter); tapeFilter.connect(master);
-    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.16; const lfoG = ctx.createGain(); lfoG.gain.value = 650; lfo.connect(lfoG); lfoG.connect(tapeFilter.frequency); lfo.start(); // slow tape wobble
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.13; const lfoG = ctx.createGain(); lfoG.gain.value = 360; lfo.connect(lfoG); lfoG.connect(tapeFilter.frequency); lfo.start(); // gentle tape shimmer (not seasick)
     // tonal sub-bus (pads/keys/bass/lead) — ducked by the kick for that sidechain "pump"
     padBus = ctx.createGain(); padBus.gain.value = 1.0; padBus.connect(musicBus);
     // tape echo send (mainly the lead)
@@ -145,19 +145,24 @@
   // the off-beats back for that head-nod feel.
   const _ = 0, K = 1;
   const TRACKS = {
-    // mellow head-nod exploration
-    island: { bpm: 84, drums: 'triphop', swing: 0.18, padWave: 'triangle', leadWave: 'sine', cut: 1700,
-      bars: [[57,60,64,67],[53,57,60,64],[50,53,57,60],[52,55,59,62]],
-      keys: [_,_,K,_, _,K,_,_, _,_,K,_, _,K,_,K], keyLen: 2.4, keyPeak: 0.07,
-      bassP: [0,_,_,_, _,_,_,_, 0,_,_,7, _,_,_,_], bassPeak: 0.3,
-      mel: [_,_,_,_, 64,_,_,_, 67,_,_,_, _,_,62,_,  _,_,_,_, 60,_,_,_, 59,_,_,_, _,_,_,_], leadPeak: 0.08 },
+    // sunny head-nod exploration — warm C-major field theme (I–vi–IV–V), hopeful & adventurous
+    island: { bpm: 88, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 2500, choir: true,
+      bars: [[60,64,67,71],[57,60,64,67],[53,57,60,64],[55,59,62,65]],
+      keys: [_,_,K,_, K,_,_,K, _,_,K,_, K,_,K,_], keyLen: 1.8, keyPeak: 0.08,
+      bassP: [0,_,_,_, _,_,7,_, 0,_,_,_, 7,_,5,_], bassPeak: 0.3, bassLen: 2.6,
+      leadADSR: { a: 0.02, d: 0.18, s: 0.5, r: 0.5 }, leadDur: 1.4, leadPeak: 0.09,
+      mel: [67,_,72,_, 71,_,69,_, 72,_,_,_, 74,_,72,_,  69,_,71,_, 74,_,72,_, 71,_,69,_, 67,_,_,_,
+            72,_,76,_, 74,_,72,_, 71,_,_,_, 69,_,71,_,  72,_,74,_, 76,_,72,_, 74,_,71,_, 72,_,_,_],
+      harm: [_,_,_,_, 64,_,_,_, _,_,_,_, 60,_,_,_, _,_,_,_, 60,_,_,_, _,_,_,_, 62,_,_,_], harmPeak: 0.05, harmWave: 'triangle' },
 
-    // dreamy open water
-    sea: { bpm: 76, drums: 'sparse', swing: 0.2, padWave: 'sine', leadWave: 'sine', cut: 1400,
-      bars: [[57,60,64,67],[52,55,59,62],[50,53,57,60],[55,59,62,65]],
-      keys: [_,_,_,_, _,K,_,_, _,_,_,_, _,K,_,_], keyLen: 3.4, keyPeak: 0.06,
-      bassP: [0,_,_,_, _,_,_,_, _,_,_,_, 0,_,_,_], bassPeak: 0.28,
-      mel: [67,_,_,_, _,_,_,_, 64,_,_,_, _,_,_,_,  62,_,_,_, 64,_,_,_, 60,_,_,_, _,_,_,_], leadPeak: 0.07 },
+    // open, hopeful sailing — bright & airy, not muffled (G–Am–F–C lift)
+    sea: { bpm: 80, drums: 'sparse', swing: 0.18, padWave: 'sine', leadWave: 'sine', cut: 2100, choir: true,
+      bars: [[55,59,62,67],[57,60,64,69],[53,57,60,65],[60,64,67,72]],
+      keys: [_,_,K,_, _,K,_,_, _,_,K,_, _,K,_,_], keyLen: 3.0, keyPeak: 0.062,
+      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.27, bassLen: 4,
+      leadADSR: { a: 0.04, d: 0.25, s: 0.6, r: 0.7 }, leadDur: 2.2, leadPeak: 0.078,
+      mel: [67,_,_,_, 69,_,72,_, 74,_,_,_, _,_,71,_,  72,_,_,_, 76,_,74,_, 72,_,69,_, 67,_,_,_,
+            69,_,_,_, 72,_,74,_, 76,_,_,_, _,_,74,_,  72,_,_,_, 71,_,69,_, 67,_,71,_, 72,_,_,_], harm: [_,_,_,_, 62,_,_,_, _,_,_,_, 64,_,_,_], harmPeak: 0.042 },
 
     // warmer jazzy groove
     town: { bpm: 90, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 1900,

@@ -26,11 +26,11 @@
     .pill:hover:not(:disabled) { transform: translateY(-2px); }
     .pill:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .panel { background: linear-gradient(180deg, rgba(16,32,82,0.94), rgba(8,16,48,0.96)); border: 1px solid rgba(150,185,255,0.55); border-radius: 12px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 1px rgba(20,40,90,0.8), 0 14px 44px rgba(0,0,0,0.55); }
-    /* FF-style windows: crisp light-blue frame + inner highlight */
+    .panel { background: linear-gradient(180deg, rgba(22,42,98,0.95), rgba(7,14,42,0.97)); border: 1px solid rgba(170,200,255,0.66); border-radius: 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), inset 0 0 0 1px rgba(120,160,240,0.26), 0 0 0 1px rgba(10,22,55,0.9), 0 16px 48px rgba(0,0,0,0.6); }
+    /* FF9-style windows: crisp light-blue frame + double bevel + top sheen */
     .menu, .eplate, .pmember, .hud-m, #hudGold, .enemy-plate, #bActive, #shipMsg, #turnbar {
-      border-color: rgba(150,185,255,0.5) !important;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07), 0 8px 26px rgba(0,0,0,0.5) !important;
+      border-color: rgba(170,200,255,0.6) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), inset 0 0 0 1px rgba(120,160,240,0.18), 0 8px 26px rgba(0,0,0,0.5) !important;
     }
     .menu .title, .sk-head h2, #shop h2, .sk-name, .date-name { color: #ffe6a6 !important; }
     .menu .cmd .cmd-label { font-size: 0.92rem; font-weight: 700; letter-spacing: 0.02em; }
@@ -113,10 +113,13 @@
     .twobar { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; align-items: center; }
     .menu { pointer-events: auto; width: min(280px, 44vw); background: linear-gradient(180deg, rgba(16,32,82,0.92), rgba(8,16,48,0.94)); border: 1px solid rgba(255,255,255,0.26); border-radius: 12px; padding: 0.45rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .menu .title { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.5); padding: 0.25rem 0.6rem 0.4rem; }
-    .menu .cmd { display: flex; flex-direction: column; align-items: stretch; gap: 0.12rem; width: 100%; text-align: left; font: inherit; font-weight: 500; color: #fff; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.7rem; cursor: pointer; transition: background 0.12s, transform 0.06s, border-color 0.12s; }
+    .menu .cmd { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 0.12rem; width: 100%; text-align: left; font: inherit; font-weight: 500; color: #fff; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 0.45rem 0.7rem 0.45rem 1.15rem; cursor: pointer; transition: background 0.12s, transform 0.06s, border-color 0.12s; }
+    /* FF9 cursor: a gold ▶ that slides in on the focused command */
+    .menu .cmd::before { content: '▶'; position: absolute; left: 0.4rem; top: 0.55rem; font-size: 0.62rem; color: #ffe6a6; opacity: 0; transform: translateX(-5px); transition: opacity 0.12s, transform 0.12s; text-shadow: 0 0 7px rgba(255,210,120,0.9); pointer-events: none; }
+    .menu .cmd:hover:not(:disabled)::before, .menu .cmd.kbfocus::before { opacity: 1; transform: translateX(0); }
     .menu .cmd .cmd-row { display: flex; justify-content: space-between; align-items: center; }
     .menu .cmd .cmd-desc { font-size: 0.68rem; color: rgba(255,255,255,0.55); font-weight: 400; }
-    .menu .cmd:hover:not(:disabled), .menu .cmd.kbfocus { background: rgba(129,140,248,0.3); border-color: rgba(165,180,252,0.6); }
+    .menu .cmd:hover:not(:disabled), .menu .cmd.kbfocus { background: linear-gradient(90deg, rgba(129,140,248,0.42), rgba(99,110,235,0.10)); border-color: rgba(180,200,255,0.7); box-shadow: inset 2px 0 0 #ffe6a6; }
     .menu .cmd:active:not(:disabled) { transform: scale(0.98); }
     .menu .cmd:disabled { opacity: 0.32; cursor: not-allowed; }
     .eplate.kbfocus, .pmember.kbfocus { outline: 2px solid #fcd34d; outline-offset: 1px; box-shadow: 0 0 18px rgba(252,211,77,0.6); }
