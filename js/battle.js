@@ -234,7 +234,10 @@ window.Battle = (function () {
   function clearMenu(title) { const m = menuEl(); m.innerHTML = ''; if (title) { const h = document.createElement('div'); h.className = 'title'; h.textContent = title; m.appendChild(h); } }
   function cmd(label, sub, onClick, disabled, subClass = '', desc = '') {
     const b = document.createElement('button'); b.className = 'cmd';
-    b.innerHTML = `<span class="cmd-row"><span class="cmd-label">${label}</span>` + (sub ? `<span class="cost ${subClass}">${sub}</span>` : '') + `</span>` + (desc ? `<span class="cmd-desc">${desc}</span>` : '');
+    // split a leading emoji/symbol icon ("⚔️  Fight") into its own badge slot
+    let ico = '', lab = label; const sp = label.indexOf('  ');
+    if (sp > 0 && sp <= 5) { ico = label.slice(0, sp).trim(); lab = label.slice(sp).trim(); }
+    b.innerHTML = `<span class="cmd-row"><span class="cmd-l">` + (ico ? `<span class="cmd-ico">${ico}</span>` : '') + `<span class="cmd-label">${lab}</span></span>` + (sub ? `<span class="cost ${subClass}">${sub}</span>` : '') + `</span>` + (desc ? `<span class="cmd-desc">${desc}</span>` : '');
     b.disabled = !!disabled; b.onclick = (e) => { if (window.SFX) SFX.play('select'); onClick(e); };
     menuEl().appendChild(b); return b;
   }

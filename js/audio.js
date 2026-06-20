@@ -22,7 +22,7 @@
     // reverb (convolution with a procedurally-generated impulse)
     conv = ctx.createConvolver(); conv.buffer = makeImpulse(3.2, 2.5);
     dry = ctx.createGain(); dry.gain.value = 0.8;
-    wet = ctx.createGain(); wet.gain.value = 0.36;
+    wet = ctx.createGain(); wet.gain.value = 0.42;
     master.connect(comp);
     comp.connect(dry).connect(ctx.destination);
     comp.connect(conv).connect(wet).connect(ctx.destination);
@@ -106,6 +106,100 @@
     o1.connect(f); o2.connect(o2g).connect(f); f.connect(g).connect(dest);
     o1.start(time); o2.start(time); o1.stop(time + dur + 0.12); o2.stop(time + dur + 0.12);
   }
+  // ---------------- ORCHESTRAL VOICES ----------------
+  // lush string section: 3 detuned saws, slow bow attack, gentle vibrato, long release
+  function strings(freq, time, dur, o = {}) {
+    const { peak = 0.05, cutoff = 2600, dest = padBus, a = 0.18, r = 0.9, echo = 0 } = o;
+    const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.5;
+    f.frequency.setValueAtTime(cutoff * 0.8, time); f.frequency.linearRampToValueAtTime(cutoff, time + a + 0.3);
+    const vib = ctx.createOscillator(); vib.frequency.value = 5.2; const vg = ctx.createGain(); vg.gain.value = freq * 0.006; vib.connect(vg);
+    const oscs = [-7, 0, 7].map(d => { const x = ctx.createOscillator(); x.type = 'sawtooth'; x.frequency.value = freq; x.detune.value = d; vg.connect(x.detune); x.connect(f); return x; });
+    const hold = Math.max(a, dur);
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.linearRampToValueAtTime(peak, time + a);
+    g.gain.setValueAtTime(peak, time + hold);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + hold + r);
+    f.connect(g).connect(dest);
+    if (echo && delaySend) { const eg = ctx.createGain(); eg.gain.value = echo; g.connect(eg); eg.connect(delaySend); }
+    const end = time + hold + r + 0.05; vib.start(time); oscs.forEach(x => x.start(time)); vib.stop(end); oscs.forEach(x => x.stop(end));
+  }
+  // french horn / brass: saw+square through a swelling filter, warm body
+  function brass(freq, time, dur, o = {}) {
+    const { peak = 0.08, cutoff = 1900, dest = padBus, a = 0.05, r = 0.3, echo = 0 } = o;
+    const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 0.8;
+    f.frequency.setValueAtTime(cutoff * 0.5, time); f.frequency.linearRampToValueAtTime(cutoff * 1.4, time + a + 0.06); f.frequency.exponentialRampToValueAtTime(Math.max(200, cutoff), time + a + 0.3);
+    const o1 = ctx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = freq; o1.detune.value = -4;
+    const o2 = ctx.createOscillator(); o2.type = 'square'; o2.frequency.value = freq; o2.detune.value = 4; const o2g = ctx.createGain(); o2g.gain.value = 0.4;
+    const hold = Math.max(a, dur);
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.linearRampToValueAtTime(peak, time + a);
+    g.gain.setValueAtTime(peak * 0.85, time + hold);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + hold + r);
+    o1.connect(f); o2.connect(o2g).connect(f); f.connect(g).connect(dest);
+    if (echo && delaySend) { const eg = ctx.createGain(); eg.gain.value = echo; g.connect(eg); eg.connect(delaySend); }
+    const end = time + hold + r + 0.05; o1.start(time); o2.start(time); o1.stop(end); o2.stop(end);
+  }
+  // harp / celesta pluck: bright triangle+octave, fast attack, long shimmering decay
+  function harp(freq, time, dur, o = {}) {
+    const { peak = 0.09, cutoff = 4200, dest = padBus, echo = 0.2 } = o;
+    const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.3;
+    const o1 = ctx.createOscillator(); o1.type = 'triangle'; o1.frequency.value = freq;
+    const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = freq * 2; const o2g = ctx.createGain(); o2g.gain.value = 0.25;
+    const ring = Math.max(dur, 0.6) + 0.4;
+    g.gain.setValueAtTime(0.0001, time); g.gain.linearRampToValueAtTime(peak, time + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, time + ring);
+    o1.connect(f); o2.connect(o2g).connect(f); f.connect(g).connect(dest);
+    if (echo && delaySend) { const eg = ctx.createGain(); eg.gain.value = echo; g.connect(eg); eg.connect(delaySend); }
+    o1.start(time); o2.start(time); o1.stop(time + ring + 0.05); o2.stop(time + ring + 0.05);
+  }
+  // flute / woodwind lead: pure sine body + soft octave + breath + gentle vibrato
+  function flute(freq, time, dur, o = {}) {
+    const { peak = 0.08, dest = padBus, a = 0.05, r = 0.25, echo = 0.25 } = o;
+    const g = ctx.createGain();
+    const body = ctx.createOscillator(); body.type = 'sine'; body.frequency.value = freq;
+    const oct = ctx.createOscillator(); oct.type = 'sine'; oct.frequency.value = freq * 2; const og = ctx.createGain(); og.gain.value = 0.08;
+    const vib = ctx.createOscillator(); vib.frequency.value = 5.5; const vg = ctx.createGain(); vg.gain.value = freq * 0.008; vib.connect(vg); vg.connect(body.frequency);
+    const hold = Math.max(a, dur);
+    g.gain.setValueAtTime(0.0001, time); g.gain.linearRampToValueAtTime(peak, time + a); g.gain.setValueAtTime(peak, time + hold); g.gain.exponentialRampToValueAtTime(0.0001, time + hold + r);
+    body.connect(g); oct.connect(og).connect(g); g.connect(dest);
+    if (echo && delaySend) { const eg = ctx.createGain(); eg.gain.value = echo; g.connect(eg); eg.connect(delaySend); }
+    const end = time + hold + r + 0.05; vib.start(time); body.start(time); oct.start(time); vib.stop(end); body.stop(end); oct.stop(end);
+  }
+  // pizzicato string: short round pluck
+  function pizz(freq, time, dur, o = {}) {
+    const { peak = 0.16, dest = padBus } = o;
+    const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2400; f.Q.value = 1;
+    const o1 = ctx.createOscillator(); o1.type = 'triangle'; o1.frequency.value = freq;
+    g.gain.setValueAtTime(peak, time); g.gain.exponentialRampToValueAtTime(0.0001, time + Math.min(0.4, dur * 0.6 + 0.12));
+    o1.connect(f).connect(g).connect(dest); o1.start(time); o1.stop(time + 0.45);
+  }
+  // low strings (cello/contrabass): sustained, warm, woody
+  function cello(freq, time, dur, o = {}) {
+    const { peak = 0.18, dest = padBus, a = 0.06, r = 0.4 } = o;
+    const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900; f.Q.value = 0.6;
+    const o1 = ctx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = freq; o1.detune.value = -5;
+    const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = freq; o2.detune.value = 5;
+    g.gain.setValueAtTime(0.0001, time); g.gain.linearRampToValueAtTime(peak, time + a); g.gain.setValueAtTime(peak * 0.9, time + Math.max(a, dur * 0.6)); g.gain.exponentialRampToValueAtTime(0.0001, time + dur + r);
+    o1.connect(f); o2.connect(f); f.connect(g).connect(dest);
+    const end = time + dur + r + 0.05; o1.start(time); o2.start(time); o1.stop(end); o2.stop(end);
+  }
+  // ---- orchestral percussion ----
+  function timpani(time, freq, dest = musicBus, o = {}) {
+    const { peak = 0.5 } = o; pump(time);
+    const oo = ctx.createOscillator(), g = ctx.createGain(); oo.type = 'sine';
+    oo.frequency.setValueAtTime(freq * 1.4, time); oo.frequency.exponentialRampToValueAtTime(Math.max(30, freq), time + 0.12);
+    g.gain.setValueAtTime(peak, time); g.gain.exponentialRampToValueAtTime(0.0001, time + 0.5);
+    oo.connect(g).connect(dest); oo.start(time); oo.stop(time + 0.55);
+    noise(time, 0.04, { cutoff: 1200, peak: peak * 0.18, dest });
+  }
+  function cymbalSwell(time, dur, dest = musicBus, o = {}) {
+    const { peak = 0.1 } = o;
+    const len = Math.ceil(ctx.sampleRate * (dur + 0.1)); const b = ctx.createBuffer(1, len, ctx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const s = ctx.createBufferSource(); s.buffer = b; const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 6000; const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, time); g.gain.linearRampToValueAtTime(peak, time + dur * 0.85); g.gain.exponentialRampToValueAtTime(0.0001, time + dur + 0.1);
+    s.connect(f).connect(g).connect(dest); s.start(time); s.stop(time + dur + 0.12);
+  }
+  function crash(time, dest = musicBus, o = {}) { const { peak = 0.16 } = o; noise(time, 0.6, { cutoff: 8000, hp: true, peak, dest }); }
+
   // ---- drums: dusty, downtempo, head-nodding ----
   function kick(time, dest = musicBus, o = {}) {
     const { peak = 0.6 } = o; pump(time); const oo = ctx.createOscillator(), g = ctx.createGain();
@@ -358,21 +452,31 @@
   let current = null, sched = null, nextTime = 0, step = 0, bar = 0, gstep = 0, _after = 'island';
   const STEPS = 16;
 
-  function drumStep(tk, step, time, beat, sw) {
-    const d = tk.drums; if (!d || d === 'none') return;
-    // swung hats
-    if (d !== 'sparse') { if (step % 2 === 0) hat(time, musicBus, { peak: 0.05 }); else hat(time + sw, musicBus, { peak: 0.035 }); }
-    else if (step === 2 || step === 10) hat(time, musicBus, { peak: 0.04 });
-    // boom-bap kick + backbeat snare (beats 2 & 4 = steps 4 & 12)
-    if (d === 'triphop' || d === 'heavy') {
-      if (step === 0 || step === 10) kick(time);
-      if (d === 'heavy' && step === 7) kick(time, musicBus, { peak: 0.4 });
-      if (step === 4 || step === 12) snare(time);
-      if (step === 14) snare(time + sw, musicBus, { peak: 0.08 });          // ghost note
-      if (step === 14) hat(time + sw, musicBus, { open: true, peak: 0.05 }); // open-hat lift
-    } else if (d === 'soft') {
-      if (step === 0) kick(time, musicBus, { peak: 0.42 });
-      if (step === 8) snare(time, musicBus, { peak: 0.12 });
+  // pick orchestral instrumentation for a track (cached). heavy=battle/boss colours.
+  function inst(tk) {
+    const heavy = tk.drums === 'heavy';
+    return {
+      comp: tk.comp || (heavy ? 'staccato' : 'harp'),                       // harp arpeggios / staccato strings
+      lead: tk.leadInst || (heavy ? 'brass' : 'flute'),                     // flute melody / brass calls
+      bass: tk.bassInst || (heavy || tk.drums === 'triphop' ? 'pizz' : 'cello'),
+      perc: tk.perc || (!tk.drums || tk.drums === 'none' ? 'none' : (heavy ? 'epic' : 'light')),
+    };
+  }
+  // orchestral percussion: cinematic timpani + cymbals (epic) or a soft field pulse (light)
+  function drumStep(tk, step, time, beat, sw, perc) {
+    if (!perc || perc === 'none') return;
+    const chord = tk.bars[bar % tk.bars.length]; const root = midi(chord[0] - 24);
+    if (perc === 'epic') {
+      if (step === 0) { timpani(time, root, musicBus, { peak: 0.5 }); if (bar === 0) crash(time, musicBus, { peak: 0.2 }); }
+      if (step === 8) timpani(time, midi(chord[0] - 24 + 7), musicBus, { peak: 0.4 });
+      if (step === 4 || step === 12) snare(time, musicBus, { peak: 0.16 });
+      if (step === 14) snare(time + sw, musicBus, { peak: 0.1 });
+      if (step % 2 === 0) hat(time, musicBus, { peak: 0.03 });
+    } else { // light — soft timpani heartbeat + brushed shaker, no boom-bap
+      if (step === 0) timpani(time, root, musicBus, { peak: 0.26 });
+      if (step === 8) timpani(time, root, musicBus, { peak: 0.16 });
+      if (step % 4 === 2) hat(time + sw, musicBus, { peak: 0.02 });
+      if (bar % 4 === 3 && step === 12) cymbalSwell(time, beat * 4, musicBus, { peak: 0.05 }); // lift into the next phrase
     }
   }
   function scheduleStep(tk, time) {
@@ -380,25 +484,47 @@
     const beat = 60 / tk.bpm / 4;                                   // 16th-note duration
     const sw = (step % 2 === 1) ? beat * (tk.swing != null ? tk.swing : 0.18) : 0; // lay back the off-beats
     const t = time + sw;
-    // slow chord wash at bar start
-    if (step === 0) chord.forEach(n => voice(midi(n - 12), time, beat * STEPS, { type: tk.padWave, peak: 0.035, cutoff: tk.cut, a: 0.5, d: 0.8, s: 0.8, r: 1.2 }));
-    // breathy choir/atmos pad (boss/date/intro)
-    if (tk.choir && step === 0) chord.forEach(n => voice(midi(n + 12), time, beat * STEPS, { type: 'sine', detune: 7, peak: 0.04, cutoff: 3000, a: 0.8, d: 0.9, s: 0.85, r: 1.4 }));
+    const ins = tk._ins || (tk._ins = inst(tk));
+    const intro = bar === 0 && !tk.once;                            // first bar = swelling intro (lighter); fanfares hit at once
+    // sustained string-section bed
+    if (step === 0) chord.forEach(n => strings(midi(n - 12), time, beat * STEPS, { peak: 0.028, cutoff: tk.cut + 400, a: intro ? 1.1 : 0.6, r: 1.4 }));
+    // high strings / choir shimmer an octave up
+    if (tk.choir && step === 0) chord.forEach(n => strings(midi(n + 12), time, beat * STEPS, { peak: 0.02, cutoff: 3200, a: intro ? 1.3 : 0.9, r: 1.6 }));
     const hum = () => (Math.random() - 0.5) * 0.014;   // micro-timing so it's not robotic
     const vel = () => 0.82 + Math.random() * 0.36;      // velocity variation
-    // electric-piano comping — the trip-hop heart
-    if (tk.keys && tk.keys[step]) chord.forEach(n => epiano(midi(n + (tk.keysOct || 0)), t + hum(), beat * (tk.keyLen || 3), { peak: (tk.keyPeak || 0.07) * vel(), cutoff: tk.cut + 600 }));
-    // dark filtered stabs (battle/boss)
-    if (tk.stabs && tk.stabs[step]) chord.forEach(n => voice(midi(n), t + hum(), beat * 1.6, { type: 'sawtooth', detune: 10, peak: 0.06, cutoff: 1300, a: 0.02, d: 0.18, s: 0.4, r: 0.3 }));
-    // deep sub bass
-    const bp = tk.bassP[step]; if (bp !== _) subBass(midi(chord[0] - 24 + bp), t, beat * (tk.bassLen || 3.4), { peak: tk.bassPeak || 0.3 });
-    // sparse, reverbed lead (loops on its own length); leadADSR lets a track pluck (lyre) instead of sustain
+    // comping — harp arpeggio (rolled) / pizzicato / staccato strings
+    if (tk.keys && tk.keys[step]) chord.forEach((n, i) => {
+      const f = midi(n + (tk.keysOct || 0)), pk = (tk.keyPeak || 0.07) * vel(), ct = tk.cut + 600;
+      if (ins.comp === 'harp') harp(f, t + hum() + i * 0.02, beat * (tk.keyLen || 3), { peak: pk * 1.1, cutoff: ct + 1300 });
+      else if (ins.comp === 'pizz') pizz(f, t + hum(), beat, { peak: pk * 1.4 });
+      else strings(f, t + hum(), beat * 0.8, { peak: pk * 0.85, cutoff: ct, a: 0.02, r: 0.18 });   // staccato
+    });
+    // brass stabs (battle/boss)
+    if (tk.stabs && tk.stabs[step]) chord.forEach(n => brass(midi(n), t + hum(), beat * 1.4, { peak: 0.05, cutoff: 1700, a: 0.03, r: 0.3 }));
+    // bass — pizzicato / cello, with a little sub weight underneath
+    const bp = tk.bassP[step];
+    if (bp !== _) {
+      const bf = midi(chord[0] - 24 + bp), bpk = tk.bassPeak || 0.3, bl = beat * (tk.bassLen || 3.4);
+      if (ins.bass === 'pizz') { pizz(bf, t, bl, { peak: bpk * 0.7 }); subBass(bf, t, bl, { peak: bpk * 0.45 }); }
+      else if (ins.bass === 'cello') { cello(bf, t, bl, { peak: bpk * 0.7 }); subBass(bf, t, bl, { peak: bpk * 0.4 }); }
+      else subBass(bf, t, bl, { peak: bpk });
+    }
+    // lead — flute / brass / harp (loops on its own length)
     const note = tk.mel[gstep % tk.mel.length];
-    if (note) { const la = tk.leadADSR || { a: 0.02, d: 0.2, s: 0.4, r: 0.45 }; voice(midi(note), t + hum(), beat * (tk.leadDur || 2.0), { type: tk.leadWave, peak: (tk.leadPeak || 0.08) * vel(), cutoff: tk.cut + 500, a: la.a, d: la.d, s: la.s, r: la.r, echo: 0.32 }); }
-    // optional counter-melody / harmony line (fuller, more interesting battle themes)
-    if (tk.harm) { const hn = tk.harm[gstep % tk.harm.length]; if (hn) voice(midi(hn), t, beat * 1.5, { type: tk.harmWave || tk.leadWave, peak: tk.harmPeak || 0.05, cutoff: tk.cut + 200, a: 0.02, d: 0.18, s: 0.32, r: 0.4 }); }
-    // drums
-    drumStep(tk, step, time, beat, sw);
+    if (note && !intro) {
+      const la = tk.leadADSR || { a: 0.04, d: 0.2, s: 0.5, r: 0.45 }, lf = midi(note), lpk = (tk.leadPeak || 0.08) * vel(), ld = beat * (tk.leadDur || 2.0);
+      if (ins.lead === 'flute') flute(lf, t + hum(), ld, { peak: lpk, a: la.a, r: la.r, echo: 0.28 });
+      else if (ins.lead === 'brass') brass(lf, t + hum(), ld, { peak: lpk * 0.9, cutoff: tk.cut + 300, a: la.a, r: la.r, echo: 0.2 });
+      else if (ins.lead === 'harp') harp(lf, t + hum(), ld, { peak: lpk * 1.1, echo: 0.3 });
+      else voice(lf, t + hum(), ld, { type: tk.leadWave, peak: lpk, cutoff: tk.cut + 500, a: la.a, d: la.d, s: la.s, r: la.r, echo: 0.3 });
+    }
+    // harmony counter-line — strings under a brass lead, horns under a flute lead
+    if (tk.harm && !intro) { const hn = tk.harm[gstep % tk.harm.length]; if (hn) {
+      if (ins.lead === 'brass') strings(midi(hn), t, beat * 2, { peak: tk.harmPeak || 0.05, cutoff: tk.cut, a: 0.06, r: 0.5 });
+      else brass(midi(hn), t, beat * 1.6, { peak: tk.harmPeak || 0.05, cutoff: tk.cut, a: 0.04, r: 0.4 });
+    } }
+    // percussion (held back during the intro bar)
+    drumStep(tk, step, time, beat, sw, intro ? (ins.perc === 'epic' ? 'light' : 'none') : ins.perc);
     step++; gstep++; if (step >= STEPS) { step = 0; bar++; if (tk.once && bar >= tk.bars.length) { current = null; setTimeout(() => play(_after), 150); } }
   }
   function tick() {
