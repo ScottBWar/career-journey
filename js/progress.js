@@ -259,6 +259,7 @@ window.Progress = (function () {
     if (!state.enchants) state.enchants = {};
     if (!state.mats) state.mats = {};
     if (!state.bestiary) state.bestiary = {};
+    if (!state.inv) state.inv = {};   // backfill inventory bag for very old saves
     if (!state.location) { const s = Data.ISLANDS.tidehaven; state.location = { place: 'island', island: 'tidehaven', x: s.spawn.x, z: s.spawn.z, shipX: Data.SEA.spawn.x, shipZ: Data.SEA.spawn.z }; }
     if (!state.equip || !state.ownedWeapons || !state.shells) {
       const equip = {}, ownedWeapons = {}, shells = []; let seq = 1;

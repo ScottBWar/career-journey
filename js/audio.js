@@ -76,23 +76,6 @@
     const g = ctx.createGain(); g.gain.setValueAtTime(peak, time); g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
     src.connect(f).connect(g).connect(dest); src.start(time); src.stop(time + dur + 0.02);
   }
-  // ---- trip-hop instrument voices ----
-  // warm electric piano (Rhodes-ish): sine body + octave shimmer + a bell "tine"
-  function epiano(freq, time, dur, o = {}) {
-    const { peak = 0.08, cutoff = 2200, dest = padBus } = o;
-    const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.4;
-    const body = ctx.createOscillator(); body.type = 'sine'; body.frequency.value = freq;
-    const oct = ctx.createOscillator(); oct.type = 'sine'; oct.frequency.value = freq * 2; const og = ctx.createGain();
-    const tine = ctx.createOscillator(); tine.type = 'sine'; tine.frequency.value = freq * 6.5; const tg = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, time);
-    g.gain.linearRampToValueAtTime(peak, time + 0.008);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak * 0.3), time + 0.16);
-    g.gain.exponentialRampToValueAtTime(0.0001, time + dur + 0.2);
-    og.gain.setValueAtTime(peak * 0.45, time); og.gain.exponentialRampToValueAtTime(0.0001, time + 0.22);
-    tg.gain.setValueAtTime(peak * 0.5, time); tg.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
-    body.connect(f); oct.connect(og).connect(f); tine.connect(tg).connect(f); f.connect(g).connect(dest);
-    [body, oct, tine].forEach(x => { x.start(time); x.stop(time + dur + 0.25); });
-  }
   // deep round sub bass
   function subBass(freq, time, dur, o = {}) {
     const { peak = 0.3, dest = padBus } = o;
@@ -200,14 +183,7 @@
   }
   function crash(time, dest = musicBus, o = {}) { const { peak = 0.16 } = o; noise(time, 0.6, { cutoff: 8000, hp: true, peak, dest }); }
 
-  // ---- drums: dusty, downtempo, head-nodding ----
-  function kick(time, dest = musicBus, o = {}) {
-    const { peak = 0.6 } = o; pump(time); const oo = ctx.createOscillator(), g = ctx.createGain();
-    oo.frequency.setValueAtTime(120, time); oo.frequency.exponentialRampToValueAtTime(42, time + 0.13);
-    g.gain.setValueAtTime(peak, time); g.gain.exponentialRampToValueAtTime(0.0001, time + 0.3);
-    oo.connect(g).connect(dest); oo.start(time); oo.stop(time + 0.32);
-    noise(time, 0.014, { cutoff: 2400, hp: true, peak: 0.12, dest }); // beater click
-  }
+  // ---- drums: snare/hat retained for orchestral percussion (timpani/cymbals live above) ----
   function snare(time, dest = musicBus, o = {}) {
     const { peak = 0.2 } = o;
     noise(time, 0.012, { cutoff: 1800, hp: false, peak: peak * 0.6, dest });  // attack crack

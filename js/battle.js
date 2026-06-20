@@ -362,6 +362,7 @@ window.Battle = (function () {
     floatDamage(e.node, 'BREAK!', '#fff0a0', 3.0, 'big'); if (typeof flashScreen === 'function') flashScreen('rgba(255,240,160,0.45)');
   }
   function damageEnemy(e, dmg, color = '#ffffff', element = 'physical', kind = 'phys') {
+    if (!isFinite(dmg) || dmg < 0) dmg = 0;            // guard against bad/missing move values
     const mult = enemyAffMult(e, element);
     recordAff(e, element, mult);
     if (mult < 0) { // absorb → enemy heals
@@ -682,6 +683,7 @@ window.Battle = (function () {
     e.node.position.copyFrom(home); if (e.play) e.play('idle'); e._busy = false; await wait(200);
   }
   function applyToMember(p, dmg, kind) {
+    if (!isFinite(dmg) || dmg < 0) dmg = 0;            // guard against bad/missing move values
     if (hasSt(p, 'weaken')) dmg = Math.round(dmg * Data.STATUS.weaken.dmg);
     // Gen-1 mitigation: DEF blunts physical, SPEC blunts magic
     if (kind === 'mag') dmg = Math.max(1, Math.round(dmg * (85 / (85 + (p.spec || 0)))));
