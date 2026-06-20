@@ -86,8 +86,9 @@ window.Battle = (function () {
       const home = new V3(x, def.baseY, z);
       built.node.position.copyFrom(home); built.node._baseY = def.baseY;
       // most models are built facing +Z, but the horizontal sea-creatures/animals face +X —
-      // rotate each so it actually faces the party (-X) instead of standing sideways
-      built.node.rotation.y = FRONT_X[key] ? Math.PI : -Math.PI / 2.2;
+      // rotate each so it actually faces the party (-X) instead of standing sideways.
+      // GLB enemies (Greeter Guy) ship facing the camera/back, so spin them 180° to front the party.
+      built.node.rotation.y = built.glb ? (Math.PI - Math.PI / 2.2) : (FRONT_X[key] ? Math.PI : -Math.PI / 2.2);
       if (boss) built.node.scaling.setAll(def.scale || 1.3);
       seen[key] = (seen[key] || 0) + 1;
       if (Progress.recordSeen) Progress.recordSeen(Game.state, key);
