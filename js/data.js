@@ -581,11 +581,14 @@ window.Data = (function () {
     tortoise_charm:{ key: 'tortoise_charm', name: 'Tortoise Charm', slots: 1, dr: 0.12, price: 360, desc: '12% damage taken reduction · 1 slot' },
     tiger_fang:    { key: 'tiger_fang',    name: 'Tiger Fang',     slots: 2, stat: { atk: 6, crit: 0.08 }, price: 420, desc: '+6 ATK, +8% Crit · 2 slots' },
     venom_ward:    { key: 'venom_ward',    name: 'Venom Ward',     slots: 2, immune: ['poison'], stat: { hp: 20 }, price: 340, desc: 'Immune to Poison · +20 HP · 2 slots' },
+    stormband:     { key: 'stormband',     name: 'Storm Band',     slots: 2, stat: { atk: 5, crit: 0.06 }, immune: ['slow'], price: 440, desc: '+5 ATK, +6% Crit · immune Slow · 2 slots' },
+    scholars_lens: { key: 'scholars_lens', name: "Scholar's Lens", slots: 3, stat: { mp: 40 }, price: 420, desc: '+40 MP · 3 shell slots' },
+    bruisers_belt: { key: 'bruisers_belt', name: "Bruiser's Belt", slots: 1, stat: { atk: 12, crit: 0.05 }, price: 500, desc: '+12 ATK, +5% Crit · 1 slot · glass-cannon' },
     aegis_pearl:   { key: 'aegis_pearl',   name: 'Aegis Pearl',    slots: 2, dr: 0.18, immune: ['weaken'], price: 680, desc: '18% damage reduction · immune Weaken · 2 slots' },
     guardian_pearl:{ key: 'guardian_pearl', name: 'Guardian Pearl', slots: 3, stat: { hp: 60, mp: 15 }, dr: 0.10, price: 900, desc: '+60 HP, +15 MP, 10% reduction · 3 slots · ultimate' },
     golden_fleece: { key: 'golden_fleece', name: 'Golden Fleece', slots: 3, stat: { hp: 80, mp: 20, atk: 6 }, dr: 0.15, immune: ['poison', 'weaken'], price: 0, desc: '+80 HP, +20 MP, +6 ATK, 15% reduction, immune Poison & Weaken · 3 slots · the Coliseum champion\'s prize' },
   };
-  const SHOP_ACCESSORIES = ['coral_bangle', 'seaglass_ring', 'tortoise_charm', 'tiger_fang', 'venom_ward', 'aegis_pearl'];
+  const SHOP_ACCESSORIES = ['coral_bangle', 'seaglass_ring', 'tortoise_charm', 'tiger_fang', 'venom_ward', 'stormband', 'scholars_lens', 'bruisers_belt', 'aegis_pearl'];
   // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
   const AFFINITIES = {
     greeterguy: { weak: ['water', 'thunder'] },
@@ -790,6 +793,8 @@ window.Data = (function () {
           lines: ['Steel and seashells — finest on the isle!', 'Weapons, materia, the works. Have a look.'] },
         { name: 'Fisher Bex', color: '#3a8a6a', x: -4, z: 8,
           lines: ['Fish won\'t bite with monsters about.', 'Calm the seas and I\'ll cook you the catch of the year!'] },
+        { name: 'Net-Mender Coombe', color: '#5a8a9a', hair: '#caa030', x: -8, z: 6,
+          lines: ['You\'ll meet a big fellow on every shore — Greeter Guy, we call him.', 'Friendliest brute alive. Hits like a wet rope, but he can soak up a HUNDRED blows.', 'Don\'t waste your steel on him — douse him with WATER or jolt him with THUNDER and he folds quick.'] },
       ],
       exit: { x: 0, z: -12 },
     },
