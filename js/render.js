@@ -38,8 +38,30 @@ window.Render = (function () {
     if (ip) {
       ip.toneMappingEnabled = true;
       try { ip.toneMappingType = BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES; } catch (e) {}
-      ip.exposure = 1.08; ip.contrast = 1.16;
+      ip.exposure = 1.1; ip.contrast = 1.18;
       ip.vignetteEnabled = true; ip.vignetteWeight = 1.4; ip.vignetteColor = new BABYLON.Color4(0, 0, 0.04, 0); ip.vignetteCameraFov = 0.9;
+      // cinematic split-tone grade: warm highlights, cool shadows, a touch more saturation
+      try {
+        const cc = new BABYLON.ColorCurves();
+        cc.globalSaturation = 12;
+        cc.highlightsHue = 32; cc.highlightsDensity = 26; cc.highlightsSaturation = 16;   // golden highlights
+        cc.shadowsHue = 220; cc.shadowsDensity = 30; cc.shadowsSaturation = 14;            // cool shadows
+        cc.midtonesSaturation = 8;
+        ip.colorCurves = cc; ip.colorCurvesEnabled = true;
+      } catch (e) {}
+    }
+    // tilt-shift depth of field — the "tiny handcrafted diorama" look. Gentle (high fStop so
+    // a mis-tuned focal plane still leaves the scene mostly sharp), High-quality only.
+    if (high()) {
+      try {
+        p.depthOfFieldEnabled = true;
+        p.depthOfFieldBlurLevel = BABYLON.DepthOfFieldEffectBlurLevel.Low;
+        const dof = p.depthOfField;
+        dof.focalLength = 38;        // mm
+        dof.fStop = 7.5;             // high = subtle, safe blur
+        dof.focusDistance = 22000;   // mm to the in-focus plane (tuned for the gameplay cameras; refine from captures)
+        dof.lensSize = 70;
+      } catch (e) {}
     }
     return p;
   }
@@ -123,10 +145,20 @@ window.Render = (function () {
     });
   }
 
+  // light atmospheric fog for depth — only added if the scene hasn't set its own (dungeons
+  // already do). Very low density so distant islands haze gently without becoming murky.
+  function fog(scene, horizon) {
+    if (scene.fogMode && scene.fogMode !== BABYLON.Scene.FOGMODE_NONE) return;  // respect dungeon/sea fog
+    scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+    scene.fogDensity = 0.0032;
+    scene.fogColor = BABYLON.Color3.FromHexString(horizon || '#cfe9f5');
+  }
+
   // apply everything to a freshly-built scene
   function setup(scene, camera, opts) {
     opts = opts || {};
     try { sky(scene, opts.skyTop, opts.skyHorizon); } catch (e) { console.warn('sky', e); }
+    try { fog(scene, opts.skyHorizon); } catch (e) { console.warn('fog', e); }
     try { pipeline(scene, camera); } catch (e) { console.warn('pipeline', e); }
     if (high()) { try { ssao(scene, camera); } catch (e) { console.warn('ssao', e); } }
     if (high() && opts.sun) { try { shadows(scene, opts.sun); } catch (e) { console.warn('shadow', e); } }

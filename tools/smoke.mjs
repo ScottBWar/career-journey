@@ -36,12 +36,12 @@ global.BABYLON = new Proxy({ Vector3:V3, Color3:C3, Color4:class{constructor(){}
   HemisphericLight:class{constructor(){this.groundColor=new C3();}}, DirectionalLight:class{constructor(){this.position=new V3();this.direction=new V3();}setDirectionToTarget(){}},
   PointLight:class{constructor(){this.diffuse=new C3();}}, UniversalCamera:class{constructor(){this.fov=1;this.position=new V3();}setTarget(){}},
   ArcRotateCamera:class{constructor(){this.position=new V3();}setTarget(){}attachControl(){}},
-  Scene:class{constructor(){this.onBeforeRenderObservable={add(){return{};},remove(){}};this.clearColor=null;}dispose(){}registerBeforeRender(){}},
+  Scene:class{constructor(){this.onBeforeRenderObservable={add(){return{};},remove(){}};this.clearColor=null;this.meshes=[];this.materials=[];this.fogMode=0;}dispose(){}registerBeforeRender(){}},
   DynamicTexture:class{getContext(){return c2d();}update(){}drawText(){}getSize(){return{width:256,height:64};}}, Texture:class{},
   ParticleSystem:class{constructor(){this.particleTexture=null;}start(){}stop(){}}, VertexBuffer:{PositionKind:'position',NormalKind:'normal'},
   Mesh:perm(), Matrix:perm(), Viewport:class{constructor(){}}, GlowLayer:class{constructor(){this.intensity=1;}addIncludedOnlyMesh(){}},
 }, { get:(t,p)=> (p in t)?t[p]:perm() });
-global.BABYLON.Scene.FOGMODE_EXP2=2; global.BABYLON.Scene.FOGMODE_LINEAR=1;
+global.BABYLON.Scene.FOGMODE_EXP2=2; global.BABYLON.Scene.FOGMODE_LINEAR=1; global.BABYLON.Scene.FOGMODE_NONE=0;
 
 // ---- DOM + globals ----
 global.window = {};
@@ -60,6 +60,7 @@ global.Game = { engine:{getDeltaTime:()=>16, runRenderLoop(){}, resize(){}}, can
   startBattle(){}, startCutscene(){}, cutscene(){}, confirm(){}, toast(){}, resumeIsland(){}, resumeDungeon(){}, resumeSea(){}, resumeExplore(){}, pauseExplore(){},
   enterTown(){}, toDungeon(){}, toSea(){}, openDating(){}, openShellHunt(){}, openColiseum(){}, CHAR_THEME:{} };
 
+load('js/render.js'); global.window.Render = window.Render; global.Render = window.Render; // exercise the real post-FX pipeline too
 load('js/world.js'); const World = window.World;
 load('js/dungeon.js'); const Dungeon = window.Dungeon;
 load('js/battle.js'); const Battle = window.Battle;
