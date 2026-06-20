@@ -1195,7 +1195,44 @@ window.Models = (function () {
     return { node: r, idle(t) { r.rotation.y = Math.sin(t * 0.9) * 0.12; r.scaling.y = 1 + Math.sin(t * 1.4) * 0.06; } };
   }
 
-  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane, omega, beetlejuice, sandling, shade: specter, gravehand, ruffy_duel: () => rival() };
+  // ---------------- EXTERNAL GLB ASSET LOADER ----------------
+  // Loads a rigged .glb async, auto-fits it to a target height (source units don't matter),
+  // and — for a single baked track — plays named sub-ranges (fractions of the track, so it's
+  // robust to whatever frame space the loader uses). Returns a SYNC placeholder node that the
+  // loaded meshes parent under, so it drops into the procedural sync architecture. Fully
+  // defensive: if the loader plugin or file is missing, the placeholder just stays empty.
+  function glbModel(file, opts) {
+    opts = opts || {};
+    const r = new BABYLON.TransformNode('glb_' + file, scene); const sc = scene;
+    const api = { node: r, glb: true, idle() {}, play(name) { api._want = name; if (api._apply) api._apply(); } };
+    api._want = opts.default || null;
+    try {
+      BABYLON.SceneLoader.ImportMeshAsync('', opts.dir || 'assets/models/', file, sc).then(res => {
+        const meshes = (res.meshes || []).filter(m => m); if (!meshes.length) return;
+        const root = meshes[0]; root.parent = r;
+        // auto-fit to target height (Maya/Cartwheel rigs export at wild scales)
+        let lo = null, hi = null;
+        meshes.forEach(m => { if (!m.getBoundingInfo) return; try { m.computeWorldMatrix(true); const bb = m.getBoundingInfo().boundingBox; lo = lo ? BABYLON.Vector3.Minimize(lo, bb.minimumWorld) : bb.minimumWorld.clone(); hi = hi ? BABYLON.Vector3.Maximize(hi, bb.maximumWorld) : bb.maximumWorld.clone(); } catch (e) {} });
+        if (lo && hi) { const h = (hi.y - lo.y) || 1; const s = (opts.height || 2.5) / h; root.scaling.setAll(s); root.position.y = -lo.y * s; }
+        const ag = res.animationGroups && res.animationGroups[0]; api._groups = res.animationGroups;
+        if (ag) {
+          try { ag.stop(); } catch (e) {}
+          const R = opts.ranges || {};
+          api._apply = () => { const rg = R[api._want]; try { ag.stop(); if (rg) ag.start(true, opts.speed || 1, Math.round(rg[0] * ag.to), Math.round(rg[1] * ag.to)); else ag.start(true, opts.speed || 1); } catch (e) {} };
+          api._apply();
+        }
+      }).catch(() => {});
+    } catch (e) {}
+    return api;
+  }
+  // Greeter Guy's single ~16.45s baked track (60fps), sliced into his three motions as
+  // FRACTIONS of the track. Real Cartwheel timings: Standing Idle 7.58s, jog in place
+  // 5.97s, Superhero Punch 2.87s (export order idle → jog → punch). Boundaries:
+  // idle 0–7.58s (0–0.461), jog 7.58–13.55s (0.461–0.824), punch 13.55–16.45s (0.824–1.0).
+  const GREETER_RANGES = { idle: [0.0, 0.461], jog: [0.461, 0.824], punch: [0.824, 1.0] };
+  function greeterguy() { return glbModel('greeterguy.glb', { height: 2.6, default: 'idle', ranges: GREETER_RANGES }); }
+
+  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane, omega, beetlejuice, sandling, shade: specter, gravehand, greeterguy, ruffy_duel: () => rival() };
 
   // ---------------- ALADDIN (street-rat ally) ----------------
   function aladdin(weaponKey) {

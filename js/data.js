@@ -222,6 +222,7 @@ window.Data = (function () {
   ];
 
   const ENEMIES = {
+    greeterguy:  { name: 'Greeter Guy',    model: 'greeterguy', hp: 500, xp: 90, gold: 60, baseY: 0, scale: 1, moves: [ { name: 'throws a clumsy punch', min: 4, max: 8 } ], drops: [] },
     sandling:    { name: 'Sandling',       model: 'sandling',  hp: 96,  xp: 30, gold: 20, baseY: 0,   moves: [ { name: 'gnashes from the sand', min: 13, max: 19 }, { name: 'spits grit', min: 11, max: 16 } ], drops: [ { mat: 'brine', chance: 0.4 } ] },
     shade:       { name: 'Neither-Shade',   model: 'shade',     hp: 84,  xp: 30, gold: 20, baseY: 0.3, moves: [ { name: 'wails', min: 12, max: 18, all: true }, { name: 'reaches through you', min: 14, max: 20, status: 'weaken', turns: 2 } ], drops: [ { mat: 'goo', chance: 0.5 } ] },
     gravehand:   { name: 'Grave Hand',      model: 'gravehand', hp: 130, xp: 34, gold: 24, baseY: 0,   moves: [ { name: 'crushes', min: 15, max: 22 }, { name: 'drags you under', min: 12, max: 18, status: 'slow', turns: 2 } ], drops: [ { mat: 'shellfrag', chance: 0.4 } ] },
@@ -577,6 +578,7 @@ window.Data = (function () {
   const SHOP_ACCESSORIES = ['coral_bangle', 'seaglass_ring', 'tortoise_charm', 'tiger_fang', 'venom_ward', 'aegis_pearl'];
   // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
   const AFFINITIES = {
+    greeterguy: { weak: ['water', 'thunder'] },
     sandling: { weak: ['water'], resist: ['earth'] },
     shade: { weak: ['holy', 'fire'], resist: ['dark', 'physical'] },
     gravehand: { weak: ['holy'], resist: ['physical'] },

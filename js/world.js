@@ -163,6 +163,13 @@ window.World = (function () {
       idlers.push(ro);
     });
 
+    // Greeter Guy — a wandering HP-sponge present on every isle; jogs around, bump him to fight
+    try {
+      const gg = Models.enemy('greeterguy'); const ghx = 9, ghz = -1;
+      gg.node.position.set(ghx, 0, ghz); gg.node._baseY = 0; if (gg.play) gg.play('jog');
+      roamers.push({ node: gg.node, play: gg.play, greeter: true, home: new V3(ghx, 0, ghz), ang: Math.random() * 6.28, spd: 1.8 });
+    } catch (e) {}
+
     // cuttable scenery — Zelda-style grass tufts to slice and clay pots to smash.
     // bright + tall so they read clearly against the ground from the overworld camera.
     const grassCol = def.grassCut || '#7ed957';
@@ -260,7 +267,7 @@ window.World = (function () {
       if (V3.Distance(r.node.position, r.home) > 4) r.ang = Math.atan2(r.home.x - r.node.position.x, r.home.z - r.node.position.z) + (Math.random()-0.5);
       if (Math.random() < 0.01) r.ang += (Math.random()-0.5);
       r.node.rotation.y = r.ang;
-      if (!locked && V3.Distance(r.node.position, player.position) < 1.7) { startRoamerBattle(r); return; }
+      if (!locked && V3.Distance(r.node.position, player.position) < 1.7) { (r.greeter ? startGreeterBattle : startRoamerBattle)(r); return; }
     }
 
     nearGate = null;
@@ -385,6 +392,17 @@ window.World = (function () {
     }
   }
 
+  // Greeter Guy — the HP-sponge who wanders every isle. He always returns (just shoves off
+  // after the fight), so you can always find him. His punch plays in battle via Models hook.
+  function startGreeterBattle(r) {
+    locked = true; paused = true; Music.play('battle');
+    Game.startBattle(['greeterguy'], {}, (res) => {
+      paused = false; locked = false; Game.resumeIsland();
+      const dir = r.node.position.subtract(player.position); if (dir.length() < 0.1) dir.set(1, 0, 1); dir.normalize();
+      if (res && res.won) { r.node.position.addInPlace(dir.scale(6)); }       // shove him off so you don't instantly re-trigger
+      else { player.position.addInPlace(dir.scale(-4)); Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
+    });
+  }
   function startRoamerBattle(r, firstStrike) {
     const music = key === 'paegina' ? 'paegina' : null; // null → startBattle cycles through the battle themes
     locked = true; paused = true;
