@@ -32,35 +32,35 @@ window.Render = (function () {
     const p = new BABYLON.DefaultRenderingPipeline('glow', true, scene, [camera]);
     p.fxaaEnabled = true;
     try { p.samples = high() ? 4 : 1; } catch (e) {}
-    p.bloomEnabled = true; p.bloomThreshold = 0.78; p.bloomWeight = 0.32; p.bloomScale = 0.5; p.bloomKernel = 48;
+    p.bloomEnabled = true; p.bloomThreshold = 0.7; p.bloomWeight = 0.5; p.bloomScale = 0.6; p.bloomKernel = 64;
     p.sharpenEnabled = high(); if (p.sharpen) { p.sharpen.edgeAmount = 0.25; p.sharpen.colorAmount = 1; }
     const ip = p.imageProcessing;
     if (ip) {
       ip.toneMappingEnabled = true;
       try { ip.toneMappingType = BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES; } catch (e) {}
-      ip.exposure = 1.1; ip.contrast = 1.18;
-      ip.vignetteEnabled = true; ip.vignetteWeight = 1.4; ip.vignetteColor = new BABYLON.Color4(0, 0, 0.04, 0); ip.vignetteCameraFov = 0.9;
-      // cinematic split-tone grade: warm highlights, cool shadows, a touch more saturation
+      ip.exposure = 1.15; ip.contrast = 1.28;
+      ip.vignetteEnabled = true; ip.vignetteWeight = 2.2; ip.vignetteColor = new BABYLON.Color4(0.02, 0, 0.06, 0); ip.vignetteCameraFov = 0.9;
+      // bold cinematic split-tone grade: golden highlights, cool shadows, punchy saturation
       try {
         const cc = new BABYLON.ColorCurves();
-        cc.globalSaturation = 12;
-        cc.highlightsHue = 32; cc.highlightsDensity = 26; cc.highlightsSaturation = 16;   // golden highlights
-        cc.shadowsHue = 220; cc.shadowsDensity = 30; cc.shadowsSaturation = 14;            // cool shadows
-        cc.midtonesSaturation = 8;
+        cc.globalSaturation = 28;
+        cc.highlightsHue = 32; cc.highlightsDensity = 45; cc.highlightsSaturation = 26;   // golden highlights
+        cc.shadowsHue = 222; cc.shadowsDensity = 48; cc.shadowsSaturation = 22;            // cool/teal shadows
+        cc.midtonesSaturation = 16;
         ip.colorCurves = cc; ip.colorCurvesEnabled = true;
       } catch (e) {}
     }
-    // tilt-shift depth of field — the "tiny handcrafted diorama" look. Gentle (high fStop so
-    // a mis-tuned focal plane still leaves the scene mostly sharp), High-quality only.
+    // tilt-shift depth of field — the "tiny handcrafted diorama" look. Tuned to be clearly
+    // VISIBLE (focal plane on the player ~16-18 units up; refine focusDistance from captures).
     if (high()) {
       try {
         p.depthOfFieldEnabled = true;
-        p.depthOfFieldBlurLevel = BABYLON.DepthOfFieldEffectBlurLevel.Low;
+        p.depthOfFieldBlurLevel = BABYLON.DepthOfFieldEffectBlurLevel.Medium;
         const dof = p.depthOfField;
-        dof.focalLength = 38;        // mm
-        dof.fStop = 7.5;             // high = subtle, safe blur
-        dof.focusDistance = 22000;   // mm to the in-focus plane (tuned for the gameplay cameras; refine from captures)
-        dof.lensSize = 70;
+        dof.focalLength = 50;        // mm
+        dof.fStop = 2.4;             // low = pronounced, miniature-diorama blur
+        dof.focusDistance = 17000;   // mm to the in-focus plane (≈ player distance; THE dial to tune from captures)
+        dof.lensSize = 90;
       } catch (e) {}
     }
     return p;
