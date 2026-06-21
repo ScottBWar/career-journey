@@ -722,9 +722,11 @@ window.Battle = (function () {
       const minCt = a.ct; actors.forEach(x => { if (x.alive) x.ct -= minCt; }); // normalize so current = 0
       renderTurnBar();
       if (a.alive) { const died = await tickStatus(a); if (checkEnd()) return; if (died || !a.alive) { a.ct += 100 / speedOf(a); await wait(120); continue; } }
-      if (a.side === 'party') { a._defend = false; await takeTurn(a); }
-      else if (a.broken) { a.broken = false; floatDamage(a.node, 'Broken!', '#fde047', 2.6); renderEnemies(false); await wait(280); } // BREAK: skip turn & recover
-      else { await enemyAct(a); }
+      try {
+        if (a.side === 'party') { a._defend = false; await takeTurn(a); }
+        else if (a.broken) { a.broken = false; floatDamage(a.node, 'Broken!', '#fde047', 2.6); renderEnemies(false); await wait(280); } // BREAK: skip turn & recover
+        else { await enemyAct(a); }
+      } catch (err) { console.error('[battle] turn error — recovering:', err); if (a) a._busy = false; await wait(60); }
       a.ct += 100 / speedOf(a);
       if (checkEnd()) return;
       await wait(140);

@@ -21,17 +21,17 @@
     sfxGain = ctx.createGain(); sfxGain.gain.value = sfxVol; sfxGain.connect(master); // SFX → its own gain → master
     // reverb (convolution with a procedurally-generated impulse)
     conv = ctx.createConvolver(); conv.buffer = makeImpulse(3.2, 2.5);
-    dry = ctx.createGain(); dry.gain.value = 0.8;
-    wet = ctx.createGain(); wet.gain.value = 0.42;
+    dry = ctx.createGain(); dry.gain.value = 0.86;
+    wet = ctx.createGain(); wet.gain.value = 0.24;          // concert-hall sheen, not a wash
     master.connect(comp);
     comp.connect(dry).connect(ctx.destination);
     comp.connect(conv).connect(wet).connect(ctx.destination);
-    // music bus → saturation → wobbling tape lowpass → master (warm, dusty, not clean-MIDI)
-    musicBus = ctx.createGain(); musicBus.gain.value = 0.9;
-    const sat = ctx.createWaveShaper(); sat.curve = makeSatCurve(2.4); sat.oversample = '2x';
-    tapeFilter = ctx.createBiquadFilter(); tapeFilter.type = 'lowpass'; tapeFilter.frequency.value = 5200; tapeFilter.Q.value = 0.5;
+    // music bus → light gloss → open air → master (clean & bright, like a sampled orchestra)
+    musicBus = ctx.createGain(); musicBus.gain.value = 0.92;
+    const sat = ctx.createWaveShaper(); sat.curve = makeSatCurve(1.3); sat.oversample = '2x'; // gentle gloss, not lo-fi grit
+    tapeFilter = ctx.createBiquadFilter(); tapeFilter.type = 'lowpass'; tapeFilter.frequency.value = 9000; tapeFilter.Q.value = 0.4; // open — air & clarity
     musicBus.connect(sat); sat.connect(tapeFilter); tapeFilter.connect(master);
-    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.13; const lfoG = ctx.createGain(); lfoG.gain.value = 360; lfo.connect(lfoG); lfoG.connect(tapeFilter.frequency); lfo.start(); // gentle tape shimmer (not seasick)
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.1; const lfoG = ctx.createGain(); lfoG.gain.value = 120; lfo.connect(lfoG); lfoG.connect(tapeFilter.frequency); lfo.start(); // barely-there breathing
     // tonal sub-bus (pads/keys/bass/lead) — ducked by the kick for that sidechain "pump"
     padBus = ctx.createGain(); padBus.gain.value = 1.0; padBus.connect(musicBus);
     // tape echo send (mainly the lead)
@@ -39,7 +39,7 @@
     delaySend = ctx.createGain(); delaySend.gain.value = 0.5; delaySend.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(musicBus);
   }
   // sidechain duck — the kick momentarily pushes the tonal bus down, then it swells back
-  function pump(time) { if (!padBus) return; const g = padBus.gain; g.cancelScheduledValues(time); g.setValueAtTime(0.52, time); g.linearRampToValueAtTime(1.0, time + 0.18); }
+  function pump(time) { if (!padBus) return; const g = padBus.gain; g.cancelScheduledValues(time); g.setValueAtTime(0.82, time); g.linearRampToValueAtTime(1.0, time + 0.16); }
   function makeImpulse(seconds, decay) {
     const rate = (ctx.sampleRate) || 44100; const len = rate * seconds; const buf = ctx.createBuffer(2, len, rate);
     for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
@@ -96,7 +96,7 @@
     const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.5;
     f.frequency.setValueAtTime(cutoff * 0.8, time); f.frequency.linearRampToValueAtTime(cutoff, time + a + 0.3);
     const vib = ctx.createOscillator(); vib.frequency.value = 5.2; const vg = ctx.createGain(); vg.gain.value = freq * 0.006; vib.connect(vg);
-    const oscs = [-7, 0, 7].map(d => { const x = ctx.createOscillator(); x.type = 'sawtooth'; x.frequency.value = freq; x.detune.value = d; vg.connect(x.detune); x.connect(f); return x; });
+    const oscs = [-6, 6].map(d => { const x = ctx.createOscillator(); x.type = 'sawtooth'; x.frequency.value = freq; x.detune.value = d; vg.connect(x.detune); x.connect(f); return x; });
     const hold = Math.max(a, dur);
     g.gain.setValueAtTime(0.0001, time);
     g.gain.linearRampToValueAtTime(peak, time + a);
@@ -198,13 +198,8 @@
   // ---- vinyl crackle bed (loops continuously under the music) ----
   let crackleNode = null;
   function startTexture() {
-    if (crackleNode || !ctx) return;
-    const rate = ctx.sampleRate, buf = ctx.createBuffer(1, Math.floor(rate * 4), rate), d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) { let v = (Math.random() * 2 - 1) * 0.008; if (Math.random() < 0.0004) v += (Math.random() * 2 - 1) * 0.28; d[i] = v; }
-    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
-    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
-    const g = ctx.createGain(); g.gain.value = 0.55;
-    src.connect(f).connect(g).connect(musicBus); src.start(); crackleNode = src;
+    // FF9 is clean concert audio — no vinyl crackle bed. Kept as a no-op so callers don't change.
+    return;
   }
 
   // ---------------- MUSIC ----------------
@@ -215,24 +210,29 @@
   // the off-beats back for that head-nod feel.
   const _ = 0, K = 1;
   const TRACKS = {
-    // sunny head-nod exploration — warm C-major field theme (I–vi–IV–V), hopeful & adventurous
-    island: { bpm: 88, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 2500, choir: true,
+    // sunny field theme — warm C-major (I–vi–IV–V) with a singable, breathing melody
+    island: { bpm: 86, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 2600, choir: true, comp: 'harp',
       bars: [[60,64,67,71],[57,60,64,67],[53,57,60,64],[55,59,62,65]],
-      keys: [_,_,K,_, K,_,_,K, _,_,K,_, K,_,K,_], keyLen: 1.8, keyPeak: 0.08,
-      bassP: [0,_,_,_, _,_,7,_, 0,_,_,_, 7,_,5,_], bassPeak: 0.3, bassLen: 2.6,
-      leadADSR: { a: 0.02, d: 0.18, s: 0.5, r: 0.5 }, leadDur: 1.4, leadPeak: 0.09,
-      mel: [67,_,72,_, 71,_,69,_, 72,_,_,_, 74,_,72,_,  69,_,71,_, 74,_,72,_, 71,_,69,_, 67,_,_,_,
-            72,_,76,_, 74,_,72,_, 71,_,_,_, 69,_,71,_,  72,_,74,_, 76,_,72,_, 74,_,71,_, 72,_,_,_],
-      harm: [_,_,_,_, 64,_,_,_, _,_,_,_, 60,_,_,_, _,_,_,_, 60,_,_,_, _,_,_,_, 62,_,_,_], harmPeak: 0.05, harmWave: 'triangle' },
+      keys: [_,_,_,_, _,_,K,_, _,_,_,_, _,_,K,_], keyLen: 2.4, keyPeak: 0.05,
+      bassP: [0,_,_,_, _,_,7,_, 0,_,_,_, 7,_,5,_], bassPeak: 0.28, bassLen: 2.6, bassInst: 'pizz',
+      leadADSR: { a: 0.03, d: 0.2, s: 0.6, r: 0.6 }, leadDur: 1.7, leadPeak: 0.1,
+      mel: [_,_,_,_, 64,_,67,_, 69,_,_,_, 67,_,_,_,  64,_,_,_, 60,_,_,_, 62,_,64,_, _,_,_,_,
+            65,_,_,_, 64,_,62,_, 60,_,_,_, _,_,62,_,  64,_,_,_, 67,_,_,_, 72,_,_,_, _,_,_,_,
+            _,_,_,_, 67,_,72,_, 74,_,_,_, 72,_,_,_,  71,_,_,_, 69,_,_,_, 67,_,69,_, _,_,_,_,
+            65,_,_,_, 67,_,69,_, 71,_,_,_, _,_,69,_,  67,_,_,_, 71,_,_,_, 72,_,_,_, _,_,_,_],
+      harm: [_,_,_,_, _,_,_,_, 60,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_, 59,_,_,_, _,_,_,_], harmPeak: 0.035, harmWave: 'triangle' },
 
-    // open, hopeful sailing — bright & airy, not muffled (G–Am–F–C lift)
-    sea: { bpm: 80, drums: 'sparse', swing: 0.18, padWave: 'sine', leadWave: 'sine', cut: 2100, choir: true,
+    // open, hopeful sailing — airy & spacious, a long flute line drifting over the swell
+    sea: { bpm: 78, drums: 'sparse', swing: 0.18, padWave: 'sine', leadWave: 'sine', cut: 2200, choir: true, comp: 'harp',
       bars: [[55,59,62,67],[57,60,64,69],[53,57,60,65],[60,64,67,72]],
-      keys: [_,_,K,_, _,K,_,_, _,_,K,_, _,K,_,_], keyLen: 3.0, keyPeak: 0.062,
-      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.27, bassLen: 4,
-      leadADSR: { a: 0.04, d: 0.25, s: 0.6, r: 0.7 }, leadDur: 2.2, leadPeak: 0.078,
-      mel: [67,_,_,_, 69,_,72,_, 74,_,_,_, _,_,71,_,  72,_,_,_, 76,_,74,_, 72,_,69,_, 67,_,_,_,
-            69,_,_,_, 72,_,74,_, 76,_,_,_, _,_,74,_,  72,_,_,_, 71,_,69,_, 67,_,71,_, 72,_,_,_], harm: [_,_,_,_, 62,_,_,_, _,_,_,_, 64,_,_,_], harmPeak: 0.042 },
+      keys: [_,_,_,_, _,_,_,_, _,_,K,_, _,_,_,_], keyLen: 3.4, keyPeak: 0.045,
+      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.25, bassLen: 4, bassInst: 'cello',
+      leadADSR: { a: 0.06, d: 0.3, s: 0.7, r: 0.9 }, leadDur: 2.6, leadPeak: 0.092,
+      mel: [_,_,_,_, 62,_,_,_, 67,_,_,_, 69,_,_,_,  _,_,_,_, 72,_,_,_, 71,_,_,_, 69,_,_,_,
+            _,_,_,_, 65,_,_,_, 69,_,_,_, _,_,_,_,  _,_,_,_, 67,_,_,_, 72,_,_,_, _,_,_,_,
+            _,_,_,_, 74,_,_,_, 72,_,_,_, 76,_,_,_,  _,_,_,_, 74,_,72,_, 71,_,_,_, 69,_,_,_,
+            _,_,_,_, 65,_,67,_, 69,_,_,_, _,_,_,_,  _,_,_,_, 67,_,_,_, 72,_,_,_, _,_,_,_],
+      harm: [_,_,_,_, _,_,_,_, _,_,_,_, 64,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_, 67,_,_,_], harmPeak: 0.03 },
 
     // warmer jazzy groove
     town: { bpm: 90, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 1900,
@@ -462,18 +462,18 @@
     const t = time + sw;
     const ins = tk._ins || (tk._ins = inst(tk));
     const intro = bar === 0 && !tk.once;                            // first bar = swelling intro (lighter); fanfares hit at once
-    // sustained string-section bed
-    if (step === 0) chord.forEach(n => strings(midi(n - 12), time, beat * STEPS, { peak: 0.028, cutoff: tk.cut + 400, a: intro ? 1.1 : 0.6, r: 1.4 }));
-    // high strings / choir shimmer an octave up
-    if (tk.choir && step === 0) chord.forEach(n => strings(midi(n + 12), time, beat * STEPS, { peak: 0.02, cutoff: 3200, a: intro ? 1.3 : 0.9, r: 1.6 }));
+    // sustained string-section bed — sits UNDER the melody (kept low so it never muds)
+    if (step === 0) chord.forEach(n => strings(midi(n - 12), time, beat * STEPS, { peak: 0.02, cutoff: tk.cut + 400, a: intro ? 1.1 : 0.6, r: 1.4 }));
+    // high strings / choir shimmer an octave up — a faint halo
+    if (tk.choir && step === 0) chord.forEach(n => strings(midi(n + 12), time, beat * STEPS, { peak: 0.012, cutoff: 3200, a: intro ? 1.3 : 0.9, r: 1.6 }));
     const hum = () => (Math.random() - 0.5) * 0.014;   // micro-timing so it's not robotic
     const vel = () => 0.82 + Math.random() * 0.36;      // velocity variation
     // comping — harp arpeggio (rolled) / pizzicato / staccato strings
     if (tk.keys && tk.keys[step]) chord.forEach((n, i) => {
       const f = midi(n + (tk.keysOct || 0)), pk = (tk.keyPeak || 0.07) * vel(), ct = tk.cut + 600;
-      if (ins.comp === 'harp') harp(f, t + hum() + i * 0.02, beat * (tk.keyLen || 3), { peak: pk * 1.1, cutoff: ct + 1300 });
-      else if (ins.comp === 'pizz') pizz(f, t + hum(), beat, { peak: pk * 1.4 });
-      else strings(f, t + hum(), beat * 0.8, { peak: pk * 0.85, cutoff: ct, a: 0.02, r: 0.18 });   // staccato
+      if (ins.comp === 'harp') harp(f, t + hum() + i * 0.022, beat * (tk.keyLen || 3), { peak: pk * 0.8, cutoff: ct + 1300 });
+      else if (ins.comp === 'pizz') pizz(f, t + hum(), beat, { peak: pk * 1.1 });
+      else strings(f, t + hum(), beat * 0.8, { peak: pk * 0.6, cutoff: ct, a: 0.02, r: 0.18 });   // staccato
     });
     // brass stabs (battle/boss)
     if (tk.stabs && tk.stabs[step]) chord.forEach(n => brass(midi(n), t + hum(), beat * 1.4, { peak: 0.05, cutoff: 1700, a: 0.03, r: 0.3 }));
@@ -488,10 +488,10 @@
     // lead — flute / brass / harp (loops on its own length)
     const note = tk.mel[gstep % tk.mel.length];
     if (note && !intro) {
-      const la = tk.leadADSR || { a: 0.04, d: 0.2, s: 0.5, r: 0.45 }, lf = midi(note), lpk = (tk.leadPeak || 0.08) * vel(), ld = beat * (tk.leadDur || 2.0);
-      if (ins.lead === 'flute') flute(lf, t + hum(), ld, { peak: lpk, a: la.a, r: la.r, echo: 0.28 });
-      else if (ins.lead === 'brass') brass(lf, t + hum(), ld, { peak: lpk * 0.9, cutoff: tk.cut + 300, a: la.a, r: la.r, echo: 0.2 });
-      else if (ins.lead === 'harp') harp(lf, t + hum(), ld, { peak: lpk * 1.1, echo: 0.3 });
+      const la = tk.leadADSR || { a: 0.04, d: 0.2, s: 0.5, r: 0.45 }, lf = midi(note), lpk = (tk.leadPeak || 0.08) * vel() * 1.5, ld = beat * (tk.leadDur || 2.0); // melody sits clearly on top
+      if (ins.lead === 'flute') flute(lf, t + hum(), ld, { peak: lpk, a: la.a, r: la.r, echo: 0.2 });
+      else if (ins.lead === 'brass') brass(lf, t + hum(), ld, { peak: lpk * 0.85, cutoff: tk.cut + 300, a: la.a, r: la.r, echo: 0.16 });
+      else if (ins.lead === 'harp') harp(lf, t + hum(), ld, { peak: lpk * 1.1, echo: 0.25 });
       else voice(lf, t + hum(), ld, { type: tk.leadWave, peak: lpk, cutoff: tk.cut + 500, a: la.a, d: la.d, s: la.s, r: la.r, echo: 0.3 });
     }
     // harmony counter-line — strings under a brass lead, horns under a flute lead
