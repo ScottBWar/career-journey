@@ -10,7 +10,14 @@
 //  synth, exactly as before. Toggle via Music.setSamples(false).
 // =====================================================================
 window.Sampler = (function () {
-  const BASE = 'https://gleitz.github.io/midi-js-Soundfonts/FluidR3_GM/';
+  // try several mirrors/formats and lock onto whichever the browser can actually reach
+  const BASES = [
+    'https://cdn.jsdelivr.net/gh/gleitz/midi-js-soundfonts@gh-pages/FluidR3_GM/',
+    'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/',
+    'https://cdn.jsdelivr.net/gh/paulrosen/midi-js-soundfonts@master/FluidR3_GM/',
+  ];
+  const FMTS = ['-ogg.js', '-mp3.js'];
+  let workingBase = null, workingFmt = null;
   // engine voice  ->  GM soundfont instrument (only the articulated parts that
   // benefit + stay short; long pads/percussion remain synth)
   const INSTR = { strings: 'string_ensemble_1', flute: 'flute', harp: 'orchestral_harp', cello: 'cello', pizz: 'pizzicato_strings', brass: 'french_horn' };
@@ -20,13 +27,18 @@ window.Sampler = (function () {
 
   function nameToMidi(n) { const m = /^([A-G][b#]?)(-?\d)$/.exec(n); if (!m) return null; const pc = PCS[m[1]]; if (pc == null) return null; return pc + (parseInt(m[2], 10) + 1) * 12; }
 
-  function loadScript(name) {
+  function tryUrl(url) {
     return new Promise(res => {
       window.MIDI = window.MIDI || {}; window.MIDI.Soundfont = window.MIDI.Soundfont || {};
-      const s = document.createElement('script'); s.src = BASE + name + '-ogg.js';
-      s.onload = () => res(true); s.onerror = () => res(false);
+      const s = document.createElement('script'); s.src = url;
+      s.onload = () => res(true); s.onerror = () => { s.remove(); res(false); };
       document.head.appendChild(s);
     });
+  }
+  async function loadScript(name) {
+    if (workingBase) return tryUrl(workingBase + name + workingFmt);   // reuse the mirror that already worked
+    for (const b of BASES) for (const f of FMTS) { if (await tryUrl(b + name + f)) { workingBase = b; workingFmt = f; try { console.info('[sampler] using ' + b + ' (' + f + ')'); } catch (e) {} return true; } }
+    return false;
   }
   async function decode(voice, name) {
     const sf = window.MIDI && window.MIDI.Soundfont && window.MIDI.Soundfont[name]; if (!sf) return;
