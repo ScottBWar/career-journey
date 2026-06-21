@@ -37,9 +37,9 @@ window.Data = (function () {
         { id: 's_hp1', name: 'Toughness', desc: '+30 Max HP', cost: 1, kind: 'stat', stat: { hp: 30 } },
         { id: 's_atk1', name: 'Heavy Swings', desc: '+5 Attack', cost: 1, req: 's_hp1', kind: 'stat', stat: { atk: 5 } },
         // ⟜ PATH: Warrior — pure, escalating swordplay
-        { id: 's_a1', branch: 'a', name: 'Braver', desc: 'PATH: Warrior — big single-target leap', cost: 1, req: 's_atk1', kind: 'ability', ability: ab('Braver', { mp: 12, min: 52, max: 70, target: 'enemy', fx: 'beam' }) },
+        { id: 's_a1', branch: 'a', name: 'Braver', desc: 'PATH: Warrior — big single-target leap', cost: 1, req: 's_atk1', kind: 'ability', ability: ab('Braver', { mp: 12, min: 52, max: 70, target: 'enemy', fx: 'beam', el: 'physical' }) },
         { id: 's_a2', branch: 'a', name: 'Berserk Edge', desc: '+16% Crit', cost: 2, req: 's_a1', kind: 'stat', stat: { crit: 0.16 } },
-        { id: 's_acap', branch: 'a', name: 'Omnislash', desc: 'Devastate all foes', cost: 3, req: 's_a2', kind: 'ability', ability: ab('Omnislash', { mp: 28, min: 46, max: 64, target: 'all', fx: 'beam' }) },
+        { id: 's_acap', branch: 'a', name: 'Omnislash', desc: 'Devastate all foes', cost: 3, req: 's_a2', kind: 'ability', ability: ab('Omnislash', { mp: 28, min: 46, max: 64, target: 'all', fx: 'beam', el: 'physical' }) },
         // ⟜ PATH: Spellblade — sword + time magic (Tidus-style)
         { id: 's_b1', branch: 'b', name: 'Hastega Edge', desc: 'PATH: Spellblade — Haste all allies', cost: 1, req: 's_atk1', kind: 'ability', ability: ab('Hastega Edge', { mp: 16, min: 0, max: 0, target: 'allparty', fx: 'beam', status: 'haste', turns: 4 }) },
         { id: 's_b2', branch: 'b', name: 'Delay Slash', desc: 'Thunder strike that Slows a foe', cost: 2, req: 's_b1', kind: 'ability', ability: ab('Delay Slash', { mp: 14, min: 30, max: 42, target: 'enemy', fx: 'beam', el: 'thunder', status: 'slow', turns: 3 }) },
@@ -655,7 +655,7 @@ window.Data = (function () {
   const LIMITS = {
     lydia:     { name: 'Say It Thrice',   target: 'all',      fx: 'beam',  el: 'dark',    min: 70, max: 96, flavor: 'says the name three times — the dead answer!' },
     pirate:    { name: 'Full Broadside',  target: 'all',      fx: 'fire',  el: 'fire',    min: 58, max: 82, flavor: 'unloads every cannon at once!' },
-    swordsman: { name: 'Omnislash',       target: 'all',      fx: 'beam',  el: 'thunder', min: 68, max: 92, flavor: 'becomes a blur of steel!' },
+    swordsman: { name: 'Omnislash',       target: 'all',      fx: 'beam',  el: 'physical', min: 68, max: 92, flavor: 'becomes a blur of steel!' },
     healer:    { name: "Ocean's Grace",   target: 'allparty', fx: 'heal',  heal: true, revive: true, min: 200, max: 200, flavor: 'calls the tide to mend all wounds!' },
     mage:      { name: 'Ultima',          target: 'all',      fx: 'beam',  el: 'dark',    min: 78, max: 108, flavor: 'unleashes forbidden magic!' },
     blader:    { name: 'Finishing Touch', target: 'all',      fx: 'beam',  el: 'thunder', min: 72, max: 98, flavor: 'cuts the very air!' },
