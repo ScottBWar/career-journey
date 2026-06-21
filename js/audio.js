@@ -94,6 +94,7 @@
   // lush string section: 3 detuned saws, slow bow attack, gentle vibrato, long release
   function strings(freq, time, dur, o = {}) {
     const { peak = 0.05, cutoff = 2600, dest = padBus, a = 0.18, r = 0.9, echo = 0 } = o;
+    if (window.Sampler && Sampler.play('strings', freq, time, dur, { peak: peak * 2.6, dest, a, r, loop: dur > 1.2 })) return;
     const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.5;
     f.frequency.setValueAtTime(cutoff * 0.8, time); f.frequency.linearRampToValueAtTime(cutoff, time + a + 0.3);
     const vib = ctx.createOscillator(); vib.frequency.value = 5.2; const vg = ctx.createGain(); vg.gain.value = freq * 0.006; vib.connect(vg);
