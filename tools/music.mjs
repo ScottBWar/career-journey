@@ -10,6 +10,7 @@ import vm from 'node:vm';
 const read = f => fs.readFileSync(new URL('../' + f, import.meta.url), 'utf8');
 
 const sandbox = { window: {}, Math, Object, Array, JSON, Date, setInterval: () => {}, setTimeout: () => {}, console };
+vm.runInNewContext(read('js/music-data.js'), sandbox);   // transcribed reference pieces
 vm.runInNewContext(read('js/audio.js'), sandbox);
 const Music = sandbox.window.Music;
 if (!Music || !Music._compose) { console.error('FATAL: Music._compose not exposed'); process.exit(1); }
