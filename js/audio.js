@@ -20,9 +20,9 @@
     master = ctx.createGain(); master.gain.value = muted ? 0 : 0.85;
     sfxGain = ctx.createGain(); sfxGain.gain.value = sfxVol; sfxGain.connect(master); // SFX → its own gain → master
     // reverb (convolution with a procedurally-generated impulse)
-    conv = ctx.createConvolver(); conv.buffer = makeImpulse(3.2, 2.5);
-    dry = ctx.createGain(); dry.gain.value = 0.86;
-    wet = ctx.createGain(); wet.gain.value = 0.24;          // concert-hall sheen, not a wash
+    conv = ctx.createConvolver(); conv.buffer = makeImpulse(1.8, 3.4);   // shorter, faster-decaying tail — clarity over wash
+    dry = ctx.createGain(); dry.gain.value = 0.92;
+    wet = ctx.createGain(); wet.gain.value = 0.11;          // a touch of room, not a swimming pool
     master.connect(comp);
     comp.connect(dry).connect(ctx.destination);
     comp.connect(conv).connect(wet).connect(ctx.destination);
@@ -35,8 +35,8 @@
     // tonal sub-bus (pads/keys/bass/lead) — ducked by the kick for that sidechain "pump"
     padBus = ctx.createGain(); padBus.gain.value = 1.0; padBus.connect(musicBus);
     // tape echo send (mainly the lead)
-    const delay = ctx.createDelay(1.0); delay.delayTime.value = 0.26; const fb = ctx.createGain(); fb.gain.value = 0.34;
-    delaySend = ctx.createGain(); delaySend.gain.value = 0.5; delaySend.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(musicBus);
+    const delay = ctx.createDelay(1.0); delay.delayTime.value = 0.26; const fb = ctx.createGain(); fb.gain.value = 0.17;   // fewer, quieter repeats — less smear
+    delaySend = ctx.createGain(); delaySend.gain.value = 0.26; delaySend.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(musicBus);
     if (window.Sampler) Sampler.init(ctx);   // load real instrument samples in the background; voices fall back to synth until ready
   }
   // sidechain duck — the kick momentarily pushes the tonal bus down, then it swells back
@@ -445,7 +445,7 @@
     });
     // continuous arpeggio — flowing broken-chord eighths, the pastoral bed (composed tracks)
     if (tk.arp) { const an = tk.arp[gstep % tk.arp.length]; if (an && !intro) {
-      const apk = (tk.arpPeak || 0.04) * vel();
+      const apk = (tk.arpPeak || 0.04) * vel() * 0.5;   // pull the running arpeggio back so it's a bed, not a wall
       if (ins.comp === 'pizz') pizz(midi(an), t + hum(), beat * 2, { peak: apk * 1.1 });
       else harp(midi(an), t + hum(), beat * (tk.arpLen || 2.0), { peak: apk, cutoff: tk.cut + 1600 });
     } }
@@ -463,7 +463,7 @@
     // lead — flute / brass / harp (loops on its own length)
     const note = tk.mel[gstep % tk.mel.length];
     if (note && !intro) {
-      const la = tk.leadADSR || { a: 0.04, d: 0.2, s: 0.5, r: 0.45 }, lf = midi(note), lpk = (tk.leadPeak || 0.08) * vel() * 1.5;
+      const la = tk.leadADSR || { a: 0.04, d: 0.2, s: 0.5, r: 0.45 }, lf = midi(note), lpk = (tk.leadPeak || 0.08) * vel() * 2.3;   // melody sits clearly on top
       const ld = beat * (tk.melDur ? (tk.melDur[gstep % tk.melDur.length] || 2) : (tk.leadDur || 2.0)); // honour the composed note length (sung phrasing)
       if (ins.lead === 'flute') flute(lf, t + hum(), ld, { peak: lpk, a: la.a, r: la.r, echo: 0.2 });
       else if (ins.lead === 'brass') brass(lf, t + hum(), ld, { peak: lpk * 0.85, cutoff: tk.cut + 300, a: la.a, r: la.r, echo: 0.16 });
