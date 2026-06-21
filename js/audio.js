@@ -283,28 +283,47 @@
     degs.forEach((d, b) => { const bn = clampNote(sdeg(mode, root, d) - 12, 33, 55); bass[b * STEPS] = bn; bass[b * STEPS + 8] = bn; });
     return bass;
   }
+  // intra-bar pitch motifs — degree offsets across the 8 eighth-slots of a bar.
+  // These give each bar a SHAPE (arpeggiate up, fill with steps, fall back) so the
+  // line actually moves and sings; strong beats then snap to chord tones for harmony.
+  const MOTIFS = [
+    [0, 2, 1, 2, 4, 2, 1, 0],
+    [0, 1, 2, 4, 2, 1, 0, -1],
+    [0, 2, 4, 2, 1, 2, 1, 0],
+    [0, -1, 0, 2, 4, 2, 1, 0],
+  ];
   function composeMelody(mode, root, degs, rnd, rhy) {
     rhy = rhy || RHY;
     const STEPS = 16, BARS = degs.length, mel = new Array(STEPS * BARS).fill(0), dur = new Array(STEPS * BARS).fill(0);
-    const lead = root + 12, arch = [0, 2, 4, 6, 6, 4, 2, 1];   // a sung arch — rises through the period, settles at the close
-    let pd = 2;  // previous melody degree (scale-degree space → always diatonic)
+    const lead = root + 12;
+    const CARCH = [0, 1, 2, 3, 3, 2, 1, 0];   // gentle 8-bar contour — the centre each bar's motif rides on
     const noteFor = d => clampNote(sdeg(mode, lead, d), 55, 86);
-    const chordTone = (rd, lift) => { let best = pd, bd = 1e9;   // nearest chord tone (voice-leading), octave-lifted on the arch peak
-      [rd, rd + 2, rd + 4, rd + 7].forEach(t => [-7, 0, 7].forEach(oc => { const c = t + oc + (lift ? 7 : 0); const k = Math.abs(c - pd); const cost = k + (k > 4 ? 22 : 0); if (cost < bd) { bd = cost; best = c; } }));
-      pd = best; return best;
+    // nearest chord-tone SCALE-DEGREE to a reference degree (voice-leading, octave-aware).
+    // All math is in scale-degree space so comparisons are apples-to-apples (the old bug
+    // compared a MIDI note against a scale degree, so the line just ramped/wandered).
+    const nearestCT = (chordDeg, ref) => {
+      let best = ref, bd = 1e9;
+      [chordDeg, chordDeg + 2, chordDeg + 4].forEach(t => [-14, -7, 0, 7, 14].forEach(oc => {
+        const c = t + oc, k = Math.abs(c - ref); if (k < bd) { bd = k; best = c; }
+      }));
+      return best;
     };
-    for (let b = 0; b < BARS; b++) { const d = degs[b], i0 = b * STEPS, lift = arch[b % arch.length] > 4, cell = rhy[Math.floor(rnd() * rhy.length)];
+    // reuse two pitch motifs A A B B and cycle the rhythm cells → phrases recur instead of wandering
+    const mA = MOTIFS[Math.floor(rnd() * MOTIFS.length)], mB = MOTIFS[Math.floor(rnd() * MOTIFS.length)];
+    for (let b = 0; b < BARS; b++) {
+      const d = degs[b], i0 = b * STEPS, motif = (b % 4 < 2) ? mA : mB, centre = CARCH[b % CARCH.length];
+      const cell = rhy[b % rhy.length];
       cell.forEach(([s, du], idx) => {
-        let deg;
-        if (idx === 0 || s === 8) deg = chordTone(d, lift);                          // strong beats land on chord tones
-        else { const tgt = sdeg(mode, lead, d + 2) + (lift ? 7 : 0); pd += (tgt > pd ? 1 : -1); deg = pd; }   // weak beats step toward one
+        const e = Math.min(7, Math.round(s / 2));        // which eighth-slot this note sits on
+        let deg = centre + motif[e];                     // contour note (diatonic passing/neighbour)
+        if (idx === 0 || s === 8) deg = nearestCT(d, deg);   // strong beats snap to a chord tone near the contour
         mel[i0 + s] = noteFor(deg); dur[i0 + s] = du;
       });
     }
-    // PERIOD cadences: antecedent (bar 3) ends OPEN on the dominant/2; consequent (last bar) RESOLVES to tonic, held
+    // PERIOD cadences: antecedent (bar 3) ends OPEN on 2/4; consequent (last bar) RESOLVES to tonic, held
     const lastOf = b => { for (let s = STEPS - 1; s >= 0; s--) if (mel[b * STEPS + s]) return b * STEPS + s; return b * STEPS; };
-    const a3 = lastOf(3); pd = rnd() < 0.5 ? 4 : 1; mel[a3] = noteFor(pd); dur[a3] = Math.max(dur[a3], 4);
-    const af = lastOf(BARS - 1); pd = 0; mel[af] = noteFor(0); dur[af] = Math.max(dur[af], 6);
+    const a3 = lastOf(3); mel[a3] = noteFor(nearestCT(degs[3], rnd() < 0.5 ? 2 : 4)); dur[a3] = Math.max(dur[a3], 4);
+    const af = lastOf(BARS - 1); mel[af] = noteFor(0); dur[af] = Math.max(dur[af], 6);
     return { mel, dur };
   }
   function compose(o) {
