@@ -222,7 +222,6 @@ window.Data = (function () {
   ];
 
   const ENEMIES = {
-    greeterguy:  { name: 'Greeter Guy',    model: 'greeterguy', hp: 500, xp: 90, gold: 60, baseY: 0, scale: 1, moves: [ { name: 'throws a clumsy punch', min: 4, max: 8 } ], drops: [] },
     sandling:    { name: 'Sandling',       model: 'sandling',  hp: 96,  xp: 30, gold: 20, baseY: 0,   moves: [ { name: 'gnashes from the sand', min: 13, max: 19 }, { name: 'spits grit', min: 11, max: 16 }, { name: 'drags you into a sink-pit', min: 14, max: 20, status: 'slow', turns: 2 } ], drops: [ { mat: 'brine', chance: 0.4 } ] },
     shade:       { name: 'Neither-Shade',   model: 'shade',     hp: 84,  xp: 30, gold: 20, baseY: 0.3, moves: [ { name: 'wails', min: 12, max: 18, all: true }, { name: 'reaches through you', min: 14, max: 20, status: 'weaken', turns: 2 } ], drops: [ { mat: 'goo', chance: 0.5 } ] },
     gravehand:   { name: 'Grave Hand',      model: 'gravehand', hp: 130, xp: 34, gold: 24, baseY: 0,   moves: [ { name: 'crushes', min: 15, max: 22 }, { name: 'drags you under', min: 12, max: 18, status: 'slow', turns: 2 }, { name: 'claws up from the grave', min: 17, max: 24, el: 'dark' } ], drops: [ { mat: 'shellfrag', chance: 0.4 } ] },
@@ -591,7 +590,6 @@ window.Data = (function () {
   const SHOP_ACCESSORIES = ['coral_bangle', 'seaglass_ring', 'tortoise_charm', 'tiger_fang', 'venom_ward', 'stormband', 'scholars_lens', 'bruisers_belt', 'aegis_pearl'];
   // enemy affinities: weak (x1.5), resist (x0.5), absorb (heals), nullify (x0)
   const AFFINITIES = {
-    greeterguy: { weak: ['water', 'thunder'] },
     sandling: { weak: ['water'], resist: ['earth'] },
     shade: { weak: ['holy', 'fire'], resist: ['dark', 'physical'] },
     gravehand: { weak: ['holy'], resist: ['physical'] },
@@ -793,8 +791,6 @@ window.Data = (function () {
           lines: ['Steel and seashells — finest on the isle!', 'Weapons, materia, the works. Have a look.'] },
         { name: 'Fisher Bex', color: '#3a8a6a', x: -4, z: 8,
           lines: ['Fish won\'t bite with monsters about.', 'Calm the seas and I\'ll cook you the catch of the year!'] },
-        { name: 'Net-Mender Coombe', color: '#5a8a9a', hair: '#caa030', x: -8, z: 6,
-          lines: ['You\'ll meet a big fellow on every shore — Greeter Guy, we call him.', 'Friendliest brute alive. Hits like a wet rope, but he can soak up a HUNDRED blows.', 'Don\'t waste your steel on him — douse him with WATER or jolt him with THUNDER and he folds quick.'] },
       ],
       exit: { x: 0, z: -12 },
     },

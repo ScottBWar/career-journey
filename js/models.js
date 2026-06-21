@@ -1225,14 +1225,8 @@ window.Models = (function () {
     } catch (e) {}
     return api;
   }
-  // Greeter Guy's single ~16.45s baked track (60fps), sliced into his three motions as
-  // FRACTIONS of the track. Real Cartwheel timings: Standing Idle 7.58s, jog in place
-  // 5.97s, Superhero Punch 2.87s (export order idle → jog → punch). Boundaries:
-  // idle 0–7.58s (0–0.461), jog 7.58–13.55s (0.461–0.824), punch 13.55–16.45s (0.824–1.0).
-  const GREETER_RANGES = { idle: [0.0, 0.461], jog: [0.461, 0.824], punch: [0.824, 1.0] };
-  function greeterguy() { return glbModel('greeterguy.glb', { height: 3.4, default: 'idle', ranges: GREETER_RANGES }); }
 
-  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane, omega, beetlejuice, sandling, shade: specter, gravehand, greeterguy, ruffy_duel: () => rival() };
+  const ENEMY_BUILDERS = { shark, crab, jelly, octo, gull, golem, kraken, selachoth, leviathan, angler, eel, urchin, bat, ghoul, wraith, vampire, drifter, cobra, scarab, genie, wyvern, skydragon, harpy, satyr, cyclops, minotaur, medusa, hydra, thething, forestgod, vogon, windmill, thingspawn, kodama, boarspirit, vogonclerk, sentry, mutton, windvane, omega, beetlejuice, sandling, shade: specter, gravehand, ruffy_duel: () => rival() };
 
   // ---------------- ALADDIN (street-rat ally) ----------------
   function aladdin(weaponKey) {

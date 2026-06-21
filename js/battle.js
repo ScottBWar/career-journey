@@ -20,7 +20,7 @@ window.Battle = (function () {
   const PSPD = { pirate: 11, lydia: 10, swordsman: 9, healer: 10, mage: 8, blader: 13, dragoon: 8, ruffy: 12, simon: 11, aladdin: 14, violca: 13, mac: 9, sane: 14, marvyn: 8, quijano: 9 };
   // enemies whose model is built facing +X (snout/beak/head along +x) rather than the usual +Z
   const FRONT_X = { shark: 1, octo: 1, eel: 1, leviathan: 1, angler: 1, gull: 1, kraken: 1, boarspirit: 1, mutton: 1 };
-  const ESPD = { greeterguy: 7, shark: 11, beetlejuice: 11, sandling: 9, shade: 11, gravehand: 6, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8, eel: 13, urchin: 6, bat: 15, ghoul: 7, wraith: 11, vampire: 12, drifter: 14, cobra: 12, scarab: 7, genie: 10, wyvern: 13, skydragon: 11, harpy: 15, satyr: 11, cyclops: 5, minotaur: 9, medusa: 11, hydra: 9, thething: 11, forestgod: 9, vogon: 6, windmill: 5, thingspawn: 8, kodama: 12, boarspirit: 11, vogonclerk: 6, sentry: 13, mutton: 8, windvane: 6, ruffy_duel: 12, selachoth_omega: 13, sentinel: 9, guardbot: 12 };
+  const ESPD = { shark: 11, beetlejuice: 11, sandling: 9, shade: 11, gravehand: 6, crab: 6, jelly: 7, octo: 9, gull: 14, golem: 5, kraken: 8, selachoth: 12, leviathan: 9, angler: 8, eel: 13, urchin: 6, bat: 15, ghoul: 7, wraith: 11, vampire: 12, drifter: 14, cobra: 12, scarab: 7, genie: 10, wyvern: 13, skydragon: 11, harpy: 15, satyr: 11, cyclops: 5, minotaur: 9, medusa: 11, hydra: 9, thething: 11, forestgod: 9, vogon: 6, windmill: 5, thingspawn: 8, kodama: 12, boarspirit: 11, vogonclerk: 6, sentry: 13, mutton: 8, windvane: 6, ruffy_duel: 12, selachoth_omega: 13, sentinel: 9, guardbot: 12 };
   const ELEMCOL = { fire: '#ff7b3a', water: '#5eead4', thunder: '#fde047', earth: '#c2a062', dark: '#b06aff', holy: '#fff0a0', physical: '#dfe7ef' };
   const fxKey = el => ({ fire: 'fire', water: 'water' })[el] || 'beam';
 
@@ -88,7 +88,7 @@ window.Battle = (function () {
       built.node.position.copyFrom(home); built.node._baseY = def.baseY;
       // most models are built facing +Z, but the horizontal sea-creatures/animals face +X —
       // rotate each so it actually faces the party (-X) instead of standing sideways.
-      // GLB enemies (Greeter Guy) ship facing the camera/back, so spin them 180° to front the party.
+      // GLB enemies (if any) ship facing the camera/back, so spin them 180° to front the party.
       built.node.rotation.y = built.glb ? (Math.PI - Math.PI / 2.2) : (FRONT_X[key] ? Math.PI : -Math.PI / 2.2);
       if (boss) built.node.scaling.setAll(def.scale || 1.3);
       seen[key] = (seen[key] || 0) + 1;
@@ -823,7 +823,7 @@ window.Battle = (function () {
     if (!e.alive || over) return; const targetsAlive = aliveParty(); if (!targetsAlive.length) return;
     if (e.rotate) { rotateWeakness(e); await wait(360); renderEnemies(false); }
     const move = chooseMove(e, targetsAlive); const home = e.home.clone(); e._busy = true; actionCam(-1, 0.6);
-    if (e.play && !move.heal) e.play('punch'); // GLB enemies (Greeter Guy) swing into their punch clip
+    if (e.play && !move.heal) e.play('punch'); // GLB enemies (if any) play their attack clip
     if (move.heal) { const h = Math.round(e.maxhp * 0.12); e.hp = Math.min(e.maxhp, e.hp + h); msg(`${e.name} ${move.name}!`); burst(worldOf(e.node, 0.6), '#6ee7b7', '#bbf7d0', 50, 5, -2); floatDamage(e.node, '+' + h, '#6ee7b7', 2.6); scalePunch(e.node, 1.08); renderEnemies(false); e._busy = false; await wait(500); return; }
     const boost = (hasSt(e, 'atkup') ? Data.STATUS.atkup.atk : 1) * ENEMY_DMG;
     const mkind = (move.el && move.el !== 'physical') ? 'mag' : 'phys';
