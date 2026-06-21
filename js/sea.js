@@ -7,6 +7,44 @@ window.Sea = (function () {
   let scene, cam, ship, engine, ocean, oceanBase;
   let isles = [], idlers = [], foes = [], paused = false, locked = false, nearTarget = null, t = 0, buoy = null, coveBuoy = null, camYaw = 0;
   let horror = null, horrorT = 0; // a rare, huge roaming deep-sea terror
+
+  // shaped landmasses on the chart — mirrors the on-island footprints so the map reads
+  // like a real world map (distinct silhouettes), not a field of identical green dots.
+  const SHAPES = { round: [1, 1], long: [1.45, 0.72], wide: [0.72, 1.45], oval: [1.25, 0.85], teardrop: [0.9, 1.3],
+    crescent: [1.1, 0.95], twin: [1.18, 0.86], star: [1, 1], clover: [1.04, 1.04], fin: [1.06, 0.98], horn: [1.22, 0.82], wedge: [1.18, 0.86], spiral: [1.08, 0.98] };
+  const RF = {
+    crescent: a => 1 - 0.30 * Math.pow(Math.max(0, Math.cos(a)), 2),
+    twin:     a => 0.85 + 0.20 * Math.abs(Math.cos(a)),
+    star:     a => 1 + 0.14 * Math.sin(a * 6),
+    clover:   a => 1 + 0.16 * Math.cos(a * 3),
+    fin:      a => 1 + 0.26 * Math.max(0, Math.sin(a)),
+    horn:     a => 1 + 0.20 * Math.sin(a * 2 + 0.8),
+    wedge:    a => 0.82 + 0.32 * ((Math.cos(a) + 1) / 2),
+    spiral:   a => 1 + 0.16 * Math.sin(a + Math.cos(a) * 1.4),
+  };
+  function shapeDisc(mesh, shp, yaw, rf, amp) {
+    mesh.rotation.x = Math.PI / 2; mesh.rotation.y = yaw; mesh.scaling.x = shp[0]; mesh.scaling.y = shp[1];
+    const pos = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+    for (let i = 0; i < pos.length; i += 3) { const a = Math.atan2(pos[i + 1], pos[i]); let f = 1 + Math.sin(a * 5) * amp + Math.sin(a * 11 + 1.3) * amp * 0.5; if (rf) f *= rf(a); pos[i] *= f; pos[i + 1] *= f; }
+    mesh.updateVerticesData(BABYLON.VertexBuffer.PositionKind, pos);
+  }
+  // draw one charted island: shaped land + beach, palms, and (for town isles) a little skyline
+  function chartIsland(key, idef, x, z, markerColor) {
+    const shp = SHAPES[idef.shape] || SHAPES.round, yaw = idef.shapeYaw || 0, rf = RF[idef.shape];
+    const landR = idef.town ? 11.5 : (idef.dungeon ? 7.5 : 9), beachR = landR + 2.2;
+    const land = MB.CreateDisc('isle', { radius: landR, tessellation: 48 }, scene); shapeDisc(land, shp, yaw, rf, 0.06); land.position.set(x, 0.05, z); land.material = M('isle', idef.ground);
+    const beach = MB.CreateDisc('beach', { radius: beachR, tessellation: 48 }, scene); shapeDisc(beach, shp, yaw, rf, 0.06); beach.position.set(x, 0.0, z); beach.material = M('beach', idef.sand);
+    const palmN = idef.town ? 5 : (idef.dungeon ? 2 : 3);
+    for (let i = 0; i < palmN; i++) { const a = Math.random() * 6.28, rr = Math.random() * landR * 0.6; const p = Models.palm(); p.node.position.set(x + Math.cos(a) * rr, 0.05, z + Math.sin(a) * rr); }
+    if (idef.town) { // a few rooftops so town isles read as larger, lived-in places
+      for (let i = 0; i < 3; i++) { const b = MB.CreateBox('twn', { width: 1.5, height: 1.4 + Math.random() * 1.6, depth: 1.5 }, scene); b.material = M('twn', i % 2 ? '#d8c39a' : '#bd8f66'); b.position.set(x + (Math.random() * 7 - 3.5), 0.8, z - (1 + Math.random() * 3.5));
+        const roof = MB.CreateCylinder('twnroof', { height: 0.9, diameterTop: 0, diameterBottom: 2.1, tessellation: 4 }, scene); roof.material = M('twnroof', '#a14b3a'); roof.parent = b; roof.position.y = 1.0; roof.rotation.y = Math.PI / 4; }
+    }
+    const dockOff = beachR + 0.6;
+    const mk = Models.portal(markerColor); mk.node.position.set(x, 0.1, z + dockOff); mk.node._baseY = 0.1; idlers.push(mk);
+    const sg = Models.sign(idef.name); sg.node.position.set(x, 0.05, z + landR * 0.5);
+    isles.push({ key, name: idef.name, pos: new V3(x, 0, z), dock: new V3(x, 0, z + dockOff), r: beachR + 3 });
+  }
   let ruffyShip = null;           // Ruffy's straw-hat ship — chases you down for a duel, then joins
   const SPEED = 11;
 
@@ -46,27 +84,14 @@ window.Sea = (function () {
     oceanBase = ocean.getVerticesData(BABYLON.VertexBuffer.PositionKind).slice();
 
     Data.SEA.islands.forEach(isle => {
-      const idef = Data.ISLANDS[isle.key];
-      const land = MB.CreateDisc('isle', { radius: 9, tessellation: 32 }, scene); land.rotation.x = Math.PI/2; land.position.set(isle.x, 0.05, isle.z); land.material = M('isle', idef.ground);
-      const beach = MB.CreateDisc('beach', { radius: 11, tessellation: 32 }, scene); beach.rotation.x = Math.PI/2; beach.position.set(isle.x, 0.0, isle.z); beach.material = M('beach', idef.sand);
-      // a couple of palms + a marker
-      for (let i = 0; i < 3; i++) { const p = Models.palm(); p.node.position.set(isle.x + (Math.random()*8-4), 0.05, isle.z + (Math.random()*8-4)); }
-      const mk = Models.portal(isle.key === 'spire' ? '#ff5e5e' : '#ffe066'); mk.node.position.set(isle.x, 0.1, isle.z + 7); mk.node._baseY = 0.1; idlers.push(mk);
-      const sg = Models.sign(idef.name); sg.node.position.set(isle.x, 0.05, isle.z + 5);
-      isles.push({ key: isle.key, name: idef.name, pos: new V3(isle.x, 0, isle.z), dock: new V3(isle.x, 0, isle.z + 7), r: 12 });
+      chartIsland(isle.key, Data.ISLANDS[isle.key], isle.x, isle.z, isle.key === 'spire' ? '#ff5e5e' : '#ffe066');
     });
 
     // secret cove — a hidden bottle until charted, then a landable isle
     const cv = Data.SEA.cove;
     if (cv) {
       if (Game.state.flags && Game.state.flags.coveFound) {
-        const cdef = Data.ISLANDS.cove;
-        const land = MB.CreateDisc('cisle', { radius: 9, tessellation: 32 }, scene); land.rotation.x = Math.PI/2; land.position.set(cv.x, 0.05, cv.z); land.material = M('cisle', cdef.ground);
-        const beach = MB.CreateDisc('cbeach', { radius: 11, tessellation: 32 }, scene); beach.rotation.x = Math.PI/2; beach.position.set(cv.x, 0.0, cv.z); beach.material = M('cbeach', cdef.sand);
-        for (let i = 0; i < 4; i++) { const p = Models.palm(); p.node.position.set(cv.x + (Math.random()*8-4), 0.05, cv.z + (Math.random()*8-4)); }
-        const mk = Models.portal('#ff9ec0'); mk.node.position.set(cv.x, 0.1, cv.z + 7); mk.node._baseY = 0.1; idlers.push(mk);
-        const sg = Models.sign(cdef.name); sg.node.position.set(cv.x, 0.05, cv.z + 5);
-        isles.push({ key: 'cove', name: cdef.name, pos: new V3(cv.x, 0, cv.z), dock: new V3(cv.x, 0, cv.z + 7), r: 12 });
+        chartIsland('cove', Data.ISLANDS.cove, cv.x, cv.z, '#ff9ec0');
       } else {
         const bot = Models.portal('#9be7ff'); bot.node.position.set(cv.x, 0.1, cv.z); bot.node._baseY = 0.1; idlers.push(bot);
         coveBuoy = new V3(cv.x, 0, cv.z);

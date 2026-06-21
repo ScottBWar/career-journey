@@ -61,6 +61,7 @@ global.Game = { engine:{getDeltaTime:()=>16, runRenderLoop(){}, resize(){}}, can
   enterTown(){}, toDungeon(){}, toSea(){}, openDating(){}, openShellHunt(){}, openColiseum(){}, CHAR_THEME:{} };
 
 load('js/render.js'); global.window.Render = window.Render; global.Render = window.Render; // exercise the real post-FX pipeline too
+load('js/sea.js'); const Sea = window.Sea;
 load('js/world.js'); const World = window.World;
 load('js/dungeon.js'); const Dungeon = window.Dungeon;
 load('js/battle.js'); const Battle = window.Battle;
@@ -69,6 +70,7 @@ load('js/coliseum.js'); const Coliseum = window.Coliseum;
 load('js/shipbattle.js'); const ShipBattle = window.ShipBattle;
 load('js/portraits.js'); const PT = window.Portraits;
 
+if (Sea && Sea.enter) { tryit('SEA map', () => Sea.enter()); state.flags = { coveFound: true }; tryit('SEA map (cove charted)', () => Sea.enter()); state.flags = {}; }
 for (const k of Object.keys(Data.ISLANDS)) tryit('ISLAND '+k, () => World.enter(k));
 for (const k of Object.keys(Data.DUNGEONS)) tryit('DUNGEON '+k, () => Dungeon.enter(k));
 for (const k of Object.keys(Data.ENEMIES)) tryit('ENEMY '+k, () => { if(!Models.enemy(k).node) throw new Error('no node'); });
