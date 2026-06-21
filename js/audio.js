@@ -264,8 +264,9 @@
   // a galloping driving bass — root pulse with octave kicks (the engine of battle urgency)
   function composeBassDrive(mode, root, degs) {
     const STEPS = 16, bass = new Array(STEPS * degs.length).fill(0);
-    degs.forEach((d, b) => { const r = clampNote(sdeg(mode, root, d) - 12, 33, 52), oc = clampNote(r + 12, 33, 57);
-      for (let e = 0; e < 8; e++) bass[b * STEPS + e * 2] = (e % 2 === 1) ? oc : r; });   // R oct R oct … pumping eighths
+    // steady root pulse on the four beats — driving but solid, not the weird octave-jump pump
+    degs.forEach((d, b) => { const r = clampNote(sdeg(mode, root, d) - 12, 33, 52);
+      bass[b * STEPS] = r; bass[b * STEPS + 4] = r; bass[b * STEPS + 8] = r; bass[b * STEPS + 12] = r; });
     return bass;
   }
   const STABS = [K, _, _, K, _, _, K, _, _, K, _, _, K, _, K, _];   // syncopated brass chord hits
@@ -443,11 +444,12 @@
       else if (ins.comp === 'pizz') pizz(f, t + hum(), beat, { peak: pk * 1.1 });
       else strings(f, t + hum(), beat * 0.8, { peak: pk * 0.6, cutoff: ct, a: 0.02, r: 0.18 });   // staccato
     });
-    // continuous arpeggio — flowing broken-chord eighths, the pastoral bed (composed tracks)
-    if (tk.arp) { const an = tk.arp[gstep % tk.arp.length]; if (an && !intro) {
-      const apk = (tk.arpPeak || 0.04) * vel() * 0.5;   // pull the running arpeggio back so it's a bed, not a wall
-      if (ins.comp === 'pizz') pizz(midi(an), t + hum(), beat * 2, { peak: apk * 1.1 });
-      else harp(midi(an), t + hum(), beat * (tk.arpLen || 2.0), { peak: apk, cutoff: tk.cut + 1600 });
+    // harmonic comp — NOT a running arpeggio (that read as "random notes"). A soft chord
+    // tone on the beats only, so it supports the melody instead of competing with it.
+    if (tk.arp && !intro && step % 4 === 0) { const an = tk.arp[gstep % tk.arp.length]; if (an) {
+      const apk = (tk.arpPeak || 0.04) * vel() * 0.6;
+      if (ins.comp === 'pizz') pizz(midi(an), t + hum(), beat * 2, { peak: apk });
+      else harp(midi(an), t + hum(), beat * 2, { peak: apk, cutoff: tk.cut + 1200 });
     } }
     // brass stabs (battle/boss)
     if (tk.stabs && tk.stabs[step]) chord.forEach(n => brass(midi(n), t + hum(), beat * 1.4, { peak: 0.05, cutoff: 1700, a: 0.03, r: 0.3 }));
