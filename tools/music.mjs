@@ -32,11 +32,11 @@ for (const mode of ['aeolian', 'dorian', 'ionian']) {
     // 2) period close: last sounded note resolves to tonic (root pitch-class)
     const last = [...tk.mel].reverse().find(x => x);
     if (((last - tk._root) % 12 + 12) % 12 !== 0) errs.push(`${tag}: consequent does not resolve to tonic (ended ${last})`);
-    // 3) antecedent (bar 3, degree-4 dominant) → open, not tonic; cell is the documented v
-    if (tk._degs[3] !== 4) warns.push(`${tag}: antecedent doesn't end on the dominant (deg ${tk._degs[3]})`);
-    // 4) lament bass: descending chord roots somewhere in the period
-    const roots = tk.bars.map(b => b[0]); let desc = 0; for (let i = 1; i < 4; i++) if (roots[i] < roots[i - 1]) desc++;
-    if (desc < 1) warns.push(`${tag}: antecedent bass not descending`);
+    // 3) continuous arpeggio present (the flowing pastoral layer)
+    if (!tk.arp || tk.arp.filter(x => x).length < 16) errs.push(`${tag}: missing/sparse arpeggio layer`);
+    // 4) LAMENT bass: chord roots trend downward across the period (more steps down than up)
+    const roots = tk.bars.map(b => b[0]); let down = 0, up = 0; for (let i = 1; i < roots.length; i++) { if (roots[i] < roots[i - 1]) down++; else if (roots[i] > roots[i - 1]) up++; }
+    if (down <= up) warns.push(`${tag}: bass not predominantly descending (${down}↓ ${up}↑)`);
     // 5) melodic smoothness: most intervals are steps/small leaps (voice-leading)
     let big = 0; for (let i = 1; i < mel.length; i++) if (Math.abs(mel[i] - mel[i - 1]) > 9) big++;
     if (big / mel.length > 0.18) warns.push(`${tag}: ${(big / mel.length * 100 | 0)}% large leaps (rough voice-leading)`);

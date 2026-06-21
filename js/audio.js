@@ -231,48 +231,68 @@
   function mulberry(seed) { let s = (seed >>> 0) || 1; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
   function sdeg(mode, root, d) { const sc = SCALES[mode] || SCALES.aeolian; return root + sc[((d % 7) + 7) % 7] + 12 * Math.floor(d / 7); }
   function clampNote(n, lo, hi) { lo = lo || 52; hi = hi || 86; while (n < lo) n += 12; while (n > hi) n -= 12; return n; }
-  // antecedent cells end 'open' on the dominant (degree 4); consequent cells resolve home to i (0)
-  const PROG_ANTE = { lament: [0, 6, 5, 4], vamp: [0, 5, 6, 4], rise: [0, 3, 5, 4] };  // lament = descending i–VII–VI–v
-  const PROG_CONS = { fall: [5, 6, 3, 0], plagal: [3, 4, 5, 0], turn: [5, 4, 3, 0] };
+  // PROGRESSIONS as descending bass lines (the passacaglia/lament — the engine of FF9 melancholy).
+  // Degrees walk DOWN the scale so the bass descends stepwise; the period resolves home to i (0).
+  const PROGS = [
+    [0, 6, 5, 4, 3, 2, 1, 0],   // full descending octave  (i VII VI v iv III II i)
+    [0, 0, 6, 6, 5, 5, 4, 0],   // slow lament, two beats a step, then home
+    [0, 6, 5, 4, 0, 6, 5, 0],   // descending tetrachord, twice
+    [0, 4, 5, 4, 3, 2, 1, 0],   // gentle dip then the long descent
+  ];
+  // melody RHYTHM cells (step, duration-in-16ths) — eighth pairs leaning into quarters, with pickups.
+  // This is what gives a SUNG, phrased line instead of a note every beat.
+  const RHY = [
+    [[0, 2], [2, 2], [4, 4], [8, 2], [10, 2], [12, 4]],   // e e q | e e q
+    [[0, 4], [4, 2], [6, 2], [8, 4], [12, 2], [14, 2]],   // q e e | q  e-e (pickup)
+    [[0, 2], [2, 2], [4, 2], [6, 2], [8, 4], [12, 4]],    // e e e e | q q
+    [[0, 4], [4, 4], [8, 2], [10, 2], [12, 2], [14, 2]],  // q q | e e e e
+    [[0, 6], [6, 2], [8, 4], [12, 2], [14, 2]],           // dotted-q . | q e e
+  ];
+  const ARP = [0, 1, 2, 1, 0, 1, 2, 1];   // broken-chord eighths: root–3rd–5th–3rd, ×2 a bar
+  // a CONTINUOUS arpeggio under everything — the flowing pastoral texture (their Track 2)
+  function composeArp(mode, root, degs) {
+    const STEPS = 16, arp = new Array(STEPS * degs.length).fill(0);
+    degs.forEach((d, b) => { const tones = [sdeg(mode, root, d), sdeg(mode, root, d + 2), sdeg(mode, root, d + 4)];
+      for (let e = 0; e < 8; e++) arp[b * STEPS + e * 2] = clampNote(tones[ARP[e]] + 12, 55, 84); });   // up an octave, A4..D6-ish
+    return arp;
+  }
   function composeMelody(mode, root, degs, rnd) {
-    const STEPS = 16, BARS = degs.length, mel = new Array(STEPS * BARS).fill(0);
-    const lead = root + 12, arch = [0, 2, 4, 5, 5, 4, 2, 1];   // a sung arch: rise through the period, settle at the close
-    // work entirely in scale-DEGREE space so every note is diatonic; convert to MIDI only at the end
-    let pd = 2;  // previous melody degree (relative to lead), start on the third
-    const noteFor = d => clampNote(sdeg(mode, lead, d));
-    const chordTone = (rd, lift) => {  // nearest chord tone to where we are (voice-leading), with an octave lift on the arch peak
-      let best = pd, bd = 1e9;
-      [rd, rd + 2, rd + 4, rd + 7].forEach(t => [-7, 0, 7].forEach(oc => { const cand = t + oc + (lift ? 7 : 0); const leap = Math.abs(cand - pd); const cost = leap + (leap > 4 ? 22 : 0); if (cost < bd) { bd = cost; best = cand; } }));
-      pd = best; return noteFor(best);
+    const STEPS = 16, BARS = degs.length, mel = new Array(STEPS * BARS).fill(0), dur = new Array(STEPS * BARS).fill(0);
+    const lead = root + 12, arch = [0, 2, 4, 6, 6, 4, 2, 1];   // a sung arch — rises through the period, settles at the close
+    let pd = 2;  // previous melody degree (scale-degree space → always diatonic)
+    const noteFor = d => clampNote(sdeg(mode, lead, d), 55, 86);
+    const chordTone = (rd, lift) => { let best = pd, bd = 1e9;   // nearest chord tone (voice-leading), octave-lifted on the arch peak
+      [rd, rd + 2, rd + 4, rd + 7].forEach(t => [-7, 0, 7].forEach(oc => { const c = t + oc + (lift ? 7 : 0); const k = Math.abs(c - pd); const cost = k + (k > 4 ? 22 : 0); if (cost < bd) { bd = cost; best = c; } }));
+      pd = best; return best;
     };
-    const stepTone = (dir) => { pd += dir; return noteFor(pd); };   // a diatonic neighbour — always in mode
-    for (let b = 0; b < BARS; b++) { const d = degs[b], i0 = b * STEPS, lift = arch[b % arch.length] > 3;
-      mel[i0 + 0] = chordTone(d, lift);
-      if (rnd() < 0.6) mel[i0 + 4] = stepTone(rnd() < 0.5 ? 1 : -1);
-      if (rnd() < 0.8) mel[i0 + 8] = chordTone(d, lift);
-      if (rnd() < 0.45) mel[i0 + 12] = stepTone(rnd() < 0.5 ? 1 : -1);
-      if (rnd() < 0.3) mel[i0 + 14] = chordTone(d, false);
+    for (let b = 0; b < BARS; b++) { const d = degs[b], i0 = b * STEPS, lift = arch[b % arch.length] > 4, cell = RHY[Math.floor(rnd() * RHY.length)];
+      cell.forEach(([s, du], idx) => {
+        let deg;
+        if (idx === 0 || s === 8) deg = chordTone(d, lift);                          // strong beats land on chord tones
+        else { const tgt = sdeg(mode, lead, d + 2) + (lift ? 7 : 0); pd += (tgt > pd ? 1 : -1); deg = pd; }   // weak beats step toward one
+        mel[i0 + s] = noteFor(deg); dur[i0 + s] = du;
+      });
     }
-    // PERIOD cadences: antecedent (bar 3) ends open (deg 5 or 2); consequent (last bar) resolves to tonic
-    for (let s = 3 * STEPS + 1; s < 4 * STEPS; s++) mel[s] = 0;
-    pd = rnd() < 0.5 ? 4 : 1; mel[3 * STEPS + 0] = noteFor(pd);
-    for (let s = (BARS - 1) * STEPS + 1; s < BARS * STEPS; s++) mel[s] = 0;
-    pd = 0; mel[(BARS - 1) * STEPS + 0] = noteFor(pd);
-    return mel;
+    // PERIOD cadences: antecedent (bar 3) ends OPEN on the dominant/2; consequent (last bar) RESOLVES to tonic, held
+    const lastOf = b => { for (let s = STEPS - 1; s >= 0; s--) if (mel[b * STEPS + s]) return b * STEPS + s; return b * STEPS; };
+    const a3 = lastOf(3); pd = rnd() < 0.5 ? 4 : 1; mel[a3] = noteFor(pd); dur[a3] = Math.max(dur[a3], 4);
+    const af = lastOf(BARS - 1); pd = 0; mel[af] = noteFor(0); dur[af] = Math.max(dur[af], 6);
+    return { mel, dur };
   }
   function compose(o) {
     o = o || {}; const mode = o.mode || 'aeolian', root = o.root || 57, rnd = mulberry(o.seed || 1);
-    const pick = a => a[Math.floor(rnd() * a.length)];
-    const degs = pick(Object.values(PROG_ANTE)).concat(pick(Object.values(PROG_CONS)));
+    const degs = (o.prog || PROGS[Math.floor(rnd() * PROGS.length)]).slice();
     const bars = degs.map(d => [sdeg(mode, root, d), sdeg(mode, root, d + 2), sdeg(mode, root, d + 4), sdeg(mode, root, d + 7)]);
     if (degs[3] === 4 && mode !== 'ionian') { bars[3] = bars[3].slice(); bars[3][1] += 1; }   // raise the leading tone at the cadence (v→V)
+    const m = composeMelody(mode, root, degs, rnd);
     return {
-      bpm: o.bpm || 84, drums: o.drums || 'triphop', swing: o.swing != null ? o.swing : 0.16, cut: o.cut || 2400, choir: !!o.choir,
+      bpm: o.bpm || 88, drums: o.drums || 'triphop', swing: o.swing != null ? o.swing : 0.06, cut: o.cut || 2400, choir: !!o.choir,
       comp: o.comp || 'harp', leadInst: o.leadInst || 'flute', bassInst: o.bassInst || 'cello',
-      bars, keys: [K, _, _, K, _, _, K, _, K, _, _, K, _, _, K, _], bassP: [0, _, _, _, _, _, _, 7, 0, _, _, _, _, _, _, _],
-      keyPeak: o.keyPeak || 0.05, bassPeak: o.bassPeak || 0.28, bassLen: o.bassLen || 3,
-      leadADSR: o.leadADSR || { a: 0.05, d: 0.25, s: 0.6, r: 0.7 }, leadDur: o.leadDur || 1.9, leadPeak: o.leadPeak || 0.1,
-      mel: composeMelody(mode, root, degs, rnd), harm: o.harm, _composed: true, _degs: degs, _mode: mode, _root: root,
+      bars,
+      arp: composeArp(mode, root, degs), arpPeak: o.arpPeak || 0.04, arpLen: o.arpLen || 2.0,   // the continuous flowing layer
+      bassP: [0, _, _, _, _, _, _, _, 0, _, _, _, _, _, _, _], bassPeak: o.bassPeak || 0.3, bassLen: o.bassLen || 6,   // half-note descending lament bass
+      leadADSR: o.leadADSR || { a: 0.04, d: 0.22, s: 0.65, r: 0.6 }, leadPeak: o.leadPeak || 0.11,
+      mel: m.mel, melDur: m.dur, harm: o.harm, _composed: true, _degs: degs, _mode: mode, _root: root,
     };
   }
 
@@ -502,6 +522,12 @@
       else if (ins.comp === 'pizz') pizz(f, t + hum(), beat, { peak: pk * 1.1 });
       else strings(f, t + hum(), beat * 0.8, { peak: pk * 0.6, cutoff: ct, a: 0.02, r: 0.18 });   // staccato
     });
+    // continuous arpeggio — flowing broken-chord eighths, the pastoral bed (composed tracks)
+    if (tk.arp) { const an = tk.arp[gstep % tk.arp.length]; if (an && !intro) {
+      const apk = (tk.arpPeak || 0.04) * vel();
+      if (ins.comp === 'pizz') pizz(midi(an), t + hum(), beat * 2, { peak: apk * 1.1 });
+      else harp(midi(an), t + hum(), beat * (tk.arpLen || 2.0), { peak: apk, cutoff: tk.cut + 1600 });
+    } }
     // brass stabs (battle/boss)
     if (tk.stabs && tk.stabs[step]) chord.forEach(n => brass(midi(n), t + hum(), beat * 1.4, { peak: 0.05, cutoff: 1700, a: 0.03, r: 0.3 }));
     // bass — pizzicato / cello, with a little sub weight underneath
@@ -515,7 +541,8 @@
     // lead — flute / brass / harp (loops on its own length)
     const note = tk.mel[gstep % tk.mel.length];
     if (note && !intro) {
-      const la = tk.leadADSR || { a: 0.04, d: 0.2, s: 0.5, r: 0.45 }, lf = midi(note), lpk = (tk.leadPeak || 0.08) * vel() * 1.5, ld = beat * (tk.leadDur || 2.0); // melody sits clearly on top
+      const la = tk.leadADSR || { a: 0.04, d: 0.2, s: 0.5, r: 0.45 }, lf = midi(note), lpk = (tk.leadPeak || 0.08) * vel() * 1.5;
+      const ld = beat * (tk.melDur ? (tk.melDur[gstep % tk.melDur.length] || 2) : (tk.leadDur || 2.0)); // honour the composed note length (sung phrasing)
       if (ins.lead === 'flute') flute(lf, t + hum(), ld, { peak: lpk, a: la.a, r: la.r, echo: 0.2 });
       else if (ins.lead === 'brass') brass(lf, t + hum(), ld, { peak: lpk * 0.85, cutoff: tk.cut + 300, a: la.a, r: la.r, echo: 0.16 });
       else if (ins.lead === 'harp') harp(lf, t + hum(), ld, { peak: lpk * 1.1, echo: 0.25 });
