@@ -357,37 +357,145 @@
     };
   }
 
+  // ============================================================
+  //  HAND-COMPOSED THEMES — real tunes, written note-for-note (NOT procedural
+  //  note-salad and NOT MIDI "transcriptions"). Each is a singable melody over a
+  //  curated modal progression with proper periods (antecedent ends open, the
+  //  consequent resolves home) and the harmonic-minor V only at the cadence.
+  //  Compact notation, expanded into the step sequencer the orchestral scheduler
+  //  already plays:  pitch+duration tokens, bars split by '|'.
+  //  pitch = NoteOctave (A4, F#5, Bb3) · rest = r · dur = t/e/q/h/w (+ '.' dots).
+  //    t=16th  e=8th  q=quarter  h=half  w=whole   (q.=dotted quarter = 6/16)
+  // ============================================================
+  const _PC = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };
+  const _DUR = { t: 1, e: 2, q: 4, h: 8, w: 16 };
+  const _QUAL = { '': [0, 4, 7], m: [0, 3, 7], dim: [0, 3, 6], aug: [0, 4, 8], '7': [0, 4, 7, 10], m7: [0, 3, 7, 10], maj7: [0, 4, 7, 11], sus: [0, 5, 7], '6': [0, 4, 7, 9], m6: [0, 3, 7, 9] };
+  function _n2m(p) { const m = /^([A-G][#b]?)(-?\d)$/.exec(p); return m ? _PC[m[1]] + (parseInt(m[2], 10) + 1) * 12 : null; }
+  function _durOf(code) { let v = _DUR[code[0]] || 2; for (let i = 1; i < code.length; i++) if (code[i] === '.') v += v / 2; return v; }
+  function parseMel(str, tr) {
+    tr = tr || 0; const barsArr = str.trim().split('|'); const BARS = barsArr.length, LEN = BARS * 16;
+    const mel = new Array(LEN).fill(0), dur = new Array(LEN).fill(0);
+    barsArr.forEach((bar, b) => { let pos = b * 16;
+      bar.trim().split(/\s+/).filter(Boolean).forEach(tok => {
+        const mt = /^(r|[A-G][#b]?-?\d)([tehqw]\.*)$/.exec(tok); if (!mt) return;
+        const du = _durOf(mt[2]);
+        if (mt[1] !== 'r') { const n = _n2m(mt[1]); if (n != null && pos < LEN) { mel[pos] = n + tr; dur[pos] = du; } }
+        pos += du;
+      });
+    });
+    return { mel, dur, bars: BARS };
+  }
+  // chord symbol -> a warm 4-note voicing in octave 4 (root, 3rd, 5th, octave) — matches the pad/arp format
+  function parseChord(sym, tr) {
+    const m = /^([A-G][#b]?)(.*)$/.exec(sym); if (!m) return [60, 64, 67, 72];
+    const root = _PC[m[1]] + 60 + (tr || 0); const ints = _QUAL[m[2]] || _QUAL[''];
+    const notes = ints.slice(0, 4).map(i => root + i); while (notes.length < 4) notes.push(notes[0] + 12);
+    return notes;
+  }
+  function parseChords(str, tr) { return str.trim().split('|').map(bar => parseChord(bar.trim().split(/\s+/)[0], tr)); }
+  // flowing broken-chord arpeggio derived from the progression (the pastoral inner voice)
+  function arpFrom(chords) { const a = new Array(chords.length * 16).fill(0);
+    chords.forEach((c, b) => { const tones = [c[0], c[1], c[2]]; for (let e = 0; e < 8; e++) a[b * 16 + e * 2] = clampNote(tones[ARP[e]] + 12, 55, 84); }); return a; }
+  // half-note lament bass (descends with the progression's roots), low & round
+  function bassFrom(chords) { const bass = new Array(chords.length * 16).fill(0);
+    chords.forEach((c, b) => { const bn = clampNote(c[0] - 24, 33, 55); bass[b * 16] = bn; bass[b * 16 + 8] = bn; }); return bass; }
+  // driving root-pulse bass on every beat (battle engine)
+  function bassDriveFrom(chords) { const bass = new Array(chords.length * 16).fill(0);
+    chords.forEach((c, b) => { const r = clampNote(c[0] - 24, 33, 52); bass[b * 16] = r; bass[b * 16 + 4] = r; bass[b * 16 + 8] = r; bass[b * 16 + 12] = r; }); return bass; }
+  // build a playable TRACK from a hand-composed theme
+  function handTrack(th, o) {
+    o = o || {}; const tr = o.transpose || 0; const battle = (o.feel || th.feel) === 'battle';
+    const m = parseMel(th.mel, tr); const chords = parseChords(th.chords, tr);
+    const tonicPc = ((parseChord(th.chords.trim().split('|')[0].trim().split(/\s+/)[0], tr)[0]) % 12 + 12) % 12;
+    return {
+      bpm: o.bpm || th.bpm, drums: o.drums || th.drums || (battle ? 'heavy' : 'triphop'),
+      swing: o.swing != null ? o.swing : (battle ? 0.04 : 0.06), cut: o.cut || th.cut || 2400,
+      choir: o.choir != null ? o.choir : (th.choir !== false),
+      comp: o.comp || th.comp || (battle ? 'pizz' : 'harp'), leadInst: o.leadInst || th.leadInst || (battle ? 'brass' : 'flute'),
+      bassInst: o.bassInst || th.bassInst || (battle ? 'pizz' : 'cello'),
+      bars: chords,
+      arp: arpFrom(chords), arpPeak: o.arpPeak || (battle ? 0.05 : 0.04), arpLen: o.arpLen || (battle ? 0.9 : 2.0),
+      bass: (battle ? bassDriveFrom : bassFrom)(chords), bassPeak: o.bassPeak || (battle ? 0.36 : 0.3), bassLen: o.bassLen || (battle ? 0.9 : 6),
+      stabs: battle ? STABS : undefined,
+      leadADSR: o.leadADSR || th.leadADSR || (battle ? { a: 0.008, d: 0.14, s: 0.4, r: 0.22 } : { a: 0.04, d: 0.22, s: 0.65, r: 0.6 }),
+      leadPeak: o.leadPeak || th.leadPeak || 0.11, once: o.once != null ? o.once : th.once,
+      mel: m.mel, melDur: m.dur, _composed: true, _hand: true, _root: tonicPc,
+    };
+  }
+
+  const THEMES = {
+    // ---- WORLD MAP: warm, hopeful pastoral. D Dorian (raised 6th = the bright wistful colour). ----
+    island: { bpm: 90, cut: 2500,
+      mel: "A4e D5e E5q F5e E5e D5q | E5q D5e C5e D5h | F5e A5e G5q F5e E5e D5q | E5h A4h | A4e D5e E5q F5e E5e D5q | E5q D5e C5e D5h | F5e G5e A5q G5e F5e E5q | D5w",
+      chords: "Dm | C | F | G | Dm | C | F | Dm" },
+    // ---- WORLD MAP (ocean): vast & melancholy, the lament tetrachord A-G-F-E. A Aeolian, V at the cadence. ----
+    sea: { bpm: 76, cut: 2200,
+      mel: "E5h A5h | G5q F5e E5e F5h | E5q D5e C5e D5h | C5h. rq | A4q C5e E5e A5h | G5q E5e D5e E5h | F5e E5e D5e C5e B4q A4q | A4w",
+      chords: "Am | G | F | E | Am | G | F | Am" },
+    // ---- TOWN: stately, bustling major (G Ionian). ----
+    town: { bpm: 100, cut: 2300,
+      mel: "D5e G5e B5q A5e G5e A5q | B5q A5e G5e D5h | E5e G5e C6q B5e A5e G5q | A5h D5h | D5e G5e B5q A5e G5e A5q | B5q A5e G5e D5h | E5e G5e C6q B5e A5e G5q | G5w",
+      chords: "G | D | C | D | G | Em | C | G" },
+    // ---- DUNGEON: dark, sparse, brooding. D Aeolian. ----
+    dungeon: { bpm: 68, cut: 1300,
+      mel: "A4h D5h | C5q Bb4e A4e A4h | F5h E5h | D5h. rq | A4h C5h | Bb4q A4e G4e A4h | D5q F5e E5e D5h | D5w",
+      chords: "Dm | Dm | Bb | A | Dm | Bb | C | Dm" },
+    // ---- INTRO / PRELUDE: soft, swelling, wistful. A Aeolian. ----
+    intro: { bpm: 80, cut: 1900,
+      mel: "A4h E5h | D5q C5e B4e C5h | E5h A5h | G5h. rq | A5q G5e E5e D5h | C5q B4e C5e E5h | D5q C5e B4e A4q rq | A4w",
+      chords: "Am | F | C | E | Am | F | Dm | Am" },
+    // ---- CUTSCENE: tender, slow, intimate. E Aeolian. ----
+    cutscene: { bpm: 64, cut: 1700,
+      mel: "B4h E5h | D5q C5e B4e C5h | G5h F#5h | E5h. rq | B4q E5e G5e F#5h | E5q D5e C5e B4h | A4q B4e C5e B4q rq | E5w",
+      chords: "Em | C | G | B | Em | C | Am | Em" },
+    // ---- DATE: sweet, romantic, lilting. E major. ----
+    date: { bpm: 88, cut: 2300,
+      mel: "B4e E5e G#5q F#5e E5e F#5q | G#5q F#5e E5e B4h | A5e G#5e F#5q E5e D#5e E5q | F#5h B4h | B4e E5e G#5q F#5e E5e F#5q | G#5q F#5e E5e B4h | A5e B5e C#6q B5e A5e G#5q | E5w",
+      chords: "E | B | A | B | E | C#m | A | E" },
+    // ---- VICTORY: triumphant fanfare (plays once). C major. ----
+    victory: { bpm: 120, cut: 2400, leadInst: 'brass',
+      mel: "G4e C5e E5e G5e C6q G5q | A5e G5e E5e C5e G5h | F5e A5e C6q B5e A5e G5q | C6w",
+      chords: "C | F | G | C" },
+    // ---- BATTLE: driving, urgent minor vamp. D Dorian, V at the turn. ----
+    battle: { bpm: 150, cut: 2200, feel: 'battle',
+      mel: "D5e D5e F5e D5e A5q F5q | E5e E5e G5e E5e D5h | F5e A5e D6e A5e G5q F5q | E5q D5e C5e D5h",
+      chords: "Dm | Dm | C | A" },
+    // ---- BOSS: heavy, menacing. D Aeolian, harmonic-minor V at the cadence. ----
+    boss: { bpm: 158, cut: 2000, feel: 'battle',
+      mel: "D5q F5e E5e D5q A4q | Bb4q A4e G4e A4h | D5q F5e A5e G5q F5q | E5q D5e C5e D5h",
+      chords: "Dm | Bb | C | A" },
+  };
+
   const TRACKS = {
-    // ===== EXPLORATION & STORY — the FF9 idiom: modal harmony, descending lament bass, flowing arpeggio =====
-    // island & sea are NOTE-FOR-NOTE transcriptions of the reference pieces (js/music-data.js):
-    island: transcribed('ff9_dorian', { drums: 'triphop', choir: true, leadInst: 'flute', bassInst: 'cello', cut: 2500 }),
-    sea: transcribed('ff9_demo', { drums: 'sparse', choir: true, leadInst: 'flute', bassInst: 'cello', cut: 2200, leadADSR: { a: 0.06, d: 0.3, s: 0.7, r: 0.9 } }),
-    town: compose({ seed: 5, mode: 'dorian', root: 60, bpm: 96, drums: 'triphop', choir: true, leadInst: 'flute', bassInst: 'pizz', cut: 2300 }),
-    dungeon: compose({ seed: 9, mode: 'aeolian', root: 50, bpm: 70, drums: 'soft', leadInst: 'flute', bassInst: 'cello', cut: 1300, bassLen: 7, arpPeak: 0.03 }),
-    intro: compose({ seed: 11, mode: 'aeolian', root: 57, bpm: 80, drums: 'sparse', choir: true, leadInst: 'flute', bassInst: 'cello', cut: 1900 }),
-    cutscene: compose({ seed: 4, mode: 'aeolian', root: 55, bpm: 66, drums: 'none', choir: true, leadInst: 'flute', bassInst: 'cello', cut: 1700, bassLen: 7, leadADSR: { a: 0.08, d: 0.3, s: 0.65, r: 1.1 } }),
-    adventure: compose({ seed: 6, mode: 'ionian', root: 60, bpm: 104, drums: 'triphop', choir: true, leadInst: 'flute', bassInst: 'pizz', cut: 2400 }),
-    victory: compose({ seed: 2, mode: 'ionian', root: 60, bpm: 116, drums: 'triphop', choir: true, leadInst: 'brass', bassInst: 'pizz', cut: 2400, once: true }),
-    date: compose({ seed: 8, mode: 'ionian', root: 64, bpm: 88, drums: 'soft', choir: true, leadInst: 'flute', bassInst: 'pizz', cut: 2300, leadPeak: 0.1 }),
-    paegina: compose({ seed: 13, mode: 'dorian', root: 59, bpm: 100, drums: 'triphop', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2100 }),
+    // ===== EXPLORATION & STORY — hand-composed themes through the orchestral engine =====
+    island: handTrack(THEMES.island, { drums: 'triphop', leadInst: 'flute', bassInst: 'cello' }),
+    sea: handTrack(THEMES.sea, { drums: 'sparse', leadInst: 'flute', bassInst: 'cello', leadADSR: { a: 0.06, d: 0.3, s: 0.7, r: 0.9 } }),
+    town: handTrack(THEMES.town, { drums: 'triphop', bassInst: 'pizz' }),
+    dungeon: handTrack(THEMES.dungeon, { drums: 'soft', bassInst: 'cello', bassLen: 7, arpPeak: 0.03 }),
+    intro: handTrack(THEMES.intro, { drums: 'sparse', bassInst: 'cello' }),
+    cutscene: handTrack(THEMES.cutscene, { drums: 'none', bassInst: 'cello', bassLen: 7, leadADSR: { a: 0.08, d: 0.3, s: 0.65, r: 1.1 } }),
+    adventure: handTrack(THEMES.island, { transpose: 2, bpm: 104, drums: 'triphop', bassInst: 'pizz' }),
+    victory: handTrack(THEMES.victory, { drums: 'triphop', bassInst: 'pizz', once: true }),
+    date: handTrack(THEMES.date, { drums: 'soft', bassInst: 'pizz', leadPeak: 0.1 }),
+    paegina: handTrack(THEMES.town, { transpose: -1, bpm: 96, leadInst: 'brass', comp: 'pizz' }),
 
-    // ===== BATTLE — same idiom, faster & driving: pizzicato arpeggio, brass calls, heavy drums =====
-    battle: compose({ seed: 21, mode: 'dorian', root: 55, bpm: 150, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2200, feel: 'battle' }),
-    battle2: compose({ seed: 22, mode: 'aeolian', root: 53, bpm: 156, drums: 'heavy', leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2100, feel: 'battle' }),
-    battle3: compose({ seed: 23, mode: 'dorian', root: 57, bpm: 144, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2200, feel: 'battle' }),
-    boss: compose({ seed: 31, mode: 'aeolian', root: 48, bpm: 158, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2000, feel: 'battle' }),
-    boss2: compose({ seed: 32, mode: 'aeolian', root: 50, bpm: 166, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2050, feel: 'battle' }),
-    assault: compose({ seed: 33, mode: 'aeolian', root: 51, bpm: 162, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2300, feel: 'battle' }),
+    // ===== BATTLE — driving variants of the two combat themes (transposed for variety) =====
+    battle: handTrack(THEMES.battle, { feel: 'battle', bpm: 150 }),
+    battle2: handTrack(THEMES.battle, { feel: 'battle', transpose: -2, bpm: 156 }),
+    battle3: handTrack(THEMES.battle, { feel: 'battle', transpose: -4, bpm: 144 }),
+    boss: handTrack(THEMES.boss, { feel: 'battle', bpm: 158 }),
+    boss2: handTrack(THEMES.boss, { feel: 'battle', transpose: 2, bpm: 166 }),
+    assault: handTrack(THEMES.boss, { feel: 'battle', transpose: -2, bpm: 162 }),
 
-    // ===== CHARACTER THEMES — one idiom, distinguished by mode / tempo / colour =====
-    theme_ruffy: compose({ seed: 41, mode: 'ionian', root: 62, bpm: 150, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2400, feel: 'battle' }),
-    theme_simon: compose({ seed: 42, mode: 'aeolian', root: 57, bpm: 138, drums: 'heavy', leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2100, feel: 'battle' }),
-    theme_aladdin: compose({ seed: 43, mode: 'dorian', root: 59, bpm: 104, drums: 'triphop', choir: true, leadInst: 'flute', bassInst: 'pizz', cut: 1900 }),
-    theme_violca: compose({ seed: 44, mode: 'dorian', root: 60, bpm: 100, drums: 'heavy', choir: true, leadInst: 'flute', bassInst: 'cello', cut: 2100, bassLen: 3 }),
-    theme_mac: compose({ seed: 45, mode: 'aeolian', root: 50, bpm: 64, drums: 'sparse', leadInst: 'flute', bassInst: 'cello', cut: 1000, bassLen: 7, arpPeak: 0.025 }),
-    theme_sane: compose({ seed: 46, mode: 'dorian', root: 55, bpm: 80, drums: 'soft', choir: true, leadInst: 'flute', bassInst: 'cello', cut: 1700, bassLen: 6 }),
-    theme_marvyn: compose({ seed: 47, mode: 'aeolian', root: 52, bpm: 90, drums: 'triphop', choir: true, leadInst: 'flute', bassInst: 'pizz', cut: 1800 }),
-    theme_quijano: compose({ seed: 48, mode: 'dorian', root: 57, bpm: 116, drums: 'heavy', leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2000, feel: 'battle' }),
+    // ===== CHARACTER THEMES — the same tunes recoloured (transpose / tempo / instrument) =====
+    theme_ruffy: handTrack(THEMES.victory, { feel: 'battle', bpm: 150, leadInst: 'brass' }),
+    theme_simon: handTrack(THEMES.boss, { feel: 'battle', transpose: -5, bpm: 138 }),
+    theme_aladdin: handTrack(THEMES.island, { transpose: -3, bpm: 104, bassInst: 'pizz' }),
+    theme_violca: handTrack(THEMES.town, { transpose: -2, bpm: 100, bassInst: 'cello' }),
+    theme_mac: handTrack(THEMES.cutscene, { transpose: -4, bpm: 64, cut: 1100, bassLen: 7 }),
+    theme_sane: handTrack(THEMES.date, { transpose: -2, bpm: 80, drums: 'soft' }),
+    theme_marvyn: handTrack(THEMES.intro, { transpose: 3, bpm: 90, drums: 'triphop', bassInst: 'pizz' }),
+    theme_quijano: handTrack(THEMES.battle, { feel: 'battle', transpose: 2, bpm: 116 }),
   };
   let battleIdx = 0; const BATTLE_THEMES = ['battle', 'battle2', 'battle3'];
   function battleTheme() { const tk = BATTLE_THEMES[battleIdx % BATTLE_THEMES.length]; battleIdx++; return tk; }
