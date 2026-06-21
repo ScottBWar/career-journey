@@ -84,32 +84,57 @@ window.Game = (function () {
 
   function toIsland(key, fromSea) {
     pauseCurrentExplore();
-    Game.state.location.place = 'island'; Game.state.location.island = key;
-    if (fromSea) { const s = Data.ISLANDS[key]; Game.state.location.x = s.spawn.x; Game.state.location.z = s.spawn.z; }
-    const sc = World.enter(key); Game.scene = sc; setMode('island'); Music.play('island'); Progress.save(Game.state);
+    areaWipe(() => {
+      Game.state.location.place = 'island'; Game.state.location.island = key;
+      if (fromSea) { const s = Data.ISLANDS[key]; Game.state.location.x = s.spawn.x; Game.state.location.z = s.spawn.z; }
+      const sc = World.enter(key); Game.scene = sc; setMode('island'); Music.play('island'); Progress.save(Game.state);
+    });
   }
   function resumeIsland() { const sc = World.getScene(); if (!sc) return; Game.dialogueOpen = false; Game.scene = sc; setMode('island'); World.resume(); World.focus(); Music.play('island'); }
-  function toSea() { if (Game.mode === 'island') World.pause(); Game.state.location.place = 'sea'; const sc = Sea.enter(); Game.scene = sc; setMode('sea'); Music.play('sea'); Progress.save(Game.state); }
+  function toSea() { if (Game.mode === 'island') World.pause(); areaWipe(() => { Game.state.location.place = 'sea'; const sc = Sea.enter(); Game.scene = sc; setMode('sea'); Music.play('sea'); Progress.save(Game.state); }); }
   function resumeSea() { const sc = Sea.getScene(); if (!sc) return; Game.dialogueOpen = false; Game.scene = sc; setMode('sea'); Sea.resume(); Sea.focus(); Music.play('sea'); }
-  function enterTown(key) { World.pause(); const sc = Town.enter(key); Game.scene = sc; setMode('town'); Progress.save(Game.state); }
-  function toDungeon(key) { World.pause(); const sc = Dungeon.enter(key); Game.scene = sc; setMode('dungeon'); Progress.save(Game.state); }
+  function enterTown(key) { World.pause(); areaWipe(() => { const sc = Town.enter(key); Game.scene = sc; setMode('town'); Progress.save(Game.state); }); }
+  function toDungeon(key) { World.pause(); areaWipe(() => { const sc = Dungeon.enter(key); Game.scene = sc; setMode('dungeon'); Progress.save(Game.state); }); }
   function resumeDungeon() { const sc = Dungeon.getScene(); if (!sc) return; Game.dialogueOpen = false; Game.scene = sc; setMode('dungeon'); Dungeon.resume(); Music.play('dungeon'); }
   Game.toIsland = toIsland; Game.resumeIsland = resumeIsland; Game.toSea = toSea; Game.resumeSea = resumeSea; Game.enterTown = enterTown; Game.toDungeon = toDungeon; Game.resumeDungeon = resumeDungeon;
 
-  // ---------- battle transition ----------
-  function transition(cb) {
-    const tEl = el('transition'); tEl.classList.remove('show'); void tEl.offsetWidth; tEl.classList.add('show');
-    if (window.SFX) SFX.play('confirm');
-    setTimeout(cb, 360);
-    setTimeout(() => tEl.classList.remove('show'), 800);
+  // ---------- transitions ----------
+  // a full-screen white pop — the classic JRPG "ping" as a fight begins
+  function flashWipe(strong) {
+    const d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;z-index:61;pointer-events:none;background:#fff;';
+    document.body.appendChild(d);
+    if (d.animate) d.animate([{ opacity: strong ? 0.96 : 0.72 }, { opacity: 0 }], { duration: strong ? 460 : 300, easing: 'ease-out' });
+    setTimeout(() => d.remove(), 480);
+  }
+  // battle entry — venetian-blind columns snap shut (cb fires while covered), flash, then snap open
+  function transition(cb, opts) {
+    opts = opts || {}; const boss = !!opts.boss;
+    const tEl = el('transition'); tEl.className = 'trans'; tEl.innerHTML = '';
+    flashWipe(boss); if (window.SFX) SFX.play(boss ? 'crit' : 'confirm');
+    const N = 12, coverMs = 300, bars = [];
+    for (let i = 0; i < N; i++) { const b = document.createElement('div'); b.className = 'tbar' + (boss ? ' boss' : ''); b.style.left = (i * 100 / N) + '%'; b.style.width = (100 / N + 0.4) + '%'; b.style.transformOrigin = (i % 2 ? 'top' : 'bottom'); tEl.appendChild(b); bars.push(b); }
+    let fired = false; const fire = () => { if (fired) return; fired = true; cb(); };
+    if (bars[0].animate) {
+      bars.forEach((b, i) => b.animate([{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: 230, delay: i * 14, easing: 'cubic-bezier(.55,0,.35,1)', fill: 'forwards' }));
+      setTimeout(fire, coverMs);
+      bars.forEach((b, i) => b.animate([{ transform: 'scaleY(1)' }, { transform: 'scaleY(0)' }], { duration: 300, delay: coverMs + 150 + (N - 1 - i) * 14, easing: 'cubic-bezier(.5,0,.2,1)', fill: 'forwards' }));
+      setTimeout(() => { tEl.className = ''; tEl.innerHTML = ''; }, coverMs + 150 + N * 14 + 340);
+    } else { tEl.classList.add('show'); setTimeout(fire, 360); setTimeout(() => { tEl.className = ''; tEl.innerHTML = ''; }, 800); }
   }
   Game.transition = transition;
+  // area change — a quick dark dip; cb swaps the scene while the screen is covered
+  function areaWipe(cb) {
+    const tEl = el('transition'); tEl.className = ''; void tEl.offsetWidth; tEl.className = 'fade'; tEl.innerHTML = '';
+    let fired = false; const fire = () => { if (fired) return; fired = true; cb && cb(); };
+    setTimeout(fire, 210); setTimeout(() => { tEl.className = ''; }, 560);
+  }
+  Game.areaWipe = areaWipe;
 
   // ---------- battle bridge ----------
   Game.musicForReturn = () => (Game.mode === 'sea' || Game.mode === 'shipbattle') ? 'sea' : Game.mode === 'town' ? 'town' : Game.mode === 'dungeon' ? 'dungeon' : 'island';
   Game.startBattle = function (keys, opts, onEnd) {
     Music.play((opts && opts.music) || (opts && opts.boss ? (Music.bossTheme ? Music.bossTheme() : 'boss') : (Music.battleTheme ? Music.battleTheme() : 'battle')));
-    transition(() => { setMode('battle'); const s = Battle.build(keys, opts, onEnd); Game.scene = s; setTimeout(() => { if (Game.scene === s) Battle.startLoop(); }, 350); });
+    transition(() => { setMode('battle'); const s = Battle.build(keys, opts, onEnd); Game.scene = s; setTimeout(() => { if (Game.scene === s) Battle.startLoop(); }, 350); }, { boss: !!(opts && opts.boss) });
   };
   Game.startShipBattle = function (type, onEnd) {
     Music.play('battle');

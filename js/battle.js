@@ -973,6 +973,8 @@ window.Battle = (function () {
     cineActive = true; if (window.SFX) SFX.play('levelup');
     const alive = party.filter(p => p.alive); if (!alive.length) { await wait(400); return; }
     const cen = alive.reduce((a, p) => a.add(p.node.getAbsolutePosition()), new V3(0, 0, 0)).scale(1 / alive.length).add(new V3(0, 1.6, 0));
+    flashScreen('rgba(255,226,150,0.34)'); burst(cen, '#ffe9a8', '#ffffff', 90, 6, -2);   // golden victory flourish
+    alive.forEach(p => burst(worldOf(p.node, 1.6), '#fff3c4', '#ffd866', 26, 4, -2.5));
     const oRad = camera.radius, oTgt = camera.target.clone();
     tween(k => { camera.radius = oRad + (11 - oRad) * k; camera.setTarget(V3.Lerp(oTgt, cen, k)); }, 360);
     await Promise.all(alive.map(p => victoryAnim(p)));

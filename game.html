@@ -546,6 +546,14 @@
 
     /* battle transition */
     #transition { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0; }
+    #transition.trans { opacity: 1; background: transparent; }
+    /* battle "blinds" — vertical columns snap shut to cover the swap, then snap open into the fight */
+    #transition .tbar { position: absolute; top: 0; height: 100%; transform: scaleY(0); will-change: transform; background: linear-gradient(180deg, #1a1030, #06040c); box-shadow: 0 0 16px rgba(0,0,0,0.6); }
+    #transition .tbar.boss { background: linear-gradient(180deg, #3a0712, #0a0206); }
+    /* area change — a quick dark dip */
+    #transition.fade { opacity: 1; animation: areaFade 0.54s ease forwards; background: #0a0a18; }
+    @keyframes areaFade { 0% { opacity: 0; } 32% { opacity: 1; } 68% { opacity: 1; } 100% { opacity: 0; } }
+    /* legacy iris fallback (no Web Animations) */
     #transition.show { animation: battleWipe 0.8s ease forwards; }
     @keyframes battleWipe {
       0% { opacity: 0; clip-path: circle(0% at 50% 50%); background: #0a0a18; }
