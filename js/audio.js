@@ -20,9 +20,9 @@
     master = ctx.createGain(); master.gain.value = muted ? 0 : 0.85;
     sfxGain = ctx.createGain(); sfxGain.gain.value = sfxVol; sfxGain.connect(master); // SFX → its own gain → master
     // reverb (convolution with a procedurally-generated impulse)
-    conv = ctx.createConvolver(); conv.buffer = makeImpulse(1.8, 3.4);   // shorter, faster-decaying tail — clarity over wash
-    dry = ctx.createGain(); dry.gain.value = 0.92;
-    wet = ctx.createGain(); wet.gain.value = 0.11;          // a touch of room, not a swimming pool
+    conv = ctx.createConvolver(); conv.buffer = makeImpulse(2.2, 3.0);   // warm concert-hall tail — lush but still clear
+    dry = ctx.createGain(); dry.gain.value = 0.9;
+    wet = ctx.createGain(); wet.gain.value = 0.15;          // more room — orchestral bloom, not a swimming pool
     master.connect(comp);
     comp.connect(dry).connect(ctx.destination);
     comp.connect(conv).connect(wet).connect(ctx.destination);
@@ -288,10 +288,10 @@
   // These give each bar a SHAPE (arpeggiate up, fill with steps, fall back) so the
   // line actually moves and sings; strong beats then snap to chord tones for harmony.
   const MOTIFS = [
-    [0, 2, 1, 2, 4, 2, 1, 0],
-    [0, 1, 2, 4, 2, 1, 0, -1],
-    [0, 2, 4, 2, 1, 2, 1, 0],
-    [0, -1, 0, 2, 4, 2, 1, 0],
+    [0, 2, 4, 3, 2, 1, 0, 0],    // arch up to the peak, then a sighing stepwise fall
+    [0, 4, 3, 2, 1, 2, 1, 0],    // leap up, sigh down — the Uematsu signature gesture
+    [0, 1, 2, 4, 3, 2, 1, 0],    // gentle climb to a peak, settle home
+    [0, -1, 0, 2, 4, 3, 2, 0],   // dip, rise to the peak, fall back home
   ];
   function composeMelody(mode, root, degs, rnd, rhy) {
     rhy = rhy || RHY;
@@ -432,9 +432,9 @@
     const ins = tk._ins || (tk._ins = inst(tk));
     const intro = bar === 0 && !tk.once;                            // first bar = swelling intro (lighter); fanfares hit at once
     // sustained string-section bed — sits UNDER the melody (kept low so it never muds)
-    if (step === 0) chord.forEach(n => strings(midi(n - 12), time, beat * STEPS, { peak: 0.02, cutoff: tk.cut + 400, a: intro ? 1.1 : 0.6, r: 1.4 }));
+    if (step === 0) chord.forEach(n => strings(midi(n - 12), time, beat * STEPS, { peak: 0.028, cutoff: tk.cut + 400, a: intro ? 1.1 : 0.6, r: 1.6 }));
     // high strings / choir shimmer an octave up — a faint halo
-    if (tk.choir && step === 0) chord.forEach(n => strings(midi(n + 12), time, beat * STEPS, { peak: 0.012, cutoff: 3200, a: intro ? 1.3 : 0.9, r: 1.6 }));
+    if (tk.choir && step === 0) chord.forEach(n => strings(midi(n + 12), time, beat * STEPS, { peak: 0.016, cutoff: 3200, a: intro ? 1.3 : 0.9, r: 1.8 }));
     const hum = () => (Math.random() - 0.5) * 0.014;   // micro-timing so it's not robotic
     const vel = () => 0.82 + Math.random() * 0.36;      // velocity variation
     // comping — harp arpeggio (rolled) / pizzicato / staccato strings
@@ -444,12 +444,12 @@
       else if (ins.comp === 'pizz') pizz(f, t + hum(), beat, { peak: pk * 1.1 });
       else strings(f, t + hum(), beat * 0.8, { peak: pk * 0.6, cutoff: ct, a: 0.02, r: 0.18 });   // staccato
     });
-    // harmonic comp — NOT a running arpeggio (that read as "random notes"). A soft chord
-    // tone on the beats only, so it supports the melody instead of competing with it.
-    if (tk.arp && !intro && step % 4 === 0) { const an = tk.arp[gstep % tk.arp.length]; if (an) {
-      const apk = (tk.arpPeak || 0.04) * vel() * 0.6;
-      if (ins.comp === 'pizz') pizz(midi(an), t + hum(), beat * 2, { peak: apk });
-      else harp(midi(an), t + hum(), beat * 2, { peak: apk, cutoff: tk.cut + 1200 });
+    // flowing arpeggio — the continuous broken-chord inner voice (FF9's pastoral motion):
+    // gentle eighth-notes rolling UNDER the melody as a bed, kept quiet so it never competes.
+    if (tk.arp && !intro && step % 2 === 0) { const an = tk.arp[gstep % tk.arp.length]; if (an) {
+      const apk = (tk.arpPeak || 0.04) * vel() * 0.5;
+      if (ins.comp === 'pizz') pizz(midi(an), t + hum(), beat * 1.2, { peak: apk });
+      else harp(midi(an), t + hum(), beat * 1.6, { peak: apk * 0.95, cutoff: tk.cut + 1200, echo: 0.12 });
     } }
     // brass stabs (battle/boss)
     if (tk.stabs && tk.stabs[step]) chord.forEach(n => brass(midi(n), t + hum(), beat * 1.4, { peak: 0.05, cutoff: 1700, a: 0.03, r: 0.3 }));
