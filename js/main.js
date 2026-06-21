@@ -433,7 +433,7 @@ window.Game = (function () {
     const s = Game.state.settings || (Game.state.settings = { music: 0.85, sfx: 1.0, battleSpeed: 1, difficulty: 'normal' });
     const pct = v => Math.round(v * 100);
     const speeds = [['0.5×', 0.5], ['1×', 1], ['1.5×', 1.5], ['2×', 2]];
-    const diffs = [['Easy', 'easy'], ['Normal', 'normal'], ['Hard', 'hard']];
+    const diffs = [['Easy', 'easy'], ['Normal', 'normal'], ['Hard', 'hard'], ['Brutal', 'brutal']];
     el('optionsBody').innerHTML = `<div class="scr-head"><h2>⚙️ Options</h2><button class="pill ghost small" id="optClose">Back</button></div>
       <div class="opt-row"><label>🎵 Music<span id="optMusicVal">${pct(s.music)}%</span></label><input type="range" id="optMusic" min="0" max="100" value="${pct(s.music)}"></div>
       <div class="opt-row"><label>🔊 Sound FX<span id="optSfxVal">${pct(s.sfx)}%</span></label><input type="range" id="optSfx" min="0" max="100" value="${pct(s.sfx)}"></div>

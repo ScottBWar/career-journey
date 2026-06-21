@@ -38,7 +38,8 @@ window.Battle = (function () {
     engine = Game.engine; canvas = Game.canvas; onEndCb = onEnd; over = false; t = 0;
     const S = (Game.state && Game.state.settings) || {};
     SPEED = S.battleSpeed || 1;
-    const DIFF = { easy: [0.78, 0.7], normal: [1, 1], hard: [1.35, 1.3] }[S.difficulty || 'normal'] || [1, 1];
+    // tuned with tools/sim.mjs — fight length (enemy HP) is the main engagement lever
+    const DIFF = { easy: [1.0, 0.8], normal: [1.5, 1.2], hard: [2.4, 1.8], brutal: [3.4, 2.8] }[S.difficulty || 'normal'] || [1.5, 1.2];
     ENEMY_HP = DIFF[0]; ENEMY_DMG = DIFF[1];
     party = []; enemies = []; activeMember = null;
 
@@ -739,16 +740,26 @@ window.Battle = (function () {
     if (ei) floatDamage(e.node, ei.i + ' shift', hex, 3.0);
   }
   // ----- enemy AI -----
+  // pick a move tactically: heal when hurt, favour AoE vs a grouped party, value status & big hits
+  function chooseMove(e, allies) {
+    const moves = e.moves; if (!moves || moves.length <= 1) return moves ? moves[0] : { name: 'attacks', min: 8, max: 12 };
+    if (e.hp < e.maxhp * 0.35) { const h = moves.find(mv => mv.heal); if (h && Math.random() < 0.6) return h; }
+    const dmg = moves.filter(mv => !mv.heal); if (!dmg.length) return moves[0];
+    const scored = dmg.map(mv => { let s = (mv.min + mv.max) / 2; if (mv.all) s *= Math.min(allies.length, 3) * 0.55; if (mv.status) s *= 1.25; return { mv, s: s * (0.7 + Math.random() * 0.6) }; });
+    scored.sort((a, b) => b.s - a.s); return scored[0].mv;
+  }
+  // focus-fire: usually the lowest-HP ally (press the advantage), sometimes spread
+  function chooseTarget(allies) { return Math.random() < 0.7 ? allies.slice().sort((a, b) => a.hp / a.maxhp - b.hp / b.maxhp)[0] : allies[rnd(0, allies.length - 1)]; }
   async function enemyAct(e) {
     if (!e.alive || over) return; const targetsAlive = aliveParty(); if (!targetsAlive.length) return;
     if (e.rotate) { rotateWeakness(e); await wait(360); renderEnemies(false); }
-    const move = e.moves[rnd(0, e.moves.length - 1)]; const home = e.home.clone(); e._busy = true; actionCam(-1, 0.6);
+    const move = chooseMove(e, targetsAlive); const home = e.home.clone(); e._busy = true; actionCam(-1, 0.6);
     if (e.play && !move.heal) e.play('punch'); // GLB enemies (Greeter Guy) swing into their punch clip
     if (move.heal) { const h = Math.round(e.maxhp * 0.12); e.hp = Math.min(e.maxhp, e.hp + h); msg(`${e.name} ${move.name}!`); burst(worldOf(e.node, 0.6), '#6ee7b7', '#bbf7d0', 50, 5, -2); floatDamage(e.node, '+' + h, '#6ee7b7', 2.6); scalePunch(e.node, 1.08); renderEnemies(false); e._busy = false; await wait(500); return; }
     const boost = (hasSt(e, 'atkup') ? Data.STATUS.atkup.atk : 1) * ENEMY_DMG;
     const mkind = (move.el && move.el !== 'physical') ? 'mag' : 'phys';
     if (move.all) { msg(`${e.name} ${move.name}!`); await moveTo(e.node, home.add(new V3(-1.2,0.4,0)), 220); for (const p of targetsAlive) { let dmg = Math.round(rnd(move.min, move.max) * boost); if (p._defend) dmg = Math.round(dmg*0.5); applyToMember(p, dmg, mkind); if (move.status) inflict(p, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); } await wait(200); await moveTo(e.node, home, 320); }
-    else { const target = targetsAlive[rnd(0, targetsAlive.length - 1)]; msg(`${e.name} ${move.name} at ${target.name}!`); const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY; await moveTo(e.node, dest, 240); let dmg = Math.round(rnd(move.min, move.max) * boost); if (target._defend) dmg = Math.round(dmg*0.5); applyToMember(target, dmg, mkind); if (move.status) inflict(target, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); await wait(160); await moveTo(e.node, home, 340); }
+    else { const target = chooseTarget(targetsAlive); msg(`${e.name} ${move.name} at ${target.name}!`); const dest = home.add(target.home.subtract(home).scale(0.6)); dest.y = e.baseY; await moveTo(e.node, dest, 240); let dmg = Math.round(rnd(move.min, move.max) * boost); if (target._defend) dmg = Math.round(dmg*0.5); applyToMember(target, dmg, mkind); if (move.status) inflict(target, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); await wait(160); await moveTo(e.node, home, 340); }
     e.node.position.copyFrom(home); if (e.play) e.play('idle'); e._busy = false; await wait(200);
   }
   function applyToMember(p, dmg, kind) {

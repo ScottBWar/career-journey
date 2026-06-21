@@ -128,13 +128,22 @@ function partyTurn(m, party, foes) {
   let dmg = rnd(m.fight.min, m.fight.max); if (Math.random() < (m.fight.crit || 0)) dmg = Math.round(dmg * 1.8);
   hurtEnemy(target, dmg, m.fight.el || 'physical', 'phys'); m.limit = Math.min(100, m.limit + 12);
 }
+// mirror battle.js chooseMove / chooseTarget
+function chooseMove(e, allies) {
+  const moves = e.moves; if (!moves || moves.length <= 1) return moves ? moves[0] : { min: 8, max: 12 };
+  if (e.hp < e.maxhp * 0.35) { const h = moves.find(mv => mv.heal); if (h && Math.random() < 0.6) return h; }
+  const dmg = moves.filter(mv => !mv.heal); if (!dmg.length) return moves[0];
+  const scored = dmg.map(mv => { let s = (mv.min + mv.max) / 2; if (mv.all) s *= Math.min(allies.length, 3) * 0.55; if (mv.status) s *= 1.25; return { mv, s: s * (0.7 + Math.random() * 0.6) }; });
+  scored.sort((a, b) => b.s - a.s); return scored[0].mv;
+}
+function chooseTarget(allies) { return Math.random() < 0.7 ? allies.slice().sort((a, b) => a.hp / a.maxhp - b.hp / b.maxhp)[0] : allies[rnd(0, allies.length - 1)]; }
 function enemyTurn(e, party) {
   const alive = party.filter(p => p.alive); if (!alive.length) return;
-  const move = e.moves[rnd(0, e.moves.length - 1)];
+  const move = chooseMove(e, alive);
   if (move.heal) { e.hp = Math.min(e.maxhp, e.hp + Math.round(e.maxhp * 0.12)); return; }
   const boost = (hasSt(e, 'atkup') ? 1.3 : 1) * e.edmg;
   const kind = (move.el && move.el !== 'physical') ? 'mag' : 'phys';
-  const victims = move.all ? alive : [alive[rnd(0, alive.length - 1)]];
+  const victims = move.all ? alive : [chooseTarget(alive)];
   victims.forEach(p => { hurtMember(p, Math.round(rnd(move.min, move.max) * boost), kind); if (move.status && p.alive) inflict(p, Array.isArray(move.status) ? move.status[0] : move.status, move.turns); });
 }
 
@@ -202,16 +211,16 @@ console.log('');
 
 // ---- difficulty calibration: sweep (HP,DMG) multipliers to find a real challenge curve ----
 // goal for a good Hard: win ~85-95%, party HP left ~30-55%. Brutal: win ~70-85%, HP ~15-35%.
-const combos = [[1, 1, 'normal(now)'], [1.35, 1.3, 'hard(now)'], [1.7, 1.7, '—'], [2.1, 2.2, '—'], [2.6, 2.8, '—'], [3.2, 3.4, '—']];
+const combos = [[1, 1, 'OLD'], [1.0, 0.85, 'easy'], [1.5, 1.25, 'normal'], [2.4, 1.9, 'hard'], [3.4, 3.0, 'brutal']];
 const sampleBosses = ['kraken', 'medusa', 'leviathan', 'skydragon', 'hydra', 'drifter'];
 const sampleReg = ['shark', 'golem', 'wraith', 'cyclops'];
-console.log('— Difficulty calibration (avg over sample bosses solo + regular 3-packs, at intended level) —');
-console.log(pad('HPx', 6), pad('DMGx', 6), pad('label', 12), pad('bossWin', 8), pad('bossHP', 8), pad('regWin', 8), pad('regHP', 8));
+console.log('— Difficulty calibration (avg over sample bosses solo + regular 3-packs, at intended level; rnds = fight length) —');
+console.log(pad('HPx', 6), pad('DMGx', 6), pad('tier', 8), pad('bossWin', 8), pad('bossHP', 8), pad('bRnds', 7), pad('regWin', 8), pad('regHP', 8), pad('rRnds', 7));
 for (const [hp, dmg, label] of combos) {
-  let bw = 0, bh = 0, rw = 0, rh = 0;
-  for (const k of sampleBosses) { const L = lvlBoss(D.ENEMIES[k].xp); const r = trials(partyAt(L), () => [makeEnemy(k, hp, dmg)], 120); bw += r.winRate; bh += r.avgHpLeft; }
-  for (const k of sampleReg) { const L = lvlReg(D.ENEMIES[k].xp); const r = trials(partyAt(L), () => [makeEnemy(k, hp, dmg), makeEnemy(k, hp, dmg), makeEnemy(k, hp, dmg)], 120); rw += r.winRate; rh += r.avgHpLeft; }
-  console.log(pad(hp, 6), pad(dmg, 6), pad(label, 12), pad(pct(bw / sampleBosses.length), 8), pad(pct(bh / sampleBosses.length), 8), pad(pct(rw / sampleReg.length), 8), pad(pct(rh / sampleReg.length), 8));
+  let bw = 0, bh = 0, br = 0, rw = 0, rh = 0, rr = 0;
+  for (const k of sampleBosses) { const L = lvlBoss(D.ENEMIES[k].xp); const r = trials(partyAt(L), () => [makeEnemy(k, hp, dmg)], 120); bw += r.winRate; bh += r.avgHpLeft; br += r.avgRounds; }
+  for (const k of sampleReg) { const L = lvlReg(D.ENEMIES[k].xp); const r = trials(partyAt(L), () => [makeEnemy(k, hp, dmg), makeEnemy(k, hp, dmg), makeEnemy(k, hp, dmg)], 120); rw += r.winRate; rh += r.avgHpLeft; rr += r.avgRounds; }
+  console.log(pad(hp, 6), pad(dmg, 6), pad(label, 8), pad(pct(bw / sampleBosses.length), 8), pad(pct(bh / sampleBosses.length), 8), pad((br / sampleBosses.length).toFixed(1), 7), pad(pct(rw / sampleReg.length), 8), pad(pct(rh / sampleReg.length), 8), pad((rr / sampleReg.length).toFixed(1), 7));
 }
 console.log('');
 
