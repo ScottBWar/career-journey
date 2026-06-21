@@ -593,15 +593,84 @@ window.Battle = (function () {
     for (const e of live) { await onHit(e); await wait(live.length > 1 ? 90 : 0); }
     if (arm) await rotTo(arm, 'x', 0.7, ax, 180); m._busy = false;
   }
+  // ---- bespoke signature moves: props, flame gouts, battlecries, blood ----
+  function sayBubble(node, text, ms) {
+    const rw = engine.getRenderWidth(), rh = engine.getRenderHeight();
+    const p = BABYLON.Vector3.Project(worldOf(node, 3.1), BABYLON.Matrix.Identity(), scene.getTransformMatrix(), new BABYLON.Viewport(0, 0, rw, rh));
+    const d = document.createElement('div'); d.className = 'saybubble'; d.textContent = text;
+    d.style.left = (p.x * (canvas.clientWidth / rw)) + 'px'; d.style.top = (p.y * (canvas.clientHeight / rh)) + 'px';
+    document.body.appendChild(d); setTimeout(() => d.remove(), ms || 1400);
+  }
+  // Capt. Redbeard wheels out a cannon and FIRES it (Broadside = all foes, Cannon Blast = one)
+  async function cannonAnim(m, targets, onHit, all) {
+    m._busy = true;
+    const cannon = new BABYLON.TransformNode('cannon', scene); cannon.position = worldOf(m.node, 0).add(new V3(1.3, 0, 0.2));
+    const barrel = MB.CreateCylinder('cb', { height: 1.7, diameterTop: 0.42, diameterBottom: 0.55, tessellation: 14 }, scene); barrel.rotation.z = -Math.PI / 2; barrel.material = M('cbM', '#23232a', { spec: 0.7 }); barrel.parent = cannon; barrel.position.y = 0.55;
+    const rim = MB.CreateTorus('cbr', { diameter: 0.5, thickness: 0.08, tessellation: 14 }, scene); rim.rotation.y = Math.PI / 2; rim.material = M('cbrM', '#d9a521'); rim.parent = cannon; rim.position.set(0.85, 0.55, 0);
+    [-0.45, 0.45].forEach(z => { const w = MB.CreateCylinder('cw', { height: 0.16, diameter: 0.75, tessellation: 14 }, scene); w.rotation.x = Math.PI / 2; w.material = M('cwM', '#5a3a1a'); w.parent = cannon; w.position.set(-0.1, 0.34, z); });
+    cannon.scaling.setAll(0.01); await tween(k => cannon.scaling.setAll(k), 220); if (window.SFX) SFX.play('confirm'); await wait(120);
+    if (window.SFX) SFX.play('fire');
+    const muzzle = worldOf(m.node, 0.55).add(new V3(2.5, 0, 0.2));
+    burst(muzzle, '#ffe066', '#ff7b3a', 70, 9, -1);
+    particles(muzzle, { count: 160, c1: '#9a9a9a', c2: '#e8e8e8', minSize: 0.4, maxSize: 1.3, life0: 0.3, life1: 1.0, rate: 360, dir1: new V3(1, 0, -1), dir2: new V3(3.5, 2.4, 1), pow0: 2, pow1: 6, gravity: new V3(0, 0.6, 0), spread: 0.3, dur: 220 });
+    flashScreen('rgba(255,170,70,0.28)'); shake(1.3); hitStop(0.08, 1.1);
+    const recoil = tween(k => { cannon.position.x = worldOf(m.node, 0).x + 1.3 - Math.sin(k * Math.PI) * 0.8; }, 260);
+    const balls = all ? targets : [targets[0]];
+    balls.forEach(e => projectile(muzzle, worldOf(e.node, -0.1), '#3a3a40'));
+    await wait(300);
+    for (const e of balls) { burst(worldOf(e.node, 0.4), '#ffd27a', '#ff5a2a', 50, 8); await onHit(e); shake(0.8); await wait(90); }
+    await recoil; await tween(k => cannon.scaling.setAll(1 - k), 200);
+    cannon.getChildMeshes().forEach(c => c.dispose()); cannon.dispose(); m._busy = false;
+  }
+  // Mac torches the foes with a sustained gout of flame
+  async function flameAnim(m, targets, onHit) {
+    m._busy = true; const arm = m.arm || m.staffPiv; if (arm) rotTo(arm, 'x', arm.rotation.x, -1.2, 150);
+    if (window.SFX) SFX.play('fire');
+    const from = worldOf(m.node, 1.0);
+    targets.forEach(e => { const dir = worldOf(e.node, 0.4).subtract(from);
+      particles(from, { count: 420, c1: '#ffe066', c2: '#ff2a0a', minSize: 0.5, maxSize: 1.7, life0: 0.22, life1: 0.7, rate: 1400, dir1: dir.scale(0.7).add(new V3(-0.6, 0.3, -0.6)), dir2: dir.scale(1.15).add(new V3(0.6, 1.0, 0.6)), pow0: 3, pow1: 7, gravity: new V3(0, 1.2, 0), spread: 0.4, dur: 560 }); });
+    flashScreen('rgba(255,120,40,0.32)'); shake(1.0); await wait(540);
+    for (const e of targets) { await onHit(e); await wait(90); }
+    if (arm) rotTo(arm, 'x', -1.2, arm.rotation.x, 200); m._busy = false;
+  }
+  // Quijano: heroic lance-to-the-sky + battlecry, then a thundering charge
+  async function chargeAnim(m, target, onHit, cry) {
+    const arm = m.arm || m.staffPiv; const ax0 = arm ? arm.rotation.x : 0;
+    if (arm) await rotTo(arm, 'x', ax0, -2.9, 220); m.node.position.y = m.baseY + 0.25; scalePunch(m.node, 1.06);
+    sayBubble(m.node, cry || '¡Por Dulcinea!', 1300); burst(worldOf(m.node, 2.4), '#fff0a0', '#ffd24a', 34, 5, -1); if (window.SFX) SFX.play('confirm');
+    await wait(720); m.node.position.y = m.baseY; if (arm) rotTo(arm, 'x', -2.9, -1.4, 110);
+    await dashAttack(m, target, async () => { bladeFlash(m, m.fight.el || 'physical'); shake(1.3); hitStop(0.11, 1.3); await onHit(); });
+    if (arm) rotTo(arm, 'x', arm.rotation.x, ax0, 160);
+  }
+  // Sané: pounce, savage rip, recoil and spit blood
+  async function ripAnim(m, target, onHit) {
+    m._busy = true; const home = m.home.clone();
+    const onto = home.add(target.home.subtract(home).scale(0.76)); onto.y = m.baseY;
+    await leapArc(m.node, onto, 2.4, 240); if (window.SFX) SFX.play('crit');
+    for (let i = 0; i < 3; i++) { burst(worldOf(target.node, 0.4 + Math.random()), '#b3121b', '#ff5a4a', 34, 7); shake(0.8); bladeFlash(m, 'physical'); await wait(95); }
+    shake(1.3); hitStop(0.12, 1.4); await onHit();
+    await moveTo(m.node, home, 220); m.node.position.copyFrom(home);
+    m.node.rotation.x = -0.55; if (window.SFX) SFX.play('hit');
+    particles(worldOf(m.node, 1.7).add(new V3(1, 0, 0)), { count: 70, c1: '#8a0a10', c2: '#d61f2a', minSize: 0.14, maxSize: 0.5, life0: 0.3, life1: 0.8, rate: 240, dir1: new V3(2, 1, -1), dir2: new V3(5, 3, 1), pow0: 2, pow1: 5, gravity: new V3(0, -11, 0), spread: 0.2, dur: 180 });
+    await wait(240); m.node.rotation.x = 0; m._busy = false;
+  }
   // pick the right choreography for an ability, then apply its hit(s)
-  const ANIM_LEAP = new Set(['Braver', 'Gum-Gum Bazooka', 'Wolf Strike', 'Joust', 'Climhazzard']);
-  const ANIM_WHIRL = new Set(['Omnislash', 'Spiral Cut', 'Gum-Gum Gatling', 'Wolf Pack', 'Chivalrous Charge']);
+  const ANIM_LEAP = new Set(['Braver', 'Gum-Gum Bazooka', 'Climhazzard']);
+  const ANIM_WHIRL = new Set(['Omnislash', 'Spiral Cut', 'Gum-Gum Gatling', 'Wolf Pack']);
   const ANIM_BEAM = new Set(['Blade Beam', 'Dagger Toss', 'Cross Boomerang']);
   const ANIM_FLURRY = new Set(['Scimitar Flurry', 'Gum-Gum Pistol', 'Throat Tear']);
   async function performAbilityAnim(m, s, targets, elem, col, applyHit) {
     const name = s.name, single = s.target === 'enemy', physical = elem === 'physical';
     const live = targets.filter(e => e.alive); if (!live.length) return;
-    if (ANIM_LEAP.has(name)) return leapStrike(m, live[0], () => applyHit(live[0]), m.key === 'dragoon' || name === 'Joust');
+    // bespoke character signatures
+    if (name === 'Broadside') return cannonAnim(m, live, applyHit, true);
+    if (name === 'Cannon Blast') return cannonAnim(m, live, applyHit, false);
+    if (m.key === 'mac' && elem === 'fire') return flameAnim(m, live, applyHit);
+    if (name === 'Joust' || name === 'Tilt!') return chargeAnim(m, live[0], () => applyHit(live[0]), name === 'Tilt!' ? '¡A por el gigante!' : '¡Por Dulcinea!');
+    if (name === 'Chivalrous Charge') { sayBubble(m.node, '¡Santiago!', 1200); await wait(260); return whirl(m, live, applyHit); }
+    if (name === 'Wolf Strike' || name === 'Throat Tear') return ripAnim(m, live[0], () => applyHit(live[0]));
+    // generic choreography
+    if (ANIM_LEAP.has(name)) return leapStrike(m, live[0], () => applyHit(live[0]), m.key === 'dragoon');
     if (ANIM_WHIRL.has(name)) return whirl(m, live, applyHit);
     if (ANIM_BEAM.has(name)) return beamSwing(m, live, applyHit, col);
     if (ANIM_FLURRY.has(name)) return flurry(m, live[0], () => applyHit(live[0]), 4);

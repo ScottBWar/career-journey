@@ -131,6 +131,10 @@
     .menu .cmd .cost { font-size: 0.74rem; color: #93c5fd; }
     .menu .cmd .cost.qty { color: #fcd34d; }
     .menu .cmd.back { color: rgba(255,255,255,0.6); }
+    /* comic battlecry bubble (Quijano's "¡Por Dulcinea!" etc.) */
+    .saybubble { position: fixed; transform: translate(-50%,-100%); z-index: 38; pointer-events: none; background: #fff; color: #1a1208; font-weight: 800; font-size: clamp(0.85rem,2.2vw,1.05rem); letter-spacing: 0.01em; padding: 0.35rem 0.75rem; border-radius: 13px; border: 2.5px solid #1a1208; box-shadow: 0 5px 0 rgba(0,0,0,0.32); white-space: nowrap; animation: sayPop 0.22s cubic-bezier(0.2,1.4,0.4,1) both; }
+    .saybubble::after { content: ''; position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); border: 8px solid transparent; border-top-color: #1a1208; }
+    @keyframes sayPop { from { transform: translate(-50%,-86%) scale(0.4); opacity: 0; } to { transform: translate(-50%,-100%) scale(1); opacity: 1; } }
     #bMessage { position: fixed; left: 50%; bottom: 210px; transform: translateX(-50%); z-index: 11; pointer-events: none; padding: 0.5rem 1.3rem; background: rgba(8,6,24,0.78); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; font-size: clamp(0.8rem,2.2vw,1rem); max-width: 92vw; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.45); display: none; }
     body.mode-battle #bMessage { display: block; }
 
