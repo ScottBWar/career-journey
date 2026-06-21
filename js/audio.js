@@ -248,6 +248,27 @@
     [[0, 4], [4, 4], [8, 2], [10, 2], [12, 2], [14, 2]],  // q q | e e e e
     [[0, 6], [6, 2], [8, 4], [12, 2], [14, 2]],           // dotted-q . | q e e
   ];
+  // BATTLE feel: tight minor vamps (lots of repetition + pedal) instead of a slow lament descent
+  const PROGS_BATTLE = [
+    [0, 6, 0, 6, 0, 6, 5, 4],   // i–VII vamp, cadence on v
+    [0, 0, 6, 6, 5, 4, 5, 0],   // pulsing then a turn home
+    [0, 3, 0, 4, 0, 3, 5, 4],   // i–iv–i–V drive
+    [0, 6, 5, 6, 0, 6, 5, 4],
+  ];
+  // BATTLE rhythm: driving, repetitive, syncopated — urgency over lyricism
+  const RHY_BATTLE = [
+    [[0, 2], [2, 2], [4, 2], [6, 2], [8, 2], [10, 2], [12, 2], [14, 2]],   // straight driving eighths
+    [[0, 1], [1, 1], [2, 2], [4, 2], [6, 2], [8, 2], [10, 2], [12, 4]],    // double-pickup then push
+    [[0, 2], [2, 2], [4, 4], [8, 1], [9, 1], [10, 2], [12, 2], [14, 2]],   // stab-and-run
+  ];
+  // a galloping driving bass — root pulse with octave kicks (the engine of battle urgency)
+  function composeBassDrive(mode, root, degs) {
+    const STEPS = 16, bass = new Array(STEPS * degs.length).fill(0);
+    degs.forEach((d, b) => { const r = clampNote(sdeg(mode, root, d) - 12, 33, 52), oc = clampNote(r + 12, 33, 57);
+      for (let e = 0; e < 8; e++) bass[b * STEPS + e * 2] = (e % 2 === 1) ? oc : r; });   // R oct R oct … pumping eighths
+    return bass;
+  }
+  const STABS = [K, _, _, K, _, _, K, _, _, K, _, _, K, _, K, _];   // syncopated brass chord hits
   const ARP = [0, 1, 2, 1, 0, 1, 2, 1];   // broken-chord eighths: root–3rd–5th–3rd, ×2 a bar
   // a CONTINUOUS arpeggio under everything — the flowing pastoral texture (their Track 2)
   function composeArp(mode, root, degs) {
@@ -262,7 +283,8 @@
     degs.forEach((d, b) => { const bn = clampNote(sdeg(mode, root, d) - 12, 33, 55); bass[b * STEPS] = bn; bass[b * STEPS + 8] = bn; });
     return bass;
   }
-  function composeMelody(mode, root, degs, rnd) {
+  function composeMelody(mode, root, degs, rnd, rhy) {
+    rhy = rhy || RHY;
     const STEPS = 16, BARS = degs.length, mel = new Array(STEPS * BARS).fill(0), dur = new Array(STEPS * BARS).fill(0);
     const lead = root + 12, arch = [0, 2, 4, 6, 6, 4, 2, 1];   // a sung arch — rises through the period, settles at the close
     let pd = 2;  // previous melody degree (scale-degree space → always diatonic)
@@ -271,7 +293,7 @@
       [rd, rd + 2, rd + 4, rd + 7].forEach(t => [-7, 0, 7].forEach(oc => { const c = t + oc + (lift ? 7 : 0); const k = Math.abs(c - pd); const cost = k + (k > 4 ? 22 : 0); if (cost < bd) { bd = cost; best = c; } }));
       pd = best; return best;
     };
-    for (let b = 0; b < BARS; b++) { const d = degs[b], i0 = b * STEPS, lift = arch[b % arch.length] > 4, cell = RHY[Math.floor(rnd() * RHY.length)];
+    for (let b = 0; b < BARS; b++) { const d = degs[b], i0 = b * STEPS, lift = arch[b % arch.length] > 4, cell = rhy[Math.floor(rnd() * rhy.length)];
       cell.forEach(([s, du], idx) => {
         let deg;
         if (idx === 0 || s === 8) deg = chordTone(d, lift);                          // strong beats land on chord tones
@@ -286,18 +308,19 @@
     return { mel, dur };
   }
   function compose(o) {
-    o = o || {}; const mode = o.mode || 'aeolian', root = o.root || 57, rnd = mulberry(o.seed || 1);
-    const degs = (o.prog || PROGS[Math.floor(rnd() * PROGS.length)]).slice();
+    o = o || {}; const mode = o.mode || 'aeolian', root = o.root || 57, rnd = mulberry(o.seed || 1), battle = o.feel === 'battle';
+    const degs = (o.prog || (battle ? PROGS_BATTLE : PROGS)[Math.floor(rnd() * (battle ? PROGS_BATTLE : PROGS).length)]).slice();
     const bars = degs.map(d => [sdeg(mode, root, d), sdeg(mode, root, d + 2), sdeg(mode, root, d + 4), sdeg(mode, root, d + 7)]);
     if (degs[3] === 4 && mode !== 'ionian') { bars[3] = bars[3].slice(); bars[3][1] += 1; }   // raise the leading tone at the cadence (v→V)
-    const m = composeMelody(mode, root, degs, rnd);
+    const m = composeMelody(mode, root, degs, rnd, battle ? RHY_BATTLE : RHY);
     return {
-      bpm: o.bpm || 88, drums: o.drums || 'triphop', swing: o.swing != null ? o.swing : 0.06, cut: o.cut || 2400, choir: !!o.choir,
-      comp: o.comp || 'harp', leadInst: o.leadInst || 'flute', bassInst: o.bassInst || 'cello',
+      bpm: o.bpm || (battle ? 150 : 88), drums: o.drums || (battle ? 'heavy' : 'triphop'), swing: o.swing != null ? o.swing : (battle ? 0.04 : 0.06), cut: o.cut || 2400, choir: !!o.choir,
+      comp: o.comp || (battle ? 'pizz' : 'harp'), leadInst: o.leadInst || (battle ? 'brass' : 'flute'), bassInst: o.bassInst || (battle ? 'pizz' : 'cello'),
       bars,
-      arp: composeArp(mode, root, degs), arpPeak: o.arpPeak || 0.04, arpLen: o.arpLen || 2.0,   // the continuous flowing layer
-      bass: composeBass(mode, root, degs), bassPeak: o.bassPeak || 0.3, bassLen: o.bassLen || 6,   // half-note descending lament bass
-      leadADSR: o.leadADSR || { a: 0.04, d: 0.22, s: 0.65, r: 0.6 }, leadPeak: o.leadPeak || 0.11, once: o.once,
+      arp: composeArp(mode, root, degs), arpPeak: o.arpPeak || (battle ? 0.05 : 0.04), arpLen: o.arpLen || (battle ? 0.9 : 2.0),   // continuous arpeggio (driving when battle)
+      bass: (battle ? composeBassDrive : composeBass)(mode, root, degs), bassPeak: o.bassPeak || (battle ? 0.36 : 0.3), bassLen: o.bassLen || (battle ? 0.9 : 6),   // galloping drive vs half-note lament
+      stabs: battle ? STABS : undefined,   // syncopated brass stabs sell the fight
+      leadADSR: o.leadADSR || (battle ? { a: 0.008, d: 0.14, s: 0.4, r: 0.22 } : { a: 0.04, d: 0.22, s: 0.65, r: 0.6 }), leadPeak: o.leadPeak || 0.11, once: o.once,
       mel: m.mel, melDur: m.dur, harm: o.harm, _composed: true, _degs: degs, _mode: mode, _root: root,
     };
   }
@@ -329,22 +352,22 @@
     paegina: compose({ seed: 13, mode: 'dorian', root: 59, bpm: 100, drums: 'triphop', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2100 }),
 
     // ===== BATTLE — same idiom, faster & driving: pizzicato arpeggio, brass calls, heavy drums =====
-    battle: compose({ seed: 21, mode: 'dorian', root: 55, bpm: 150, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2200, arpPeak: 0.05, bassLen: 2 }),
-    battle2: compose({ seed: 22, mode: 'aeolian', root: 53, bpm: 156, drums: 'heavy', leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2100, arpPeak: 0.05, bassLen: 2 }),
-    battle3: compose({ seed: 23, mode: 'dorian', root: 57, bpm: 144, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2200, arpPeak: 0.05, bassLen: 2 }),
-    boss: compose({ seed: 31, mode: 'aeolian', root: 48, bpm: 158, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2000, arpPeak: 0.05, bassLen: 2 }),
-    boss2: compose({ seed: 32, mode: 'aeolian', root: 50, bpm: 166, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2050, arpPeak: 0.05, bassLen: 2 }),
-    assault: compose({ seed: 33, mode: 'aeolian', root: 51, bpm: 162, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2300, arpPeak: 0.05, bassLen: 2 }),
+    battle: compose({ seed: 21, mode: 'dorian', root: 55, bpm: 150, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2200, feel: 'battle' }),
+    battle2: compose({ seed: 22, mode: 'aeolian', root: 53, bpm: 156, drums: 'heavy', leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2100, feel: 'battle' }),
+    battle3: compose({ seed: 23, mode: 'dorian', root: 57, bpm: 144, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2200, feel: 'battle' }),
+    boss: compose({ seed: 31, mode: 'aeolian', root: 48, bpm: 158, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2000, feel: 'battle' }),
+    boss2: compose({ seed: 32, mode: 'aeolian', root: 50, bpm: 166, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2050, feel: 'battle' }),
+    assault: compose({ seed: 33, mode: 'aeolian', root: 51, bpm: 162, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2300, feel: 'battle' }),
 
     // ===== CHARACTER THEMES — one idiom, distinguished by mode / tempo / colour =====
-    theme_ruffy: compose({ seed: 41, mode: 'ionian', root: 62, bpm: 150, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2400, bassLen: 2 }),
-    theme_simon: compose({ seed: 42, mode: 'aeolian', root: 57, bpm: 138, drums: 'heavy', leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2100, bassLen: 2 }),
+    theme_ruffy: compose({ seed: 41, mode: 'ionian', root: 62, bpm: 150, drums: 'heavy', choir: true, leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2400, feel: 'battle' }),
+    theme_simon: compose({ seed: 42, mode: 'aeolian', root: 57, bpm: 138, drums: 'heavy', leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2100, feel: 'battle' }),
     theme_aladdin: compose({ seed: 43, mode: 'dorian', root: 59, bpm: 104, drums: 'triphop', choir: true, leadInst: 'flute', bassInst: 'pizz', cut: 1900 }),
     theme_violca: compose({ seed: 44, mode: 'dorian', root: 60, bpm: 100, drums: 'heavy', choir: true, leadInst: 'flute', bassInst: 'cello', cut: 2100, bassLen: 3 }),
     theme_mac: compose({ seed: 45, mode: 'aeolian', root: 50, bpm: 64, drums: 'sparse', leadInst: 'flute', bassInst: 'cello', cut: 1000, bassLen: 7, arpPeak: 0.025 }),
     theme_sane: compose({ seed: 46, mode: 'dorian', root: 55, bpm: 80, drums: 'soft', choir: true, leadInst: 'flute', bassInst: 'cello', cut: 1700, bassLen: 6 }),
     theme_marvyn: compose({ seed: 47, mode: 'aeolian', root: 52, bpm: 90, drums: 'triphop', choir: true, leadInst: 'flute', bassInst: 'pizz', cut: 1800 }),
-    theme_quijano: compose({ seed: 48, mode: 'dorian', root: 57, bpm: 116, drums: 'heavy', leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2000, bassLen: 2 }),
+    theme_quijano: compose({ seed: 48, mode: 'dorian', root: 57, bpm: 116, drums: 'heavy', leadInst: 'brass', comp: 'pizz', bassInst: 'pizz', cut: 2000, feel: 'battle' }),
   };
   let battleIdx = 0; const BATTLE_THEMES = ['battle', 'battle2', 'battle3'];
   function battleTheme() { const tk = BATTLE_THEMES[battleIdx % BATTLE_THEMES.length]; battleIdx++; return tk; }
