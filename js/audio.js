@@ -37,6 +37,7 @@
     // tape echo send (mainly the lead)
     const delay = ctx.createDelay(1.0); delay.delayTime.value = 0.26; const fb = ctx.createGain(); fb.gain.value = 0.34;
     delaySend = ctx.createGain(); delaySend.gain.value = 0.5; delaySend.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(musicBus);
+    if (window.Sampler) Sampler.init(ctx);   // load real instrument samples in the background; voices fall back to synth until ready
   }
   // sidechain duck — the kick momentarily pushes the tonal bus down, then it swells back
   function pump(time) { if (!padBus) return; const g = padBus.gain; g.cancelScheduledValues(time); g.setValueAtTime(0.82, time); g.linearRampToValueAtTime(1.0, time + 0.16); }
@@ -109,6 +110,7 @@
   // french horn / brass: saw+square through a swelling filter, warm body
   function brass(freq, time, dur, o = {}) {
     const { peak = 0.08, cutoff = 1900, dest = padBus, a = 0.05, r = 0.3, echo = 0 } = o;
+    if (window.Sampler && Sampler.play('brass', freq, time, dur, { peak: peak * 2.0, dest, a, r })) return;
     const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 0.8;
     f.frequency.setValueAtTime(cutoff * 0.5, time); f.frequency.linearRampToValueAtTime(cutoff * 1.4, time + a + 0.06); f.frequency.exponentialRampToValueAtTime(Math.max(200, cutoff), time + a + 0.3);
     const o1 = ctx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = freq; o1.detune.value = -4;
@@ -125,6 +127,7 @@
   // harp / celesta pluck: bright triangle+octave, fast attack, long shimmering decay
   function harp(freq, time, dur, o = {}) {
     const { peak = 0.09, cutoff = 4200, dest = padBus, echo = 0.2 } = o;
+    if (window.Sampler && Sampler.play('harp', freq, time, Math.max(dur, 0.6), { peak: peak * 2.2, dest, a: 0.005 })) return;
     const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.3;
     const o1 = ctx.createOscillator(); o1.type = 'triangle'; o1.frequency.value = freq;
     const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = freq * 2; const o2g = ctx.createGain(); o2g.gain.value = 0.25;
@@ -137,6 +140,7 @@
   // flute / woodwind lead: pure sine body + soft octave + breath + gentle vibrato
   function flute(freq, time, dur, o = {}) {
     const { peak = 0.08, dest = padBus, a = 0.05, r = 0.25, echo = 0.25 } = o;
+    if (window.Sampler && Sampler.play('flute', freq, time, dur, { peak: peak * 2.4, dest, a, r })) return;
     const g = ctx.createGain();
     const body = ctx.createOscillator(); body.type = 'sine'; body.frequency.value = freq;
     const oct = ctx.createOscillator(); oct.type = 'sine'; oct.frequency.value = freq * 2; const og = ctx.createGain(); og.gain.value = 0.08;
@@ -150,6 +154,7 @@
   // pizzicato string: short round pluck
   function pizz(freq, time, dur, o = {}) {
     const { peak = 0.16, dest = padBus } = o;
+    if (window.Sampler && Sampler.play('pizz', freq, time, 0.35, { peak: peak * 2.0, dest, a: 0.002 })) return;
     const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2400; f.Q.value = 1;
     const o1 = ctx.createOscillator(); o1.type = 'triangle'; o1.frequency.value = freq;
     g.gain.setValueAtTime(peak, time); g.gain.exponentialRampToValueAtTime(0.0001, time + Math.min(0.4, dur * 0.6 + 0.12));
@@ -158,6 +163,7 @@
   // low strings (cello/contrabass): sustained, warm, woody
   function cello(freq, time, dur, o = {}) {
     const { peak = 0.18, dest = padBus, a = 0.06, r = 0.4 } = o;
+    if (window.Sampler && Sampler.play('cello', freq, time, dur, { peak: peak * 1.8, dest, a, r })) return;
     const g = ctx.createGain(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900; f.Q.value = 0.6;
     const o1 = ctx.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = freq; o1.detune.value = -5;
     const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = freq; o2.detune.value = 5;
@@ -538,7 +544,7 @@
 
   function setMusicVolume(v) { musicVol = Math.max(0, Math.min(1, v)); if (musicBus && current) musicBus.gain.setTargetAtTime(musicVol, ctx.currentTime, 0.05); }
   function setSfxVolume(v) { sfxVol = Math.max(0, Math.min(1, v)); if (sfxGain) sfxGain.gain.setTargetAtTime(sfxVol, ctx.currentTime, 0.05); }
-  window.Music = { play, start, toggle, battleTheme, bossTheme, setMusicVolume, setSfxVolume, getMusicVolume: () => musicVol, getSfxVolume: () => sfxVol, isMuted: () => muted, context: () => { ensure(); return ctx; }, _compose: compose, _tracks: () => TRACKS, get _after() { return _after; }, set _after(v) { _after = v; } };
+  window.Music = { play, start, toggle, battleTheme, bossTheme, setMusicVolume, setSfxVolume, getMusicVolume: () => musicVol, getSfxVolume: () => sfxVol, isMuted: () => muted, context: () => { ensure(); return ctx; }, _compose: compose, _tracks: () => TRACKS, setSamples: (on) => { if (window.Sampler) Sampler.setEnabled(on); }, get _after() { return _after; }, set _after(v) { _after = v; } };
 
   // ---------------- SFX ----------------
   function sfxBus() { ensure(); return sfxGain || master; }
