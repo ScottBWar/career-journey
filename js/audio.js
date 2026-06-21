@@ -209,37 +209,76 @@
   // bassP[]=sub-bass pattern, mel[]=lead (loops on its own length). swing lays
   // the off-beats back for that head-nod feel.
   const _ = 0, K = 1;
+
+  // ============================================================
+  //  FF9-IDIOM PROCEDURAL COMPOSER
+  //  Encodes Romantic-era constraints (Uematsu's idiom) rather than randomness:
+  //  modal harmony (Aeolian/Dorian/Ionian) · descending LAMENT bass · balanced
+  //  antecedent/consequent 8-bar PERIODS (question ends open, answer resolves to
+  //  tonic) · ARCH-contour melody snapped to chord tones with stepwise passing
+  //  notes & voice-leading (nearest pitch, leaps penalised) · the harmonic-minor
+  //  leading tone raised ONLY at the cadential dominant · arpeggiated comp.
+  //  Output is a normal TRACK so the orchestral scheduler plays it live.
+  // ============================================================
+  const SCALES = { aeolian: [0, 2, 3, 5, 7, 8, 10], dorian: [0, 2, 3, 5, 7, 9, 10], ionian: [0, 2, 4, 5, 7, 9, 11] };
+  function mulberry(seed) { let s = (seed >>> 0) || 1; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function sdeg(mode, root, d) { const sc = SCALES[mode] || SCALES.aeolian; return root + sc[((d % 7) + 7) % 7] + 12 * Math.floor(d / 7); }
+  function clampNote(n, lo, hi) { lo = lo || 52; hi = hi || 86; while (n < lo) n += 12; while (n > hi) n -= 12; return n; }
+  // antecedent cells end 'open' on the dominant (degree 4); consequent cells resolve home to i (0)
+  const PROG_ANTE = { lament: [0, 6, 5, 4], vamp: [0, 5, 6, 4], rise: [0, 3, 5, 4] };  // lament = descending i–VII–VI–v
+  const PROG_CONS = { fall: [5, 6, 3, 0], plagal: [3, 4, 5, 0], turn: [5, 4, 3, 0] };
+  function composeMelody(mode, root, degs, rnd) {
+    const STEPS = 16, BARS = degs.length, mel = new Array(STEPS * BARS).fill(0);
+    const lead = root + 12, arch = [0, 2, 4, 5, 5, 4, 2, 1];   // a sung arch: rise through the period, settle at the close
+    // work entirely in scale-DEGREE space so every note is diatonic; convert to MIDI only at the end
+    let pd = 2;  // previous melody degree (relative to lead), start on the third
+    const noteFor = d => clampNote(sdeg(mode, lead, d));
+    const chordTone = (rd, lift) => {  // nearest chord tone to where we are (voice-leading), with an octave lift on the arch peak
+      let best = pd, bd = 1e9;
+      [rd, rd + 2, rd + 4, rd + 7].forEach(t => [-7, 0, 7].forEach(oc => { const cand = t + oc + (lift ? 7 : 0); const leap = Math.abs(cand - pd); const cost = leap + (leap > 4 ? 22 : 0); if (cost < bd) { bd = cost; best = cand; } }));
+      pd = best; return noteFor(best);
+    };
+    const stepTone = (dir) => { pd += dir; return noteFor(pd); };   // a diatonic neighbour — always in mode
+    for (let b = 0; b < BARS; b++) { const d = degs[b], i0 = b * STEPS, lift = arch[b % arch.length] > 3;
+      mel[i0 + 0] = chordTone(d, lift);
+      if (rnd() < 0.6) mel[i0 + 4] = stepTone(rnd() < 0.5 ? 1 : -1);
+      if (rnd() < 0.8) mel[i0 + 8] = chordTone(d, lift);
+      if (rnd() < 0.45) mel[i0 + 12] = stepTone(rnd() < 0.5 ? 1 : -1);
+      if (rnd() < 0.3) mel[i0 + 14] = chordTone(d, false);
+    }
+    // PERIOD cadences: antecedent (bar 3) ends open (deg 5 or 2); consequent (last bar) resolves to tonic
+    for (let s = 3 * STEPS + 1; s < 4 * STEPS; s++) mel[s] = 0;
+    pd = rnd() < 0.5 ? 4 : 1; mel[3 * STEPS + 0] = noteFor(pd);
+    for (let s = (BARS - 1) * STEPS + 1; s < BARS * STEPS; s++) mel[s] = 0;
+    pd = 0; mel[(BARS - 1) * STEPS + 0] = noteFor(pd);
+    return mel;
+  }
+  function compose(o) {
+    o = o || {}; const mode = o.mode || 'aeolian', root = o.root || 57, rnd = mulberry(o.seed || 1);
+    const pick = a => a[Math.floor(rnd() * a.length)];
+    const degs = pick(Object.values(PROG_ANTE)).concat(pick(Object.values(PROG_CONS)));
+    const bars = degs.map(d => [sdeg(mode, root, d), sdeg(mode, root, d + 2), sdeg(mode, root, d + 4), sdeg(mode, root, d + 7)]);
+    if (degs[3] === 4 && mode !== 'ionian') { bars[3] = bars[3].slice(); bars[3][1] += 1; }   // raise the leading tone at the cadence (v→V)
+    return {
+      bpm: o.bpm || 84, drums: o.drums || 'triphop', swing: o.swing != null ? o.swing : 0.16, cut: o.cut || 2400, choir: !!o.choir,
+      comp: o.comp || 'harp', leadInst: o.leadInst || 'flute', bassInst: o.bassInst || 'cello',
+      bars, keys: [K, _, _, K, _, _, K, _, K, _, _, K, _, _, K, _], bassP: [0, _, _, _, _, _, _, 7, 0, _, _, _, _, _, _, _],
+      keyPeak: o.keyPeak || 0.05, bassPeak: o.bassPeak || 0.28, bassLen: o.bassLen || 3,
+      leadADSR: o.leadADSR || { a: 0.05, d: 0.25, s: 0.6, r: 0.7 }, leadDur: o.leadDur || 1.9, leadPeak: o.leadPeak || 0.1,
+      mel: composeMelody(mode, root, degs, rnd), harm: o.harm, _composed: true, _degs: degs, _mode: mode, _root: root,
+    };
+  }
+
   const TRACKS = {
     // sunny field theme — warm C-major (I–vi–IV–V) with a singable, breathing melody
-    island: { bpm: 86, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 2600, choir: true, comp: 'harp',
-      bars: [[60,64,67,71],[57,60,64,67],[53,57,60,64],[55,59,62,65]],
-      keys: [_,_,_,_, _,_,K,_, _,_,_,_, _,_,K,_], keyLen: 2.4, keyPeak: 0.05,
-      bassP: [0,_,_,_, _,_,7,_, 0,_,_,_, 7,_,5,_], bassPeak: 0.28, bassLen: 2.6, bassInst: 'pizz',
-      leadADSR: { a: 0.03, d: 0.2, s: 0.6, r: 0.6 }, leadDur: 1.7, leadPeak: 0.1,
-      mel: [_,_,_,_, 64,_,67,_, 69,_,_,_, 67,_,_,_,  64,_,_,_, 60,_,_,_, 62,_,64,_, _,_,_,_,
-            65,_,_,_, 64,_,62,_, 60,_,_,_, _,_,62,_,  64,_,_,_, 67,_,_,_, 72,_,_,_, _,_,_,_,
-            _,_,_,_, 67,_,72,_, 74,_,_,_, 72,_,_,_,  71,_,_,_, 69,_,_,_, 67,_,69,_, _,_,_,_,
-            65,_,_,_, 67,_,69,_, 71,_,_,_, _,_,69,_,  67,_,_,_, 71,_,_,_, 72,_,_,_, _,_,_,_],
-      harm: [_,_,_,_, _,_,_,_, 60,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_, 59,_,_,_, _,_,_,_], harmPeak: 0.035, harmWave: 'triangle' },
+    // sunny field theme — Dorian (hopeful adventure), composed in the FF9 idiom
+    island: compose({ seed: 7, mode: 'dorian', root: 62, bpm: 86, drums: 'triphop', choir: true, leadInst: 'flute', comp: 'harp', bassInst: 'pizz', cut: 2600, leadDur: 1.7, leadPeak: 0.1 }),
 
-    // open, hopeful sailing — airy & spacious, a long flute line drifting over the swell
-    sea: { bpm: 78, drums: 'sparse', swing: 0.18, padWave: 'sine', leadWave: 'sine', cut: 2200, choir: true, comp: 'harp',
-      bars: [[55,59,62,67],[57,60,64,69],[53,57,60,65],[60,64,67,72]],
-      keys: [_,_,_,_, _,_,_,_, _,_,K,_, _,_,_,_], keyLen: 3.4, keyPeak: 0.045,
-      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.25, bassLen: 4, bassInst: 'cello',
-      leadADSR: { a: 0.06, d: 0.3, s: 0.7, r: 0.9 }, leadDur: 2.6, leadPeak: 0.092,
-      mel: [_,_,_,_, 62,_,_,_, 67,_,_,_, 69,_,_,_,  _,_,_,_, 72,_,_,_, 71,_,_,_, 69,_,_,_,
-            _,_,_,_, 65,_,_,_, 69,_,_,_, _,_,_,_,  _,_,_,_, 67,_,_,_, 72,_,_,_, _,_,_,_,
-            _,_,_,_, 74,_,_,_, 72,_,_,_, 76,_,_,_,  _,_,_,_, 74,_,72,_, 71,_,_,_, 69,_,_,_,
-            _,_,_,_, 65,_,67,_, 69,_,_,_, _,_,_,_,  _,_,_,_, 67,_,_,_, 72,_,_,_, _,_,_,_],
-      harm: [_,_,_,_, _,_,_,_, _,_,_,_, 64,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_, 67,_,_,_], harmPeak: 0.03 },
+    // open, hopeful sailing — airy Dorian, a long composed flute line over the swell
+    sea: compose({ seed: 3, mode: 'dorian', root: 57, bpm: 78, drums: 'sparse', choir: true, leadInst: 'flute', comp: 'harp', bassInst: 'cello', cut: 2200, leadDur: 2.6, leadPeak: 0.09, leadADSR: { a: 0.06, d: 0.3, s: 0.7, r: 0.9 } }),
 
-    // warmer jazzy groove
-    town: { bpm: 90, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 1900,
-      bars: [[57,60,64,67],[50,53,57,60],[55,59,62,65],[52,55,59,62]],
-      keys: [_,_,K,_, K,_,_,K, _,_,K,_, K,_,K,_], keyLen: 1.8, keyPeak: 0.075,
-      bassP: [0,_,_,_, 7,_,_,_, 0,_,_,5, 7,_,_,_], bassPeak: 0.3,
-      mel: [_,_,72,_, _,_,71,_, 67,_,_,_, _,_,_,_,  _,_,69,_, 67,_,_,_, 64,_,_,_, _,_,_,_], leadPeak: 0.07 },
+    // warm market town — Dorian, gently lilting harp + flute
+    town: compose({ seed: 5, mode: 'dorian', root: 60, bpm: 90, drums: 'triphop', leadInst: 'flute', comp: 'harp', bassInst: 'pizz', cut: 2100, leadDur: 1.5, leadPeak: 0.09 }),
 
     // downtempo but driving — tense trip-hop battle (8-bar hook with a counter-melody)
     battle: { bpm: 96, drums: 'heavy', swing: 0.1, padWave: 'sawtooth', leadWave: 'square', cut: 2000,
@@ -282,19 +321,11 @@
       leadADSR: { a: 0.004, d: 0.16, s: 0.1, r: 0.16 }, leadDur: 0.9, leadPeak: 0.07,
       mel: [57,60,64, 69,67,65, 64,_, 60,64,67, 72,_,67,_, _,  58,62,65, 69,65,62, 58,_, 57,60,64, 67,64,60, 57,_,_,_] },
 
-    // sparse, dripping ambience
-    dungeon: { bpm: 68, drums: 'soft', swing: 0.2, padWave: 'sawtooth', leadWave: 'sine', cut: 1000,
-      bars: [[57,60,64],[52,55,59],[50,53,57],[51,55,58]],
-      keys: [_,_,_,_, _,_,K,_, _,_,_,_, _,_,_,_], keyLen: 3.0, keyPeak: 0.05,
-      bassP: [0,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_], bassPeak: 0.3, bassLen: 5,
-      mel: [57,_,_,_, _,_,_,_, _,_,60,_, _,_,_,_,  56,_,_,_, _,_,_,_, 59,_,_,_, _,_,_,_], leadPeak: 0.06 },
+    // sparse, dripping dungeon dread — low Aeolian lament
+    dungeon: compose({ seed: 9, mode: 'aeolian', root: 50, bpm: 68, drums: 'soft', leadInst: 'flute', comp: 'harp', bassInst: 'cello', cut: 1200, leadDur: 3, leadPeak: 0.07, bassLen: 5 }),
 
-    // atmospheric build
-    intro: { bpm: 80, drums: 'sparse', swing: 0.18, padWave: 'sawtooth', leadWave: 'sine', cut: 1500, choir: true,
-      bars: [[57,60,64,67],[53,57,60,64],[55,59,62,65],[52,55,59,62]],
-      keys: [_,_,K,_, _,K,_,_, _,_,K,_, _,K,_,_], keyLen: 2.4, keyPeak: 0.07,
-      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.28,
-      mel: [64,_,67,_, 72,_,_,_, 71,_,67,_, _,_,_,_,  62,_,65,_, 69,_,_,_, 67,_,64,_, _,_,_,_], leadPeak: 0.08 },
+    // atmospheric build — Aeolian, choir-lit
+    intro: compose({ seed: 11, mode: 'aeolian', root: 57, bpm: 80, drums: 'sparse', choir: true, leadInst: 'flute', comp: 'harp', bassInst: 'cello', cut: 1800, leadDur: 2.4, leadPeak: 0.08 }),
 
     // a warm, satisfying lift — still dusty
     victory: { bpm: 94, drums: 'triphop', swing: 0.16, padWave: 'triangle', leadWave: 'triangle', cut: 2100, once: true,
@@ -303,22 +334,11 @@
       bassP: [0,_,_,_, 0,_,_,_, 0,_,_,_, 0,_,_,_], bassPeak: 0.32,
       mel: [72,_,76,_, 79,_,_,_, 77,_,76,_, _,_,_,_,  72,_,76,_, 79,_,84,_, 83,_,_,_, _,_,_,_], leadPeak: 0.09 },
 
-    // ---- cinematic cutscene bed: slow, emotional, drumless, swelling strings/choir ----
-    cutscene: { bpm: 72, drums: 'none', swing: 0.2, padWave: 'sine', leadWave: 'triangle', cut: 1500, choir: true,
-      bars: [[57,60,64,67],[53,57,60,64],[55,59,62,65],[52,55,59,62],[50,53,57,60],[55,59,62,65],[53,57,60,64],[52,56,59,64]],
-      keys: [_,_,K,_, _,_,_,_, _,_,K,_, _,_,_,_], keyLen: 3.4, keyPeak: 0.055,
-      bassP: [0,_,_,_, _,_,_,_, 0,_,_,_, _,_,_,_], bassPeak: 0.24, bassLen: 5,
-      leadADSR: { a: 0.06, d: 0.3, s: 0.6, r: 0.9 }, leadDur: 3, leadPeak: 0.07,
-      mel: [_,_,_,_, 64,_,_,_, 67,_,_,_, _,_,62,_,  _,_,_,_, 60,_,_,_, 59,_,_,_, _,_,_,_,  _,_,_,_, 67,_,_,_, 72,_,71,_, 67,_,_,_,  _,_,_,_, 64,_,_,_, 62,_,60,_, _,_,_,_] },
+    // cinematic cutscene bed — slow, emotional, drumless Aeolian lament, strings + flute
+    cutscene: compose({ seed: 4, mode: 'aeolian', root: 57, bpm: 72, drums: 'none', choir: true, leadInst: 'flute', comp: 'harp', bassInst: 'cello', cut: 1600, leadDur: 3, leadPeak: 0.075, bassLen: 5, leadADSR: { a: 0.07, d: 0.3, s: 0.65, r: 1.0 } }),
 
-    // ---- a bright, anthemic CALL TO ADVENTURE — major key, the horizon is calling ----
-    adventure: { bpm: 92, drums: 'triphop', swing: 0.14, padWave: 'triangle', leadWave: 'triangle', cut: 2200, choir: true,
-      bars: [[60,64,67,72],[55,59,62,67],[57,60,64,69],[53,57,60,64], [60,64,67,72],[62,65,69,74],[59,62,67,71],[55,59,62,67]],
-      keys: [K,_,_,K, _,K,_,_, K,_,_,K, _,K,_,_], keyLen: 1.8, keyPeak: 0.08,
-      bassP: [0,_,_,_, 0,_,_,_, 0,_,_,_, 0,_,_,_], bassPeak: 0.34, bassLen: 3,
-      leadADSR: { a: 0.02, d: 0.18, s: 0.5, r: 0.5 }, leadDur: 1.4, leadPeak: 0.095,
-      mel: [67,_,72,_, 76,_,_,79, 76,_,72,_, 74,_,_,_,  67,_,71,_, 74,_,_,79, 77,_,74,_, 71,_,_,_,
-            72,_,76,_, 79,_,_,84, 83,_,79,_, 76,_,_,_,  74,_,77,_, 79,_,84,_, 86,_,_,_, _,_,_,_] },
+    // a bright CALL TO ADVENTURE — Ionian (major), the horizon is calling
+    adventure: compose({ seed: 6, mode: 'ionian', root: 60, bpm: 92, drums: 'triphop', choir: true, leadInst: 'flute', comp: 'harp', bassInst: 'pizz', cut: 2300, leadDur: 1.5, leadPeak: 0.1 }),
 
     // ===== CHARACTER MEET THEMES — each riffs on its source material =====
     // Ruffy — One Piece "We Are!": fast, brassy, sunlit adventure
@@ -518,7 +538,7 @@
 
   function setMusicVolume(v) { musicVol = Math.max(0, Math.min(1, v)); if (musicBus && current) musicBus.gain.setTargetAtTime(musicVol, ctx.currentTime, 0.05); }
   function setSfxVolume(v) { sfxVol = Math.max(0, Math.min(1, v)); if (sfxGain) sfxGain.gain.setTargetAtTime(sfxVol, ctx.currentTime, 0.05); }
-  window.Music = { play, start, toggle, battleTheme, bossTheme, setMusicVolume, setSfxVolume, getMusicVolume: () => musicVol, getSfxVolume: () => sfxVol, isMuted: () => muted, context: () => { ensure(); return ctx; }, get _after() { return _after; }, set _after(v) { _after = v; } };
+  window.Music = { play, start, toggle, battleTheme, bossTheme, setMusicVolume, setSfxVolume, getMusicVolume: () => musicVol, getSfxVolume: () => sfxVol, isMuted: () => muted, context: () => { ensure(); return ctx; }, _compose: compose, _tracks: () => TRACKS, get _after() { return _after; }, set _after(v) { _after = v; } };
 
   // ---------------- SFX ----------------
   function sfxBus() { ensure(); return sfxGain || master; }
