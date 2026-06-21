@@ -532,8 +532,85 @@ window.Battle = (function () {
       default: await rotTo(arm, 'x', ax, -1.3, 90); await rotTo(arm, 'x', -1.3, ax, 110); // light swing
     }
   }
-  function lightningStrike(node, col) {
-    const p = node.getAbsolutePosition();
+  // ---- signature ability motion primitives (so moves match their descriptions) ----
+  // the gathering-power orb wind-up, used by magical casts
+  function castGlow(m, col) {
+    if (m.staffPiv) rotTo(m.staffPiv, 'z', 0, -0.6, 150).then(() => rotTo(m.staffPiv, 'z', -0.6, 0, 260));
+    else if (m.arm) rotTo(m.arm, 'x', m.arm.rotation.x, -1.0, 150).then(() => rotTo(m.arm, 'x', -1.0, m.arm.rotation.x, 260));
+    burst(worldOf(m.node, 0.7), col, '#ffffff', 110, 7, -2);
+    const orb = MB.CreateSphere('castOrb', { diameter: 0.5 }, scene); orb.material = M('castOrbM', col, { emissive: col }); orb.material.alpha = 0.9; orb.material.alphaMode = BABYLON.Engine.ALPHA_ADD; orb.position = worldOf(m.node, 1.4); orb.isPickable = false;
+    tween(k => { orb.scaling.setAll(0.4 + k * 1.6); orb.material.alpha = 0.9 * (1 - k * 0.3); }, 220).then(() => orb.dispose());
+  }
+  function leapArc(node, to, height, ms) { const from = node.position.clone(); return tween(k => { const p = V3.Lerp(from, to, k); p.y += Math.sin(k * Math.PI) * height; node.position = p; }, ms); }
+  // Braver / pounce / dragoon jump — spring high toward the foe, slam an overhead (or thrusting) blow
+  async function leapStrike(m, target, onHit, thrust) {
+    m._busy = true; const home = m.home.clone(); const arm = m.arm || m.staffPiv;
+    const dir = target.home.subtract(home);
+    const apex = home.add(dir.scale(0.6)); apex.y = m.baseY; const down = home.add(dir.scale(0.82)); down.y = m.baseY;
+    const ax = arm ? arm.rotation.x : 0;
+    if (arm) rotTo(arm, 'x', ax, thrust ? -1.5 : -2.6, 240);
+    await leapArc(m.node, apex, 4.2, 300);
+    if (window.SFX) SFX.play('slash');
+    if (arm) rotTo(arm, 'x', thrust ? -1.5 : -2.6, thrust ? -1.1 : 0.9, 110);
+    await leapArc(m.node, down, 0.2, 150);
+    bladeFlash(m, m.fight.el || 'physical'); shake(1.2); hitStop(0.11, 1.35);
+    await onHit(); await wait(70);
+    if (arm) rotTo(arm, 'x', arm.rotation.x, ax, 170);
+    await moveTo(m.node, home, 320); m.node.position.copyFrom(home); m._busy = false;
+  }
+  // Scimitar Flurry / Gum-Gum Pistol — blink around a single foe with rapid strikes; the last lands
+  async function flurry(m, target, onHit, hits) {
+    m._busy = true; const home = m.home.clone(); const arm = m.arm || m.staffPiv; hits = hits || 4; const base = target.home;
+    for (let i = 0; i < hits; i++) {
+      const ang = -0.9 + (i / Math.max(1, hits - 1)) * 1.8;
+      m.node.position.set(base.x - 1.7, m.baseY, base.z + Math.sin(ang) * 1.8);
+      if (arm) { arm.rotation.x = -2.3; rotTo(arm, 'x', -2.3, 0.6, 80); }
+      bladeFlash(m, m.fight.el || 'physical'); if (window.SFX) SFX.play('slash');
+      burst(worldOf(target.node, 0.4 + Math.random()), '#ffffff', '#dfe7ef', 22, 5); shake(0.5); await wait(85);
+    }
+    shake(1.0); hitStop(0.1, 1.2); await onHit(); await wait(70);
+    await moveTo(m.node, home, 300); m.node.position.copyFrom(home); m._busy = false;
+  }
+  // Omnislash / whirlwind — leap into the middle of the foes and spin, striking everything
+  async function whirl(m, targets, onHit) {
+    m._busy = true; const home = m.home.clone(); const arm = m.arm || m.staffPiv; const live = targets.filter(e => e.alive); if (!live.length) live.push(targets[0]);
+    const cx = live.reduce((s, e) => s + e.home.x, 0) / live.length, cz = live.reduce((s, e) => s + e.home.z, 0) / live.length;
+    await leapArc(m.node, new V3(cx - 1.2, m.baseY, cz), 2.6, 280); if (window.SFX) SFX.play('slash');
+    const ay = m.node.rotation.y; const spin = tween(k => { m.node.rotation.y = ay + k * Math.PI * 4; if (arm) arm.rotation.x = -1.4; }, 460);
+    for (const e of live) { bladeFlash(m, m.fight.el || 'physical'); burst(worldOf(e.node, 0.5), '#ffffff', '#dfe7ef', 30, 6); shake(0.6); await onHit(e); await wait(80); }
+    await spin; m.node.rotation.y = ay;
+    await moveTo(m.node, home, 320); m.node.position.copyFrom(home); m._busy = false;
+  }
+  // Blade Beam / thrown weapons — a big swing that launches a wave/projectile at each foe
+  async function beamSwing(m, targets, onHit, col) {
+    m._busy = true; const arm = m.arm || m.staffPiv; const ax = arm ? arm.rotation.x : 0; const live = targets.filter(e => e.alive); if (!live.length) live.push(targets[0]);
+    if (arm) await rotTo(arm, 'x', ax, -2.5, 160);
+    if (window.SFX) SFX.play('slash'); bladeFlash(m, m.fight.el || 'physical');
+    if (arm) rotTo(arm, 'x', -2.5, 0.7, 120);
+    live.forEach(e => projectile(worldOf(m.node, 0.6), worldOf(e.node, -0.1), col));
+    await wait(300);
+    for (const e of live) { await onHit(e); await wait(live.length > 1 ? 90 : 0); }
+    if (arm) await rotTo(arm, 'x', 0.7, ax, 180); m._busy = false;
+  }
+  // pick the right choreography for an ability, then apply its hit(s)
+  const ANIM_LEAP = new Set(['Braver', 'Gum-Gum Bazooka', 'Wolf Strike', 'Joust', 'Climhazzard']);
+  const ANIM_WHIRL = new Set(['Omnislash', 'Spiral Cut', 'Gum-Gum Gatling', 'Wolf Pack', 'Chivalrous Charge']);
+  const ANIM_BEAM = new Set(['Blade Beam', 'Dagger Toss', 'Cross Boomerang']);
+  const ANIM_FLURRY = new Set(['Scimitar Flurry', 'Gum-Gum Pistol', 'Throat Tear']);
+  async function performAbilityAnim(m, s, targets, elem, col, applyHit) {
+    const name = s.name, single = s.target === 'enemy', physical = elem === 'physical';
+    const live = targets.filter(e => e.alive); if (!live.length) return;
+    if (ANIM_LEAP.has(name)) return leapStrike(m, live[0], () => applyHit(live[0]), m.key === 'dragoon' || name === 'Joust');
+    if (ANIM_WHIRL.has(name)) return whirl(m, live, applyHit);
+    if (ANIM_BEAM.has(name)) return beamSwing(m, live, applyHit, col);
+    if (ANIM_FLURRY.has(name)) return flurry(m, live[0], () => applyHit(live[0]), 4);
+    if (single && physical) return dashAttack(m, live[0], async () => { await meleeAnim(m, live[0]); applyHit(live[0]); });
+    if (!single && physical) return whirl(m, live, applyHit);
+    if (single && (s.proj || elem === 'fire' || elem === 'water')) { castGlow(m, col); await projectile(worldOf(m.node, -0.1), worldOf(live[0].node, -0.1), col); applyHit(live[0]); await wait(120); return; }
+    if (!single && s.proj) return beamSwing(m, live, applyHit, col);
+    castGlow(m, col); await wait(200); for (const e of live) { applyHit(e); await wait(single ? 140 : 100); } // ranged caster
+  }
+  function lightningStrike(node, col) {    const p = node.getAbsolutePosition();
     const bolt = MB.CreateBox('bolt', { width: 0.32, height: 11, depth: 0.32 }, scene); bolt.material = M('boltM', col, { emissive: col }); bolt.position.set(p.x, p.y + 5.2, p.z);
     burst(worldOf(node, 0.5), col, '#ffffff', 130, 13); shake(1.0); flashScreen('rgba(253,224,71,0.2)'); if (window.SFX) SFX.play('crit');
     setTimeout(() => bolt.dispose(), 150);
@@ -615,30 +692,22 @@ window.Battle = (function () {
   async function doSpell(m, s, targets) {
     actionCam(1, 0.9);
     const elem = Data.elementOf(s), col = ELEMCOL[elem] || '#a5b4fc';
-    if (window.SFX) SFX.play(s.fx === 'fire' ? 'fire' : s.fx === 'water' ? 'water' : s.heal ? 'heal' : 'magic');
     m.mp = Math.max(0, m.mp - s.mp); renderParty(false);
-    // cast wind-up + charge glow
-    if (m.staffPiv) rotTo(m.staffPiv, 'z', 0, -0.6, 150).then(() => rotTo(m.staffPiv, 'z', -0.6, 0, 260));
-    else if (m.arm) rotTo(m.arm, 'x', m.arm.rotation.x, -1.0, 150).then(() => rotTo(m.arm, 'x', -1.0, m.arm.rotation.x, 260));
-    // gathering-power charge: motes spiral up + a swelling core glow at the caster
-    burst(worldOf(m.node, 0.7), col, '#ffffff', 110, 7, -2);
-    const orb = MB.CreateSphere('castOrb', { diameter: 0.5 }, scene); orb.material = M('castOrbM', col, { emissive: col }); orb.material.alpha = 0.9; orb.material.alphaMode = BABYLON.Engine.ALPHA_ADD; orb.position = worldOf(m.node, 1.4); orb.isPickable = false;
-    tween(k => { orb.scaling.setAll(0.4 + k * 1.6); orb.material.alpha = 0.9 * (1 - k * 0.3); }, 220).then(() => orb.dispose());
-    await wait(220);
     const hasDmg = (s.min || 0) > 0 || (s.max || 0) > 0;
-    if (s.heal) { msg(`${m.name} casts ${s.name}!`); for (const p of targets) { healMember(p, Math.round(rnd(s.min, s.max) * (0.85 + (m.spec || 20) / 110))); if (s.status) applyStatusList(p, s.status, s.turns); burst(worldOf(p.node, 1.4), '#6ee7b7', '#ffffff', 50, 4, -3); } await wait(560); gainLimit(m, 14); return; }
+    // heal
+    if (s.heal) { if (window.SFX) SFX.play('heal'); castGlow(m, col); await wait(200); msg(`${m.name} casts ${s.name}!`); for (const p of targets) { healMember(p, Math.round(rnd(s.min, s.max) * (0.85 + (m.spec || 20) / 110))); if (s.status) applyStatusList(p, s.status, s.turns); burst(worldOf(p.node, 1.4), '#6ee7b7', '#ffffff', 50, 4, -3); } await wait(540); gainLimit(m, 14); return; }
     // ally buff / support (no damage)
-    if ((s.target === 'ally' || s.target === 'allparty') && s.status && !hasDmg) { msg(`${m.name} casts ${s.name}!`); for (const p of targets) { applyStatusList(p, s.status, s.turns); } await wait(560); gainLimit(m, 14); return; }
+    if ((s.target === 'ally' || s.target === 'allparty') && s.status && !hasDmg) { if (window.SFX) SFX.play('magic'); castGlow(m, col); await wait(220); msg(`${m.name} casts ${s.name}!`); for (const p of targets) { applyStatusList(p, s.status, s.turns); } await wait(540); gainLimit(m, 14); return; }
+    // damage abilities → signature choreography that matches the move
+    if (window.SFX && (elem === 'fire' || elem === 'water')) SFX.play(elem);
     msg(`${m.name} unleashes ${s.name}!`);
-    const single = s.target === 'enemy';
-    for (const e of targets) {
-      if (single && hasDmg && (s.proj || elem === 'fire' || elem === 'water')) await projectile(worldOf(m.node, -0.1), worldOf(e.node, -0.1), col);
+    const applyHit = (e) => {
       spellHit(e, elem, col);
-      if (hasDmg) { let dmg = Math.round(rnd(s.min, s.max) * 1.5 * (0.75 + (m.spec || 20) / 80)); if (hasSt(m, 'atkup')) dmg = Math.round(dmg * Data.STATUS.atkup.atk); damageEnemy(e, dmg, col, elem, 'mag'); }
+      if (hasDmg) { let dmg = Math.round(rnd(s.min, s.max) * 1.5 * (0.75 + (m.spec || 20) / 80)); if (hasSt(m, 'atkup')) dmg = Math.round(dmg * Data.STATUS.atkup.atk); damageEnemy(e, dmg, col, elem, elem === 'physical' ? 'phys' : 'mag'); }
       if (s.status) applyStatusList(e, s.status, s.turns);
-      await wait(single ? 160 : 110);
-    }
-    gainLimit(m, 18); await wait(320);
+    };
+    await performAbilityAnim(m, s, targets, elem, col, applyHit);
+    gainLimit(m, 18); await wait(280);
   }
   function reviveMember(p, full) { p.alive = true; p.node.setEnabled(true); p.node.position.copyFrom(p.home); p.node.rotation.x = 0; p.hp = full ? p.maxhp : Math.round(p.maxhp * 0.5); burst(worldOf(p.node, 0.5), '#fff6c2', '#fde68a', 80, 6, -1); floatDamage(p.node, '+' + p.hp, '#fde68a', 2.6); }
   function restoreMana(p, amt) { const add = Math.min(amt, p.maxmp - p.mp); p.mp = Math.min(p.maxmp, p.mp + amt); burst(worldOf(p.node, 0.2), ...FX.mana, 45, 5, -2); floatDamage(p.node, '+' + add + ' MP', '#93c5fd', 2.6); }
