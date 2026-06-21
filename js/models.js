@@ -7,6 +7,26 @@ window.Models = (function () {
   let MB, scene;
   function use(s) { scene = s; MB = BABYLON.MeshBuilder; }
 
+  // procedurally "painted" canvas skin — a small grayscale shading+grain map that MULTIPLIES the
+  // material's colour (so the hue is preserved, lighting still applies, but flat primitives gain baked
+  // volume + a painted, hand-tinted FF9 texture). Cached per-scene (textures are scene-bound). Tunable
+  // strength; set Models.painting(false) to revert to flat colours.
+  let PAINT = true;
+  function paintTex(variant) {
+    const cache = scene._paintTex || (scene._paintTex = {});
+    if (cache[variant]) return cache[variant];
+    const S = 64, dt = new BABYLON.DynamicTexture('paint' + variant, { width: S, height: S }, scene, false); // no mipmaps
+    const c = dt.getContext();
+    c.fillStyle = '#efefef'; c.fillRect(0, 0, S, S);
+    const g = c.createLinearGradient(0, 0, 0, S);                                    // baked top-lit volume
+    g.addColorStop(0, 'rgba(255,255,255,0.85)'); g.addColorStop(0.55, 'rgba(236,236,236,0.30)'); g.addColorStop(1, 'rgba(150,150,150,0.55)');
+    c.fillStyle = g; c.fillRect(0, 0, S, S);
+    let seed = (variant * 2654435761 + 12345) >>> 0; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    for (let i = 0; i < 460; i++) { const a = 0.04 + rnd() * 0.10, sz = rnd() < 0.82 ? 1 : 2;   // canvas grain / tooth
+      c.fillStyle = rnd() < 0.5 ? `rgba(38,28,22,${a})` : `rgba(255,255,255,${a})`; c.fillRect(rnd() * S | 0, rnd() * S | 0, sz, sz); }
+    for (let i = 0; i < 4; i++) { c.fillStyle = `rgba(0,0,0,${0.03 + rnd() * 0.04})`; c.fillRect(rnd() * S | 0, 0, 1, S); } // faint painted folds
+    dt.update(false); cache[variant] = dt; return dt;
+  }
   function M(name, hex, opt = {}) {
     const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene);
     m.diffuseColor = Color3.FromHexString(hex);
@@ -14,6 +34,7 @@ window.Models = (function () {
     if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive);
     if (opt.alpha != null) m.alpha = opt.alpha;
     if (opt.specPower) m.specularPower = opt.specPower;
+    if (PAINT && !opt.flat) { let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0; m.diffuseTexture = paintTex(h % 5); } // painted canvas skin
     return m;
   }
   function at(mesh, parent, m, x = 0, y = 0, z = 0) { mesh.material = m; mesh.parent = parent; mesh.position.set(x, y, z); return mesh; }
@@ -1473,7 +1494,7 @@ window.Models = (function () {
   }
   function pillar() { const r = new BABYLON.TransformNode('pillar', scene); at(MB.CreateCylinder('p', { height: 4, diameter: 1.0, tessellation: 8 }, scene), r, M('pil', '#5a5266'), 0, 2, 0); return { node: r }; }
 
-  return { use, M, at, weaponSpec, attachWeapon, cosmetic, pirate, swordsman, healer, mage, blader, dragoon, rival, simon, aladdin, violca, mac, sane, marvyn, quijano, lydia, mermaid, hero, npc, tree, palm, pine, deadTree, blossom, rock, house, sign, portal, roamer,
+  return { use, M, at, painting: (on) => (PAINT = on !== false), weaponSpec, attachWeapon, cosmetic, pirate, swordsman, healer, mage, blader, dragoon, rival, simon, aladdin, violca, mac, sane, marvyn, quijano, lydia, mermaid, hero, npc, tree, palm, pine, deadTree, blossom, rock, house, sign, portal, roamer,
            crystal, chest, pillar,
            // dispatch by enemy id, falling back to its model (some enemies reuse another's builder), then a generic roamer
            enemy: (key) => (ENEMY_BUILDERS[key] || ENEMY_BUILDERS[((window.Data && Data.ENEMIES[key]) || {}).model] || roamer)('#b03050'),
