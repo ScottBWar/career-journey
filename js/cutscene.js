@@ -9,6 +9,7 @@ window.Cutscene = (function () {
   const el = id => document.getElementById(id);
   let scene, cam, engine, prevScene, beats, idx, onDoneCb, actors = {}, order = [], t = 0;
   let camPos, camLook, camPosT, camLookT, key, spot, setMode = null, setAnim = [];
+  let moving = [], acting = {};   // live actor walk-tweens + one-shot action poses (the dynamic toolkit)
 
   function M(hex, opt = {}) { const m = new BABYLON.StandardMaterial('cm' + Math.random(), scene); m.diffuseColor = Color3.FromHexString(hex); m.specularColor = new Color3(0.1, 0.1, 0.1); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); return m; }
 
@@ -58,7 +59,7 @@ window.Cutscene = (function () {
   function build() {
     scene = new BABYLON.Scene(engine); scene.clearColor = new BABYLON.Color4(0.02, 0.02, 0.04, 1);
     scene.fogMode = BABYLON.Scene.FOGMODE_EXP2; scene.fogColor = new Color3(0.04, 0.04, 0.07); scene.fogDensity = 0.03;
-    Models.use(scene); setAnim = [];
+    Models.use(scene); setAnim = []; moving = []; acting = {};
     cam = new BABYLON.UniversalCamera('cc', new V3(0, 3, -9), scene); cam.fov = 0.8; cam.minZ = 0.1;
 
     if (setMode === 'cliff_dawn') {
@@ -93,6 +94,25 @@ window.Cutscene = (function () {
     scene.onBeforeRenderObservable.add(frame);
   }
 
+  // ---- cinematic toolkit: named camera shots, hard cuts, actor movement & action poses ----
+  // a beat may carry: shot:'wide'|'closeup'|'low'|'high'|'profile'|'over'|'hero', cut:true,
+  //   move:{who?,to:[x,z],ms?}, act:{who?,do:'leap'|'raise'|'point'|'stagger'|'cheer'|'shake'}
+  function shotFor(b) {
+    const a = actors[b.name]; const ax = a ? a.x : 0;
+    switch (b.shot) {
+      case 'wide':    return [new V3(0, 4.2, -12), new V3(0, 2, 0)];
+      case 'closeup': return [new V3(ax * 0.6 - 1.0, 2.7, -4.0), new V3(ax, 2.3, 0)];
+      case 'low':     return [new V3(ax * 0.5, 0.9, -4.8), new V3(ax, 2.7, 0)];           // dramatic up-angle
+      case 'high':    return [new V3(ax * 0.3, 7.5, -6.5), new V3(ax, 1.0, 0)];           // looming down-angle
+      case 'profile': return [new V3(ax - 5.5, 2.5, 0.2), new V3(ax, 2.1, 0)];            // side-on
+      case 'hero':    return [new V3(ax * 0.4, 1.3, -4.2), new V3(ax, 3.0, 7)];           // low, gazing past them to the sky
+      case 'over': {  const o = order.filter(n => n !== b.name); const ox = o.length ? actors[o[0]].x : ax - 3; return [new V3(ox * 0.85, 2.8, -5.2), new V3(ax, 2.2, 0)]; }
+      default: return null;
+    }
+  }
+  function walkActor(name, tx, tz, ms) { const a = actors[name]; if (!a || !a.node) return; const p = a.node.position; a.node.rotation.y = Math.atan2(tx - p.x, tz - p.z); moving.push({ a, fx: p.x, fz: p.z, tx, tz, t0: t, dur: (ms || 700) / 1000 }); }
+  function actAct(name, kind) { const a = actors[name]; if (!a) return; acting[name] = { kind, t0: t, dur: kind === 'cheer' ? 1.4 : 0.7 }; }
+
   function focus(name) {
     const a = actors[name];
     if (setMode === 'cliff_dawn') { // keep the vista (ship + dawn behind the crew) while favouring the speaker
@@ -110,12 +130,27 @@ window.Cutscene = (function () {
   function frame() {
     const dt = Math.min(0.05, engine.getDeltaTime() / 1000); t += dt;
     setAnim.forEach(fn => fn(t));
+    // live actor walk-tweens (smoothstep)
+    for (let i = moving.length - 1; i >= 0; i--) { const mv = moving[i], k = Math.min(1, (t - mv.t0) / mv.dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; mv.a.node.position.x = mv.fx + (mv.tx - mv.fx) * e; mv.a.node.position.z = mv.fz + (mv.tz - mv.fz) * e; mv.a.x = mv.a.node.position.x; if (k >= 1) moving.splice(i, 1); }
     // ease camera toward its target (cinematic glide)
     camPos = V3.Lerp(camPos, camPosT, 0.06); camLook = V3.Lerp(camLook, camLookT, 0.08);
     cam.position.copyFrom(camPos); cam.setTarget(camLook);
     const speaking = beats[idx] && beats[idx].name;
     order.forEach(name => {
       const a = actors[name]; if (!a || !a.node) return;
+      const act = acting[name];
+      if (act) {                                                      // a one-shot action pose overrides idle this frame
+        const k = Math.min(1, (t - act.t0) / act.dur), s = Math.sin(k * Math.PI);
+        if (act.kind === 'leap') a.node.position.y = a.baseY + s * 1.6;
+        else if (act.kind === 'raise') { if (a.arm) a.arm.rotation.x = -2.2 * s; a.node.position.y = a.baseY + s * 0.2; }
+        else if (act.kind === 'point') { if (a.arm) a.arm.rotation.x = -1.4 * s; }
+        else if (act.kind === 'stagger') a.node.rotation.x = -0.45 * s;
+        else if (act.kind === 'shake') a.node.position.x = a.x + Math.sin(t * 40) * 0.08 * (1 - k);
+        else if (act.kind === 'cheer') { a.node.position.y = a.baseY + Math.abs(Math.sin(t * 11)) * 0.4; if (a.arm) a.arm.rotation.x = -2.0; }
+        if (a.idle) a.idle(t);
+        if (k >= 1 && act.kind !== 'cheer') { delete acting[name]; a.node.rotation.x = 0; }
+        return;
+      }
       const active = name === speaking;
       if (active) { spot.position.set(a.x, 9, -7); spot.setDirectionToTarget(new V3(a.x, 2, 0));
         a.node.position.y = a.baseY + Math.abs(Math.sin(t * 9)) * 0.05;          // talking bob
@@ -132,7 +167,12 @@ window.Cutscene = (function () {
     el('cineLine').textContent = b.text;
     el('cinePort').innerHTML = (window.Portraits && Portraits.has(NAMEKEY(b.name))) ? Portraits.img(NAMEKEY(b.name)) : '';
     el('cineNext').textContent = idx < beats.length - 1 ? '▶' : '✓';
-    focus(b.name);
+    // cinematic directives: explicit camera shot (with optional hard cut), else auto-focus the speaker
+    const s = b.shot && shotFor(b);
+    if (s) { camPosT = s[0]; camLookT = s[1]; if (b.cut) { camPos = camPosT.clone(); camLook = camLookT.clone(); } }
+    else focus(b.name);
+    if (b.move) walkActor(b.move.who || b.name, b.move.to[0], b.move.to[1], b.move.ms);
+    if (b.act) actAct(b.act.who || b.name, b.act.do);
   }
   function NAMEKEY(name) { const a = Game.cutsceneActorKey(name); return a ? a.key : ''; }
   function advance() { if (idx < beats.length - 1) { idx++; show(); } else finish(); }
