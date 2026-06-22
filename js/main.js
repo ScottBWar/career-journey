@@ -162,6 +162,7 @@ window.Game = (function () {
     'Aladdin': 'aladdin', 'Jafira': 'genie', 'Violca': 'violca', 'Vyrmithrax': 'skydragon',
     'Mac': 'mac', 'The Thing': 'thething', 'Sané': 'sane', 'The Forest God': 'forestgod',
     'Marvyn': 'marvyn', 'Vogon Constructor': 'vogon', 'Quijano': 'quijano', 'The Giant (a windmill)': 'windmill',
+    'Kuato': 'kuato', 'Brundle': 'brundle', 'Sir Didymus': 'didymus', 'Zed': 'zed',
     'Ember': 'ember', 'Nerida': 'nerida', 'Volta': 'volta', 'Gaia': 'gaia', 'Nyx': 'nyx', 'Lumina': 'lumina' };
   function dlgPortrait(name) { const k = NAME2PORT[name]; el('dlgPortrait').innerHTML = (k && Portraits.has(k)) ? Portraits.img(k) : ''; }
   Game.talk = function (npc) {

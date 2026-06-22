@@ -219,6 +219,66 @@ window.Data = (function () {
         { id: 'ly_bcap', branch: 'b', name: 'Eternal Night', desc: 'Drown all foes in dark + Slow', cost: 3, req: 'ly_b2', kind: 'ability', ability: ab('Eternal Night', { mp: 30, min: 44, max: 60, target: 'all', fx: 'beam', el: 'dark', status: 'slow', turns: 3 }) },
       ],
     },
+    { // Total Recall (1990) — the mutant seer who lives in his brother's chest. "Open your mind."
+      key: 'kuato', name: 'Kuato', role: 'Mutant Seer', model: 'kuato', temporary: true,
+      base: { hp: 150, mp: 46, atkMin: 16, atkMax: 26, crit: 0.12 }, growth: { hp: 14, mp: 6, atk: 3 },
+      baseAbilities: [ ab('Open Your Mind', { mp: 12, min: 24, max: 36, target: 'all', fx: 'beam', el: 'dark' }), ab('Psychic Lance', { mp: 10, min: 36, max: 50, target: 'enemy', fx: 'beam', el: 'dark' }) ],
+      tree: [
+        { id: 'kt_mp', name: 'Third Lobe', desc: '+18 Max MP', cost: 1, kind: 'stat', stat: { mp: 18 } },
+        { id: 'kt_sp', name: 'Foresight', desc: '+10% Crit', cost: 1, req: 'kt_mp', kind: 'stat', stat: { crit: 0.10 } },
+        { id: 'kt_a1', branch: 'a', name: 'Mind Crush', desc: 'PATH: Psion — shatter one mind', cost: 1, req: 'kt_sp', kind: 'ability', ability: ab('Mind Crush', { mp: 14, min: 50, max: 68, target: 'enemy', fx: 'beam', el: 'dark' }) },
+        { id: 'kt_a2', branch: 'a', name: 'Deep Sight', desc: '+24 Max MP', cost: 2, req: 'kt_a1', kind: 'stat', stat: { mp: 24 } },
+        { id: 'kt_acap', branch: 'a', name: 'Open Your Mind!', desc: 'Tear every enemy mind wide open', cost: 3, req: 'kt_a2', kind: 'ability', ability: ab('Open Your Mind!', { mp: 28, min: 46, max: 62, target: 'all', fx: 'beam', el: 'dark' }) },
+        { id: 'kt_b1', branch: 'b', name: 'Free Your Mind', desc: 'PATH: Seer — heal the whole party', cost: 1, req: 'kt_sp', kind: 'ability', ability: ab('Free Your Mind', { mp: 16, min: 32, max: 46, target: 'allparty', fx: 'heal', heal: true }) },
+        { id: 'kt_b2', branch: 'b', name: 'Prophecy', desc: '+30 Max HP', cost: 2, req: 'kt_b1', kind: 'stat', stat: { hp: 30 } },
+        { id: 'kt_bcap', branch: 'b', name: 'Start the Reactor', desc: 'Light over all allies — Regen + Haste', cost: 3, req: 'kt_b2', kind: 'ability', ability: ab('Start the Reactor', { mp: 26, min: 0, max: 0, target: 'allparty', fx: 'heal', status: ['regen', 'haste'], turns: 4 }) },
+      ],
+    },
+    { // The Fly (1986) — Seth Brundle, half-spliced with the thing in the telepod
+      key: 'brundle', name: 'Brundle', role: 'Spliced Genius', model: 'brundle', temporary: true,
+      base: { hp: 158, mp: 34, atkMin: 20, atkMax: 30, crit: 0.16 }, growth: { hp: 15, mp: 4, atk: 4 },
+      baseAbilities: [ ab('Acid Spit', { mp: 10, min: 30, max: 44, target: 'enemy', fx: 'water', el: 'water', status: 'poison', turns: 3 }), ab('Telepod Blink', { mp: 12, min: 26, max: 38, target: 'all', fx: 'water', el: 'water' }) ],
+      tree: [
+        { id: 'br_cr', name: 'Insect Reflexes', desc: '+16% Crit', cost: 1, kind: 'stat', stat: { crit: 0.16 } },
+        { id: 'br_at', name: 'Brundle Strength', desc: '+5 Attack', cost: 1, req: 'br_cr', kind: 'stat', stat: { atk: 5 } },
+        { id: 'br_a1', branch: 'a', name: 'Pod Strike', desc: 'PATH: Fly — blink in for a savage hit', cost: 1, req: 'br_at', kind: 'ability', ability: ab('Pod Strike', { mp: 12, min: 54, max: 72, target: 'enemy', fx: 'beam', el: 'physical' }) },
+        { id: 'br_a2', branch: 'a', name: 'Corrosive Blood', desc: '+6 Attack', cost: 2, req: 'br_a1', kind: 'stat', stat: { atk: 6 } },
+        { id: 'br_acap', branch: 'a', name: 'Maggot Frenzy', desc: 'Lingering acid over all foes', cost: 3, req: 'br_a2', kind: 'ability', ability: ab('Maggot Frenzy', { mp: 24, min: 38, max: 54, target: 'all', fx: 'water', el: 'water', status: 'poison', turns: 4 }) },
+        { id: 'br_b1', branch: 'b', name: 'Self-Repair', desc: 'PATH: Scientist — Regen to an ally', cost: 1, req: 'br_at', kind: 'ability', ability: ab('Self-Repair', { mp: 12, min: 0, max: 0, target: 'ally', fx: 'heal', status: 'regen', turns: 4 }) },
+        { id: 'br_b2', branch: 'b', name: 'Hybrid Vigor', desc: '+45 Max HP', cost: 2, req: 'br_b1', kind: 'stat', stat: { hp: 45 } },
+        { id: 'br_bcap', branch: 'b', name: 'Be Afraid', desc: 'Acid all foes + Slow + Weaken', cost: 3, req: 'br_b2', kind: 'ability', ability: ab('Be Afraid', { mp: 26, min: 30, max: 44, target: 'all', fx: 'water', el: 'water', status: ['slow', 'weaken'], turns: 3 }) },
+      ],
+    },
+    { // Labyrinth (1986) — Sir Didymus, the tiny valiant fox-knight astride Ambrosius
+      key: 'didymus', name: 'Sir Didymus', role: 'Valiant Knight', model: 'didymus', temporary: true,
+      base: { hp: 170, mp: 28, atkMin: 22, atkMax: 32, crit: 0.14, big: true }, growth: { hp: 17, mp: 3, atk: 4 },
+      baseAbilities: [ ab('Valiant Charge', { mp: 8, min: 36, max: 50, target: 'enemy', fx: 'beam', el: 'physical' }), ab('None Shall Pass!', { mp: 12, min: 0, max: 0, target: 'allparty', fx: 'beam', status: 'atkup', turns: 4 }) ],
+      tree: [
+        { id: 'dd_hp', name: 'Unyielding Heart', desc: '+30 Max HP', cost: 1, kind: 'stat', stat: { hp: 30 } },
+        { id: 'dd_at', name: 'Knightly Drill', desc: '+5 Attack', cost: 1, req: 'dd_hp', kind: 'stat', stat: { atk: 5 } },
+        { id: 'dd_a1', branch: 'a', name: 'Honour Duel', desc: 'PATH: Champion — a holy lance to one foe', cost: 1, req: 'dd_at', kind: 'ability', ability: ab('Honour Duel', { mp: 14, min: 52, max: 70, target: 'enemy', fx: 'beam', el: 'holy' }) },
+        { id: 'dd_a2', branch: 'a', name: 'Fearless', desc: '+16% Crit', cost: 2, req: 'dd_a1', kind: 'stat', stat: { crit: 0.16 } },
+        { id: 'dd_acap', branch: 'a', name: 'For the Labyrinth!', desc: 'A glorious charge upon all foes', cost: 3, req: 'dd_a2', kind: 'ability', ability: ab('For the Labyrinth!', { mp: 26, min: 48, max: 64, target: 'all', fx: 'beam', el: 'holy' }) },
+        { id: 'dd_b1', branch: 'b', name: 'Stand Behind Me!', desc: 'PATH: Guardian — shield an ally (Regen)', cost: 1, req: 'dd_at', kind: 'ability', ability: ab('Stand Behind Me!', { mp: 12, min: 0, max: 0, target: 'ally', fx: 'heal', status: 'regen', turns: 4 }) },
+        { id: 'dd_b2', branch: 'b', name: 'Bog-Proof Hide', desc: '+45 Max HP', cost: 2, req: 'dd_b1', kind: 'stat', stat: { hp: 45 } },
+        { id: 'dd_bcap', branch: 'b', name: 'Your Word Is Your Bond', desc: 'Attack Up + Haste to all allies', cost: 3, req: 'dd_b2', kind: 'ability', ability: ab('Your Word Is Your Bond', { mp: 24, min: 0, max: 0, target: 'allparty', fx: 'beam', status: ['atkup', 'haste'], turns: 4 }) },
+      ],
+    },
+    { // Zardoz (1974) — Zed, the Exterminator who shot his way out of the floating god
+      key: 'zed', name: 'Zed', role: 'Exterminator', model: 'zed', temporary: true,
+      base: { hp: 162, mp: 22, atkMin: 26, atkMax: 36, crit: 0.18, big: true }, growth: { hp: 16, mp: 2, atk: 5 },
+      baseAbilities: [ ab('Fan the Hammer', { mp: 8, min: 34, max: 48, target: 'enemy', fx: 'fire', el: 'fire', proj: true }), ab('Spray and Pray', { mp: 12, min: 22, max: 34, target: 'all', fx: 'fire', el: 'fire' }) ],
+      tree: [
+        { id: 'zd_cr', name: 'Dead Eye', desc: '+16% Crit', cost: 1, kind: 'stat', stat: { crit: 0.16 } },
+        { id: 'zd_at', name: 'Gun Oil', desc: '+5 Attack', cost: 1, req: 'zd_cr', kind: 'stat', stat: { atk: 5 } },
+        { id: 'zd_a1', branch: 'a', name: 'Magnum Shot', desc: 'PATH: Gunslinger — one devastating round', cost: 1, req: 'zd_at', kind: 'ability', ability: ab('Magnum Shot', { mp: 12, min: 56, max: 74, target: 'enemy', fx: 'fire', el: 'fire', proj: true }) },
+        { id: 'zd_a2', branch: 'a', name: 'Steady Aim', desc: '+6 Attack', cost: 2, req: 'zd_a1', kind: 'stat', stat: { atk: 6 } },
+        { id: 'zd_acap', branch: 'a', name: 'The Gun Is Good', desc: 'Empty every chamber into one foe', cost: 3, req: 'zd_a2', kind: 'ability', ability: ab('The Gun Is Good', { mp: 24, min: 64, max: 86, target: 'enemy', fx: 'fire', el: 'fire', proj: true }) },
+        { id: 'zd_b1', branch: 'b', name: 'Suppressing Fire', desc: 'PATH: Outlaw — a fiery volley that Weakens all', cost: 1, req: 'zd_at', kind: 'ability', ability: ab('Suppressing Fire', { mp: 16, min: 24, max: 36, target: 'all', fx: 'fire', el: 'fire', status: 'weaken', turns: 3 }) },
+        { id: 'zd_b2', branch: 'b', name: 'Bandolier', desc: '+30 Max HP', cost: 2, req: 'zd_b1', kind: 'stat', stat: { hp: 30 } },
+        { id: 'zd_bcap', branch: 'b', name: 'Burn the Vortex', desc: 'A roaring fusillade across all foes', cost: 3, req: 'zd_b2', kind: 'ability', ability: ab('Burn the Vortex', { mp: 26, min: 44, max: 60, target: 'all', fx: 'fire', el: 'fire' }) },
+      ],
+    },
   ];
 
   const ENEMIES = {
@@ -338,6 +398,26 @@ window.Data = (function () {
       { name: 'vents scalding steam', min: 12, max: 18, all: true, status: 'weaken', turns: 2 } ], drops: [] },
     guardbot: { name: 'Dock Guard-Drone', model: 'sentry', hp: 64, xp: 12, gold: 14, baseY: 1.3, moves: [
       { name: 'fires a warning shot', min: 7, max: 12 }, { name: 'rams forward', min: 9, max: 14 } ], drops: [] },
+    // ---- four more legend-isle bosses (deep-cut cinema) ----
+    cohaagen: { name: 'Administrator Cohaagen', model: 'cyclops', hp: 620, xp: 540, gold: 760, baseY: 0, boss: true, scale: 1.3, moves: [
+      { name: 'shuts off the air', min: 24, max: 34, all: true, status: 'weaken', turns: 3 },
+      { name: 'swings the drilling rig', min: 32, max: 46 },
+      { name: 'sics the colony guard', min: 22, max: 30, all: true },
+      { name: 'crushes a rebel underfoot', min: 30, max: 44 } ], drops: [ { mat: 'sand', chance: 1 }, { mat: 'brine', chance: 0.5 } ] },
+    telepod: { name: 'The Telepod Aberration', model: 'kraken', hp: 600, xp: 520, gold: 720, baseY: 0.2, boss: true, scale: 1.35, moves: [
+      { name: 'splices flesh into steel', min: 26, max: 38 },
+      { name: 'vomits digestive acid', min: 20, max: 28, all: true, status: 'poison', turns: 4 },
+      { name: 'teleports and reassembles wrong', min: 30, max: 44 },
+      { name: 'screams through a human mouth', min: 22, max: 30, all: true, status: 'weaken', turns: 3 } ], drops: [ { mat: 'goo', chance: 1 }, { mat: 'ectoplasm', chance: 0.6 } ] },
+    bridgekeeper: { name: 'The Bridge Goblin', model: 'minotaur', hp: 580, xp: 500, gold: 700, baseY: 0, boss: true, scale: 1.3, moves: [
+      { name: 'bars the way with a roar', min: 28, max: 40, all: true },
+      { name: 'swings a knotted club', min: 32, max: 46 },
+      { name: 'kicks you toward the Bog', min: 24, max: 34, status: 'slow', turns: 3 } ], drops: [ { mat: 'fang', chance: 1 }, { mat: 'goo', chance: 0.5 } ] },
+    zardoz: { name: 'ZARDOZ, the Stone God', model: 'golem', hp: 720, xp: 620, gold: 880, baseY: 0.5, boss: true, scale: 1.7, rotate: ['holy', 'dark'], moves: [
+      { name: 'booms "THE GUN IS GOOD"', min: 26, max: 36, all: true },
+      { name: 'vomits a tide of rifles', min: 30, max: 44 },
+      { name: 'fixes you in its stone gaze', min: 24, max: 34, status: 'weaken', turns: 3 },
+      { name: 'descends upon a hero', min: 36, max: 50 } ], drops: [ { mat: 'abyssscale', chance: 1 }, { mat: 'sand', chance: 0.6 } ] },
   };
 
   // shared inventory items (consumables)
@@ -496,6 +576,26 @@ window.Data = (function () {
       { key: 'tourney_lance', name: 'Tourney Lance', atk: 24, slots: 2, price: 0, desc: '+24 ATK · 2 shell slots' },
       { key: 'dream_lance',  name: 'Lance of the Impossible Dream', atk: 36, slots: 3, price: 0, desc: 'For glory, for Dulcinea.' },
     ],
+    kuato: [
+      { key: 'mutant_hand', name: 'Mutant Hand', atk: 14, slots: 2, price: 0, desc: 'A third hand — and it KNOWS things.' },
+      { key: 'psi_focus',   name: 'Psi Focus',   atk: 22, slots: 3, price: 0, desc: '+22 ATK · 3 shell slots' },
+      { key: 'opened_mind', name: 'The Opened Mind', atk: 32, slots: 3, price: 0, desc: 'Reality bends where it looks.' },
+    ],
+    brundle: [
+      { key: 'lab_scalpel', name: 'Lab Scalpel', atk: 14, slots: 2, price: 0, desc: 'Surgical. Mostly.' },
+      { key: 'spliced_claw', name: 'Spliced Claw', atk: 24, slots: 2, price: 0, desc: '+24 ATK · 2 shell slots' },
+      { key: 'telepod_limb', name: 'Telepod Limb', atk: 36, slots: 3, price: 0, desc: 'Arrived from somewhere wrong.' },
+    ],
+    didymus: [
+      { key: 'wooden_lance', name: 'Wooden Lance', atk: 14, slots: 2, price: 0, desc: 'Held with absolute conviction.' },
+      { key: 'noble_pike',   name: 'Noble Pike',   atk: 24, slots: 2, price: 0, desc: '+24 ATK · 2 shell slots' },
+      { key: 'bog_lance',    name: 'Lance of the Bog', atk: 36, slots: 3, price: 0, desc: 'None shall pass while he holds it.' },
+    ],
+    zed: [
+      { key: 'worn_revolver', name: 'Worn Revolver', atk: 16, slots: 2, price: 0, desc: 'The gun is good.' },
+      { key: 'twin_pistols',  name: 'Twin Pistols',  atk: 26, slots: 2, price: 0, desc: '+26 ATK · 2 shell slots' },
+      { key: 'vortex_rifle',  name: 'Vortex Rifle',  atk: 38, slots: 3, price: 0, desc: 'Vomited from the stone god itself.' },
+    ],
   };
   // ultimate weapons (sold at the Mall Isle bazaar)
   const ULT = {
@@ -638,6 +738,10 @@ window.Data = (function () {
     forestgod: { weak: ['fire'], absorb: ['earth'], resist: ['holy', 'water'] },
     vogon: { weak: ['thunder'], resist: ['physical', 'dark'] },
     windmill: { weak: ['thunder'], resist: ['physical', 'earth'] },
+    cohaagen: { weak: ['water'], resist: ['physical', 'fire'] },
+    telepod: { weak: ['fire', 'holy'], resist: ['water'] },
+    bridgekeeper: { weak: ['thunder'], resist: ['physical', 'earth'] },
+    zardoz: { weak: ['thunder'], resist: ['physical'] },
   };
   const AMBUSH = ['leviathan', 'angler']; // random deep-sea ambush bosses
   function affMult(enemyKey, element) {
@@ -666,10 +770,14 @@ window.Data = (function () {
     sane:      { name: 'Spirit Howl',     target: 'all',      fx: 'beam',  el: 'earth',   min: 90, max: 124, flavor: 'and the whole forest answers her cry!' },
     marvyn:    { name: 'Improbability Cascade', target: 'all', fx: 'beam', el: 'dark',    min: 94, max: 130, flavor: '"...here I am, brain the size of a planet." Reality buckles.' },
     quijano:   { name: 'The Impossible Dream', target: 'all', fx: 'beam',  el: 'holy',    min: 92, max: 128, flavor: 'charges an imaginary giant — and somehow, gloriously, wins!' },
+    kuato:     { name: 'Open Your Mind',    target: 'all', fx: 'beam',  el: 'dark',  min: 92, max: 128, flavor: 'splits the air — every mind in the room screams as one!' },
+    brundle:   { name: 'Telepod Splice',    target: 'all', fx: 'water', el: 'water', min: 92, max: 128, flavor: 'drags every foe through the pod and reassembles them WRONG!' },
+    didymus:   { name: 'For My Lady Sarah!', target: 'all', fx: 'beam', el: 'holy',  min: 90, max: 126, flavor: 'and Ambrosius charge at full gallop — valor made manifest!' },
+    zed:       { name: 'The Gun Is Good',   target: 'all', fx: 'fire',  el: 'fire',  min: 94, max: 130, flavor: 'empties the whole bandolier in one roaring fusillade!' },
   };
 
   // ---------------- ICONS ----------------
-  const WEAPON_ICON = { pirate: '⚔️', swordsman: '🗡️', healer: '🪄', mage: '✨', blader: '🌀', dragoon: '🔱', ruffy: '🥊', simon: '🔗', aladdin: '🗡️', violca: '🏹', mac: '🔥', sane: '🐺', marvyn: '🤖', quijano: '🛡️' };
+  const WEAPON_ICON = { pirate: '⚔️', swordsman: '🗡️', healer: '🪄', mage: '✨', blader: '🌀', dragoon: '🔱', ruffy: '🥊', simon: '🔗', aladdin: '🗡️', violca: '🏹', mac: '🔥', sane: '🐺', marvyn: '🤖', quijano: '🛡️', kuato: '🧠', brundle: '🪰', didymus: '🦊', zed: '🔫' };
   const weaponIcon = (charKey) => WEAPON_ICON[charKey] || '⚔️';
   const shellIcon = (sh) => (sh.kind === 'magic' ? '🔮' : '🛡️');
 
@@ -1061,6 +1169,34 @@ window.Data = (function () {
       encounters: [ { x: 5, z: 9, pool: ['golem', 'urchin'], min: 2, max: 2 }, { x: -6, z: 11, pool: ['cobra', 'scarab'], min: 2, max: 3 } ],
       decor: { trees: 5, palms: 0, rocks: 10 },
     },
+    rekall: {
+      name: 'Rekall Colony', size: 50, shape: 'horn', treeType: 'deadTree', ground: '#9a4530', sand: '#c2724a', water: '#5a3026', sky: { top: '#5a1810', horizon: '#e08a4a' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      dungeon: { key: 'rekall_mine', x: 0, z: 9, color: '#ff7a4a' },
+      encounters: [ { x: 5, z: 9, pool: ['golem', 'scarab'], min: 2, max: 3 }, { x: -6, z: 11, pool: ['sentry', 'golem'], min: 2, max: 2 } ],
+      decor: { trees: 3, palms: 0, rocks: 16 },
+    },
+    tawny: {
+      name: 'Tawny Labs', size: 48, shape: 'fin', treeType: 'pine', ground: '#3a4048', sand: '#52596a', water: '#16202c', sky: { top: '#10141c', horizon: '#2a3a4a' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      dungeon: { key: 'tawny_lab', x: 0, z: 9, color: '#9effd0' },
+      encounters: [ { x: -6, z: 9, pool: ['jelly', 'octo'], min: 2, max: 3 }, { x: 7, z: 11, pool: ['urchin', 'sentry'], min: 2, max: 2 } ],
+      decor: { trees: 6, palms: 0, rocks: 10 },
+    },
+    labyrinth: {
+      name: 'The Labyrinth', size: 54, shape: 'clover', treeType: 'tree', ground: '#2f6a3a', sand: '#b9a86a', water: '#2a7a8a', sky: { top: '#3a6a8a', horizon: '#e6e0b0' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      dungeon: { key: 'goblin_maze', x: -11, z: 8, color: '#caa86a' },
+      encounters: [ { x: 5, z: 9, pool: ['satyr', 'bat'], min: 2, max: 3 }, { x: -6, z: 11, pool: ['gravehand', 'satyr'], min: 2, max: 2 } ],
+      decor: { trees: 14, palms: 0, rocks: 8 },
+    },
+    vortex: {
+      name: 'The Vortex', size: 52, shape: 'spiral', treeType: 'tree', ground: '#3a6a4a', sand: '#caa030', water: '#2a8a7a', sky: { top: '#1a4a3a', horizon: '#e0d088' },
+      spawn: { x: 0, z: -10 }, dock: { x: 0, z: -13 },
+      dungeon: { key: 'the_vortex', x: 11, z: 8, color: '#ffe06a' },
+      encounters: [ { x: -6, z: 9, pool: ['wraith', 'gravehand'], min: 2, max: 3 }, { x: 7, z: 11, pool: ['sentry', 'wraith'], min: 2, max: 2 } ],
+      decor: { trees: 9, palms: 0, rocks: 11 },
+    },
   };
 
   // ---------------- SEA (sail between islands) ----------------
@@ -1080,6 +1216,10 @@ window.Data = (function () {
       { key: 'improbable', x: 26, z: 94 },
       { key: 'lamancha', x: -34, z: -94 },
       { key: 'neither', x: 40, z: -86 },
+      { key: 'rekall', x: -96, z: -54 },
+      { key: 'tawny', x: 98, z: 66 },
+      { key: 'labyrinth', x: -58, z: 98 },
+      { key: 'vortex', x: 54, z: -98 },
     ],
     ships: [
       { id: 's0', type: 'sloop', x: -12, z: 26 },
@@ -1222,6 +1362,54 @@ window.Data = (function () {
         { name: 'Narrator', text: 'The miller loads you up with provisions. (Received 2 Honey Baklava.)' } ] },
       bossMob: { x: 0, z: 27, key: 'windmill' }, reward: { gold: 900, shell: 'venom_spiral' },
     },
+    rekall_mine: {
+      name: 'The Rekall Mine', island: 'rekall', ground: '#5a2a1e', wall: '#3a1a12', sky: { top: '#2a0a06', horizon: '#6a2410' },
+      spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
+      hint: 'Rekall Colony — the air is being rationed to break the rebels. Cohaagen holds the alien reactor that could give this red rock a sky. Cut to the core and turn it ON.',
+      ally: { key: 'kuato', metFlag: 'kuatoMet', join: 'kuatoJoin', pre: 'rekallPre', fall: 'rekallFall', leave: 'kuatoLeave', holdMsg: 'Kuato\'s host folds his arms. "Go. We will hold. Open... your mind... when you return."' },
+      mobs: [ { x: -8, z: -4, pool: ['golem'], min: 1, max: 2 }, { x: 8, z: 6, pool: ['sentry', 'golem'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['scarab', 'sentry'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['golem', 'scarab', 'sentry'], min: 2, max: 3 } ],
+      npc: { x: -7, z: 10, name: 'Melina', color: '#7a3a2a', hair: '#1a1008', gift: { item: 'hipotion', n: 3 }, lines: [
+        { name: 'Melina', text: '(low, fast) You\'re really doing this? Cohaagen cut the AIR to starve us out. Kuato sees the whole board — he lives inside Tony, leans out when it\'s time to talk. Don\'t flinch when he does.' },
+        { name: 'Melina', text: 'Get to the reactor and turn it on. The aliens left it for whoever was brave enough. Take these — you\'ll need them more than I will.' },
+        { name: 'Narrator', text: 'Melina presses a fistful of vials into your hand. (Received 3 Hi-Potions.)' } ] },
+      bossMob: { x: 0, z: 27, key: 'cohaagen' }, reward: { gold: 900, shell: 'hex_conch' },
+    },
+    tawny_lab: {
+      name: 'Tawny Labs', island: 'tawny', ground: '#2a3038', wall: '#181e26', sky: { top: '#0a0e14', horizon: '#22303e' },
+      spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
+      hint: 'A dark research loft. Two telepods hum in the corner — and something came through them that should not have. Reach the lab\'s heart before it finishes... becoming.',
+      ally: { key: 'brundle', metFlag: 'brundleMet', join: 'brundleJoin', pre: 'labPre', fall: 'labFall', leave: 'brundleLeave', holdMsg: 'Brundle twitches a too-fast smile. "I\'ll wait. Don\'t mind the dripping. Be afraid only... a little."' },
+      mobs: [ { x: -8, z: -4, pool: ['jelly'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['octo', 'jelly'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['urchin', 'sentry'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['octo', 'urchin', 'sentry'], min: 2, max: 3 } ],
+      npc: { x: 7, z: 11, name: 'Veronica', color: '#6a5a4a', hair: '#3a2410', gift: { item: 'remedy', n: 2 }, lines: [
+        { name: 'Veronica', text: '(camera shaking in her hands) He typed himself into that pod drunk, to prove it was safe. A fly got in with him. The computer... spliced them. He doesn\'t know yet how much of him is left.' },
+        { name: 'Veronica', text: 'Whatever\'s growing past that door isn\'t Seth anymore. Put it down — and if any of HIM can still be saved, save it. Take these.' },
+        { name: 'Narrator', text: 'Veronica hands you her field kit. (Received 2 Remedies.)' } ] },
+      bossMob: { x: 0, z: 27, key: 'telepod' }, reward: { gold: 920, shell: 'venom_spiral' },
+    },
+    goblin_maze: {
+      name: 'The Goblin Labyrinth', island: 'labyrinth', ground: '#2a3a22', wall: '#1c2a16', sky: { top: '#3a3a4a', horizon: '#d8d0a0' },
+      spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
+      hint: 'The hedge-maze shifts when you\'re not looking. A noble little knight guards a bridge over the Bog of Eternal Stench — and a Goblin twice your height wants to throw you in.',
+      ally: { key: 'didymus', metFlag: 'didymusMet', join: 'didymusJoin', pre: 'mazePre', fall: 'mazeFall', leave: 'didymusLeave', holdMsg: 'Sir Didymus salutes. "I shall guard this bridge with my life, good friend! None shall pass! ...Do hurry back."' },
+      mobs: [ { x: -8, z: -4, pool: ['satyr'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['bat', 'satyr'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['gravehand'], min: 1, max: 2 }, { x: 7, z: 24, pool: ['satyr', 'gravehand', 'bat'], min: 2, max: 3 } ],
+      npc: { x: -7, z: 10, name: 'The Helping Hands', color: '#6a5a4a', hair: '#3a2a18', gift: { item: 'megapotion', n: 1 }, lines: [
+        { name: 'The Helping Hands', text: '(a wall of stone hands, all talking at once) Up, or DOWN? Which way, which way?! Most folk scream. You didn\'t scream. We LIKE the ones who don\'t scream.' },
+        { name: 'The Helping Hands', text: 'The good Sir Didymus holds the bridge ahead — brave as a lion, small as a teacup. Mind the Bog. And mind the big Goblin minding the Bog. Here — catch!' },
+        { name: 'Narrator', text: 'The hands toss you something useful. (Received a Mega-Potion.)' } ] },
+      bossMob: { x: 0, z: 27, key: 'bridgekeeper' }, reward: { gold: 900, shell: 'spiral_mend' },
+    },
+    the_vortex: {
+      name: 'The Vortex', island: 'vortex', ground: '#1f3a2a', wall: '#142a1c', sky: { top: '#0e2a1e', horizon: '#caa84a' },
+      spawn: { x: 0, z: -12 }, exit: { x: 0, z: -14 }, gate: { x: 0, z: 30 }, chest: { x: 0, z: 34 }, crystals: [],
+      hint: 'Inside the dome of the Eternals, where no one dies and no one truly lives. A great floating stone head hangs at the centre, booming commandments — and one Brutal has stopped believing it.',
+      ally: { key: 'zed', metFlag: 'zedMet', join: 'zedJoin', pre: 'vortexPre', fall: 'vortexFall', leave: 'zedLeave', holdMsg: 'Zed thumbs the cylinder of his revolver. "Go. I\'ll watch the head. It hates being watched."' },
+      mobs: [ { x: -8, z: -4, pool: ['wraith'], min: 2, max: 3 }, { x: 8, z: 6, pool: ['gravehand', 'wraith'], min: 2, max: 2 }, { x: -7, z: 14, pool: ['sentry'], min: 2, max: 2 }, { x: 7, z: 24, pool: ['wraith', 'sentry', 'gravehand'], min: 2, max: 3 } ],
+      npc: { x: 7, z: 11, name: 'An Eternal', color: '#5a6a7a', hair: '#cccccc', gift: { heal: true }, lines: [
+        { name: 'An Eternal', text: '(serene, unbearably bored) A Brutal? Here, in the Vortex? And armed? How... stimulating. We have lived ten thousand years and forgotten how to die. It was not the gift the stone head promised.' },
+        { name: 'An Eternal', text: 'Zed has seen behind the face. Follow him, and end this deathless tedium — for all of us. Rest first; immortality is exhausting.' },
+        { name: 'Narrator', text: 'The Eternal lays a cool hand on your brow. (Party fully restored.)' } ] },
+      bossMob: { x: 0, z: 27, key: 'zardoz' }, reward: { gold: 980, shell: 'conch_ember' },
+    },
   };
 
   // ---------------- COSMOLOGY (the Observatory) ----------------
@@ -1264,6 +1452,102 @@ window.Data = (function () {
   // ---------------- STORY (cutscene beats) ----------------
   // each beat: { name, text }
   const STORY = {
+    // ===== Total Recall =====
+    kuatoJoin: [
+      { name: 'Narrator', text: 'Rekall Colony, dug into red Martian rock. The recycled air tastes of rust and fear. In a back room, a heavyset man named Tony grips his own stomach as if something inside is waking up.' },
+      { name: 'Kuato', text: '(a second face pushes out from Tony\'s chest — small, ancient, kind) "Open... your mind. You came a long way to free this rock. Good. The reactor at the heart of the mine can give Mars a sky — Cohaagen keeps it sealed to keep us begging for air."' },
+      { name: 'Capt. Redbeard', text: 'A man with a man in him. ...Honestly? Not the strangest crew member I\'ve signed.' },
+      { name: 'Kuato', text: '"Take me. While I live in Tony, I see what the enemy plans before he plans it. Open the reactor — and open your mind. It is the only weapon that has ever frightened them."' },
+      { name: 'Narrator', text: 'Kuato joins your party — for as long as you walk the red colony. (Leave and he holds the line; end Cohaagen and he stays to free his people.)' },
+    ],
+    rekallPre: [
+      { name: 'Kuato', text: '"There. The man who would sell you the very air. Cohaagen."' },
+      { name: 'Administrator Cohaagen', text: '"You think you want to give these mutants a SKY? You want what I want — and I want this colony on its knees. Breathing my air. Paying my price."' },
+      { name: 'Kuato', text: '"Then we end the price. Open your mind — and bring the rig DOWN!"' },
+    ],
+    rekallFall: [
+      { name: 'Narrator', text: 'Cohaagen falls. Kuato presses Tony\'s hand to the alien reactor — and ancient ice-cores roar to life. Far above, the red sky cracks... and turns blue.' },
+      { name: 'Kuato', text: '"...A sky. After all this time. Breathe it, friend. You earned the air."' },
+      { name: 'Narrator', text: 'In the thawing rock you find a Hex Conch, humming faintly. (Equip it from the Gear menu.)' },
+    ],
+    kuatoLeave: [
+      { name: 'Kuato', text: '"Tony\'s body is tired, and my people have a world to learn how to live in. I will stay. Teach them. Watch the sky we made."' },
+      { name: 'Capt. Redbeard', text: 'You sure, friend? There\'s stranger seas out there than red sand.' },
+      { name: 'Kuato', text: '(the small face smiles, then sinks away) "Go. And remember — when they corner you... open your mind."' },
+      { name: 'Narrator', text: 'Kuato stays to guide the freed colony. (No longer available — but Mars breathes because of you.)' },
+    ],
+    // ===== The Fly =====
+    brundleJoin: [
+      { name: 'Narrator', text: 'Tawny Labs — a research loft gone dark, two telepods humming in the corner. Something hunches over a desk, half in shadow, moving in little too-fast jerks.' },
+      { name: 'Brundle', text: '(a wet, brilliant, breaking voice) "Don\'t — don\'t come closer yet. I\'m a little... unstable. Name was Seth. Seth Brundle. I built those pods to END distance. Then I got in one. Drunk. And a fly got in with me."' },
+      { name: 'Marina', text: 'The computer didn\'t know how to keep you separate. It made you... one thing.' },
+      { name: 'Brundle', text: '"An insect who dreamed he was a man. There\'s a worse one still in the pods — a splice that never stopped splicing. Help me put it down before it wears my last good face. I\'m still fast. I\'m still... mostly me."' },
+      { name: 'Narrator', text: 'Brundle joins your party — for as long as you\'re in the lab. (Leave and he waits; end the Aberration and he asks for one last mercy.)' },
+    ],
+    labPre: [
+      { name: 'Brundle', text: '"There. That\'s what I would have become if I let it. Look at it — it\'s still trying to BE me."' },
+      { name: 'The Telepod Aberration', text: '(a chorus of digestive gurgles shaped into words) "Brundlefly. Come. Back. To. The. Pod."' },
+      { name: 'Brundle', text: '"...No. Not this time. Burn it, melt it, splice it — I don\'t care. Just don\'t let it OUT."' },
+    ],
+    labFall: [
+      { name: 'Narrator', text: 'The Aberration collapses into a steaming, finally-still heap. Brundle stares at his own trembling, half-changed hands.' },
+      { name: 'Brundle', text: '"...Thank you. I was afraid I\'d end up exactly like that. Maybe I still will. But not today, eh? Not today."' },
+      { name: 'Narrator', text: 'Among the ruined equipment you recover a Venom Spiral. (Equip it from the Gear menu.)' },
+    ],
+    brundleLeave: [
+      { name: 'Brundle', text: '"I should stay near the pods. Someone has to make sure nothing else comes through — and the changes... they\'re not done with me."' },
+      { name: 'Marina', text: 'Seth. You don\'t have to face that alone.' },
+      { name: 'Brundle', text: '(a flicker of the brilliant man he was) "Ha — alone is rather my whole condition now. Go. Be careful out there. The world\'s a telepod, friend; you never quite arrive as the same thing that left."' },
+      { name: 'Narrator', text: 'Brundle stays to guard the telepods. (No longer available — but the lab is sealed, and quiet.)' },
+    ],
+    // ===== Labyrinth =====
+    didymusJoin: [
+      { name: 'Narrator', text: 'The Goblin Labyrinth — hedges taller than ships, shifting when your back is turned. At a little stone bridge over a reeking bog stands a knight no higher than your knee, mounted on a shaggy sheepdog.' },
+      { name: 'Sir Didymus', text: '"HALT! None may cross this bridge without my permission! ...I am Sir Didymus, sworn defender of this crossing, and this is my noble steed, Ambrosius. State thy business, knaves!"' },
+      { name: 'Capt. Redbeard', text: 'We mean to slay the giant Goblin past the Bog, little ser.' },
+      { name: 'Sir Didymus', text: '(gasps with joy) "A QUEST! And a worthy one! Then I grant thee passage — nay, I grant thee my LANCE! For where there is a giant to be faced, there shall Sir Didymus be also! Onward, Ambrosius!"' },
+      { name: 'Narrator', text: 'Sir Didymus joins your party — for as long as you brave the Labyrinth. (Leave and he guards the bridge; end the Goblin and he keeps his post with honour.)' },
+    ],
+    mazePre: [
+      { name: 'Sir Didymus', text: '"There he stands — the great brute who would hurl travellers into the Bog of Eternal Stench! For shame, sirrah! For SHAME!"' },
+      { name: 'The Bridge Goblin', text: '(a wet, rumbling laugh) "Little knight on a little dog. I will throw you the FARTHEST."' },
+      { name: 'Sir Didymus', text: '"You shall throw NO ONE this day! For my word is my bond, and my bond is this bridge! HAVE AT THEE!"' },
+    ],
+    mazeFall: [
+      { name: 'Narrator', text: 'The Bridge Goblin topples into its own bog with a tremendous, malodorous splash. Sir Didymus plants his lance and strikes a triumphant pose atop Ambrosius.' },
+      { name: 'Sir Didymus', text: '"HUZZAH! Did you SEE that, friends?! Valor! Honour! ...And only a LITTLE smell!"' },
+      { name: 'Narrator', text: 'On the bridge you find a Spiral of Mending, left by some grateful traveller. (Equip it from the Gear menu.)' },
+    ],
+    didymusLeave: [
+      { name: 'Sir Didymus', text: '"A knight does not abandon his post, good friends — and this bridge will not guard itself. But know that you shall ALWAYS have my lance, should you call."' },
+      { name: 'Capt. Redbeard', text: 'The seas could use a heart as brave as yours, ser.' },
+      { name: 'Sir Didymus', text: '(bows so low he nearly slides off Ambrosius) "And should your quest bring you again to my bridge — I shall be HERE. Fare thee well! Onward to glory! ...Ambrosius, stop eating the hedge."' },
+      { name: 'Narrator', text: 'Sir Didymus keeps his bridge. (No longer available — but no one is thrown in the Bog on his watch.)' },
+    ],
+    // ===== Zardoz =====
+    zedJoin: [
+      { name: 'Narrator', text: 'The Vortex — a glass dome over green hills where the Eternals drift, deathless and bored to madness. A hard-eyed man in crossed bandoliers steps from behind a standing stone, a heavy revolver level at your chest.' },
+      { name: 'Zed', text: '"Stop there. I\'ve killed a great many men who came through that fold. ...But you don\'t move like the Eternals. You move like people who can still DIE. Good. So can I help."' },
+      { name: 'Marina', text: 'There\'s a... giant stone head outside. It was shouting about guns.' },
+      { name: 'Zed', text: '"Zardoz. The floating god that armed us Brutals and sent us out to do its killing. \'The gun is good,\' it told us. It was lying. I climbed inside the head and saw the man working the strings. Now I aim to bring the whole lie down. You in?"' },
+      { name: 'Narrator', text: 'Zed joins your party — for as long as you\'re in the Vortex. (Leave and he holds position; end Zardoz and he stays to give the Eternals back their deaths.)' },
+    ],
+    vortexPre: [
+      { name: 'Zed', text: '"There it is. The face that ran my whole life from the clouds."' },
+      { name: 'ZARDOZ, the Stone God', text: '(booming, vast, absurd) "THE GUN IS GOOD. THE GUN IS GOOD. KNEEL, BRUTAL, AND BE ARMED."' },
+      { name: 'Zed', text: '"Not anymore. The gun was never good — and neither were you. Light it UP!"' },
+    ],
+    vortexFall: [
+      { name: 'Narrator', text: 'The great stone head cracks down the middle and crashes silent into the green. The Eternals look up, blinking, as if waking from a very long dream — and, for the first time in an age, afraid. And glad of it.' },
+      { name: 'Zed', text: '"...It\'s done. They can grow old now. They can REST. Took a god falling out of the sky to make a gift of dying."' },
+      { name: 'Narrator', text: 'In the rubble of the head you find an Ember Conch, still warm. (Equip it from the Gear menu.)' },
+    ],
+    zedLeave: [
+      { name: 'Zed', text: '"The Eternals need someone to teach them how to live now that they can die. Reckon that\'s a job for a man who never forgot how. I\'ll stay."' },
+      { name: 'Capt. Redbeard', text: 'There\'s a whole horizon out there, Zed. Bigger than any dome.' },
+      { name: 'Zed', text: '(holsters the revolver, looks at the broken sky) "Maybe one day. For now — somebody has to make sure no new gods grow back. Go on. And keep that powder dry."' },
+      { name: 'Narrator', text: 'Zed stays to shepherd the Eternals into mortality. (No longer available — but the Vortex is free.)' },
+    ],
     lydiaJoin: [
       { name: 'Lydia', text: '(stepping from the shadows, calm as a held breath) You can see me. Good — most of the living look right through a girl in black.' },
       { name: 'Lydia', text: 'My parents are caged in his striped little kingdom, and the only language he respects is the one I speak: the dark. Take me with you. We end him — and we do not say his name even once.' },
@@ -1628,13 +1912,17 @@ window.Data = (function () {
     sane:     { def: 24, spec: 22, spd: 14, gdef: 2.0, gspec: 1.8, gspd: 0.45 },
     marvyn:   { def: 34, spec: 36, spd: 8,  gdef: 2.5, gspec: 2.5, gspd: 0.20 },
     quijano:  { def: 40, spec: 14, spd: 9,  gdef: 3.0, gspec: 1.0, gspd: 0.20 },
+    kuato:    { def: 20, spec: 40, spd: 10, gdef: 1.6, gspec: 3.0, gspd: 0.30 },
+    brundle:  { def: 24, spec: 24, spd: 13, gdef: 2.0, gspec: 1.8, gspd: 0.42 },
+    didymus:  { def: 34, spec: 18, spd: 11, gdef: 2.6, gspec: 1.4, gspd: 0.30 },
+    zed:      { def: 28, spec: 14, spd: 12, gdef: 2.2, gspec: 1.0, gspd: 0.38 },
   };
 
   // ---------------- STORYBOARD ----------------
   // The intended voyage — a suggested order with a logical thread, NOT a hard gate.
   // The Captain's Log walks this spine and surfaces the current chapter + the "why".
   // The legend-isles (Act II) are deliberately open: any order, none strictly required.
-  const LEGEND_ALLIES = ['simon', 'aladdin', 'violca', 'mac', 'sane', 'quijano', 'lydia'];
+  const LEGEND_ALLIES = ['simon', 'aladdin', 'violca', 'mac', 'sane', 'quijano', 'lydia', 'kuato', 'brundle', 'didymus', 'zed'];
   const STORYBOARD = {
     allies: LEGEND_ALLIES,
     spine: [
