@@ -16,7 +16,7 @@ window.Dungeon = (function () {
   function M(name, hex, opt = {}) { const m = new BABYLON.StandardMaterial(name + Math.random().toFixed(4), scene); m.diffuseColor = Color3.FromHexString(hex); const s = opt.spec ?? 0.1; m.specularColor = new Color3(s, s, s); if (opt.emissive) m.emissiveColor = Color3.FromHexString(opt.emissive); if (opt.alpha != null) m.alpha = opt.alpha; return m; }
 
   // each dungeon gets its own lighting/fog/sky + a signature prop set down the hall
-  const DUN_THEME = { tide_cave: 'cave', dune_tomb: 'tomb', abyss_vault: 'abyss', vampire_keep: 'castle', genie_cave: 'wonders', dragon_vale: 'vale' };
+  const DUN_THEME = { tide_cave: 'cave', dune_tomb: 'tomb', abyss_vault: 'abyss', vampire_keep: 'castle', genie_cave: 'wonders', dragon_vale: 'vale', spire_branch_a: 'abyss', spire_branch_b: 'cave' };
   const DUN_ENV = {
     cave:    { hemi: '#16242e', pt: '#7fd0ff', fog: '#1a2a34', fogD: 0.020, sky: ['#05101a', '#16303e'], torch: '#7fd0ff' },
     tomb:    { hemi: '#2a2418', pt: '#ffcf7a', fog: '#2a2414', fogD: 0.022, sky: ['#100c04', '#2a2008'], torch: '#ffb14a' },
@@ -278,6 +278,7 @@ window.Dungeon = (function () {
       else if (nearTarget.kind === 'chest') label += 'Open the vault chest';
       else if (nearTarget.kind === 'bonus') label += 'Open the hidden cache';
       else if (nearTarget.kind === 'npc') label += 'Speak with ' + nearTarget.npc.name;
+      else if (def.finale) label += bossDefeated ? 'Descend toward Selachoth\'s heart' : 'Retreat & regroup the crews';
       else label += 'Leave the dungeon';
       prompt.textContent = label; prompt.classList.add('show');
     } else prompt.classList.remove('show');
@@ -324,6 +325,10 @@ window.Dungeon = (function () {
     else if (nearTarget.kind === 'bonus') lootBonus(nearTarget);
     else if (nearTarget.kind === 'npc') talkNpc(nearTarget.npc);
     else if (nearTarget.kind === 'exit') {
+      if (def.finale) {
+        if (bossDefeated) { if (Game.spireBranchCleared) Game.spireBranchCleared(def.finale); return; }
+        return Game.confirm('Retreat from the Drowned Spire and regroup your crews? (Your progress on this branch is kept.)', () => { if (Game.spireRetreat) Game.spireRetreat(); });
+      }
       const ally = def.ally;
       if (ally && ally.key && !bossDefeated) { Progress.dismiss(Game.state, ally.key); Progress.save(Game.state); if (ally.holdMsg) Game.toast(ally.holdMsg); }
       Game.toIsland(def.island, false, true);

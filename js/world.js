@@ -416,12 +416,13 @@ window.World = (function () {
       else { player.position.z -= 4; Game.state.location.x = player.position.x; Game.state.location.z = player.position.z; }
     });
   }
-  // ACT III FINAL TRIAL — the Drowned Spire. Two crews brave two branches of the spire,
-  // one after the other, then converge on Selachoth and the Omega Tide. Gated on having
-  // freed enough heroes from the cursed isles to field two crews of 3–4.
+  // ACT III FINAL TRIAL — the Drowned Spire. Two crews each play a FULL, explorable
+  // dungeon branch (mobs, hazards, caches, a guardian — menu open throughout for
+  // equipping/leveling/healing), then converge on Selachoth and the Omega Tide.
+  // Gated on having freed enough heroes from the cursed isles to field two crews of 3–4.
   function finalTrial() {
     const st = Game.state;
-    const ALLY_DUN = { simon: 'vampire_keep', aladdin: 'genie_cave', violca: 'dragon_vale', mac: 'frost_station', sane: 'spirit_wood', quijano: 'mill_keep', lydia: 'neitherworld' };
+    const ALLY_DUN = { simon: 'vampire_keep', aladdin: 'genie_cave', violca: 'dragon_vale', mac: 'frost_station', sane: 'spirit_wood', marvyn: 'crash_site', quijano: 'mill_keep', lydia: 'neitherworld', kuato: 'rekall_mine', brundle: 'tawny_lab', didymus: 'goblin_maze', zed: 'the_vortex' };
     const cleared = k => { const d = ALLY_DUN[k]; return !!(st.dungeons[d] || st.dungeons[d + '_boss']); };
     const freed = Object.keys(ALLY_DUN).filter(cleared).length;
     const roster = 3 + freed + (st.party.find(p => p.key === 'ruffy' && p.recruited) ? 1 : 0); // core 3 + freed heroes (+ruffy)
@@ -429,29 +430,10 @@ window.World = (function () {
       Game.toast("The spire's final door won't open — you need two full crews. Free more heroes from the cursed isles first.");
       return;
     }
-    Game.confirm('The spire descends into two flooded branches before Selachoth\'s heart. Send TWO crews — one down each branch — then face the Omega Tide together. Assemble them?', () => {
+    Game.confirm('Below the spire the descent splits into TWO flooded branches. Send a crew down each — they fight their OWN way through (open the menu any time to equip, spend skill points and heal) — then both crews converge on Selachoth and the Omega Tide. Assemble your crews?', () => {
       Game.chooseTwoParties((A, B) => {
-        const restore = st.active.slice();
-        const setActive = team => { team.forEach(k => Progress.recruit(st, k, 4)); st.active = team.slice(0, 4); Progress.fullHeal(st); Progress.save(st); };
-        const bail = () => { st.active = restore; Progress.save(st); paused = false; locked = false; Game.resumeIsland(); player.position.z -= 4; };
-        const runOmega = () => { // crews converge: Selachoth breaks, then the Omega Tide rises
-          setActive(A); locked = true; paused = true; Music.play('boss');
-          Game.startBattle(['selachoth'], { boss: true, fullLimit: true }, (res) => {
-            if (!res.won) return bail();
-            setActive(B); Music.play('boss');
-            Game.startBattle(['selachoth_omega'], { boss: true, fullLimit: true }, (r2) => {
-              if (!r2.won) return bail();
-              st.active = restore; st.prog.finalWin = true; Progress.save(st);
-              paused = false; locked = false; Game.resumeIsland(); Game.finalEnding();
-            });
-          });
-        };
-        const branchB = () => {
-          setActive(B); locked = true; paused = true; Music.play('boss');
-          Game.startBattle(['angler'], { boss: true }, (res) => { if (!res.won) return bail(); Game.toast('The drowned branch is cleared. The crews converge on Selachoth\'s heart...'); runOmega(); });
-        };
-        setActive(A); locked = true; paused = true; Music.play('boss');
-        Game.startBattle(['leviathan'], { boss: true }, (res) => { if (!res.won) return bail(); Game.toast('The first branch is cleared. Send your second crew down the flooded stair...'); branchB(); });
+        Game._spire = { A: A.slice(), B: B.slice(), restore: st.active.slice() };
+        Game.enterSpireBranch('A');
       });
     });
   }

@@ -1410,6 +1410,29 @@ window.Data = (function () {
         { name: 'Narrator', text: 'The Eternal lays a cool hand on your brow. (Party fully restored.)' } ] },
       bossMob: { x: 0, z: 27, key: 'zardoz' }, reward: { gold: 980, shell: 'conch_ember' },
     },
+    // ===== ACT III FINALE — the Drowned Spire's two branches (played one crew each) =====
+    spire_branch_a: {
+      name: 'The Sunken Stair', island: 'spire', ground: '#1c2438', wall: '#10182a', sky: { top: '#05030f', horizon: '#1a2a44' },
+      spawn: { x: 0, z: -12 }, exit: { x: 0, z: 52 }, gate: { x: 0, z: 44 }, chest: { x: 0, z: 48 }, crystals: [], finale: 'A',
+      hint: 'CREW A — the Sunken Stair, the spire\'s upper branch, drowned to the rafters. Fight down the flooded steps and break the Reaper Leviathan that guards the descent, then signal the second crew. (Open the menu any time to equip, level skills and heal.)',
+      mobs: [ { x: -6, z: -2, pool: ['octo', 'jelly'], min: 2, max: 3 }, { x: 7, z: 10, pool: ['eel', 'octo'], min: 2, max: 3 }, { x: -7, z: 22, pool: ['wraith', 'urchin'], min: 2, max: 3 }, { x: 6, z: 32, pool: ['octo', 'eel', 'wraith'], min: 3, max: 3 } ],
+      npc: { x: 8, z: 6, name: 'Marina', color: '#5fc6c0', hair: '#2a6a78', gift: { heal: true }, lines: [
+        { name: 'Marina', text: 'The tide remembers every drowning in this place. Steady, Captain — this branch is yours to hold. The other crew descends the moment you break the Leviathan.' },
+        { name: 'Marina', text: 'Catch your breath first. Spend what you\'ve earned — skills, gear, all of it. We only get the one descent.' },
+        { name: 'Narrator', text: 'Marina sings the tide back out of your wounds. (Crew A fully restored.)' } ] },
+      bossMob: { x: 0, z: 40, key: 'leviathan' }, reward: { gold: 600 },
+    },
+    spire_branch_b: {
+      name: 'The Flooded Reliquary', island: 'spire', ground: '#16222e', wall: '#0c1822', sky: { top: '#0a1018', horizon: '#1a3340' },
+      spawn: { x: 0, z: -12 }, exit: { x: 0, z: 52 }, gate: { x: 0, z: 44 }, chest: { x: 0, z: 48 }, crystals: [], finale: 'B',
+      hint: 'CREW B — the Flooded Reliquary, the spire\'s lower branch, where the abyss keeps its dead. Cut down to the Abyss Angler that bars the heart — then both crews converge on Selachoth. (Open the menu any time to equip, level skills and heal.)',
+      mobs: [ { x: 6, z: -2, pool: ['wraith', 'ghoul'], min: 2, max: 3 }, { x: -7, z: 10, pool: ['bat', 'wraith'], min: 2, max: 3 }, { x: 7, z: 22, pool: ['ghoul', 'octo'], min: 2, max: 3 }, { x: -6, z: 32, pool: ['wraith', 'ghoul', 'urchin'], min: 3, max: 3 } ],
+      npc: { x: -8, z: 6, name: 'Marina', color: '#5fc6c0', hair: '#2a6a78', gift: { heal: true }, lines: [
+        { name: 'Marina', text: 'Crew A holds the stair above us. Now it falls to you. Past the Angler is Selachoth\'s heart — and the end of the long drowning.' },
+        { name: 'Marina', text: 'Ready yourselves. When you break the Angler, every hero who ever stood with us stands at the heart, together. Go.' },
+        { name: 'Narrator', text: 'Marina mends Crew B with the clean tide. (Fully restored.)' } ] },
+      bossMob: { x: 0, z: 40, key: 'angler' }, reward: { gold: 700 },
+    },
   };
 
   // ---------------- COSMOLOGY (the Observatory) ----------------
@@ -1661,6 +1684,12 @@ window.Data = (function () {
       { name: 'Ruffy', text: 'And I didn\'t come alone. Everybody you ever stuck your neck out for? They heard the king was making his last stand. They ALL wanted in.' },
       { name: 'Capt. Redbeard', text: 'Then we do this in two waves. My crew breaks the old monster\'s guard. Ruffy — you and yours finish whatever crawls out of the wreck.' },
       { name: 'Ruffy', text: 'Pick who comes with me, captain. The people we SAVED get to be the ones who save the world. Feels right, yeah?' },
+    ],
+    spireConverge: [
+      { name: 'Narrator', text: 'Two flooded branches, two crews — and at the spire\'s drowned heart, they meet again. Every hero you ever freed from the cursed isles forms up shoulder to shoulder, water to their knees, eyes on the throne of the One-Finned Angel.' },
+      { name: 'Capt. Redbeard', text: 'Both ways are cleared. Whole crew\'s here. ...When did we get so many friends?' },
+      { name: 'Selachoth', text: '(rising from the black water, Tidemourn dragging) So. The warm world sent ALL of you. It changes nothing. The tide takes everything in the end.' },
+      { name: 'Lance Strider', text: 'Not today it doesn\'t. First crew — break his guard!' },
     ],
     omegaRise: [
       { name: 'Selachoth', text: 'No... the warm world will NOT outlast me. I am more than this borrowed shell. I am what the abyss MADE of a hero.' },

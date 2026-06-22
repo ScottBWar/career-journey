@@ -538,7 +538,7 @@ window.Game = (function () {
   };
 
   // ---------- endgame ally picker (Ruffy's strike team for the two-party finale) ----------
-  const ALLY_DUN = { simon: 'vampire_keep', aladdin: 'genie_cave', violca: 'dragon_vale', mac: 'frost_station', sane: 'spirit_wood', marvyn: 'crash_site', quijano: 'mill_keep', lydia: 'neitherworld' };
+  const ALLY_DUN = { simon: 'vampire_keep', aladdin: 'genie_cave', violca: 'dragon_vale', mac: 'frost_station', sane: 'spirit_wood', marvyn: 'crash_site', quijano: 'mill_keep', lydia: 'neitherworld', kuato: 'rekall_mine', brundle: 'tawny_lab', didymus: 'goblin_maze', zed: 'the_vortex' };
   Game.chooseEndgameAllies = function (cb) {
     const st = Game.state;
     const cleared = k => { const d = ALLY_DUN[k]; return !!(st.dungeons[d] || st.dungeons[d + '_boss']); };
@@ -621,6 +621,44 @@ window.Game = (function () {
       foot.appendChild(go); body.appendChild(foot);
     }
     draw(); el('allyPick').classList.add('show');
+  };
+
+  // ---------- two-crew finale: real, explorable Drowned Spire branches ----------
+  // Each crew plays a FULL dungeon branch (mobs, hazards, caches, a guardian) with the
+  // menu open the whole time for equipping/leveling/healing — then the crews converge
+  // on Selachoth and the Omega Tide. State lives in Game._spire = { A, B, restore }.
+  function spireSetActive(team) { team.forEach(k => Progress.recruit(Game.state, k, 4)); Game.state.active = team.slice(0, 4); Progress.fullHeal(Game.state); Progress.save(Game.state); }
+  Game.enterSpireBranch = function (which) {
+    const sp = Game._spire; if (!sp) return;
+    spireSetActive(which === 'A' ? sp.A : sp.B);
+    Game.toDungeon(which === 'A' ? 'spire_branch_a' : 'spire_branch_b');
+  };
+  Game.spireBranchCleared = function (which) {
+    if (which === 'A') { Game.toast('⚓ The upper branch is secured! Your second crew descends the flooded stair…'); setTimeout(() => Game.enterSpireBranch('B'), 400); }
+    else Game.runSpireFinale();
+  };
+  Game.spireRetreat = function () {
+    const sp = Game._spire; if (sp) { Game.state.active = sp.restore.slice(); Progress.save(Game.state); }
+    Game._spire = null; Game.toIsland('spire', false); Game.toast('The crews fall back to regroup. The spire still waits.');
+  };
+  // both branches done → crews converge: Selachoth (Crew A) breaks, then the Omega Tide (Crew B)
+  Game.runSpireFinale = function () {
+    const s = Game.state, sp = Game._spire || { A: s.active.slice(), B: s.active.slice(), restore: s.active.slice() };
+    const bail = () => { s.active = sp.restore.slice(); Progress.save(s); Game._spire = null; Game.toIsland('spire', false); Game.toast('The crews fall back. Selachoth still holds the spire\'s heart.'); };
+    Game.startCutscene('spireConverge', () => {
+      spireSetActive(sp.A); Music.play('boss');
+      Game.startBattle(['selachoth'], { boss: true, fullLimit: true }, (r1) => {
+        if (!r1.won) return bail();
+        Game.startCutscene('omegaRise', () => {
+          spireSetActive(sp.B); Music.play('boss');
+          Game.startBattle(['selachoth_omega'], { boss: true, fullLimit: true }, (r2) => {
+            if (!r2.won) return bail();
+            s.active = sp.restore.slice(); s.prog.finalWin = true; Game._spire = null; Progress.save(s);
+            Game.startCutscene('omegaFall', () => Game.finalEnding());
+          });
+        });
+      });
+    });
   };
 
   // ---------- toast ----------
